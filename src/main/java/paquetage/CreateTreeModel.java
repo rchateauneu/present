@@ -65,7 +65,7 @@ public class CreateTreeModel {
         Rio.write(model, System.out, RDFFormat.RDFXML);
 
         try {
-            java.io.FileWriter fw = new java.io.FileWriter("toto.xml");
+            java.io.FileWriter fw = new java.io.FileWriter("CreateTreeModel.xml");
             Rio.write(model, fw, RDFFormat.RDFXML);
         }
         catch(Exception e)
