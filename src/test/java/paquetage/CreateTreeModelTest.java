@@ -6,7 +6,8 @@ import org.junit.Test;
 public class CreateTreeModelTest {
     @Test
     public void CreateTreeModelTest() throws Exception {
-        int expected_size = CreateTreeModel.create_stuff();
+        CreateTreeModel treeModel = new CreateTreeModel("CreateTreeModelTest.xml");
+        int expected_size = treeModel.model.size();
         Assert.assertEquals(expected_size, 2);
     }
 }

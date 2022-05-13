@@ -14,6 +14,4 @@ public class CreateRepositoryTest extends TestCase {
         CreateRepository.CreateSailRepositoryFromFile(
                 ".");
     }
-
-
 }

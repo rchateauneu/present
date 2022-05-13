@@ -1,13 +1,11 @@
 package paquetage;
 
+import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
@@ -26,7 +24,10 @@ public class SparqlBGPExtractorTest {
                 ?obs <uri:hasLatitude> ?lat
             }
         """;
-        Map<String, ObjectPattern> patternsMap = SparqlBGPExtractor.Parse(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("obs", "time", "lat"));
+
+        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
         Assert.assertEquals(patternsMap.size(), 1);
         Assert.assertTrue(patternsMap.containsKey("obs"));
     }
@@ -38,14 +39,17 @@ public class SparqlBGPExtractorTest {
     public void ParseTest2() throws Exception {
         String sparql_query = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_directory
             where {
                 ?my_directory rdf:type cim:Win32_Directory .
                 ?my_directory cim:Name "C:" .
             }
         """;
-        Map<String, ObjectPattern> patternsMap = SparqlBGPExtractor.Parse(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_directory"));
+
+        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
         Assert.assertEquals(patternsMap.size(), 1);
         Assert.assertTrue(patternsMap.containsKey("my_directory"));
         ObjectPattern patternWin32_Directory = patternsMap.get("my_directory");
@@ -70,7 +74,10 @@ public class SparqlBGPExtractorTest {
                 ?my_directory cim:Name ?my_name .
             }
         """;
-        Map<String, ObjectPattern> patternsMap = SparqlBGPExtractor.Parse(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_name"));
+
+        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
         Assert.assertEquals(patternsMap.size(), 1);
         Assert.assertTrue(patternsMap.containsKey("my_directory"));
         ObjectPattern patternWin32_Directory = patternsMap.get("my_directory");
@@ -110,7 +117,10 @@ public class SparqlBGPExtractorTest {
                 ?my_file cim:Name "C:\\\\WINDOWS\\\\System32\\\\kernel32.dll" .
                 }
         """;
-        Map<String, ObjectPattern> patternsMap = SparqlBGPExtractor.Parse(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+
+        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
         Assert.assertEquals(patternsMap.size(), 3);
 
         Assert.assertTrue(patternsMap.containsKey("my_assoc"));
@@ -132,8 +142,6 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(patternCIM_DataFile.Members.size(), 1);
         CheckKeyValue(patternCIM_DataFile.Members, "Name", false, "C:\\WINDOWS\\System32\\kernel32.dll");
     }
-
-
 }
 
                 /*

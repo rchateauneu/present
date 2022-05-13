@@ -108,6 +108,8 @@ public class WmiSelecterTest {
         System.out.println(listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
+        for(WmiSelecter.Row row : listResults)
+            Assert.assertEquals(row.Elements.size(), 1);
     }
 
     @Test

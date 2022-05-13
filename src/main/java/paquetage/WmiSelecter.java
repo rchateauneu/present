@@ -18,8 +18,8 @@ import java.util.Map;
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
  */
 public class WmiSelecter {
-    record KeyValue(String key, String value) {
-        public String ToTest() {
+    public record KeyValue(String key, String value) {
+        public String ToEqualComparison() {
             // Real examples in Powershell - they are quite fast:
             // PS C:\Users\rchat> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
             // PS C:\Users\rchat> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
@@ -28,6 +28,9 @@ public class WmiSelecter {
         }
     };
 
+    /**
+     * This is a row returned by a WMI select query.
+     */
     public class Row {
         ArrayList<String> Elements;
 
@@ -54,7 +57,7 @@ public class WmiSelecter {
 
         if( (wheres != null) && (! wheres.isEmpty())) {
             wqlQuery += " where ";
-            String whereClause = (String)wheres.stream().map(KeyValue::ToTest)
+            String whereClause = (String)wheres.stream().map(KeyValue::ToEqualComparison)
                     .collect(Collectors.joining(" and "));
             wqlQuery += whereClause;
         }

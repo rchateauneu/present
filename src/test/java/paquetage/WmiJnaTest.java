@@ -50,18 +50,8 @@ public class WmiJnaTest {
         }
     }
 
-    /*
-    Removed this from pom.xml:
-            <dependency>
-            <groupId>com.sun.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>3.0.9</version>
-        </dependency>
-
-     */
     @Test
-    public void DoTheTest2() {
-        System.out.println("DoTheTest2");
+    public void SelectDiskDrives() {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
 
         // Connect to the server
@@ -112,7 +102,7 @@ public class WmiJnaTest {
     }
 
     @Test
-    public void DoTheTest3() {
+    public void SelectProcesses() {
         System.out.println("DoTheTest3");
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
 

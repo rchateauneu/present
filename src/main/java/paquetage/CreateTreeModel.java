@@ -32,23 +32,19 @@ Extraire les BGP.
  */
 
 public class CreateTreeModel {
-    public static int create_stuff() {
-        // We want to reuse this namespace when creating several building blocks.
+    public Model model;
+
+    public CreateTreeModel(String file_name) throws Exception{
         String ex = "http://example.org/";
 
-        //org.eclipse.rdf4j.
-
-        // Create IRIs for the resources we want to add.
         IRI picasso = iri(ex, "Picasso");
         IRI artist = iri(ex, "Artist");
 
         // Create a new, empty Model object.
-        Model model = new TreeModel();
+        model = new TreeModel();
 
-        // add our first statement: Picasso is an Artist
         model.add(picasso, RDF.TYPE, artist);
 
-        // second statement: Picasso's first name is "Pablo".
         model.add(picasso, FOAF.FIRST_NAME, literal("Pablo"));
 
         // to see what's in our model, let's just print it to the screen
@@ -64,16 +60,8 @@ public class CreateTreeModel {
         // write the model in RDF/XML syntax:
         Rio.write(model, System.out, RDFFormat.RDFXML);
 
-        try {
-            java.io.FileWriter fw = new java.io.FileWriter("CreateTreeModel.xml");
-            Rio.write(model, fw, RDFFormat.RDFXML);
-        }
-        catch(Exception e)
-        {
-            System.out.println("Tout va mal, c'est epouvantable !");
-            System.out.println(e);
-        }
-        return model.size();
+        java.io.FileWriter fw = new java.io.FileWriter(file_name);
+        Rio.write(model, fw, RDFFormat.RDFXML);
     }
 
 }

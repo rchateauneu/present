@@ -5,13 +5,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ef269f1f-ff28-4f68-8628-beed4a904068" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/paquetage/PatternToSparql.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/paquetage/PatternToSparqlTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/MyClasse.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/CreateTreeModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/CreateTreeModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmInteropTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/Wmi4jTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/PatternToSparql.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/CreateRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/CreateRepositoryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/CreateTreeModelTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/CreateTreeModelTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/PatternToSparqlTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiSelecterTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiSelecterTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -178,33 +186,38 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java</url>
-          <line>71</line>
+          <line>61</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java</url>
-          <line>62</line>
+          <line>65</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>52</line>
+          <line>56</line>
           <option name="timeStamp" value="12" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>47</line>
+          <line>51</line>
           <option name="timeStamp" value="13" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>28</line>
+          <line>29</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java</url>
-          <line>19</line>
+          <line>28</line>
           <option name="timeStamp" value="21" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java</url>
+          <line>43</line>
+          <option name="timeStamp" value="22" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
