@@ -78,7 +78,6 @@ public class WmiSelecter {
                     Row oneRow = new Row();
                     for(String oneColumn : columns) {
                         COMUtils.checkRC(wqlResult[0].Get(oneColumn, 0, pVal, pType, plFlavor));
-                        //System.out.println("---------" + pVal.getValue() + "-------------");
                         oneRow.Elements.add(pVal.getValue().toString());
                         OleAuto.INSTANCE.VariantClear(pVal);
                     }
