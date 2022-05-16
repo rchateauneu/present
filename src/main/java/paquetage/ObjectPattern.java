@@ -13,10 +13,19 @@ public class ObjectPattern {
     public String className;
     public String VariableName;
 
-    ObjectPattern(String variableName) {
-        className = null;
+    /**
+     * This is for debugging purpose. An object can be created with a single call.
+     * @param variableName
+     * @param the_class
+     */
+    ObjectPattern(String variableName, String the_class) {
+        className = the_class;
         VariableName = variableName;
         Members = new ArrayList<KeyValue>();
+    }
+
+    ObjectPattern(String variableName) {
+        this(variableName, null);
     }
 
     // TODO: ObjectName must be a Variable or Value. See rdf4j
@@ -29,5 +38,4 @@ public class ObjectPattern {
         KeyValue keyValue = new KeyValue(predicate, isVariable, content);
         Members.add(keyValue);
     }
-
 }
