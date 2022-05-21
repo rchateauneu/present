@@ -4,14 +4,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.lang.Object;
 
+import COM.Wbemcli;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class WmiSelecterTest {
     @Test
-    public void TestCIM_Process() {
+    public void TestBuildQuery() throws Exception {
+    WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(
+                "CIM_Process",
+                Arrays.asList("Handle"),
+                Arrays.asList(new WmiSelecter.KeyValue("Handle", "123")));
+        String wqlQuery = queryData.BuildWqlQuery();
+        Assert.assertEquals(wqlQuery, "lkjhkljh");
+    }
+
+    @Test
+    public void TestCIM_Process() throws Exception{
         WmiSelecter selecter = new WmiSelecter();
-        ArrayList<WmiSelecter.Row> listResults = selecter.Select("CIM_Process", Arrays.asList("Handle"));
+        ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect("CIM_Process", Arrays.asList("Handle"));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
@@ -33,12 +44,12 @@ public class WmiSelecterTest {
     }
 
     @Test
-    public void TestCIM_ProcessCurrent() {
+    public void TestCIM_ProcessCurrent() throws Exception {
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
 
         WmiSelecter selecter = new WmiSelecter();
-        ArrayList<WmiSelecter.Row> listResults = selecter.Select(
+        ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_Process",
                 Arrays.asList("Handle"),
                 Arrays.asList(new WmiSelecter.KeyValue("Handle", pidString)));
@@ -51,14 +62,14 @@ public class WmiSelecterTest {
     }
 
     @Test
-    public void TestCIM_ProcessExecutable() {
+    public void TestCIM_ProcessExecutable() throws Exception{
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         WmiSelecter selecter = new WmiSelecter();
-        ArrayList<WmiSelecter.Row> listResults = selecter.Select(
+        ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_ProcessExecutable",
                 Arrays.asList("Dependent"));
         String stringsResults = (String)listResults.stream().map(Object::toString)
@@ -70,7 +81,7 @@ public class WmiSelecterTest {
     }
 
     @Test
-    public void TestCIM_ProcessExecutableDependent() {
+    public void TestCIM_ProcessExecutableDependent() throws Exception {
         long pid = ProcessHandle.current().pid();
         //String pidString = String.valueOf(pid);
         //String dependentString = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"2588\""
@@ -80,7 +91,7 @@ public class WmiSelecterTest {
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         WmiSelecter selecter = new WmiSelecter();
-        ArrayList<WmiSelecter.Row> listResults = selecter.Select(
+        ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_ProcessExecutable",
                 Arrays.asList("Antecedent"),
                 Arrays.asList(new WmiSelecter.KeyValue("Dependent", dependentString)));
@@ -94,11 +105,11 @@ public class WmiSelecterTest {
 
     //  \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"
     @Test
-    public void TestCIM_ProcessExecutableAntecedent() {
+    public void TestCIM_ProcessExecutableAntecedent() throws Exception {
         String antecedentString = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"";
 
         WmiSelecter selecter = new WmiSelecter();
-        ArrayList<WmiSelecter.Row> listResults = selecter.Select(
+        ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_ProcessExecutable",
                 Arrays.asList("Dependent"),
                 Arrays.asList(new WmiSelecter.KeyValue("Antecedent", antecedentString)));
@@ -113,7 +124,7 @@ public class WmiSelecterTest {
     }
 
     @Test
-    public void TestClasses() {
+    public void TestClassesList() {
         WmiSelecter selecter = new WmiSelecter();
         Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
         Assert.assertTrue(classes.containsKey("Win32_Process"));
@@ -123,4 +134,34 @@ public class WmiSelecterTest {
         Assert.assertEquals(classes.get("Win32_Process").BaseName, "CIM_Process");
         Assert.assertTrue(properties.containsKey("Handle"));
     }
+
+    @Test
+    public void TestGetObject_CIM_DataFile() {
+        String objectPath = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clbcatq.dll\"";
+        WmiSelecter selecter = new WmiSelecter();
+        Wbemcli.IWbemClassObject obj = selecter.GetObjectNode(objectPath);
+        List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
+        Assert.assertTrue(namesList.contains("Name"));
+        Assert.assertTrue(namesList.contains("FileName"));
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption"), "C:\\WINDOWS\\System32\\clbcatq.dll");
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "CreationClassName"), "CIM_LogicalFile");
+    }
+
+    @Test
+    public void TestGetObject_Win32_Process() {
+        long pid = ProcessHandle.current().pid();
+        String objectPath = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"" + pid + "\"";
+        WmiSelecter selecter = new WmiSelecter();
+        Wbemcli.IWbemClassObject obj = selecter.GetObjectNode(objectPath);
+        List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
+        Assert.assertTrue(namesList.contains("Handle"));
+        Assert.assertTrue(namesList.contains("Caption"));
+        Assert.assertTrue(namesList.contains("Description"));
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "Handle"), Long.toString(pid));
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption"), "java.exe");
+    }
+    // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
+    // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
+
 }
+

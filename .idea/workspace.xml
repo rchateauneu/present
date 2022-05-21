@@ -5,20 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ef269f1f-ff28-4f68-8628-beed4a904068" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/COM/Wbemcli.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/COM/WbemcliUtil.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/MyClasse.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/CreateTreeModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/CreateTreeModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/PatternToSparql.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/CreateRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/CreateRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/CreateTreeModelTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/CreateTreeModelTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/PatternToSparqlTest.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiSelecterTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiSelecterTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -37,6 +31,14 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -73,7 +75,7 @@
       <recent name="paquetage" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.All in present">
+  <component name="RunManager" selected="JUnit.SparqlToWmiTest">
     <configuration name="All in present" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <option name="PACKAGE_NAME" value="" />
@@ -82,7 +84,7 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlBGPExtractorTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SparqlToWmiTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -91,13 +93,13 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPExtractorTest" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlToWmiTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlBGPExtractorTest.ParseTest1" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SparqlToWmiTest.SymbolicQueryDataTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -106,14 +108,14 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPExtractorTest" />
-      <option name="METHOD_NAME" value="ParseTest1" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlToWmiTest" />
+      <option name="METHOD_NAME" value="SymbolicQueryDataTest" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlBGPExtractorTest.ParseTest2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="WmiSelecterTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -122,35 +124,35 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPExtractorTest" />
-      <option name="METHOD_NAME" value="ParseTest2" />
-      <option name="TEST_OBJECT" value="method" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="WmiOntologyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="present" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="paquetage.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.WmiOntologyTest" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.WmiSelecterTest" />
       <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WmiSelecterTest.TestCIM_ProcessExecutableDependent" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="present" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="paquetage.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="paquetage" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.WmiSelecterTest" />
+      <option name="METHOD_NAME" value="TestCIM_ProcessExecutableDependent" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.SparqlToWmiTest" />
         <item itemvalue="JUnit.All in present" />
-        <item itemvalue="JUnit.WmiOntologyTest" />
-        <item itemvalue="JUnit.SparqlBGPExtractorTest" />
-        <item itemvalue="JUnit.SparqlBGPExtractorTest.ParseTest2" />
-        <item itemvalue="JUnit.SparqlBGPExtractorTest.ParseTest1" />
+        <item itemvalue="JUnit.WmiSelecterTest.TestCIM_ProcessExecutableDependent" />
+        <item itemvalue="JUnit.WmiSelecterTest" />
+        <item itemvalue="JUnit.SparqlToWmiTest.SymbolicQueryDataTest" />
       </list>
     </recent_temporary>
   </component>
@@ -191,33 +193,68 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java</url>
-          <line>65</line>
+          <line>113</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>56</line>
+          <line>67</line>
           <option name="timeStamp" value="12" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>51</line>
-          <option name="timeStamp" value="13" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>29</line>
-          <option name="timeStamp" value="20" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java</url>
-          <line>28</line>
-          <option name="timeStamp" value="21" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java</url>
-          <line>43</line>
+          <line>47</line>
           <option name="timeStamp" value="22" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
+          <line>40</line>
+          <option name="timeStamp" value="23" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java</url>
+          <line>60</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
+          <line>60</line>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/COM/WbemcliUtil.java</url>
+          <line>526</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
+          <line>117</line>
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java</url>
+          <line>15</line>
+          <option name="timeStamp" value="28" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
+          <line>49</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
+          <line>156</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java</url>
+          <line>27</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
+          <line>200</line>
+          <option name="timeStamp" value="34" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

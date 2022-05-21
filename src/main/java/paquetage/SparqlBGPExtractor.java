@@ -3,6 +3,7 @@ package paquetage;
 // Notamment "query explain"
 // https://rdf4j.org/documentation/programming/repository/
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -21,22 +22,25 @@ import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
 public class SparqlBGPExtractor {
     public String sparql_query;
     public Set<String> bindings;
-    public Map<String, ObjectPattern> patternsMap;
+    Map<String, ObjectPattern> patternsMap;
 
     public SparqlBGPExtractor(String input_query) throws Exception {
         sparql_query = input_query;
-        Parse();
+        patternsMap = null;
+        ParseQuery();
     }
 
+    /**
+     * Returns the BGPs as a list whose order is guaranteed.
+     * @return
+     */
     List<ObjectPattern> patternsAsArray() {
-        ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>();
-        for(ObjectPattern pattern: patternsMap.values()) {
-            patternsArray.add(pattern);
-        }
+        ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(patternsMap.values());
+        patternsArray.sort(Comparator.comparing(s -> s.VariableName));
         return patternsArray;
     }
 
-    void Parse() throws Exception {
+    void ParseQuery() throws Exception {
         SPARQLParser parser = new SPARQLParser();
         ParsedQuery pq = parser.parseQuery(sparql_query, null);
         TupleExpr tupleExpr = pq.getTupleExpr();
@@ -61,9 +65,7 @@ public class SparqlBGPExtractor {
                 refPattern = patternsMap.get(subjectName);
             }
             Var predicate = myPattern.getPredicateVar();
-            String predicateName = predicate.getName();
             Var object = myPattern.getObjectVar();
-            String objectName = object.getName();
             // TODO: Try comparing the nodes instead of the strings, if this is possible. It could be faster.
             if(!predicate.getValue().stringValue().equals(RDF.TYPE.stringValue())) {
                 if(object.isConstant()) {
@@ -81,7 +83,7 @@ public class SparqlBGPExtractor {
                 }
             }
             else {
-                refPattern.className = objectName;
+                refPattern.className = object.getValue().stringValue();
             }
         }
     }

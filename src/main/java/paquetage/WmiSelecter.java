@@ -1,8 +1,12 @@
 package paquetage;
 
+import COM.Wbemcli;
+import COM.WbemcliUtil;
 import com.sun.jna.platform.win32.COM.COMUtils;
-import com.sun.jna.platform.win32.COM.Wbemcli;
-import com.sun.jna.platform.win32.COM.WbemcliUtil;
+
+//import com.sun.jna.platform.win32.COM.Wbemcli;
+//import com.sun.jna.platform.win32.COM.WbemcliUtil;
+
 import com.sun.jna.platform.win32.Ole32;
 import com.sun.jna.platform.win32.OleAuto;
 import com.sun.jna.platform.win32.Variant;
@@ -18,11 +22,30 @@ import java.util.Map;
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
  */
 public class WmiSelecter {
-    public record KeyValue(String key, String value) {
+    //static String TruncateNode(String nodeValue) {
+        // nodeValue = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
+        // Prefix is WmiOntology.survol_url_prefix
+   //     return nodeValue.split("#")[1];
+    //}
+    static public class KeyValue {
+        public String key;
+        public String value;
+        public KeyValue(String keyStr, String valueStr) throws Exception {
+            if(keyStr.contains("#")) {
+                throw new Exception("Invalid class:" + keyStr);
+            }
+
+            key = keyStr;
+            value = valueStr;
+        }
         public String ToEqualComparison() {
             // Real examples in Powershell - they are quite fast:
-            // PS C:\Users\rchat> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
-            // PS C:\Users\rchat> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
+            // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
+            // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
+
+            // key = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
+            //String truncatedKey = TruncateNode(key);
+
             String escapedValue = value.replace("\\", "\\\\").replace("\"", "\\\"");
             return "" + key + "" + " = \"" + escapedValue + "\"";
         }
@@ -43,8 +66,41 @@ public class WmiSelecter {
         }
     }
 
-    public ArrayList<Row> Select(String className, List<String> columns, List<KeyValue> wheres) {
-        System.out.println("Select " + className);
+    /**
+     * To be used when reconstructing a WQL query.
+     */
+    public static class QueryData {
+        String className;
+        List<String> queryColumns;
+        List<WmiSelecter.KeyValue> queryWheres;
+
+        QueryData(String wmiClassName, List<String> columns, List<WmiSelecter.KeyValue> wheres) throws Exception {
+            if(wmiClassName.contains("#")) {
+                throw new Exception("Invalid class:" + wmiClassName);
+            }
+            className = wmiClassName;
+            queryColumns = columns;
+            queryWheres = wheres;
+        }
+
+        public String BuildWqlQuery() {
+            String wqlQuery = "Select " + String.join(",", queryColumns) + " from " + className;
+
+            if( (queryWheres != null) && (! queryWheres.isEmpty())) {
+                wqlQuery += " where ";
+                String whereClause = (String)queryWheres.stream()
+                        .map(KeyValue::ToEqualComparison)
+                        .collect(Collectors.joining(" and "));
+                wqlQuery += whereClause;
+            }
+            System.out.println("wqlQuery " + wqlQuery);
+            return wqlQuery;
+        }
+    }
+
+
+    public ArrayList<Row> WqlSelect(QueryData queryData) {
+        System.out.println("Select " + queryData.className);
 
         // TODO: Maybe this could be done once only in this object.
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
@@ -53,15 +109,7 @@ public class WmiSelecter {
         Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
 
         ArrayList<Row> resultRows = new ArrayList<Row>();
-        String wqlQuery = "Select " + String.join(",", columns) + " from " + className;
-
-        if( (wheres != null) && (! wheres.isEmpty())) {
-            wqlQuery += " where ";
-            String whereClause = (String)wheres.stream().map(KeyValue::ToEqualComparison)
-                    .collect(Collectors.joining(" and "));
-            wqlQuery += whereClause;
-        }
-        System.out.println("wqlQuery " + wqlQuery);
+        String wqlQuery = queryData.BuildWqlQuery();
 
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", wqlQuery,
@@ -76,7 +124,7 @@ public class WmiSelecter {
                         break;
                     }
                     Row oneRow = new Row();
-                    for(String oneColumn : columns) {
+                    for(String oneColumn : queryData.queryColumns) {
                         COMUtils.checkRC(wqlResult[0].Get(oneColumn, 0, pVal, pType, plFlavor));
                         oneRow.Elements.add(pVal.getValue().toString());
                         OleAuto.INSTANCE.VariantClear(pVal);
@@ -95,8 +143,12 @@ public class WmiSelecter {
         return resultRows;
     }
 
-    public ArrayList<Row> Select(String className, List<String> columns) {
-        return Select(className, columns, null);
+    public ArrayList<Row> WqlSelect(String className, List<String> columns, List<KeyValue> wheres) throws Exception {
+        return WqlSelect(new QueryData(className, columns, wheres));
+    }
+
+    public ArrayList<Row> WqlSelect(String className, List<String> columns) throws Exception {
+        return WqlSelect(className, columns, null);
     }
 
     public class WmiProperty {
@@ -224,17 +276,36 @@ public class WmiSelecter {
                     result[0].Release();
                 }
             } finally {
-                // Cleanup
                 enumerator.Release();
             }
         } finally {
-            // Cleanup
             svc.Release();
         }
         Ole32.INSTANCE.CoUninitialize();
         return resultClasses;
-
     }
+
+    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath)
+    {
+        // TODO: Maybe this could be done once only in this object.
+        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
+
+        Wbemcli.IWbemServices svc_wgo = WbemcliUtil.connectServer("ROOT\\CIMV2");
+        return svc_wgo.GetObject(objectPath);
+    }
+
+    String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName)
+    {
+        Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
+        IntByReference pType = new IntByReference();
+        IntByReference plFlavor = new IntByReference();
+        COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, plFlavor));
+        Object objectValue = pVal.getValue();
+        String value = objectValue != null ? objectValue.toString() : null;
+        OleAuto.INSTANCE.VariantClear(pVal);
+        return value;
+    }
+
 
     /*
     // http://win32easy.blogspot.com/2011/03/wmi-in-c-query-everyting-from-your-os.html

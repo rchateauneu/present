@@ -5,11 +5,19 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 public class SparqlBGPExtractorTest {
+    static ObjectPattern FindObjectPattern(SparqlBGPExtractor extractor, String variable) {
+        ObjectPattern pattern = extractor.patternsMap.get(variable);
+        Assert.assertNotEquals(pattern, null);
+        Assert.assertEquals(pattern.VariableName, variable);
+        return pattern;
+    }
+
     @Test
     public void ParseTest1() throws Exception {
         String sparql_query = """
@@ -26,15 +34,19 @@ public class SparqlBGPExtractorTest {
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("obs", "time", "lat"));
+        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+        Assert.assertNotEquals(FindObjectPattern(extractor, "obs"), null);
+    }
 
-        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
-        Assert.assertEquals(patternsMap.size(), 1);
-        Assert.assertTrue(patternsMap.containsKey("obs"));
+    static void CompareKeyValue(ObjectPattern.KeyValue a, String predicate, boolean isVariable, String content) {
+        Assert.assertEquals(a.Predicate(), predicate);
+        Assert.assertEquals(a.isVariable(), isVariable);
+        Assert.assertEquals(a.Content(), content);
     }
 
     @Test
     /***
-     * Checks thar the right patterns are detected.
+     * Checks patterns detection.
      */
     public void ParseTest2() throws Exception {
         String sparql_query = """
@@ -49,15 +61,12 @@ public class SparqlBGPExtractorTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_directory"));
 
-        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
-        Assert.assertEquals(patternsMap.size(), 1);
-        Assert.assertTrue(patternsMap.containsKey("my_directory"));
-        ObjectPattern patternWin32_Directory = patternsMap.get("my_directory");
-        Assert.assertEquals(patternWin32_Directory.VariableName, "my_directory");
+        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+
+        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
+        Assert.assertEquals(patternWin32_Directory.className, WmiOntology.survol_url_prefix + "Win32_Directory");
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        Assert.assertEquals(patternWin32_Directory.Members.get(0).Predicate(),   WmiOntology.survol_url_prefix + "Name");
-        Assert.assertEquals(patternWin32_Directory.Members.get(0).isVariable(), false);
-        Assert.assertEquals(patternWin32_Directory.Members.get(0).Content(), "C:");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), WmiOntology.survol_url_prefix + "Name", false, "C:");
     }
 
     @Test
@@ -77,25 +86,20 @@ public class SparqlBGPExtractorTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_name"));
 
-        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
-        Assert.assertEquals(patternsMap.size(), 1);
-        Assert.assertTrue(patternsMap.containsKey("my_directory"));
-        ObjectPattern patternWin32_Directory = patternsMap.get("my_directory");
-        Assert.assertEquals(patternWin32_Directory.VariableName, "my_directory");
+        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+
+        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
+        Assert.assertEquals(patternWin32_Directory.className, WmiOntology.survol_url_prefix + "Win32_Directory");
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        Assert.assertEquals(patternWin32_Directory.Members.get(0).Predicate(), WmiOntology.survol_url_prefix + "Name");
-        Assert.assertEquals(patternWin32_Directory.Members.get(0).isVariable(), true);
-        Assert.assertEquals(patternWin32_Directory.Members.get(0).Content(), "my_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), WmiOntology.survol_url_prefix + "Name", true, "my_name");
     }
 
-    static void CheckKeyValue(ArrayList<ObjectPattern.KeyValue> members, String predicate, boolean is_variable, String content) {
+    static void FindAndCompareKeyValue(ArrayList<ObjectPattern.KeyValue> members, String predicate, boolean is_variable, String content) {
         ObjectPattern.KeyValue memberName = members.stream()
                 .filter(x -> x.Predicate().equals(WmiOntology.survol_url_prefix + predicate))
                 .findFirst().orElse(null);
         Assert.assertNotEquals(memberName, null);
-        Assert.assertEquals(memberName.Predicate(), WmiOntology.survol_url_prefix + predicate);
-        Assert.assertEquals(memberName.isVariable(), is_variable);
-        Assert.assertEquals(memberName.Content(), content);
+        CompareKeyValue(memberName, WmiOntology.survol_url_prefix + predicate, is_variable, content);
     }
 
     @Test
@@ -120,27 +124,23 @@ public class SparqlBGPExtractorTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        Map<String, ObjectPattern> patternsMap = extractor.patternsMap;
-        Assert.assertEquals(patternsMap.size(), 3);
+        Assert.assertEquals(extractor.patternsAsArray().size(), 3);
 
-        Assert.assertTrue(patternsMap.containsKey("my_assoc"));
-        ObjectPattern patternCIM_ProcessExecutable = patternsMap.get("my_assoc");
-        Assert.assertEquals(patternCIM_ProcessExecutable.VariableName, "my_assoc");
+        ObjectPattern patternCIM_ProcessExecutable = FindObjectPattern(extractor, "my_assoc");
+        Assert.assertEquals(patternCIM_ProcessExecutable.className, WmiOntology.survol_url_prefix + "CIM_ProcessExecutable");
         Assert.assertEquals(patternCIM_ProcessExecutable.Members.size(), 2);
-        CheckKeyValue(patternCIM_ProcessExecutable.Members, "Dependent", true, "my_process");
-        CheckKeyValue(patternCIM_ProcessExecutable.Members, "Antecedent", true, "my_file");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, "Dependent", true, "my_process");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, "Antecedent", true, "my_file");
 
-        Assert.assertTrue(patternsMap.containsKey("my_process"));
-        ObjectPattern patternWin32_Process = patternsMap.get("my_process");
-        Assert.assertEquals(patternWin32_Process.VariableName, "my_process");
+        ObjectPattern patternWin32_Process = FindObjectPattern(extractor, "my_process");
+        Assert.assertEquals(patternWin32_Process.className, WmiOntology.survol_url_prefix + "Win32_Process");
         Assert.assertEquals(patternWin32_Process.Members.size(), 1);
-        CheckKeyValue(patternWin32_Process.Members, "Handle", true, "my_process_handle");
+        FindAndCompareKeyValue(patternWin32_Process.Members, "Handle", true, "my_process_handle");
 
-        Assert.assertTrue(patternsMap.containsKey("my_file"));
-        ObjectPattern patternCIM_DataFile = patternsMap.get("my_file");
-        Assert.assertEquals(patternCIM_DataFile.VariableName, "my_file");
+        ObjectPattern patternCIM_DataFile = FindObjectPattern(extractor, "my_file");
+        Assert.assertEquals(patternCIM_DataFile.className, WmiOntology.survol_url_prefix + "CIM_DataFile");
         Assert.assertEquals(patternCIM_DataFile.Members.size(), 1);
-        CheckKeyValue(patternCIM_DataFile.Members, "Name", false, "C:\\WINDOWS\\System32\\kernel32.dll");
+        FindAndCompareKeyValue(patternCIM_DataFile.Members, "Name", false, "C:\\WINDOWS\\System32\\kernel32.dll");
     }
 }
 
