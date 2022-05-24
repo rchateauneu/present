@@ -85,6 +85,28 @@ public class SparqlToWmiTest {
     }
 
     @Test
+    public void SymbolicQuery3Test() throws Exception {
+        ObjectPattern objectPattern0 = new ObjectPattern(
+                "my_process",
+                WmiOntology.survol_url_prefix + "Win32_Process");
+        objectPattern0.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false,"C:");
+
+        ObjectPattern objectPattern1 = new ObjectPattern(
+                "my_assoc",
+                WmiOntology.survol_url_prefix + "CIM_ProcessExecutable");
+        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Dependent", true,"my_process");
+        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Antecedent", true,"my_file");
+
+        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern0, objectPattern1));
+        String symbolicQuery = patternSparql.SymbolicQuery();
+        System.out.println("symbolicQuery=" + symbolicQuery);
+        Assert.assertEquals(
+                "Select __RELPATH from Win32_Process where Name = \"C:\"\n" +
+                    "\tSelect Antecedent from CIM_ProcessExecutable where Dependent = \"my_process\"\n",
+                symbolicQuery);
+    }
+
+    @Test
     /**
      * This manually builds an object pattern and checks the intermediate query data necessary to create the WQL query,
      * are properly created.
