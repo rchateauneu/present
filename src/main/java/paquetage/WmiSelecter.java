@@ -12,11 +12,12 @@ import com.sun.jna.platform.win32.OleAuto;
 import com.sun.jna.platform.win32.Variant;
 import com.sun.jna.ptr.IntByReference;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+// import java.util.function.Function;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.Map;
 
 /**
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
@@ -55,14 +56,14 @@ public class WmiSelecter {
      * This is a row returned by a WMI select query.
      */
     public class Row {
-        ArrayList<String> Elements;
+        Map<String, String> Elements;
 
         public Row() {
-            Elements = new ArrayList<String>();
+            Elements = new HashMap<String, String>();
         }
 
         public String toString() {
-            return String.join(",", Elements);
+            return String.join(",", Elements.values());
         }
     }
 
@@ -71,20 +72,37 @@ public class WmiSelecter {
      */
     public static class QueryData {
         String className;
-        List<String> queryColumns;
+        String mainVariable;
+        // Map<String, String> queryColumns;
+        // It maps a column name to a variable and is used to copy the column values to the variables.
+        // This sorted container guarantees the order to help comparison.
+        SortedMap<String, String> queryColumns;
         List<WmiSelecter.KeyValue> queryWheres;
 
-        QueryData(String wmiClassName, List<String> columns, List<WmiSelecter.KeyValue> wheres) throws Exception {
+        QueryData(String wmiClassName, String variable, Map<String, String> columns, List<WmiSelecter.KeyValue> wheres) throws Exception {
+            mainVariable = variable;
             if(wmiClassName.contains("#")) {
                 throw new Exception("Invalid class:" + wmiClassName);
             }
             className = wmiClassName;
-            queryColumns = columns;
-            queryWheres = wheres;
+            // Uniform representation of no columns selected (except the path).
+            if(columns == null)
+                queryColumns = new TreeMap<String, String>();
+            else
+                queryColumns = new TreeMap<String, String>(columns);
+            // Uniform representation of an empty where clause.
+            if(wheres == null)
+                queryWheres = new ArrayList<WmiSelecter.KeyValue>();
+            else
+                // This sorts the where tests so the order is always the same and helps comparisons.
+                // This is not a problem performance-wise because there is only one such element per WQL query.
+                queryWheres = wheres.stream().sorted(Comparator.comparing(x -> x.key)).collect(Collectors.toList());
         }
 
         public String BuildWqlQuery() {
-            String wqlQuery = "Select " + String.join(",", queryColumns) + " from " + className;
+            // The order of select columns is not very important because the results can be mapped to variables.
+            String columns = queryColumns.size() == 0 ? "__RELPATH" : String.join(",", queryColumns.keySet());
+            String wqlQuery = "Select " + columns + " from " + className;
 
             if( (queryWheres != null) && (! queryWheres.isEmpty())) {
                 wqlQuery += " where ";
@@ -98,7 +116,6 @@ public class WmiSelecter {
         }
     }
 
-
     public ArrayList<Row> WqlSelect(QueryData queryData) {
         System.out.println("Select " + queryData.className);
 
@@ -110,6 +127,7 @@ public class WmiSelecter {
 
         ArrayList<Row> resultRows = new ArrayList<Row>();
         String wqlQuery = queryData.BuildWqlQuery();
+        System.out.println("wqlQuery=" + wqlQuery);
 
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", wqlQuery,
@@ -119,16 +137,65 @@ public class WmiSelecter {
                 IntByReference pType = new IntByReference();
                 IntByReference plFlavor = new IntByReference();
                 while(true) {
+                    /**
+                     * When selecting a single column "MyColumn", the returned effective columns are:
+                     *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
+                     *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
+                     */
                     Wbemcli.IWbemClassObject[] wqlResult = enumerator.Next(0, 1);
                     if(wqlResult.length == 0) {
                         break;
                     }
                     Row oneRow = new Row();
-                    for(String oneColumn : queryData.queryColumns) {
-                        COMUtils.checkRC(wqlResult[0].Get(oneColumn, 0, pVal, pType, plFlavor));
-                        oneRow.Elements.add(pVal.getValue().toString());
-                        OleAuto.INSTANCE.VariantClear(pVal);
+                    // The path is always selected and never recalculated to ensure consistency with WMI.
+                    // All values are NULL except, typically:
+                    //     __CLASS=Win32_Process
+                    //     __RELPATH=Win32_Process.Handle="4"
+                    if(false) {
+                        String[] names = wqlResult[0].GetNames(null, 0, null);
+                        System.out.println("names=" + String.join("+", names));
+
+                        for (String col : names) {
+                            COMUtils.checkRC(wqlResult[0].Get(col, 0, pVal, pType, plFlavor));
+                            if (pVal.getValue() == null)
+                                System.out.println(col + "=" + "NULL");
+                            else
+                                System.out.println(col + "=" + pVal.getValue().toString());
+                            OleAuto.INSTANCE.VariantClear(pVal);
+                        }
                     }
+
+                    //COMUtils.checkRC(wqlResult[0].Get("__RELPATH", 0, pVal, pType, plFlavor));
+                    //OleAuto.INSTANCE.VariantClear(pVal);
+                    //System.out.println("__RELPATH=" + pVal.getValue().toString());
+                    BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) ->  {
+                        COMUtils.checkRC(wqlResult[0].Get(lambda_column, 0, pVal, pType, plFlavor));
+                        Object currentValue = pVal.getValue();
+                        if(currentValue == null)
+                        {
+                            //System.out.println("Value for "+lambda_column+" and "+lambda_variable+" is NULL");
+                            // The value of __RELPATH is null for associator classes.
+                            oneRow.Elements.put(lambda_variable, "NULL:"+lambda_variable+":"+lambda_variable);
+                        }
+                        else
+                        {
+                            oneRow.Elements.put(lambda_variable, currentValue.toString());
+                        }
+                        OleAuto.INSTANCE.VariantClear(pVal);
+                    };
+                    //String parameter = "jhljhlkjh";
+                    //Function<String, String> fn =
+                    //        parameter -> parameter + " from lambda";
+
+                    queryData.queryColumns.forEach(storeValue);
+                    storeValue.accept("__RELPATH", queryData.mainVariable);
+                    /*
+                    queryData.queryColumns.forEach((oneColumn, oneVariable) -> {
+                        COMUtils.checkRC(wqlResult[0].Get(oneColumn, 0, pVal, pType, plFlavor));
+                        oneRow.Elements.put(oneVariable, pVal.getValue().toString());
+                        OleAuto.INSTANCE.VariantClear(pVal);
+                    });
+                    */
                     wqlResult[0].Release();
                     resultRows.add(oneRow);
                 }
@@ -143,12 +210,12 @@ public class WmiSelecter {
         return resultRows;
     }
 
-    public ArrayList<Row> WqlSelect(String className, List<String> columns, List<KeyValue> wheres) throws Exception {
-        return WqlSelect(new QueryData(className, columns, wheres));
+    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<KeyValue> wheres) throws Exception {
+        return WqlSelect(new QueryData(className, variable, columns, wheres));
     }
 
-    public ArrayList<Row> WqlSelect(String className, List<String> columns) throws Exception {
-        return WqlSelect(className, columns, null);
+    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns) throws Exception {
+        return WqlSelect(className, variable, columns, null);
     }
 
     public class WmiProperty {
@@ -192,7 +259,6 @@ public class WmiSelecter {
                     Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
 
             try {
-                System.out.println("In loop");
                 Wbemcli.IWbemClassObject[] result;
                 Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
                 IntByReference pType = new IntByReference();

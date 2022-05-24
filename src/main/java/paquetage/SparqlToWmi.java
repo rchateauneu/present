@@ -18,15 +18,13 @@ abstract class SparqlToWmiAbstract {
 
         for(ObjectPattern pattern: patterns)  {
             List<WmiSelecter.KeyValue> wheres = new ArrayList<>();
-            List<String> selected_variables = new ArrayList<>();
-            // The main variable which represents the object must be selected.
-            selected_variables.add(pattern.VariableName);
+            Map<String, String> selected_variables = new HashMap<>();
 
-            // Now, split the variables of this object,
-            // between:
+            // Now, split the variables of this object, between:
             // - the variables known at this stage from the previous queries,
             //   and which can be used in the "WHERE" clause,
             // - the variables which are not known yet, and returned by this WQL query.
+            // The variable representing the object is selected anyway and contains the WMI relative path.
             for(ObjectPattern.KeyValue keyValue: pattern.Members) {
                 String predicateName = keyValue.Predicate();
                 if(! predicateName.contains("#")) {
@@ -39,26 +37,29 @@ abstract class SparqlToWmiAbstract {
                     wheres.add(wmiKeyValue);
                 }
                 else {
-                    if(variablesContext.containsKey(keyValue.Predicate()))  {
+                    // if(variablesContext.containsKey(keyValue.Predicate()))  {
+                    if(variablesContext.containsKey(keyValue.Content()))  {
                         // If it is a variable is calculated in the previous queries.
                         WmiSelecter.KeyValue wmiKeyValue = new WmiSelecter.KeyValue(shortPredicate, keyValue.Content());
                         wheres.add(wmiKeyValue);
                     }
                     else {
-                        selected_variables.add(keyValue.Content());
+                        selected_variables.put(shortPredicate, keyValue.Content());
                     }
                 }
             }
 
             // The same variables might be added several times.
-            for(String variable_name : selected_variables) {
+            for(String variable_name : selected_variables.values()) {
                 variablesContext.put(variable_name, null);
             }
+            // The variable which defines the object will receive a value with the execution of this WQL query.
+            variablesContext.put(pattern.VariableName, null);
             if(! pattern.className.contains("#")) {
                 throw new Exception("Invalid class name:" + pattern.className);
             }
             String shortClassName = pattern.className.split("#")[1];
-            WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(shortClassName, selected_variables, wheres);
+            WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(shortClassName, pattern.VariableName, selected_variables, wheres);
             prepared_queries.add(queryData);
         }
     }
@@ -80,7 +81,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
         WmiSelecter.Row new_row = wmiSelecter.new Row();
         for(String binding : extractor.bindings)
         {
-            new_row.Elements.add(variablesContext.get(binding));
+            new_row.Elements.put(binding, variablesContext.get(binding));
         }
         current_rows.add(new_row);
     }
@@ -93,9 +94,10 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
         }
         else
         {
-            ExecuteOneLevel(index + 1);
             WmiSelecter.QueryData queryData = prepared_queries.get(index);
             if(true == false) {
+                // TODO: If it is possible to calculate the path of the object, or if it is known
+                // TODO: In Python, the path is always selected and never calculated.
                 /*
                 The WMI path of the variable associated to the object might be known, for example if it is selected
                 from an associator, or if it is built as a string.
@@ -125,7 +127,22 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                     );
                 */
             } else {
-                ArrayList<WmiSelecter.Row> rows = wmiSelecter.WqlSelect(queryData.className, queryData.queryColumns, queryData.queryWheres);
+                ArrayList<WmiSelecter.Row> rows = wmiSelecter.WqlSelect(queryData.className, queryData.mainVariable, queryData.queryColumns, queryData.queryWheres);
+                int numColumns = queryData.queryColumns.size();
+                for(WmiSelecter.Row row: rows) {
+                    if(row.Elements.size() != numColumns) {
+                        throw new Exception("Inconsistent size between returned results and columns");
+                    }
+                    for(Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
+                        String variableName = entry.getKey();
+                        if(!variablesContext.containsKey(variableName)){
+                            throw new Exception("Variable not in context");
+                        }
+                        variablesContext.put(variableName, entry.getValue());
+                    }
+                    // New WQL query for this row.
+                    ExecuteOneLevel(index + 1);
+                }
             }
         }
     }

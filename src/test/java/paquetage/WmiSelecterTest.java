@@ -13,26 +13,31 @@ public class WmiSelecterTest {
     public void TestBuildQuery() throws Exception {
     WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(
                 "CIM_Process",
-                Arrays.asList("Handle"),
+                "any_variable",
+                Map.of("Handle", "var_handle"),
                 Arrays.asList(new WmiSelecter.KeyValue("Handle", "123")));
         String wqlQuery = queryData.BuildWqlQuery();
-        Assert.assertEquals(wqlQuery, "lkjhkljh");
+        Assert.assertEquals(wqlQuery, "Select Handle from CIM_Process where Handle = \"123\"");
     }
 
     @Test
-    public void TestCIM_Process() throws Exception{
+    public void TestCIM_Process() throws Exception {
         WmiSelecter selecter = new WmiSelecter();
-        ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect("CIM_Process", Arrays.asList("Handle"));
-        String stringsResults = (String)listResults.stream().map(Object::toString)
-                .collect(Collectors.joining(", "));
-        System.out.println(stringsResults);
+        ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
+                "CIM_Process",
+                "any_variable",
+                Map.of("Handle", "var_handle"));
+        //String stringsResults = (String)listResults.stream().map(Object::toString)
+        //        .collect(Collectors.joining(", "));
+        //System.out.println(stringsResults);
 
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
         boolean isIn = false;
         for(WmiSelecter.Row aRow : listResults)
         {
-            if(aRow.Elements.get(0).equals(pidString))
+            //System.out.println("var_handle=" + aRow.Elements.get("var_handle"));
+            if(aRow.Elements.get("var_handle").equals(pidString))
             {
                 isIn = true;
                 break;
@@ -51,27 +56,28 @@ public class WmiSelecterTest {
         WmiSelecter selecter = new WmiSelecter();
         ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_Process",
-                Arrays.asList("Handle"),
+                "any_variable",
+                Map.of("Handle", "var_handle"),
                 Arrays.asList(new WmiSelecter.KeyValue("Handle", pidString)));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
 
         Assert.assertEquals(listResults.size(), 1);
-        Assert.assertEquals(listResults.get(0).Elements.get(0), pidString);
+        Assert.assertEquals(listResults.get(0).Elements.get("var_handle"), pidString);
     }
 
     @Test
     public void TestCIM_ProcessExecutable() throws Exception{
         long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         WmiSelecter selecter = new WmiSelecter();
         ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_ProcessExecutable",
-                Arrays.asList("Dependent"));
+                "any_variable",
+                Map.of("Dependent", "var_dependent"));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
@@ -83,9 +89,6 @@ public class WmiSelecterTest {
     @Test
     public void TestCIM_ProcessExecutableDependent() throws Exception {
         long pid = ProcessHandle.current().pid();
-        //String pidString = String.valueOf(pid);
-        //String dependentString = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"2588\""
-        //pid = 7084;
         String dependentString = String.format("\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"%d\"", pid);
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
@@ -93,7 +96,8 @@ public class WmiSelecterTest {
         WmiSelecter selecter = new WmiSelecter();
         ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_ProcessExecutable",
-                Arrays.asList("Antecedent"),
+                "any_variable",
+                Map.of("Antecedent", "var_antecedent"),
                 Arrays.asList(new WmiSelecter.KeyValue("Dependent", dependentString)));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
@@ -111,7 +115,8 @@ public class WmiSelecterTest {
         WmiSelecter selecter = new WmiSelecter();
         ArrayList<WmiSelecter.Row> listResults = selecter.WqlSelect(
                 "CIM_ProcessExecutable",
-                Arrays.asList("Dependent"),
+                "any_variable",
+                Map.of("Dependent", "var_dependent"),
                 Arrays.asList(new WmiSelecter.KeyValue("Antecedent", antecedentString)));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
@@ -119,8 +124,11 @@ public class WmiSelecterTest {
         System.out.println(listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
-        for(WmiSelecter.Row row : listResults)
-            Assert.assertEquals(row.Elements.size(), 1);
+        for(WmiSelecter.Row row : listResults) {
+            Assert.assertEquals(row.Elements.size(), 2);
+            Assert.assertTrue(row.Elements.containsKey("any_variable"));
+            Assert.assertTrue(row.Elements.containsKey("var_dependent"));
+        }
     }
 
     @Test
