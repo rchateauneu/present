@@ -71,14 +71,17 @@ public class SparqlToWmiTest {
         Assert.assertEquals("Select __RELPATH from Win32_Process where Handle = \"123\"\n", symbolicQuery);
     }
 
+    @Test
     public void SymbolicQuery2Test() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern(
-                "my_process", WmiOntology.survol_url_prefix + "Win32_Process");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false,"123");
+                "my_process",
+                WmiOntology.survol_url_prefix + "CIM_DataFile");
+        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false,"C:");
+        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Caption", true,"any_variable");
 
         SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
-        Assert.assertEquals("Select my_process from Win32_Process where Handle = \"123\"", symbolicQuery);
+        Assert.assertEquals("Select Caption from CIM_DataFile where Name = \"C:\"\n", symbolicQuery);
     }
 
     @Test
@@ -96,7 +99,8 @@ public class SparqlToWmiTest {
                 "Win32_Process",
                 "my_process",
                 null,
-                Arrays.asList(new WmiSelecter.KeyValue("Handle", "123")));
+                Arrays.asList(new WmiSelecter.KeyValue("Handle", "123"))
+        );
 
         List<WmiSelecter.QueryData> preparedQueries = patternSparql.prepared_queries;
         Assert.assertEquals(preparedQueries.size(), 1);
@@ -126,7 +130,8 @@ public class SparqlToWmiTest {
                 "Win32_Directory",
                 "my_directory",
                 null,
-                Arrays.asList(new WmiSelecter.KeyValue("Name", "C:")));
+                Arrays.asList(new WmiSelecter.KeyValue("Name", "C:"))
+        );
 
         List<WmiSelecter.QueryData> preparedQueries = patternSparql.prepared_queries;
         Assert.assertEquals(preparedQueries.size(), 1);
@@ -225,7 +230,8 @@ public class SparqlToWmiTest {
                 null,
                 Arrays.asList(
                         new WmiSelecter.KeyValue("Handle", "123")
-                ));
+                )
+        );
 
         WmiSelecter.QueryData queryData1 = new WmiSelecter.QueryData(
                 "CIM_ProcessExecutable",
@@ -249,10 +255,10 @@ public class SparqlToWmiTest {
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_file
             where {
-                ?my2_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my2_assoc cim:Dependent ?my1_process .
-                ?my2_assoc cim:Antecedent ?my_file .
-                ?my1_process rdf:type cim:Win32_Process .
+                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my1_assoc cim:Dependent ?my0_process .
+                ?my1_assoc cim:Antecedent ?my_file .
+                ?my0_process rdf:type cim:Win32_Process .
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -269,16 +275,17 @@ public class SparqlToWmiTest {
 
         WmiSelecter.QueryData queryData0 = new WmiSelecter.QueryData(
                 "Win32_Process",
-                "my1_process",
+                "my0_process",
                 null,
-                null);
+                null
+        );
 
         WmiSelecter.QueryData queryData1 = new WmiSelecter.QueryData(
                 "CIM_ProcessExecutable",
-                "my2_assoc",
+                "my1_assoc",
                 Map.of("Antecedent", "my_file"),
                 Arrays.asList(
-                        new WmiSelecter.KeyValue("Dependent", "my1_process")
+                        new WmiSelecter.KeyValue("Dependent", "my0_process")
                 )
         );
 
@@ -295,13 +302,13 @@ public class SparqlToWmiTest {
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_file_name
             where {
-                ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my_assoc cim:Dependent ?my_process .
-                ?my_assoc cim:Antecedent ?my_file .
-                ?my_process rdf:type cim:Win32_Process .
-                ?my_process cim:Handle "123" .
-                ?my_file rdf:type cim:CIM_DataFile .
-                ?my_file cim:Name ?my_file_name .
+                ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my0_assoc cim:Dependent ?my2_process .
+                ?my0_assoc cim:Antecedent ?my1_file .
+                ?my2_process rdf:type cim:Win32_Process .
+                ?my2_process cim:Handle "123" .
+                ?my1_file rdf:type cim:CIM_DataFile .
+                ?my1_file cim:Name ?my_file_name .
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -316,26 +323,187 @@ public class SparqlToWmiTest {
 
         WmiSelecter.QueryData queryData0 = new WmiSelecter.QueryData(
                 "CIM_ProcessExecutable",
-                "my_assoc",
-                Map.of("Dependent", "my_process", "Antecedent", "my_file"),
+                "my0_assoc",
+                Map.of("Dependent", "my2_process", "Antecedent", "my1_file"),
                 null
-                );
+        );
 
         WmiSelecter.QueryData queryData1 = new WmiSelecter.QueryData(
                 "CIM_DataFile",
-                "my_file",
+                "my1_file",
                 Map.of("Name", "my_file_name"),
                 null
-                );
+        );
 
         // Here, there is no WMI selection but the instantiation of the COM object with the moniker.
         WmiSelecter.QueryData queryData2 = new WmiSelecter.QueryData(
                 "Win32_Process",
-                "my_process",
+                "my2_process",
                 null,
                 Arrays.asList(
                         new WmiSelecter.KeyValue("Handle", "123")
-                ));
+                )
+        );
+
+        List<WmiSelecter.QueryData> preparedQueries = patternSparql.prepared_queries;
+        Assert.assertEquals(preparedQueries.size(), 3);
+        CompareQueryData(queryData0, preparedQueries.get(0));
+        CompareQueryData(queryData1, preparedQueries.get(1));
+        CompareQueryData(queryData2, preparedQueries.get(2));
+    }
+
+    @Test
+    public void Plan3_2Test() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_file_name
+            where {
+                ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my0_assoc cim:Dependent ?my1_process .
+                ?my0_assoc cim:Antecedent ?my2_file .
+                ?my1_process rdf:type cim:Win32_Process .
+                ?my1_process cim:Handle "123" .
+                ?my2_file rdf:type cim:CIM_DataFile .
+                ?my2_file cim:Name ?my_file_name .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+
+        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+
+        WmiSelecter.QueryData queryData0 = new WmiSelecter.QueryData(
+                "CIM_ProcessExecutable",
+                "my0_assoc",
+                Map.of("Dependent", "my1_process", "Antecedent", "my2_file"),
+                null
+        );
+
+        // Here, there is no WMI selection but the instantiation of the COM object with the moniker.
+        WmiSelecter.QueryData queryData1 = new WmiSelecter.QueryData(
+                "Win32_Process",
+                "my1_process",
+                null,
+                Arrays.asList(
+                        new WmiSelecter.KeyValue("Handle", "123")
+                )
+        );
+
+        WmiSelecter.QueryData queryData2 = new WmiSelecter.QueryData(
+                "CIM_DataFile",
+                "my2_file",
+                Map.of("Name", "my_file_name"),
+                null
+        );
+
+        List<WmiSelecter.QueryData> preparedQueries = patternSparql.prepared_queries;
+        Assert.assertEquals(preparedQueries.size(), 3);
+        CompareQueryData(queryData0, preparedQueries.get(0));
+        CompareQueryData(queryData1, preparedQueries.get(1));
+        CompareQueryData(queryData2, preparedQueries.get(2));
+    }
+
+    @Test
+    public void Plan3_3Test() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_file_name
+            where {
+                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my1_assoc cim:Dependent ?my0_process .
+                ?my1_assoc cim:Antecedent ?my2_file .
+                ?my0_process rdf:type cim:Win32_Process .
+                ?my0_process cim:Handle "123" .
+                ?my2_file rdf:type cim:CIM_DataFile .
+                ?my2_file cim:Name ?my_file_name .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+
+        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+
+        WmiSelecter.QueryData queryData0 = new WmiSelecter.QueryData(
+                "Win32_Process",
+                "my0_process",
+                null,
+                Arrays.asList(
+                        new WmiSelecter.KeyValue("Handle", "123")
+                )
+        );
+
+        WmiSelecter.QueryData queryData1 = new WmiSelecter.QueryData(
+                "CIM_ProcessExecutable",
+                "my1_assoc",
+                Map.of("Antecedent", "my2_file"),
+                Arrays.asList(
+                        new WmiSelecter.KeyValue("Dependent", "my0_process")
+                )
+        );
+
+        // No need to select anything because the object is already known.
+        WmiSelecter.QueryData queryData2 = new WmiSelecter.QueryData(
+                "CIM_DataFile",
+                "my2_file",
+                Map.of("Name", "my_file_name"),
+                null
+        );
+
+        List<WmiSelecter.QueryData> preparedQueries = patternSparql.prepared_queries;
+        Assert.assertEquals(preparedQueries.size(), 3);
+        CompareQueryData(queryData0, preparedQueries.get(0));
+        CompareQueryData(queryData1, preparedQueries.get(1));
+        CompareQueryData(queryData2, preparedQueries.get(2));
+    }
+
+    @Test
+    public void Plan3_4Test() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_process_caption
+            where {
+                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my1_assoc cim:Dependent ?my2_process .
+                ?my1_assoc cim:Antecedent ?my0_file .
+                ?my2_process rdf:type cim:Win32_Process .
+                ?my2_process cim:Caption ?my_process_caption .
+                ?my0_file rdf:type cim:CIM_DataFile .
+                ?my0_file cim:Name "C:" .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
+
+        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+
+        // No need to select anything because the object is already known.
+        WmiSelecter.QueryData queryData0 = new WmiSelecter.QueryData(
+                "CIM_DataFile",
+                "my0_file",
+                null,
+                Arrays.asList(
+                        new WmiSelecter.KeyValue("Name", "C:")
+                )
+        );
+
+        WmiSelecter.QueryData queryData1 = new WmiSelecter.QueryData(
+                "CIM_ProcessExecutable",
+                "my1_assoc",
+                Map.of("Dependent", "my2_process"),
+                Arrays.asList(
+                        new WmiSelecter.KeyValue("Antecedent", "my0_file")
+                )
+        );
+
+        WmiSelecter.QueryData queryData2 = new WmiSelecter.QueryData(
+                "Win32_Process",
+                "my2_process",
+                Map.of("Caption", "my_process_caption"),
+                null
+        );
 
         List<WmiSelecter.QueryData> preparedQueries = patternSparql.prepared_queries;
         Assert.assertEquals(preparedQueries.size(), 3);
