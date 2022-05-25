@@ -39,8 +39,6 @@ public class WmiSelecterTest {
                 break;
             }
         }
-        //System.out.println("pidString=" + pidString);
-        //System.out.println("IsIn=" + String.valueOf(isIn));
         Assert.assertTrue(isIn);
     }
 

@@ -1,11 +1,6 @@
 package paquetage;
 
-// net.java.dev.jna
 import com.sun.jna.Pointer;
-
-// import net.java.dev.jna;
-import com.sun.jna.Platform;
-
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.platform.win32.COM.Wbemcli;
@@ -36,17 +31,17 @@ public class WmiJnaTest {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
         WbemcliUtil.WmiResult<Win32_DiskDrive_Values> result = serialNumberQuery.execute();
         for (int i = 0; i < result.getResultCount(); i++) {
-            System.out.println(result.getValue(Win32_DiskDrive_Values.Caption, i));
+            //System.out.println(result.getValue(Win32_DiskDrive_Values.Caption, i));
             SAFEARRAY value = (OaIdl.SAFEARRAY) result.getValue(Win32_DiskDrive_Values.Capabilities, i);
             // According to https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/win32-diskdrive, the type of Capabilities
             // should be uint16[] which should be Variant.VT_I2 (2-byte integer)
             // however, it is not constant. sometimes it is 0, sometimes Variant.VT_I2 (3);
-            System.out.println("Var Type(3 expected): " + value.getVarType().intValue());
-            System.out.println("Size (>0 expected): " + (value.getUBound(0) - value.getLBound(0)));
+            //System.out.println("Var Type(3 expected): " + value.getVarType().intValue());
+            //System.out.println("Size (>0 expected): " + (value.getUBound(0) - value.getLBound(0)));
             Object el = value.getElement(0);
-            System.out.println("Element 0 (!=null expected): " + el);
+            //System.out.println("Element 0 (!=null expected): " + el);
             Pointer pointer = value.accessData();
-            System.out.println("pointer (!=null expected): " + pointer);
+            //System.out.println("pointer (!=null expected): " + pointer);
         }
     }
 
@@ -59,7 +54,9 @@ public class WmiJnaTest {
 
         // Send query
         try {
-            Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", "SELECT Caption, Capabilities, CapabilityDescriptions FROM Win32_DiskDrive",
+            Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery(
+                    "WQL",
+                    "SELECT Caption, Capabilities, CapabilityDescriptions FROM Win32_DiskDrive",
                     Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
 
             try {
@@ -73,7 +70,6 @@ public class WmiJnaTest {
                         break;
                     }
                     COMUtils.checkRC(result[0].Get("Caption", 0, pVal, pType, plFlavor));
-                    System.out.println("---------" + pVal.getValue() + "-------------");
                     OleAuto.INSTANCE.VariantClear(pVal);
                     COMUtils.checkRC(result[0].Get("CapabilityDescriptions", 0, pVal, pType, plFlavor));
                     SAFEARRAY safeArray = (SAFEARRAY) pVal.getValue();
@@ -90,11 +86,9 @@ public class WmiJnaTest {
                     result[0].Release();
                 }
             } finally {
-                // Cleanup
                 enumerator.Release();
             }
         } finally {
-            // Cleanup
             svc.Release();
         }
 
@@ -103,7 +97,6 @@ public class WmiJnaTest {
 
     @Test
     public void SelectProcesses() {
-        System.out.println("DoTheTest3");
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
 
         // Connect to the server
@@ -111,7 +104,9 @@ public class WmiJnaTest {
 
         // Send query
         try {
-            Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", "SELECT Handle FROM CIM_Process",
+            Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery(
+                    "WQL",
+                    "SELECT Handle FROM CIM_Process",
                     Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
             try {
                 Wbemcli.IWbemClassObject[] result;
@@ -129,16 +124,13 @@ public class WmiJnaTest {
                     result[0].Release();
                 }
             } finally {
-                // Cleanup
                 enumerator.Release();
             }
         } finally {
-            // Cleanup
             svc.Release();
         }
 
         Ole32.INSTANCE.CoUninitialize();
-
     }
 
 }

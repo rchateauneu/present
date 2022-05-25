@@ -132,7 +132,6 @@ public class WmiSelecter {
 
         ArrayList<Row> resultRows = new ArrayList<Row>();
         String wqlQuery = queryData.BuildWqlQuery();
-        System.out.println("WqlSelect : wqlQuery=" + wqlQuery);
 
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", wqlQuery,

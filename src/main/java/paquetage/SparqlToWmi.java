@@ -139,7 +139,6 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                         if(!variablesContext.containsKey(variableName)){
                             throw new Exception("Variable not in context");
                         }
-                        // variablesContext.put(variableName, entry.getValue());
                         variablesContext.put(variableName, row.Elements.get(variableName));
                     }
                     // New WQL query for this row.

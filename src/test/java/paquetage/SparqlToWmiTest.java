@@ -540,31 +540,53 @@ public class SparqlToWmiTest {
         String sparql_query = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_process_handle
+            where {
+                ?my_process rdf:type cim:Win32_Process .
+                ?my_process cim:Handle ?my_process_handle .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        boolean foundCurrentPid = false;
+        long pid = ProcessHandle.current().pid();
+        String pidString = String.valueOf(pid);
+        for(WmiSelecter.Row row: the_rows) {
+            if(row.Elements.get("my_process_handle").equals(pidString)) {
+                foundCurrentPid = true;
+                break;
+            }
+        }
+        Assert.assertTrue(foundCurrentPid);
+    }
+
+    @Test
+    public void Execution1_2Test() throws Exception {
+        long pid = ProcessHandle.current().pid();
+        String pidString = String.valueOf(pid);
+
+        String sparql_query = String.format("""
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_process_caption
             where {
                 ?my_process rdf:type cim:Win32_Process .
-                ?my_process cim:Handle ?my_process_caption .
+                ?my_process cim:Caption ?my_process_caption .
+                ?my_process cim:Handle "%s" .
             }
-        """;
+        """, pidString);
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
-        //System.out.println("Received rows=" + the_rows);
-        //System.out.println("number of rows=" + the_rows.size());
-        boolean foundCurrentPid = false;
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
-        //System.out.println("pidString=" + pidString);
-        for(WmiSelecter.Row row: the_rows) {
-            //System.out.println("PID=" + row.Elements.get("my_process_caption"));
-            if(row.Elements.get("my_process_caption").equals(pidString)) {
-                foundCurrentPid = true;
-                break;
-            }
-            // System.out.println("Row=" + row.toString());
-        }
-        Assert.assertTrue(foundCurrentPid);
+        Assert.assertEquals(1, the_rows.size());
+        Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
+        //for(WmiSelecter.Row row: the_rows) {
+        //    System.out.println("Row=" + row.toString());
+        //}
     }
 }
