@@ -17,7 +17,7 @@ public class WmiSelecterTest {
                 Map.of("Handle", "var_handle"),
                 Arrays.asList(new WmiSelecter.KeyValue("Handle", "123")));
         String wqlQuery = queryData.BuildWqlQuery();
-        Assert.assertEquals(wqlQuery, "Select Handle from CIM_Process where Handle = \"123\"");
+        Assert.assertEquals("Select Handle, __PATH from CIM_Process where Handle = \"123\"", wqlQuery);
     }
 
     @Test
@@ -27,24 +27,20 @@ public class WmiSelecterTest {
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"));
-        //String stringsResults = (String)listResults.stream().map(Object::toString)
-        //        .collect(Collectors.joining(", "));
-        //System.out.println(stringsResults);
 
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
         boolean isIn = false;
         for(WmiSelecter.Row aRow : listResults)
         {
-            //System.out.println("var_handle=" + aRow.Elements.get("var_handle"));
             if(aRow.Elements.get("var_handle").equals(pidString))
             {
                 isIn = true;
                 break;
             }
         }
-        System.out.println("pidString=" + pidString);
-        System.out.println("IsIn=" + String.valueOf(isIn));
+        //System.out.println("pidString=" + pidString);
+        //System.out.println("IsIn=" + String.valueOf(isIn));
         Assert.assertTrue(isIn);
     }
 

@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,7 @@ public class SparqlToWmiTest {
         SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
         // This selects as few columns as possible (but the keys are returned anyway, and the path).
-        Assert.assertEquals("Select __RELPATH from Win32_Process where Handle = \"123\"\n", symbolicQuery);
+        Assert.assertEquals("Select __PATH from Win32_Process where Handle = \"123\"\n", symbolicQuery);
     }
 
     @Test
@@ -81,7 +82,7 @@ public class SparqlToWmiTest {
 
         SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
-        Assert.assertEquals("Select Caption from CIM_DataFile where Name = \"C:\"\n", symbolicQuery);
+        Assert.assertEquals("Select Caption, __PATH from CIM_DataFile where Name = \"C:\"\n", symbolicQuery);
     }
 
     @Test
@@ -101,8 +102,8 @@ public class SparqlToWmiTest {
         String symbolicQuery = patternSparql.SymbolicQuery();
         System.out.println("symbolicQuery=" + symbolicQuery);
         Assert.assertEquals(
-                "Select __RELPATH from Win32_Process where Name = \"C:\"\n" +
-                    "\tSelect Antecedent from CIM_ProcessExecutable where Dependent = \"my_process\"\n",
+                "Select __PATH from Win32_Process where Name = \"C:\"\n" +
+                    "\tSelect Antecedent, __PATH from CIM_ProcessExecutable where Dependent = \"my_process\"\n",
                 symbolicQuery);
     }
 
@@ -532,5 +533,38 @@ public class SparqlToWmiTest {
         CompareQueryData(queryData0, preparedQueries.get(0));
         CompareQueryData(queryData1, preparedQueries.get(1));
         CompareQueryData(queryData2, preparedQueries.get(2));
+    }
+
+    @Test
+    public void Execution1_1Test() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_process_caption
+            where {
+                ?my_process rdf:type cim:Win32_Process .
+                ?my_process cim:Handle ?my_process_caption .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        //System.out.println("Received rows=" + the_rows);
+        //System.out.println("number of rows=" + the_rows.size());
+        boolean foundCurrentPid = false;
+        long pid = ProcessHandle.current().pid();
+        String pidString = String.valueOf(pid);
+        //System.out.println("pidString=" + pidString);
+        for(WmiSelecter.Row row: the_rows) {
+            //System.out.println("PID=" + row.Elements.get("my_process_caption"));
+            if(row.Elements.get("my_process_caption").equals(pidString)) {
+                foundCurrentPid = true;
+                break;
+            }
+            // System.out.println("Row=" + row.toString());
+        }
+        Assert.assertTrue(foundCurrentPid);
     }
 }

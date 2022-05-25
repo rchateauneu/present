@@ -130,15 +130,17 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                 ArrayList<WmiSelecter.Row> rows = wmiSelecter.WqlSelect(queryData.className, queryData.mainVariable, queryData.queryColumns, queryData.queryWheres);
                 int numColumns = queryData.queryColumns.size();
                 for(WmiSelecter.Row row: rows) {
-                    if(row.Elements.size() != numColumns) {
+                    // An extra column contains the path.
+                    if(row.Elements.size() != numColumns + 1) {
                         throw new Exception("Inconsistent size between returned results and columns");
                     }
                     for(Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
-                        String variableName = entry.getKey();
+                        String variableName = entry.getValue();
                         if(!variablesContext.containsKey(variableName)){
                             throw new Exception("Variable not in context");
                         }
-                        variablesContext.put(variableName, entry.getValue());
+                        // variablesContext.put(variableName, entry.getValue());
+                        variablesContext.put(variableName, row.Elements.get(variableName));
                     }
                     // New WQL query for this row.
                     ExecuteOneLevel(index + 1);

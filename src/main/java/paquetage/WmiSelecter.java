@@ -63,7 +63,7 @@ public class WmiSelecter {
         }
 
         public String toString() {
-            return String.join(",", Elements.values());
+            return Elements.toString();
         }
     }
 
@@ -101,7 +101,14 @@ public class WmiSelecter {
 
         public String BuildWqlQuery() {
             // The order of select columns is not very important because the results can be mapped to variables.
-            String columns = queryColumns.size() == 0 ? "__RELPATH" : String.join(",", queryColumns.keySet());
+            String columns = String.join(",", queryColumns.keySet());
+
+            // If the keys of the class are given, __RELPATH is not calculated.
+            // Anyway, it seems that __PATH is calculated only when explicitely requested.
+            if (queryColumns.size() == 0)
+                columns += "__PATH";
+            else
+                columns += ", __PATH";
             String wqlQuery = "Select " + columns + " from " + className;
 
             if( (queryWheres != null) && (! queryWheres.isEmpty())) {
@@ -117,8 +124,6 @@ public class WmiSelecter {
     }
 
     public ArrayList<Row> WqlSelect(QueryData queryData) {
-        System.out.println("Select " + queryData.className);
-
         // TODO: Maybe this could be done once only in this object.
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
 
@@ -127,11 +132,11 @@ public class WmiSelecter {
 
         ArrayList<Row> resultRows = new ArrayList<Row>();
         String wqlQuery = queryData.BuildWqlQuery();
-        System.out.println("wqlQuery=" + wqlQuery);
+        System.out.println("WqlSelect : wqlQuery=" + wqlQuery);
 
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", wqlQuery,
-                    Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
+                    Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
             try {
                 Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
                 IntByReference pType = new IntByReference();
@@ -147,7 +152,8 @@ public class WmiSelecter {
                         break;
                     }
                     Row oneRow = new Row();
-                    // The path is always selected and never recalculated to ensure consistency with WMI.
+                    // The path is always returned if the key is selected.
+                    // This path should never be recalculated to ensure consistency with WMI.
                     // All values are NULL except, typically:
                     //     __CLASS=Win32_Process
                     //     __RELPATH=Win32_Process.Handle="4"
@@ -165,38 +171,28 @@ public class WmiSelecter {
                         }
                     }
 
-                    //COMUtils.checkRC(wqlResult[0].Get("__RELPATH", 0, pVal, pType, plFlavor));
-                    //OleAuto.INSTANCE.VariantClear(pVal);
-                    //System.out.println("__RELPATH=" + pVal.getValue().toString());
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) ->  {
                         COMUtils.checkRC(wqlResult[0].Get(lambda_column, 0, pVal, pType, plFlavor));
                         Object currentValue = pVal.getValue();
                         if(currentValue == null)
                         {
-                            //System.out.println("Value for "+lambda_column+" and "+lambda_variable+" is NULL");
-                            // The value of __RELPATH is null for associator classes.
+                            System.out.println("Value for "+lambda_column+" and "+lambda_variable+" is NULL");
                             oneRow.Elements.put(lambda_variable, "NULL:"+lambda_variable+":"+lambda_variable);
                         }
                         else
                         {
+                            //System.out.println("Value for "+lambda_column+" and "+lambda_variable+" is "+currentValue.toString());
                             oneRow.Elements.put(lambda_variable, currentValue.toString());
                         }
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
-                    //String parameter = "jhljhlkjh";
-                    //Function<String, String> fn =
-                    //        parameter -> parameter + " from lambda";
+
+                    var wrapper = new Object(){ int ordinal = 0; };
 
                     queryData.queryColumns.forEach(storeValue);
-                    storeValue.accept("__RELPATH", queryData.mainVariable);
-                    /*
-                    queryData.queryColumns.forEach((oneColumn, oneVariable) -> {
-                        COMUtils.checkRC(wqlResult[0].Get(oneColumn, 0, pVal, pType, plFlavor));
-                        oneRow.Elements.put(oneVariable, pVal.getValue().toString());
-                        OleAuto.INSTANCE.VariantClear(pVal);
-                    });
-                    */
+                    storeValue.accept("__PATH", queryData.mainVariable);
                     wqlResult[0].Release();
+                    //System.out.println("Added row=" + oneRow);
                     resultRows.add(oneRow);
                 }
             } finally {
@@ -207,6 +203,8 @@ public class WmiSelecter {
         }
 
         Ole32.INSTANCE.CoUninitialize();
+        //System.out.println("Added rows=" + resultRows);
+        //System.out.println("number of rows=" + resultRows.size());
         return resultRows;
     }
 
@@ -284,37 +282,6 @@ public class WmiSelecter {
                         newClass.BaseName = baseClass.toString();
                     }
                     OleAuto.INSTANCE.VariantClear(pVal);
-
-                    // On veut l'object decrivant la classe afin de faire Get("Description", wbemFlagUseAmendedQualifiers)
-
-                    /*
-                    IWbemServices *pSvc
-                    IWbemClassObject* pClass = NULL;
-                    hres = pSvc->GetObject(L"Win32_Process", 0, NULL, &pClass, NULL);
-                    QueryInterface ?
-                     */
-                    // Wbemcli.IWbemClassObject
-
-
-
-
-                    /*
-                    COMUtils.checkRC(result[0].Get("Description",wbemFlagUseAmendedQualifiers,pVal, pType, plFlavor));
-                    Object descr = pVal.getValue();
-                    if(descr != null) {
-                        System.out.printf("Description=", descr);
-                    }
-                    OleAuto.INSTANCE.VariantClear(pVal);
-                    */
-
-                    /*
-                    Const wbemFlagUseAmendedQualifiers = &H20000
-
-                    Set oWMI = GetObject("winmgmts:\\.\root\cimv2")
-                    Set oClass = oWMI.Get("Win32_OperatingSystem", wbemFlagUseAmendedQualifiers)
-
-                    WScript.Echo oClass.Properties_("BootDevice").Qualifiers_("Description").Value
-                     */
 
                     if(names != null) {
                         /*
