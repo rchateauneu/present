@@ -15,30 +15,30 @@ import com.sun.jna.ptr.IntByReference;
 import java.util.*;
 // import java.util.function.Function;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
  */
 public class WmiSelecter {
-    //static String TruncateNode(String nodeValue) {
-        // nodeValue = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
-        // Prefix is WmiOntology.survol_url_prefix
-   //     return nodeValue.split("#")[1];
-    //}
-    static public class KeyValue {
-        public String key;
+    static public class WhereEquality {
+        public String predicate;
         public String value;
-        public KeyValue(String keyStr, String valueStr) throws Exception {
-            if(keyStr.contains("#")) {
-                throw new Exception("Invalid class:" + keyStr);
+        boolean isVariable;
+        public WhereEquality(String predicateArg, String valueStr, boolean isVariableArg) throws Exception {
+            if(predicateArg.contains("#")) {
+                throw new Exception("Invalid class:" + predicateArg);
             }
 
-            key = keyStr;
+            predicate = predicateArg;
             value = valueStr;
+            isVariable = isVariableArg;
         }
+
+        public WhereEquality(String predicateArg, String valueStr) throws Exception {
+            this(predicateArg, valueStr, false);
+        }
+
         public String ToEqualComparison() {
             // Real examples in Powershell - they are quite fast:
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
@@ -47,8 +47,11 @@ public class WmiSelecter {
             // key = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
             //String truncatedKey = TruncateNode(key);
 
+            if(value == null) {
+                System.out.println("Value of " + predicate + " is null");
+            }
             String escapedValue = value.replace("\\", "\\\\").replace("\"", "\\\"");
-            return "" + key + "" + " = \"" + escapedValue + "\"";
+            return "" + predicate + "" + " = \"" + escapedValue + "\"";
         }
     };
 
@@ -73,14 +76,15 @@ public class WmiSelecter {
     public static class QueryData {
         String className;
         String mainVariable;
-        // Map<String, String> queryColumns;
+        boolean isMainVariableAvailable;
         // It maps a column name to a variable and is used to copy the column values to the variables.
         // This sorted container guarantees the order to help comparison.
         SortedMap<String, String> queryColumns;
-        List<WmiSelecter.KeyValue> queryWheres;
+        List<WhereEquality> queryWheres;
 
-        QueryData(String wmiClassName, String variable, Map<String, String> columns, List<WmiSelecter.KeyValue> wheres) throws Exception {
+        QueryData(String wmiClassName, String variable, boolean mainVariableAvailable, Map<String, String> columns, List<WhereEquality> wheres) throws Exception {
             mainVariable = variable;
+            isMainVariableAvailable = mainVariableAvailable;
             if(wmiClassName.contains("#")) {
                 throw new Exception("Invalid class:" + wmiClassName);
             }
@@ -92,11 +96,11 @@ public class WmiSelecter {
                 queryColumns = new TreeMap<String, String>(columns);
             // Uniform representation of an empty where clause.
             if(wheres == null)
-                queryWheres = new ArrayList<WmiSelecter.KeyValue>();
+                queryWheres = new ArrayList<WhereEquality>();
             else
                 // This sorts the where tests so the order is always the same and helps comparisons.
                 // This is not a problem performance-wise because there is only one such element per WQL query.
-                queryWheres = wheres.stream().sorted(Comparator.comparing(x -> x.key)).collect(Collectors.toList());
+                queryWheres = wheres.stream().sorted(Comparator.comparing(x -> x.predicate)).collect(Collectors.toList());
         }
 
         public String BuildWqlQuery() {
@@ -114,7 +118,7 @@ public class WmiSelecter {
             if( (queryWheres != null) && (! queryWheres.isEmpty())) {
                 wqlQuery += " where ";
                 String whereClause = (String)queryWheres.stream()
-                        .map(KeyValue::ToEqualComparison)
+                        .map(WhereEquality::ToEqualComparison)
                         .collect(Collectors.joining(" and "));
                 wqlQuery += whereClause;
             }
@@ -123,7 +127,7 @@ public class WmiSelecter {
         }
     }
 
-    public ArrayList<Row> WqlSelect(QueryData queryData) {
+    public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
         // TODO: Maybe this could be done once only in this object.
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
 
@@ -133,6 +137,11 @@ public class WmiSelecter {
         ArrayList<Row> resultRows = new ArrayList<Row>();
         String wqlQuery = queryData.BuildWqlQuery();
 
+        if(queryData.isMainVariableAvailable) {
+            throw new Exception("Main variable should not be available in a WQL query.");
+        }
+
+        System.out.println("wqlQuery=" + wqlQuery);
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", wqlQuery,
                     Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
@@ -140,14 +149,14 @@ public class WmiSelecter {
                 Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
                 IntByReference pType = new IntByReference();
                 IntByReference plFlavor = new IntByReference();
-                while(true) {
+                while (true) {
                     /**
                      * When selecting a single column "MyColumn", the returned effective columns are:
                      *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
                      *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
                      */
                     Wbemcli.IWbemClassObject[] wqlResult = enumerator.Next(0, 1);
-                    if(wqlResult.length == 0) {
+                    if (wqlResult.length == 0) {
                         break;
                     }
                     Row oneRow = new Row();
@@ -156,7 +165,7 @@ public class WmiSelecter {
                     // All values are NULL except, typically:
                     //     __CLASS=Win32_Process
                     //     __RELPATH=Win32_Process.Handle="4"
-                    if(false) {
+                    if (false) {
                         String[] names = wqlResult[0].GetNames(null, 0, null);
                         System.out.println("names=" + String.join("+", names));
 
@@ -170,23 +179,18 @@ public class WmiSelecter {
                         }
                     }
 
-                    BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) ->  {
+                    BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
                         COMUtils.checkRC(wqlResult[0].Get(lambda_column, 0, pVal, pType, plFlavor));
                         Object currentValue = pVal.getValue();
-                        if(currentValue == null)
-                        {
-                            System.out.println("Value for "+lambda_column+" and "+lambda_variable+" is NULL");
-                            oneRow.Elements.put(lambda_variable, "NULL:"+lambda_variable+":"+lambda_variable);
-                        }
-                        else
-                        {
+                        if (currentValue == null) {
+                            System.out.println("Value for " + lambda_column + " and " + lambda_variable + " is NULL");
+                            oneRow.Elements.put(lambda_variable, "NULL:" + lambda_variable + ":" + lambda_variable);
+                        } else {
                             //System.out.println("Value for "+lambda_column+" and "+lambda_variable+" is "+currentValue.toString());
                             oneRow.Elements.put(lambda_variable, currentValue.toString());
                         }
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
-
-                    var wrapper = new Object(){ int ordinal = 0; };
 
                     queryData.queryColumns.forEach(storeValue);
                     storeValue.accept("__PATH", queryData.mainVariable);
@@ -197,7 +201,12 @@ public class WmiSelecter {
             } finally {
                 enumerator.Release();
             }
-        } finally {
+        }
+        catch(Exception exc){
+            // This is to catch an exception.
+            throw exc;
+        }
+        finally {
             svc.Release();
         }
 
@@ -207,8 +216,8 @@ public class WmiSelecter {
         return resultRows;
     }
 
-    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<KeyValue> wheres) throws Exception {
-        return WqlSelect(new QueryData(className, variable, columns, wheres));
+    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<WhereEquality> wheres) throws Exception {
+        return WqlSelect(new QueryData(className, variable, false,columns, wheres));
     }
 
     public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns) throws Exception {

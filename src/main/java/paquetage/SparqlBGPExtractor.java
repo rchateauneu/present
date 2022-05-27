@@ -1,9 +1,8 @@
 package paquetage;
 
-// Notamment "query explain"
+// See "query explain"
 // https://rdf4j.org/documentation/programming/repository/
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 import org.eclipse.rdf4j.model.vocabulary.RDF;

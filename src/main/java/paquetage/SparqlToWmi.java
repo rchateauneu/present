@@ -1,5 +1,7 @@
 package paquetage;
 
+import COM.Wbemcli;
+
 import java.util.*;
 
 /**
@@ -8,44 +10,44 @@ import java.util.*;
 abstract class SparqlToWmiAbstract {
     HashMap<String, String> variablesContext;
 
-
     public List<WmiSelecter.QueryData> prepared_queries;
 
     public SparqlToWmiAbstract(List<ObjectPattern> patterns) throws Exception
     {
         prepared_queries = new ArrayList<WmiSelecter.QueryData>();
+
+        // In this constructor, it is filled with all variables and null values.
         variablesContext = new HashMap<String, String>();
 
         for(ObjectPattern pattern: patterns)  {
-            List<WmiSelecter.KeyValue> wheres = new ArrayList<>();
+            List<WmiSelecter.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
 
             // Now, split the variables of this object, between:
-            // - the variables known at this stage from the previous queries,
-            //   and which can be used in the "WHERE" clause,
+            // - the variables known at this stage from the previous queries,  which can be used in the "WHERE" clause,
             // - the variables which are not known yet, and returned by this WQL query.
             // The variable representing the object is selected anyway and contains the WMI relative path.
-            for(ObjectPattern.KeyValue keyValue: pattern.Members) {
+            for(ObjectPattern.PredicateObject keyValue: pattern.Members) {
                 String predicateName = keyValue.Predicate();
+                String valueContent = keyValue.Content();
                 if(! predicateName.contains("#")) {
                     throw new Exception("Invalid predicate:" + predicateName);
                 }
                 String shortPredicate = predicateName.split("#")[1];
-                if(!keyValue.isVariable()) {
-                    // If the value of the predicate is known because it is a constant.
-                    WmiSelecter.KeyValue wmiKeyValue = new WmiSelecter.KeyValue(shortPredicate, keyValue.Content());
-                    wheres.add(wmiKeyValue);
+
+                WmiSelecter.WhereEquality wmiKeyValue = new WmiSelecter.WhereEquality(shortPredicate, valueContent, keyValue.isVariable());
+
+                if(keyValue.isVariable()) {
+                    if(variablesContext.containsKey(valueContent))  {
+                        // If it is a variable calculated in the previous queries, its value is known when executing.
+                        wheres.add(wmiKeyValue);
+                    } else {
+                        selected_variables.put(shortPredicate, valueContent);
+                    }
                 }
                 else {
-                    // if(variablesContext.containsKey(keyValue.Predicate()))  {
-                    if(variablesContext.containsKey(keyValue.Content()))  {
-                        // If it is a variable is calculated in the previous queries.
-                        WmiSelecter.KeyValue wmiKeyValue = new WmiSelecter.KeyValue(shortPredicate, keyValue.Content());
-                        wheres.add(wmiKeyValue);
-                    }
-                    else {
-                        selected_variables.put(shortPredicate, keyValue.Content());
-                    }
+                    // If the value of the predicate is known because it is a constant.
+                    wheres.add(wmiKeyValue);
                 }
             }
 
@@ -53,13 +55,20 @@ abstract class SparqlToWmiAbstract {
             for(String variable_name : selected_variables.values()) {
                 variablesContext.put(variable_name, null);
             }
-            // The variable which defines the object will receive a value with the execution of this WQL query.
-            variablesContext.put(pattern.VariableName, null);
+
+            // The variable which defines the object will receive a value with the execution of this WQL query,
+            // but maybe it is already known because of an association request done before.
+            boolean isMainVariableAvailable = variablesContext.containsKey(pattern.VariableName);
+            if(!isMainVariableAvailable) {
+                variablesContext.put(pattern.VariableName, null);
+            }
+
             if(! pattern.className.contains("#")) {
                 throw new Exception("Invalid class name:" + pattern.className);
             }
             String shortClassName = pattern.className.split("#")[1];
-            WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(shortClassName, pattern.VariableName, selected_variables, wheres);
+
+            WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
             prepared_queries.add(queryData);
         }
     }
@@ -95,51 +104,57 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
         else
         {
             WmiSelecter.QueryData queryData = prepared_queries.get(index);
-            if(true == false) {
-                // TODO: If it is possible to calculate the path of the object, or if it is known
-                // TODO: In Python, the path is always selected and never calculated.
-                /*
-                The WMI path of the variable associated to the object might be known, for example if it is selected
-                from an associator, or if it is built as a string.
-                In this case, WQL is not necessary. Just instantiate the COM object.
-                 */
+            if(queryData.isMainVariableAvailable) {
+                if(queryData.queryWheres.size() > 0) {
+                    throw new Exception("Where clauses should be empty if the main variable is available");
+                }
+                String objectPath = variablesContext.get(queryData.mainVariable);
+                if(objectPath == null) {
+                    throw new Exception("Value for " + queryData.mainVariable + " should not be null");
+                }
 
-                // This gives all instances of a class. We just need one if them.
-                // query_generator = "win32com.client.GetObject('winmgmts:').InstancesOf('%s')" % class_name
+                Wbemcli.IWbemClassObject objectNode = wmiSelecter.GetObjectNode(objectPath);
 
-                // https://docs.microsoft.com/en-us/windows/win32/wmisdk/swbemservices-get
-                /*
-                Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
-                svc.
+                // Now takes the values needed from the members of this object.
+                for( Map.Entry<String, String> entry: queryData.queryColumns.entrySet()) {
+                    String variableName = entry.getValue();
+                    if(!variablesContext.containsKey(variableName)){
+                        throw new Exception("Variable " + variableName + " from object not in context");
+                    }
+                    variablesContext.put(variableName, wmiSelecter.GetObjectProperty( objectNode, entry.getKey()));
+                }
+                // New WQL query for this row.
+                ExecuteOneLevel(index + 1);
 
-                SWbemServices
-                objWbemObject = .Get( _
-                        [ ByVal strObjectPath ], _
-                        [ ByVal iFlags ], _
-                        [ ByVal objWbemNamedValueSet ] _)
-
-                HRESULT GetObject(
-                    [in]  const BSTR       strObjectPath,
-                    [in]  long             lFlags,
-                    [in]  IWbemContext     *pCtx,
-                    [out] IWbemClassObject **ppObject,
-                    [out] IWbemCallResult  **ppCallResult
-                    );
-                */
             } else {
-                ArrayList<WmiSelecter.Row> rows = wmiSelecter.WqlSelect(queryData.className, queryData.mainVariable, queryData.queryColumns, queryData.queryWheres);
+                ArrayList<WmiSelecter.WhereEquality> substitutedWheres = new ArrayList<>();
+                for(WmiSelecter.WhereEquality kv : queryData.queryWheres) {
+                    // This is not strictly the same type because the value of KeyValue is:
+                    // - either a variable name of type string,
+                    // - or the context value of this variable, theoretically of any type.
+                    if(kv.isVariable) {
+                        String variableValue = variablesContext.get(kv.value);
+                        if (variableValue == null) {
+                            System.out.println("Value of " + kv.predicate + " variable=" + kv.value + " is null");
+                        }
+                        substitutedWheres.add(new WmiSelecter.WhereEquality(kv.predicate, variableValue));
+                    } else {
+                        substitutedWheres.add(new WmiSelecter.WhereEquality(kv.predicate, kv.value));
+                    }
+                }
+                ArrayList<WmiSelecter.Row> rows = wmiSelecter.WqlSelect(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
                 int numColumns = queryData.queryColumns.size();
                 for(WmiSelecter.Row row: rows) {
                     // An extra column contains the path.
                     if(row.Elements.size() != numColumns + 1) {
                         throw new Exception("Inconsistent size between returned results and columns");
                     }
-                    for(Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
-                        String variableName = entry.getValue();
+                    for(Map.Entry<String, String> entry : row.Elements.entrySet()) {
+                        String variableName = entry.getKey();
                         if(!variablesContext.containsKey(variableName)){
-                            throw new Exception("Variable not in context");
+                            throw new Exception("Variable " + variableName + " from selection not in context");
                         }
-                        variablesContext.put(variableName, row.Elements.get(variableName));
+                        variablesContext.put(variableName, entry.getValue());
                     }
                     // New WQL query for this row.
                     ExecuteOneLevel(index + 1);

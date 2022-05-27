@@ -5,8 +5,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
@@ -38,7 +36,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertNotEquals(FindObjectPattern(extractor, "obs"), null);
     }
 
-    static void CompareKeyValue(ObjectPattern.KeyValue a, String predicate, boolean isVariable, String content) {
+    static void CompareKeyValue(ObjectPattern.PredicateObject a, String predicate, boolean isVariable, String content) {
         Assert.assertEquals(a.Predicate(), predicate);
         Assert.assertEquals(a.isVariable(), isVariable);
         Assert.assertEquals(a.Content(), content);
@@ -94,8 +92,8 @@ public class SparqlBGPExtractorTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), WmiOntology.survol_url_prefix + "Name", true, "my_name");
     }
 
-    static void FindAndCompareKeyValue(ArrayList<ObjectPattern.KeyValue> members, String predicate, boolean is_variable, String content) {
-        ObjectPattern.KeyValue memberName = members.stream()
+    static void FindAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObject> members, String predicate, boolean is_variable, String content) {
+        ObjectPattern.PredicateObject memberName = members.stream()
                 .filter(x -> x.Predicate().equals(WmiOntology.survol_url_prefix + predicate))
                 .findFirst().orElse(null);
         Assert.assertNotEquals(memberName, null);

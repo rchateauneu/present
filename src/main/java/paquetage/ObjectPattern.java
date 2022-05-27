@@ -21,7 +21,7 @@ public class ObjectPattern {
     ObjectPattern(String variableName, String the_class) {
         className = the_class;
         VariableName = variableName;
-        Members = new ArrayList<KeyValue>();
+        Members = new ArrayList<PredicateObject>();
     }
 
     ObjectPattern(String variableName) {
@@ -29,13 +29,13 @@ public class ObjectPattern {
     }
 
     // TODO: ObjectName must be a Variable or Value. See rdf4j
-    public record KeyValue(String Predicate, boolean isVariable, String Content) {}
+    public record PredicateObject(String Predicate, boolean isVariable, String Content) {}
 
-    public ArrayList<KeyValue> Members;
+    public ArrayList<PredicateObject> Members;
 
     public void AddKeyValue(String predicate, boolean isVariable, String content)
     {
-        KeyValue keyValue = new KeyValue(predicate, isVariable, content);
+        PredicateObject keyValue = new PredicateObject(predicate, isVariable, content);
         Members.add(keyValue);
     }
 }

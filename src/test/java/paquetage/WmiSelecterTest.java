@@ -14,8 +14,9 @@ public class WmiSelecterTest {
     WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(
                 "CIM_Process",
                 "any_variable",
+                false,
                 Map.of("Handle", "var_handle"),
-                Arrays.asList(new WmiSelecter.KeyValue("Handle", "123")));
+                Arrays.asList(new WmiSelecter.WhereEquality("Handle", "123", false)));
         String wqlQuery = queryData.BuildWqlQuery();
         Assert.assertEquals("Select Handle, __PATH from CIM_Process where Handle = \"123\"", wqlQuery);
     }
@@ -52,7 +53,7 @@ public class WmiSelecterTest {
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
-                Arrays.asList(new WmiSelecter.KeyValue("Handle", pidString)));
+                Arrays.asList(new WmiSelecter.WhereEquality("Handle", pidString)));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
@@ -92,7 +93,7 @@ public class WmiSelecterTest {
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
-                Arrays.asList(new WmiSelecter.KeyValue("Dependent", dependentString)));
+                Arrays.asList(new WmiSelecter.WhereEquality("Dependent", dependentString)));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
@@ -111,7 +112,7 @@ public class WmiSelecterTest {
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"),
-                Arrays.asList(new WmiSelecter.KeyValue("Antecedent", antecedentString)));
+                Arrays.asList(new WmiSelecter.WhereEquality("Antecedent", antecedentString)));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
