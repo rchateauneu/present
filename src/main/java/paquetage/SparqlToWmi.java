@@ -17,7 +17,7 @@ abstract class SparqlToWmiAbstract {
         prepared_queries = new ArrayList<WmiSelecter.QueryData>();
 
         // In this constructor, it is filled with all variables and null values.
-        variablesContext = new HashMap<String, String>();
+        variablesContext = new HashMap<>();
 
         for(ObjectPattern pattern: patterns)  {
             List<WmiSelecter.WhereEquality> wheres = new ArrayList<>();
@@ -105,7 +105,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
         {
             WmiSelecter.QueryData queryData = prepared_queries.get(index);
             if(queryData.isMainVariableAvailable) {
-                if(queryData.queryWheres.size() > 0) {
+                if(! queryData.queryWheres.isEmpty()) {
                     throw new Exception("Where clauses should be empty if the main variable is available");
                 }
                 String objectPath = variablesContext.get(queryData.mainVariable);
@@ -121,9 +121,9 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                     if(!variablesContext.containsKey(variableName)){
                         throw new Exception("Variable " + variableName + " from object not in context");
                     }
-                    variablesContext.put(variableName, wmiSelecter.GetObjectProperty( objectNode, entry.getKey()));
+                    variablesContext.put(variableName, wmiSelecter.GetObjectProperty(objectNode, entry.getKey()));
                 }
-                // New WQL query for this row.
+                // New WQL query for this row only.
                 ExecuteOneLevel(index + 1);
 
             } else {
@@ -135,6 +135,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                     if(kv.isVariable) {
                         String variableValue = variablesContext.get(kv.value);
                         if (variableValue == null) {
+                            // This should not happen.
                             System.out.println("Value of " + kv.predicate + " variable=" + kv.value + " is null");
                         }
                         substitutedWheres.add(new WmiSelecter.WhereEquality(kv.predicate, variableValue));

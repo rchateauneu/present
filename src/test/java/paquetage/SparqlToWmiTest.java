@@ -4,10 +4,8 @@ import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 class SparqlToWmiPlan extends SparqlToWmiAbstract {
     public SparqlToWmiPlan(List<ObjectPattern> patterns) throws Exception {
@@ -633,14 +631,104 @@ public class SparqlToWmiTest {
             }
         """, pidString);
 
-
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
-        for(WmiSelecter.Row row: the_rows) {
-            System.out.println("Row=" + row.toString());
-        }
+        Set<String> libsSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_file_name")).collect(Collectors.toSet());
+        // This tests the presence of some libraries which are used by the current Java process.
+        Assert.assertTrue(libsSet.contains("C:\\Program Files\\Java\\jdk-17.0.2\\bin\\java.exe"));
+        Assert.assertTrue(libsSet.contains("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"));
+        Assert.assertTrue(libsSet.contains("C:\\WINDOWS\\System32\\USER32.dll"));
     }
+
+    @Test
+    /**
+     * The current pid must be found in the processes using a specific library.
+     * The order of evaluation, i.e. the order of object patterms, is forced with the alphabetical order
+     * of main variables.
+     */
+    public void Execution3_2Test() throws Exception {
+        long pid = ProcessHandle.current().pid();
+        String pidString = String.valueOf(pid);
+
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_handle
+            where {
+                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my1_assoc cim:Dependent ?my2_process .
+                ?my1_assoc cim:Antecedent ?my0_file .
+                ?my2_process rdf:type cim:Win32_Process .
+                ?my2_process cim:Handle ?my_handle .
+                ?my0_file rdf:type cim:CIM_DataFile .
+                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+
+        Set<String> libsSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_handle")).collect(Collectors.toSet());
+        // The current pid must be there because it uses this library.
+        Assert.assertTrue(libsSet.contains(pidString));
+    }
+
+    @Test
+    /**
+     * The current pid must be found in the processes using a specific library.
+     * This checks that two columns are properly returned.
+     * The order of evaluation, i.e. the order of object patterms, is forced with the alphabetical order
+     * of main variables.
+     */
+    public void Execution3_3Test() throws Exception {
+        long pid = ProcessHandle.current().pid();
+        String pidString = String.valueOf(pid);
+
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_handle ?my_caption
+            where {
+                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my1_assoc cim:Dependent ?my2_process .
+                ?my1_assoc cim:Antecedent ?my0_file .
+                ?my2_process rdf:type cim:Win32_Process .
+                ?my2_process cim:Handle ?my_handle .
+                ?my2_process cim:Caption ?my_caption .
+                ?my0_file rdf:type cim:CIM_DataFile .
+                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+
+        Set<String> captionsSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_caption")).collect(Collectors.toSet());
+        // The current caption must be there because it uses this library.
+        Assert.assertTrue(captionsSet.contains("java.exe"));
+        Set<String> libsSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_handle")).collect(Collectors.toSet());
+        // The current pid must be there because it uses this library.
+        Assert.assertTrue(libsSet.contains(pidString));
+    }
+
+    /*
+    TODO: Specify the path of an object.
+     */
 }

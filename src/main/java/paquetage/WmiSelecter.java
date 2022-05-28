@@ -45,9 +45,9 @@ public class WmiSelecter {
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
 
             // key = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
-            //String truncatedKey = TruncateNode(key);
 
             if(value == null) {
+                // This should not happen.
                 System.out.println("Value of " + predicate + " is null");
             }
             String escapedValue = value.replace("\\", "\\\\").replace("\"", "\\\"");
@@ -57,6 +57,7 @@ public class WmiSelecter {
 
     /**
      * This is a row returned by a WMI select query.
+     * For simplicity, each row contains all column names.
      */
     public class Row {
         Map<String, String> Elements;
@@ -91,12 +92,12 @@ public class WmiSelecter {
             className = wmiClassName;
             // Uniform representation of no columns selected (except the path).
             if(columns == null)
-                queryColumns = new TreeMap<String, String>();
+                queryColumns = new TreeMap<>();
             else
-                queryColumns = new TreeMap<String, String>(columns);
+                queryColumns = new TreeMap<>(columns);
             // Uniform representation of an empty where clause.
             if(wheres == null)
-                queryWheres = new ArrayList<WhereEquality>();
+                queryWheres = new ArrayList<>();
             else
                 // This sorts the where tests so the order is always the same and helps comparisons.
                 // This is not a problem performance-wise because there is only one such element per WQL query.
@@ -109,7 +110,7 @@ public class WmiSelecter {
 
             // If the keys of the class are given, __RELPATH is not calculated.
             // Anyway, it seems that __PATH is calculated only when explicitely requested.
-            if (queryColumns.size() == 0)
+            if (queryColumns.isEmpty())
                 columns += "__PATH";
             else
                 columns += ", __PATH";
@@ -122,7 +123,6 @@ public class WmiSelecter {
                         .collect(Collectors.joining(" and "));
                 wqlQuery += whereClause;
             }
-            System.out.println("wqlQuery " + wqlQuery);
             return wqlQuery;
         }
     }
@@ -134,14 +134,15 @@ public class WmiSelecter {
         // Connect to the server
         Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
 
-        ArrayList<Row> resultRows = new ArrayList<Row>();
+        ArrayList<Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
+        // Temporary debugging purpose.
+        System.out.println("wqlQuery=" + wqlQuery);
 
         if(queryData.isMainVariableAvailable) {
             throw new Exception("Main variable should not be available in a WQL query.");
         }
 
-        System.out.println("wqlQuery=" + wqlQuery);
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", wqlQuery,
                     Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
@@ -179,23 +180,24 @@ public class WmiSelecter {
                         }
                     }
 
+                    // This lambda extracts the value of a single column.
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
                         COMUtils.checkRC(wqlResult[0].Get(lambda_column, 0, pVal, pType, plFlavor));
                         Object currentValue = pVal.getValue();
                         if (currentValue == null) {
+                            // This should not happen.
                             System.out.println("Value for " + lambda_column + " and " + lambda_variable + " is NULL");
                             oneRow.Elements.put(lambda_variable, "NULL:" + lambda_variable + ":" + lambda_variable);
                         } else {
-                            //System.out.println("Value for "+lambda_column+" and "+lambda_variable+" is "+currentValue.toString());
                             oneRow.Elements.put(lambda_variable, currentValue.toString());
                         }
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
 
                     queryData.queryColumns.forEach(storeValue);
+                    // Also get the path of each returned object.
                     storeValue.accept("__PATH", queryData.mainVariable);
                     wqlResult[0].Release();
-                    //System.out.println("Added row=" + oneRow);
                     resultRows.add(oneRow);
                 }
             } finally {
@@ -211,8 +213,6 @@ public class WmiSelecter {
         }
 
         Ole32.INSTANCE.CoUninitialize();
-        //System.out.println("Added rows=" + resultRows);
-        //System.out.println("number of rows=" + resultRows.size());
         return resultRows;
     }
 
@@ -259,7 +259,6 @@ public class WmiSelecter {
         Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
 
         Map<String, WmiClass> resultClasses = new HashMap<String, WmiClass>();
-        int count = 0;
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", "SELECT * FROM meta_class",
                     Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
@@ -338,9 +337,7 @@ public class WmiSelecter {
     String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName)
     {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
-        IntByReference pType = new IntByReference();
-        IntByReference plFlavor = new IntByReference();
-        COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, plFlavor));
+        COMUtils.checkRC(obj.Get(propertyName, 0, pVal, null, null));
         Object objectValue = pVal.getValue();
         String value = objectValue != null ? objectValue.toString() : null;
         OleAuto.INSTANCE.VariantClear(pVal);
