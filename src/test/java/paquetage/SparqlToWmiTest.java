@@ -557,7 +557,7 @@ public class SparqlToWmiTest {
     }
 
     @Test
-    public void Execution1_1Test() throws Exception {
+    public void Execution_Win32_Process_1() throws Exception {
         String sparql_query = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -585,7 +585,7 @@ public class SparqlToWmiTest {
     }
 
     @Test
-    public void Execution1_2Test() throws Exception {
+    public void Execution_Win32_Process_2() throws Exception {
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
 
@@ -606,13 +606,10 @@ public class SparqlToWmiTest {
         ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
         Assert.assertEquals(1, the_rows.size());
         Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
-        //for(WmiSelecter.Row row: the_rows) {
-        //    System.out.println("Row=" + row.toString());
-        //}
     }
 
     @Test
-    public void Execution3_1Test() throws Exception {
+    public void Execution_Forced_CIM_ProcessExecutable_1() throws Exception {
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
 
@@ -648,10 +645,10 @@ public class SparqlToWmiTest {
     @Test
     /**
      * The current pid must be found in the processes using a specific library.
-     * The order of evaluation, i.e. the order of object patterms, is forced with the alphabetical order
+     * The order of evaluation, i.e. the order of object patterns, is forced with the alphabetical order
      * of main variables.
      */
-    public void Execution3_2Test() throws Exception {
+    public void Execution_Forced_CIM_ProcessExecutable_2() throws Exception {
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
 
@@ -687,10 +684,10 @@ public class SparqlToWmiTest {
     /**
      * The current pid must be found in the processes using a specific library.
      * This checks that two columns are properly returned.
-     * The order of evaluation, i.e. the order of object patterms, is forced with the alphabetical order
+     * The order of evaluation, i.e. the order of object patterns, is forced with the alphabetical order
      * of main variables.
      */
-    public void Execution3_3Test() throws Exception {
+    public void Execution_Forced_CIM_ProcessExecutable_3() throws Exception {
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
 
@@ -727,6 +724,121 @@ public class SparqlToWmiTest {
         // The current pid must be there because it uses this library.
         Assert.assertTrue(libsSet.contains(pidString));
     }
+
+    @Test
+    /***
+     * This gets the parent-directory of a file.
+     */
+    public void Execution_Forced_CIM_DirectoryContainsFile_1() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_dir_name
+            where {
+                ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                ?my1_assoc cim:GroupComponent ?my2_dir .
+                ?my1_assoc cim:PartComponent ?my0_file .
+                ?my2_dir rdf:type cim:Win32_Directory .
+                ?my2_dir cim:Name ?my_dir_name .
+                ?my0_file rdf:type cim:CIM_DataFile .
+                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        Assert.assertEquals(the_rows.size(), 1);
+        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS\\SYSTEM32");
+    }
+
+    @Test
+    /**
+     * This gets the list of files in a directory.
+     */
+    public void Execution_Forced_CIM_DirectoryContainsFile_2() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_file_name
+            where {
+                ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                ?my1_assoc cim:GroupComponent ?my0_dir .
+                ?my1_assoc cim:PartComponent ?my2_file .
+                ?my0_dir rdf:type cim:Win32_Directory .
+                ?my0_dir cim:Name "C:\\\\WINDOWS\\\\SYSTEM32" .
+                ?my2_file rdf:type cim:CIM_DataFile .
+                ?my2_file cim:Name ?my_file_name .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        Set<String> filesSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_file_name").toUpperCase()).collect(Collectors.toSet());
+        // These files must be in this directory.
+        // Beware of cases which are not stable.
+        Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\NTDLL.DLL"));
+        Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\USER32.DLL"));
+    }
+
+    @Test
+    /***
+     * This gets the parent-parent-directory of a file.
+     */
+    public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_1() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_dir_name
+            where {
+                ?my0_file rdf:type cim:CIM_DataFile .
+                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+                ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                ?my1_assoc cim:PartComponent ?my0_file .
+                ?my1_assoc cim:GroupComponent ?my2_dir .
+                ?my2_dir rdf:type cim:Win32_Directory .
+                ?my3_assoc rdf:type cim:Win32_SubDirectory .
+                ?my3_assoc cim:PartComponent ?my2_dir .
+                ?my3_assoc cim:GroupComponent ?my4_dir .
+                ?my4_dir rdf:type cim:Win32_Directory .
+                ?my4_dir cim:Name ?my_dir_name .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        Assert.assertEquals(the_rows.size(), 1);
+        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS");
+    }
+
+    /**
+     *         self.assertEqual(map_attributes["Win32_MountPoint.Directory"],
+     *             {"predicate_type": "ref:Win32_Directory", "predicate_domain": ["Win32_Volume"]})
+     *         self.assertEqual(map_attributes["Win32_MountPoint.Volume"],
+     *             {"predicate_type": "ref:Win32_Volume", "predicate_domain": ["Win32_Directory"]})
+     *
+     *         self.assertEqual(map_attributes["CIM_ProcessExecutable.Antecedent"],
+     *             {"predicate_type": "ref:CIM_DataFile", "predicate_domain": ["CIM_Process"]})
+     *         self.assertEqual(map_attributes["CIM_ProcessExecutable.Dependent"],
+     *             {"predicate_type": "ref:CIM_Process", "predicate_domain": ["CIM_DataFile"]})
+     *
+     *         self.assertEqual(map_attributes["CIM_DirectoryContainsFile.GroupComponent"],
+     *             {"predicate_type": "ref:CIM_Directory", "predicate_domain": ["CIM_DataFile"]})
+     *         self.assertEqual(map_attributes["CIM_DirectoryContainsFile.PartComponent"],
+     *             {"predicate_type": "ref:CIM_DataFile", "predicate_domain": ["CIM_Directory"]})
+     */
+
+
 
     /*
     TODO: Specify the path of an object.
