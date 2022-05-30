@@ -71,6 +71,18 @@ public class WmiSelecter {
         }
     }
 
+    Wbemcli.IWbemServices svc = null;
+
+    public WmiSelecter() {
+        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
+        svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
+    }
+
+    protected void finalize() throws Throwable {
+        svc.Release();
+        Ole32.INSTANCE.CoUninitialize();
+    }
+
     /**
      * To be used when reconstructing a WQL query.
      */
@@ -128,12 +140,6 @@ public class WmiSelecter {
     }
 
     public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
-        // TODO: Maybe this could be done once only in this object.
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-
-        // Connect to the server
-        Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
-
         ArrayList<Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
         // Temporary debugging purpose.
@@ -143,62 +149,83 @@ public class WmiSelecter {
             throw new Exception("Main variable should not be available in a WQL query.");
         }
 
+        int countRows = 100;
+
         try {
             Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", wqlQuery,
                     Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
             try {
                 Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
                 IntByReference pType = new IntByReference();
-                IntByReference plFlavor = new IntByReference();
+                IntByReference plFlavor = null; new IntByReference();
                 while (true) {
                     /**
                      * When selecting a single column "MyColumn", the returned effective columns are:
                      *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
                      *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
                      */
-                    Wbemcli.IWbemClassObject[] wqlResult = enumerator.Next(0, 1);
-                    if (wqlResult.length == 0) {
+                    Wbemcli.IWbemClassObject[] wqlResults = enumerator.Next(0, countRows);
+                    if (wqlResults.length == 0) {
                         break;
                     }
-                    Row oneRow = new Row();
-                    // The path is always returned if the key is selected.
-                    // This path should never be recalculated to ensure consistency with WMI.
-                    // All values are NULL except, typically:
-                    //     __CLASS=Win32_Process
-                    //     __RELPATH=Win32_Process.Handle="4"
-                    if (false) {
-                        String[] names = wqlResult[0].GetNames(null, 0, null);
-                        System.out.println("names=" + String.join("+", names));
+                    for(int indexRow = 0; indexRow < wqlResults.length; ++indexRow) {
+                        Wbemcli.IWbemClassObject wqlResult = wqlResults[indexRow];
+                        Row oneRow = new Row();
+                        // The path is always returned if the key is selected.
+                        // This path should never be recalculated to ensure consistency with WMI.
+                        // All values are NULL except, typically:
+                        //     __CLASS=Win32_Process
+                        //     __RELPATH=Win32_Process.Handle="4"
+                        if (false) {
+                            String[] names = wqlResult.GetNames(null, 0, null);
+                            System.out.println("names=" + String.join("+", names));
 
-                        for (String col : names) {
-                            COMUtils.checkRC(wqlResult[0].Get(col, 0, pVal, pType, plFlavor));
-                            if (pVal.getValue() == null)
-                                System.out.println(col + "=" + "NULL");
-                            else
-                                System.out.println(col + "=" + pVal.getValue().toString());
+                            for (String col : names) {
+                                COMUtils.checkRC(wqlResult.Get(col, 0, pVal, pType, plFlavor));
+                                if (pVal.getValue() == null)
+                                    System.out.println(col + "=" + "NULL");
+                                else
+                                    System.out.println(col + "=" + pVal.getValue().toString());
+                                OleAuto.INSTANCE.VariantClear(pVal);
+                            }
+                        }
+
+                        // This lambda extracts the value of a single column.
+                        BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
+                            COMUtils.checkRC(wqlResult.Get(lambda_column, 0, pVal, pType, plFlavor));
+                            /*
+                            // TODO: If the value is a reference, get the object !
+                            if(pType.getValue() != Wbemcli.CIM_STRING) {
+                                if(pType.getValue() == Wbemcli.CIM_REFERENCE) {
+                                    // pType=102 lambda_column=GroupComponent value=\\LAPTOP-R89KG6V1\root\cimv2:Win32_Directory.Name="C:\\WINDOWS\\SYSTEM32"
+                                    // CIM_REFERENCE = 102
+                                    // Tant qu'a faire, on recupere l'objet.
+                                    System.out.println("pType=" + pType.getValue()
+                                            + " lambda_column=" + lambda_column
+                                            + " lambda_variable=" + lambda_variable
+                                            + " value=" + pVal.getValue().toString());
+                                } else  {
+                                    System.out.println("pType=" + pType.getValue() + " lambda_column=" + lambda_column + " value=" + pVal.getValue().toString());
+                                }
+                            }
+                            */
+                            Object currentValue = pVal.getValue();
+                            if (currentValue == null) {
+                                // This should not happen.
+                                System.out.println("Value for " + lambda_column + " and " + lambda_variable + " is NULL");
+                                oneRow.Elements.put(lambda_variable, "NULL:" + lambda_variable + ":" + lambda_variable);
+                            } else {
+                                oneRow.Elements.put(lambda_variable, currentValue.toString());
+                            }
                             OleAuto.INSTANCE.VariantClear(pVal);
-                        }
+                        };
+
+                        queryData.queryColumns.forEach(storeValue);
+                        // Also get the path of each returned object.
+                        storeValue.accept("__PATH", queryData.mainVariable);
+                        wqlResult.Release();
+                        resultRows.add(oneRow);
                     }
-
-                    // This lambda extracts the value of a single column.
-                    BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
-                        COMUtils.checkRC(wqlResult[0].Get(lambda_column, 0, pVal, pType, plFlavor));
-                        Object currentValue = pVal.getValue();
-                        if (currentValue == null) {
-                            // This should not happen.
-                            System.out.println("Value for " + lambda_column + " and " + lambda_variable + " is NULL");
-                            oneRow.Elements.put(lambda_variable, "NULL:" + lambda_variable + ":" + lambda_variable);
-                        } else {
-                            oneRow.Elements.put(lambda_variable, currentValue.toString());
-                        }
-                        OleAuto.INSTANCE.VariantClear(pVal);
-                    };
-
-                    queryData.queryColumns.forEach(storeValue);
-                    // Also get the path of each returned object.
-                    storeValue.accept("__PATH", queryData.mainVariable);
-                    wqlResult[0].Release();
-                    resultRows.add(oneRow);
                 }
             } finally {
                 enumerator.Release();
@@ -208,11 +235,7 @@ public class WmiSelecter {
             // This is to catch an exception.
             throw exc;
         }
-        finally {
-            svc.Release();
-        }
 
-        Ole32.INSTANCE.CoUninitialize();
         return resultRows;
     }
 
@@ -250,88 +273,77 @@ public class WmiSelecter {
     }
 
     Map<String, WmiClass> Classes() {
-        // TODO: Maybe this could be done once only in this object.
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-
-        int wbemFlagUseAmendedQualifiers = 0x20000;
-
-        // Connect to the server
-        Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
-
         Map<String, WmiClass> resultClasses = new HashMap<String, WmiClass>();
+        Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", "SELECT * FROM meta_class",
+                Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
+
         try {
-            Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", "SELECT * FROM meta_class",
-                    Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
+            Wbemcli.IWbemClassObject[] result;
+            Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
+            IntByReference pType = new IntByReference();
+            IntByReference plFlavor = new IntByReference();
 
-            try {
-                Wbemcli.IWbemClassObject[] result;
-                Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
-                IntByReference pType = new IntByReference();
-                IntByReference plFlavor = new IntByReference();
-                while(true) {
-                    result = enumerator.Next(0, 1);
-                    if(result.length == 0) {
-                        break;
-                    }
+            while(true) {
+                result = enumerator.Next(0, 1);
+                if(result.length == 0) {
+                    break;
+                }
 
-                    Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
-                    // String[] names = result[0].GetNames(null, Wbemcli.WBEM_CONDITION_FLAG_TYPE.WBEM_FLAG_NONSYSTEM_ONLY, pQualifierVal);
-                    //String[] names = result[0].GetNames(null, 0, pQualifierVal);
-                    String[] names = result[0].GetNames(null,0, pQualifierVal);
+                Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
+                // String[] names = result[0].GetNames(null, Wbemcli.WBEM_CONDITION_FLAG_TYPE.WBEM_FLAG_NONSYSTEM_ONLY, pQualifierVal);
+                //String[] names = result[0].GetNames(null, 0, pQualifierVal);
+                String[] names = result[0].GetNames(null,0, pQualifierVal);
 
-                    COMUtils.checkRC(result[0].Get("__CLASS", 0, pVal, pType, plFlavor));
-                    WmiClass newClass = new WmiClass(pVal.getValue().toString());
-                    OleAuto.INSTANCE.VariantClear(pVal);
+                COMUtils.checkRC(result[0].Get("__CLASS", 0, pVal, pType, plFlavor));
+                WmiClass newClass = new WmiClass(pVal.getValue().toString());
+                OleAuto.INSTANCE.VariantClear(pVal);
 
-                    COMUtils.checkRC(result[0].Get("__SUPERCLASS", 0, pVal, pType, plFlavor));
-                    Object baseClass = pVal.getValue();
-                    if(baseClass != null) {
-                        newClass.BaseName = baseClass.toString();
-                    }
-                    OleAuto.INSTANCE.VariantClear(pVal);
+                COMUtils.checkRC(result[0].Get("__SUPERCLASS", 0, pVal, pType, plFlavor));
+                Object baseClass = pVal.getValue();
+                if(baseClass != null) {
+                    newClass.BaseName = baseClass.toString();
+                }
+                OleAuto.INSTANCE.VariantClear(pVal);
 
-                    if(names != null) {
-                        /*
-                            one_name:__GENUS
-                            one_name:__CLASS
-                            one_name:__SUPERCLASS
-                            one_name:__DYNASTY
-                            one_name:__RELPATH
-                            one_name:__PROPERTY_COUNT
-                            one_name:__DERIVATION
-                            one_name:__SERVER
-                            one_name:__NAMESPACE
-                            one_name:__PATH
-                         */
-                        for (String one_name : names) {
-                            if(!one_name.startsWith("__")) {
-                                WmiProperty newProperty = new WmiProperty(one_name);
-                                newClass.Properties.put(one_name, newProperty);
-                            }
+                if(names != null) {
+                    /*
+                        one_name:__GENUS
+                        one_name:__CLASS
+                        one_name:__SUPERCLASS
+                        one_name:__DYNASTY
+                        one_name:__RELPATH
+                        one_name:__PROPERTY_COUNT
+                        one_name:__DERIVATION
+                        one_name:__SERVER
+                        one_name:__NAMESPACE
+                        one_name:__PATH
+                     */
+                    for (String one_name : names) {
+                        if(!one_name.startsWith("__")) {
+                            WmiProperty newProperty = new WmiProperty(one_name);
+                            newClass.Properties.put(one_name, newProperty);
                         }
                     }
-
-                    resultClasses.put(newClass.Name, newClass);
-                    OleAuto.INSTANCE.VariantClear(pVal);
-                    result[0].Release();
                 }
-            } finally {
-                enumerator.Release();
+
+                resultClasses.put(newClass.Name, newClass);
+                OleAuto.INSTANCE.VariantClear(pVal);
+                result[0].Release();
             }
         } finally {
-            svc.Release();
+            enumerator.Release();
         }
-        Ole32.INSTANCE.CoUninitialize();
         return resultClasses;
     }
 
     public Wbemcli.IWbemClassObject GetObjectNode(String objectPath)
     {
         // TODO: Maybe this could be done once only in this object.
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
+        // Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
 
-        Wbemcli.IWbemServices svc_wgo = WbemcliUtil.connectServer("ROOT\\CIMV2");
-        return svc_wgo.GetObject(objectPath);
+        //Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
+        //System.out.println("GetObjectNode");
+        return svc.GetObject(objectPath);
     }
 
     String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName)
@@ -343,41 +355,6 @@ public class WmiSelecter {
         OleAuto.INSTANCE.VariantClear(pVal);
         return value;
     }
-
-
-    /*
-    // http://win32easy.blogspot.com/2011/03/wmi-in-c-query-everyting-from-your-os.html
-
-    public ArrayList<String> Classes() {
-    }
-
-    // IWBEMClassObject::BeginEnumeration
-    // https://stackoverflow.com/questions/18992717/list-all-properties-of-wmi-class-in-c
-    public record Property(String Name, String Description) {}
-
-    public ArrayList<Property> Properties(String className) {
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-
-        // Connect to the server
-        Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
-
-        // IWbemClassObject* pClass = NULL;
-        Wbemcli.IWbemClassObject pClass;
-
-        //Ole32.INSTANCE.
-        svc.
-                ;
-
-        pClass.;
-        Wbemcli.
-
-        hres = svc. pSvc->GetObject(className, 0, NULL, &pClass, NULL);
-
-        Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
-        String[] members = pClass.GetNames(null, 0, pQualifierVal);
-    }
-*/
-
 
 }
 
