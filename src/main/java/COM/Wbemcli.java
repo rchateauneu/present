@@ -317,22 +317,16 @@ public interface Wbemcli {
              */
             int lFlags = WBEM_FLAG_RETURN_WBEM_COMPLETE;
             try {
-                // Typically NULL.
-                IWbemContext pCtx = null;
-                // [out] IWbemClassObject **ppObject
                 PointerByReference ppObject = new PointerByReference();
 
                 // If NULL, this parameter is not used. If the lFlags parameter contains WBEM_FLAG_RETURN_IMMEDIATELY,
                 // this call returns immediately with WBEM_S_NO_ERROR.
-                PointerByReference ppCallResult = null;
-                HRESULT h = GetObject(strObjectPathBSTR, lFlags, pCtx, ppObject, ppCallResult);
+                HRESULT h = GetObject(strObjectPathBSTR, lFlags, null, ppObject, null);
                 return new IWbemClassObject(ppObject.getValue());
-
             } finally {
                 OleAuto.INSTANCE.SysFreeString(strObjectPathBSTR);
             }
         }
-
     }
 
     /**
