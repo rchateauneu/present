@@ -647,6 +647,8 @@ public class SparqlToWmiTest {
      * The current pid must be found in the processes using a specific library.
      * The order of evaluation, i.e. the order of object patterns, is forced with the alphabetical order
      * of main variables.
+     *
+     * TODO: This test might fail is a process unexpectedly leaves in the middle of the query.
      */
     public void Execution_Forced_CIM_ProcessExecutable_2() throws Exception {
         long pid = ProcessHandle.current().pid();
@@ -757,6 +759,7 @@ public class SparqlToWmiTest {
     @Test
     /**
      * This gets the list of files in a directory.
+     * Possibly because accessing CIM_DataFile is slow anyway.
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_2() throws Exception {
         String sparql_query = """
