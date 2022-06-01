@@ -3,14 +3,12 @@ package paquetage;
 import COM.Wbemcli;
 import COM.WbemcliUtil;
 import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
 //import com.sun.jna.platform.win32.COM.Wbemcli;
 //import com.sun.jna.platform.win32.COM.WbemcliUtil;
 
-import com.sun.jna.platform.win32.Ole32;
-import com.sun.jna.platform.win32.OleAuto;
-import com.sun.jna.platform.win32.Variant;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -18,6 +16,10 @@ import java.util.*;
 // import java.util.function.Function;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+
+import static com.sun.jna.platform.win32.COM.Wbemcli.IWbemLocator.CLSID_WbemLocator;
+import static com.sun.jna.platform.win32.Variant.VT_ARRAY;
+import static com.sun.jna.platform.win32.Variant.VT_BSTR;
 
 /**
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
@@ -288,8 +290,6 @@ public class WmiSelecter {
                 OleAuto.INSTANCE.VariantClear(pVal);
 
                 if(names != null) {
-                    /*
-                     */
                     for (String one_name : names) {
                         /* Filter properties such as __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH
                         __PROPERTY_COUNT, __DERIVATION, __SERVER, __NAMESPACE, __PATH */
@@ -312,10 +312,61 @@ public class WmiSelecter {
 
     public Wbemcli.IWbemClassObject GetObjectNode(String objectPath)
     {
-        return svc.GetObject(objectPath);
+        return svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
     }
 
-    // TODO: Call this with a list of properties to avoid reallocation of a variant.
+    // TODO: This should be thread-safe.
+    static HashMap<String, Wbemcli.IWbemClassObject> cacheWbemClassObject = new HashMap<>();
+
+    public Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) {
+        Wbemcli.IWbemClassObject ret = cacheWbemClassObject.get(objectPath);
+        if(ret == null) {
+            ret = GetObjectNode(objectPath);
+            cacheWbemClassObject.put(objectPath, ret);
+        }
+        return ret;
+    }
+
+    public Wbemcli.IWbemClassObject GetObjectNodePartial(String objectPath, Set<String> properties)
+    {
+        Wbemcli.IWbemContext pctxDrive = new Wbemcli.IWbemContext().create();
+
+        // Add named values to the context object.
+        pctxDrive.SetValue("__GET_EXTENSIONS", 0, true);
+
+        pctxDrive.SetValue("__GET_EXT_CLIENT_REQUEST", 0, true);
+
+        // Create an array of properties to return.
+        OaIdl.SAFEARRAY psaProperties = OaIdl.SAFEARRAY.createSafeArray(new WTypes.VARTYPE(VT_BSTR), properties.size());
+
+        int indexProperties = 0;
+        OleAuto.INSTANCE.SafeArrayLock(psaProperties);
+        try {
+            for (String strProperty : properties) {
+                WTypes.BSTR strPropertyBSTR = OleAuto.INSTANCE.SysAllocString(strProperty);
+                try {
+                    //Variant.VARIANT.ByReference vProperty = new Variant.VARIANT.ByReference();
+                    //vProperty.setValue(VT_BSTR, strPropertyBSTR);
+                    psaProperties.putElement(strPropertyBSTR, indexProperties);
+                    //OleAuto.INSTANCE.VariantClear(vProperty);
+                    ++indexProperties;
+                } finally {
+                    OleAuto.INSTANCE.SysFreeString(strPropertyBSTR);
+                }
+            }
+        } finally {
+            OleAuto.INSTANCE.SafeArrayUnlock(psaProperties);
+        }
+
+        Variant.VARIANT.ByReference vPropertyList = new Variant.VARIANT.ByReference();
+        vPropertyList.setVarType((short) (VT_ARRAY | VT_BSTR));
+        vPropertyList.setValue(psaProperties);
+        pctxDrive.SetValue("__GET_EXT_PROPERTIES", 0, vPropertyList);
+        psaProperties.destroy();
+
+        return svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
+    }
+
     String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName)
     {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();

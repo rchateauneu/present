@@ -113,7 +113,18 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                     throw new Exception("Value for " + queryData.mainVariable + " should not be null");
                 }
 
-                Wbemcli.IWbemClassObject objectNode = wmiSelecter.GetObjectNode(objectPath);
+                Wbemcli.IWbemClassObject objectNode = null;
+                if(true) {
+                    objectNode = wmiSelecter.GetObjectNode(objectPath);
+                } else {
+                    if(false) {
+                        // This works but this is not faster.
+                        objectNode = wmiSelecter.GetObjectNodePartial(objectPath, queryData.queryColumns.keySet());
+                    } else {
+                        // Not faster if all objects have different path.
+                        objectNode = wmiSelecter.GetObjectNodeCached(objectPath);
+                    }
+                }
 
                 // Now takes the values needed from the members of this object.
                 for( Map.Entry<String, String> entry: queryData.queryColumns.entrySet()) {
