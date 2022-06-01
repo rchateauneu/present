@@ -27,16 +27,13 @@ package COM;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
+import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.platform.win32.COM.Unknown;
 import com.sun.jna.platform.win32.Guid.CLSID;
 import com.sun.jna.platform.win32.Guid.GUID;
 import com.sun.jna.platform.win32.OaIdl.SAFEARRAY;
-import com.sun.jna.platform.win32.OaIdlUtil;
-import com.sun.jna.platform.win32.Ole32;
-import com.sun.jna.platform.win32.OleAuto;
 import com.sun.jna.platform.win32.Variant.VARIANT;
-import com.sun.jna.platform.win32.WTypes;
 import com.sun.jna.platform.win32.WTypes.BSTR;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.ptr.IntByReference;
@@ -301,27 +298,12 @@ public interface Wbemcli {
                             ppObject, ppCallResult}, HRESULT.class);
         }
 
-        public IWbemClassObject GetObject(String strObjectPath) {
+        public IWbemClassObject GetObject(String strObjectPath, int lFlags, IWbemContext pCtx) {
             BSTR strObjectPathBSTR = OleAuto.INSTANCE.SysAllocString(strObjectPath);
-            /*
-            WBEM_FLAG_USE_AMENDED_QUALIFIERS : If this flag is set,
-                WMI retrieves the amended qualifiers
-                stored in the localized namespace of the current connection's locale.
-                If not set, only the qualifiers stored in the immediate namespace are retrieved.
-            WBEM_FLAG_RETURN_WBEM_COMPLETE : This flag makes this a synchronous call.
-            WBEM_FLAG_RETURN_IMMEDIATELY : This flag makes this a semisynchronous call.
-                You must provide a valid pointer for the ppCallResult parameter.
-                    For more information, see Calling a Method.
-            WBEM_FLAG_DIRECT_READ : This flag causes direct access to the provider for the class specified
-                without any regard to its parent class or subclasses.
-             */
-            int lFlags = WBEM_FLAG_RETURN_WBEM_COMPLETE;
             try {
                 PointerByReference ppObject = new PointerByReference();
-
-                // If NULL, this parameter is not used. If the lFlags parameter contains WBEM_FLAG_RETURN_IMMEDIATELY,
-                // this call returns immediately with WBEM_S_NO_ERROR.
-                HRESULT h = GetObject(strObjectPathBSTR, lFlags, null, ppObject, null);
+                HRESULT res = GetObject(strObjectPathBSTR, lFlags, pCtx, ppObject, null);
+                COMUtils.checkRC(res);
                 return new IWbemClassObject(ppObject.getValue());
             } finally {
                 OleAuto.INSTANCE.SysFreeString(strObjectPathBSTR);
@@ -334,12 +316,57 @@ public interface Wbemcli {
      * providers when submitting IWbemServices calls to WMI
      */
     class IWbemContext extends Unknown {
+        public static final CLSID CLSID_WbemContext  = new CLSID("674B6698-EE92-11D0-AD71-00C04FD8FDFF");
+        public static final GUID IID_IWbemContext  = new GUID("44aca674-e8fc-11d0-a07c-00c04fb68820");
 
         public IWbemContext() {
         }
 
+        public static IWbemContext create() {
+            PointerByReference pbr = new PointerByReference();
+
+            HRESULT hres = Ole32.INSTANCE.CoCreateInstance(CLSID_WbemContext, null, WTypes.CLSCTX_INPROC_SERVER,
+                    IID_IWbemContext, pbr);
+            if (COMUtils.FAILED(hres)) {
+                return null;
+            }
+
+            return new IWbemContext(pbr.getValue());
+        }
+
         public IWbemContext(Pointer pvInstance) {
             super(pvInstance);
+        }
+
+        public void SetValue(String wszName, int lFlag, Variant.VARIANT pValue) {
+            BSTR wszNameBSTR = OleAuto.INSTANCE.SysAllocString(wszName);
+            try {
+                // SetValue is the 9th method of IWbemContextVtbl in WbemCli.h
+                HRESULT res = (HRESULT) _invokeNativeObject(8,
+                        new Object[] { getPointer(), wszNameBSTR, lFlag, pValue}, HRESULT.class);
+                COMUtils.checkRC(res);
+            } finally {
+                OleAuto.INSTANCE.SysFreeString(wszNameBSTR);
+            }
+        }
+
+        public void SetValue(String wszName, int lFlag, boolean pValue) {
+            Variant.VARIANT.ByReference aVariant = new Variant.VARIANT.ByReference();
+            aVariant.setValue(Variant.VT_BOOL, pValue ? Variant.VARIANT_TRUE : Variant.VARIANT_FALSE);
+            SetValue(wszName, lFlag, aVariant);
+            OleAuto.INSTANCE.VariantClear(aVariant);
+        }
+
+        public void SetValue(String wszName, int lFlag, String pValue) {
+            BSTR wszNameBSTR = OleAuto.INSTANCE.SysAllocString(wszName);
+            try {
+                // SetValue is the 9th method of IWbemContextVtbl in WbemCli.h
+                HRESULT res = (HRESULT) _invokeNativeObject(8,
+                        new Object[] { getPointer(), wszNameBSTR, lFlag, pValue}, HRESULT.class);
+                COMUtils.checkRC(res);
+            } finally {
+                OleAuto.INSTANCE.SysFreeString(wszNameBSTR);
+            }
         }
     }
 }
