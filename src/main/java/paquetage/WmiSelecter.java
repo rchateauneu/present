@@ -87,6 +87,76 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
+    /** This is used to evaluate the cost of accessing a single object given its path.
+     * The keys are the class name and the fetched columns, because this information can be used
+     * to create custom functions.
+     *
+     */
+    static public class Statistics {
+        class Sample {
+            public long elapsed;
+            public int count;
+            public Sample() {
+                elapsed = System.currentTimeMillis();
+                count = 0;
+            }
+        };
+        HashMap<String, Sample> statistics;
+        long startTime;
+
+        Statistics() {
+            Reset();
+        }
+
+        void Reset() {
+            statistics = new HashMap<>();
+        }
+
+        void Start() {
+            startTime = System.currentTimeMillis();
+        }
+
+        void Update(String objectPath, Set<String> columns) {
+            String key = objectPath + String.join("_", columns);
+            Sample sample = statistics.get(key);
+            if(sample != null) {
+                sample.elapsed += System.currentTimeMillis() - startTime;
+                sample.count++;
+            } else {
+                sample = new Sample();
+                sample.elapsed = System.currentTimeMillis() - startTime;
+                sample.count = 1;
+                statistics.put(key, sample);
+            }
+            startTime = -1;
+        }
+
+        void Display() {
+            long totalElapsed = 0;
+            int totalCount = 0;
+
+            long maxElapsed = 0;
+            int maxCount = 0;
+
+            for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
+                Sample currentValue = entry.getValue();
+                totalElapsed += currentValue.elapsed;
+                totalCount += currentValue.count;
+                if(currentValue.elapsed >= maxElapsed)
+                    maxElapsed = currentValue.elapsed;
+                if(currentValue.count >= maxCount)
+                    maxCount = currentValue.count;
+            }
+            // Only display the most expensive fetches.
+            for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
+                Sample currentValue = entry.getValue();
+                if((currentValue.elapsed >= maxElapsed) || (currentValue.count >= maxCount))
+                    System.out.println(entry.getKey() + ":" + (currentValue.elapsed / 1000.0) + " s " + currentValue.count);
+            }
+            System.out.println("TOTAL" + ":" + (totalElapsed / 1000.0) + " s " + totalCount);
+        }
+    }
+
     /**
      * To be used when reconstructing a WQL query.
      */
@@ -98,6 +168,7 @@ public class WmiSelecter {
         // This sorted container guarantees the order to help comparison.
         SortedMap<String, String> queryColumns;
         List<WhereEquality> queryWheres;
+        public Statistics statistics = new Statistics();
 
         QueryData(String wmiClassName, String variable, boolean mainVariableAvailable, Map<String, String> columns, List<WhereEquality> wheres) throws Exception {
             mainVariable = variable;

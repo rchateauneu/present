@@ -32,20 +32,17 @@ class SparqlToWmiPlan extends SparqlToWmiAbstract {
 }
 
 public class SparqlToWmiTest {
-    void CompareQueryData(WmiSelecter.QueryData expected, WmiSelecter.QueryData actual)
-    {
+    void CompareQueryData(WmiSelecter.QueryData expected, WmiSelecter.QueryData actual) {
         Assert.assertEquals(expected.className, actual.className);
         Assert.assertEquals(expected.mainVariable, actual.mainVariable);
         Assert.assertEquals(expected.isMainVariableAvailable, actual.isMainVariableAvailable);
         Assert.assertEquals(expected.queryColumns.size(), actual.queryColumns.size());
-        for(String key: expected.queryColumns.keySet()) {
+        for (String key : expected.queryColumns.keySet()) {
             Assert.assertEquals(expected.queryColumns.get(key), actual.queryColumns.get(key));
         }
-        if((expected.queryWheres == null) || (actual.queryWheres == null))
-        {
+        if ((expected.queryWheres == null) || (actual.queryWheres == null)) {
             Assert.assertEquals(null, actual.queryWheres);
-        }
-        else {
+        } else {
             Assert.assertEquals(expected.queryWheres.size(), actual.queryWheres.size());
             for (int index = 0; index < expected.queryWheres.size(); ++index) {
                 WmiSelecter.WhereEquality kv_expected = expected.queryWheres.get(index);
@@ -64,7 +61,7 @@ public class SparqlToWmiTest {
     public void SymbolicQuery1Test() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process", WmiOntology.survol_url_prefix + "Win32_Process");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false,"123");
+        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false, "123");
 
         SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -77,8 +74,8 @@ public class SparqlToWmiTest {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process",
                 WmiOntology.survol_url_prefix + "CIM_DataFile");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false,"C:");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Caption", true,"any_variable");
+        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false, "C:");
+        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Caption", true, "any_variable");
 
         SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -90,20 +87,20 @@ public class SparqlToWmiTest {
         ObjectPattern objectPattern0 = new ObjectPattern(
                 "my_process",
                 WmiOntology.survol_url_prefix + "Win32_Process");
-        objectPattern0.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false,"C:");
+        objectPattern0.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false, "C:");
 
         ObjectPattern objectPattern1 = new ObjectPattern(
                 "my_assoc",
                 WmiOntology.survol_url_prefix + "CIM_ProcessExecutable");
-        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Dependent", true,"my_process");
-        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Antecedent", true,"my_file");
+        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Dependent", true, "my_process");
+        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Antecedent", true, "my_file");
 
         SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern0, objectPattern1));
         String symbolicQuery = patternSparql.SymbolicQuery();
         System.out.println("symbolicQuery=" + symbolicQuery);
         Assert.assertEquals(
                 "Select __PATH from Win32_Process where Name = \"C:\"\n" +
-                    "\tSelect Antecedent, __PATH from CIM_ProcessExecutable where Dependent = \"my_process\"\n",
+                        "\tSelect Antecedent, __PATH from CIM_ProcessExecutable where Dependent = \"my_process\"\n",
                 symbolicQuery);
     }
 
@@ -114,7 +111,7 @@ public class SparqlToWmiTest {
      */
     public void InternalQueryDataTest() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern("my_process", WmiOntology.survol_url_prefix + "Win32_Process");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false,"123");
+        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false, "123");
 
         SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
 
@@ -137,14 +134,14 @@ public class SparqlToWmiTest {
      */
     public void Plan1Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_directory
-            where {
-                ?my_directory rdf:type cim:Win32_Directory .
-                ?my_directory cim:Name "C:" .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_directory
+                    where {
+                        ?my_directory rdf:type cim:Win32_Directory .
+                        ?my_directory cim:Name "C:" .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_directory"));
 
@@ -166,15 +163,15 @@ public class SparqlToWmiTest {
     @Test
     public void Plan1_1Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_process_name ?my_process_handle
-            where {
-                ?my_process rdf:type cim:CIM_Process .
-                ?my_process cim:Handle ?my_process_handle .
-                ?my_process cim:Name ?my_process_name .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_process_name ?my_process_handle
+                    where {
+                        ?my_process rdf:type cim:CIM_Process .
+                        ?my_process cim:Handle ?my_process_handle .
+                        ?my_process cim:Name ?my_process_name .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name", "my_process_handle"));
 
@@ -196,15 +193,15 @@ public class SparqlToWmiTest {
     @Test
     public void Plan1_2Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_process_name ?my_process_handle
-            where {
-                ?my_process rdf:type cim:CIM_Process .
-                ?my_process cim:Handle "12345" .
-                ?my_process cim:Name ?my_process_name .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_process_name ?my_process_handle
+                    where {
+                        ?my_process rdf:type cim:CIM_Process .
+                        ?my_process cim:Handle "12345" .
+                        ?my_process cim:Name ?my_process_name .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name", "my_process_handle"));
 
@@ -228,17 +225,17 @@ public class SparqlToWmiTest {
     @Test
     public void Plan2_1Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_file
-            where {
-                ?my2_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my2_assoc cim:Dependent ?my1_process .
-                ?my2_assoc cim:Antecedent ?my_file .
-                ?my1_process rdf:type cim:Win32_Process .
-                ?my1_process cim:Handle "123" .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file
+                    where {
+                        ?my2_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my2_assoc cim:Dependent ?my1_process .
+                        ?my2_assoc cim:Antecedent ?my_file .
+                        ?my1_process rdf:type cim:Win32_Process .
+                        ?my1_process cim:Handle "123" .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         //System.out.println("bindings="+extractor.bindings.toString());
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file"));
@@ -280,16 +277,16 @@ public class SparqlToWmiTest {
     @Test
     public void Plan2_2Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_file
-            where {
-                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my1_assoc cim:Dependent ?my0_process .
-                ?my1_assoc cim:Antecedent ?my_file .
-                ?my0_process rdf:type cim:Win32_Process .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my1_assoc cim:Dependent ?my0_process .
+                        ?my1_assoc cim:Antecedent ?my_file .
+                        ?my0_process rdf:type cim:Win32_Process .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         //System.out.println("bindings="+extractor.bindings.toString());
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file"));
@@ -329,19 +326,19 @@ public class SparqlToWmiTest {
     @Test
     public void Plan3_1Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_file_name
-            where {
-                ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my0_assoc cim:Dependent ?my2_process .
-                ?my0_assoc cim:Antecedent ?my1_file .
-                ?my2_process rdf:type cim:Win32_Process .
-                ?my2_process cim:Handle "123" .
-                ?my1_file rdf:type cim:CIM_DataFile .
-                ?my1_file cim:Name ?my_file_name .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file_name
+                    where {
+                        ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my0_assoc cim:Dependent ?my2_process .
+                        ?my0_assoc cim:Antecedent ?my1_file .
+                        ?my2_process rdf:type cim:Win32_Process .
+                        ?my2_process cim:Handle "123" .
+                        ?my1_file rdf:type cim:CIM_DataFile .
+                        ?my1_file cim:Name ?my_file_name .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
@@ -389,19 +386,19 @@ public class SparqlToWmiTest {
     @Test
     public void Plan3_2Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_file_name
-            where {
-                ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my0_assoc cim:Dependent ?my1_process .
-                ?my0_assoc cim:Antecedent ?my2_file .
-                ?my1_process rdf:type cim:Win32_Process .
-                ?my1_process cim:Handle "123" .
-                ?my2_file rdf:type cim:CIM_DataFile .
-                ?my2_file cim:Name ?my_file_name .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file_name
+                    where {
+                        ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my0_assoc cim:Dependent ?my1_process .
+                        ?my0_assoc cim:Antecedent ?my2_file .
+                        ?my1_process rdf:type cim:Win32_Process .
+                        ?my1_process cim:Handle "123" .
+                        ?my2_file rdf:type cim:CIM_DataFile .
+                        ?my2_file cim:Name ?my_file_name .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
@@ -444,19 +441,19 @@ public class SparqlToWmiTest {
     @Test
     public void Plan3_3Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_file_name
-            where {
-                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my1_assoc cim:Dependent ?my0_process .
-                ?my1_assoc cim:Antecedent ?my2_file .
-                ?my0_process rdf:type cim:Win32_Process .
-                ?my0_process cim:Handle "123" .
-                ?my2_file rdf:type cim:CIM_DataFile .
-                ?my2_file cim:Name ?my_file_name .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file_name
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my1_assoc cim:Dependent ?my0_process .
+                        ?my1_assoc cim:Antecedent ?my2_file .
+                        ?my0_process rdf:type cim:Win32_Process .
+                        ?my0_process cim:Handle "123" .
+                        ?my2_file rdf:type cim:CIM_DataFile .
+                        ?my2_file cim:Name ?my_file_name .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
@@ -502,19 +499,19 @@ public class SparqlToWmiTest {
     @Test
     public void Plan3_4Test() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_process_caption
-            where {
-                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my1_assoc cim:Dependent ?my2_process .
-                ?my1_assoc cim:Antecedent ?my0_file .
-                ?my2_process rdf:type cim:Win32_Process .
-                ?my2_process cim:Caption ?my_process_caption .
-                ?my0_file rdf:type cim:CIM_DataFile .
-                ?my0_file cim:Name "C:" .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_process_caption
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my1_assoc cim:Dependent ?my2_process .
+                        ?my1_assoc cim:Antecedent ?my0_file .
+                        ?my2_process rdf:type cim:Win32_Process .
+                        ?my2_process cim:Caption ?my_process_caption .
+                        ?my0_file rdf:type cim:CIM_DataFile .
+                        ?my0_file cim:Name "C:" .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
@@ -559,14 +556,14 @@ public class SparqlToWmiTest {
     @Test
     public void Execution_Win32_Process_1() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_process_handle
-            where {
-                ?my_process rdf:type cim:Win32_Process .
-                ?my_process cim:Handle ?my_process_handle .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_process_handle
+                    where {
+                        ?my_process rdf:type cim:Win32_Process .
+                        ?my_process cim:Handle ?my_process_handle .
+                    }
+                """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
 
@@ -575,8 +572,8 @@ public class SparqlToWmiTest {
         boolean foundCurrentPid = false;
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
-        for(WmiSelecter.Row row: the_rows) {
-            if(row.Elements.get("my_process_handle").equals(pidString)) {
+        for (WmiSelecter.Row row : the_rows) {
+            if (row.Elements.get("my_process_handle").equals(pidString)) {
                 foundCurrentPid = true;
                 break;
             }
@@ -590,15 +587,15 @@ public class SparqlToWmiTest {
         String pidString = String.valueOf(pid);
 
         String sparql_query = String.format("""
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_process_caption
-            where {
-                ?my_process rdf:type cim:Win32_Process .
-                ?my_process cim:Caption ?my_process_caption .
-                ?my_process cim:Handle "%s" .
-            }
-        """, pidString);
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_process_caption
+                    where {
+                        ?my_process rdf:type cim:Win32_Process .
+                        ?my_process cim:Caption ?my_process_caption .
+                        ?my_process cim:Handle "%s" .
+                    }
+                """, pidString);
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
@@ -614,19 +611,19 @@ public class SparqlToWmiTest {
         String pidString = String.valueOf(pid);
 
         String sparql_query = String.format("""
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_file_name
-            where {
-                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my1_assoc cim:Dependent ?my0_process .
-                ?my1_assoc cim:Antecedent ?my2_file .
-                ?my0_process rdf:type cim:Win32_Process .
-                ?my0_process cim:Handle "%s" .
-                ?my2_file rdf:type cim:CIM_DataFile .
-                ?my2_file cim:Name ?my_file_name .
-            }
-        """, pidString);
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file_name
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my1_assoc cim:Dependent ?my0_process .
+                        ?my1_assoc cim:Antecedent ?my2_file .
+                        ?my0_process rdf:type cim:Win32_Process .
+                        ?my0_process cim:Handle "%s" .
+                        ?my2_file rdf:type cim:CIM_DataFile .
+                        ?my2_file cim:Name ?my_file_name .
+                    }
+                """, pidString);
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
@@ -655,19 +652,19 @@ public class SparqlToWmiTest {
         String pidString = String.valueOf(pid);
 
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_handle
-            where {
-                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my1_assoc cim:Dependent ?my2_process .
-                ?my1_assoc cim:Antecedent ?my0_file .
-                ?my2_process rdf:type cim:Win32_Process .
-                ?my2_process cim:Handle ?my_handle .
-                ?my0_file rdf:type cim:CIM_DataFile .
-                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_handle
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my1_assoc cim:Dependent ?my2_process .
+                        ?my1_assoc cim:Antecedent ?my0_file .
+                        ?my2_process rdf:type cim:Win32_Process .
+                        ?my2_process cim:Handle ?my_handle .
+                        ?my0_file rdf:type cim:CIM_DataFile .
+                        ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+                    }
+                """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
@@ -684,6 +681,7 @@ public class SparqlToWmiTest {
 
     @Test
     /**
+     * This gets the handle and caption of all processes using a specific library.
      * The current pid must be found in the processes using a specific library.
      * This checks that two columns are properly returned.
      * The order of evaluation, i.e. the order of object patterns, is forced with the alphabetical order
@@ -694,20 +692,20 @@ public class SparqlToWmiTest {
         String pidString = String.valueOf(pid);
 
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_handle ?my_caption
-            where {
-                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my1_assoc cim:Dependent ?my2_process .
-                ?my1_assoc cim:Antecedent ?my0_file .
-                ?my2_process rdf:type cim:Win32_Process .
-                ?my2_process cim:Handle ?my_handle .
-                ?my2_process cim:Caption ?my_caption .
-                ?my0_file rdf:type cim:CIM_DataFile .
-                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_handle ?my_caption
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?my1_assoc cim:Dependent ?my2_process .
+                        ?my1_assoc cim:Antecedent ?my0_file .
+                        ?my2_process rdf:type cim:Win32_Process .
+                        ?my2_process cim:Handle ?my_handle .
+                        ?my2_process cim:Caption ?my_caption .
+                        ?my0_file rdf:type cim:CIM_DataFile .
+                        ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+                    }
+                """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
@@ -733,19 +731,19 @@ public class SparqlToWmiTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_1() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_dir_name
-            where {
-                ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
-                ?my1_assoc cim:GroupComponent ?my2_dir .
-                ?my1_assoc cim:PartComponent ?my0_file .
-                ?my2_dir rdf:type cim:Win32_Directory .
-                ?my2_dir cim:Name ?my_dir_name .
-                ?my0_file rdf:type cim:CIM_DataFile .
-                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_dir_name
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                        ?my1_assoc cim:GroupComponent ?my2_dir .
+                        ?my1_assoc cim:PartComponent ?my0_file .
+                        ?my2_dir rdf:type cim:Win32_Directory .
+                        ?my2_dir cim:Name ?my_dir_name .
+                        ?my0_file rdf:type cim:CIM_DataFile .
+                        ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+                    }
+                """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
@@ -763,19 +761,19 @@ public class SparqlToWmiTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_2() throws Exception {
         String sparql_query = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?my_file_name
-            where {
-                ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
-                ?my1_assoc cim:GroupComponent ?my0_dir .
-                ?my1_assoc cim:PartComponent ?my2_file .
-                ?my0_dir rdf:type cim:Win32_Directory .
-                ?my0_dir cim:Name "C:\\\\WINDOWS\\\\SYSTEM32" .
-                ?my2_file rdf:type cim:CIM_DataFile .
-                ?my2_file cim:Name ?my_file_name .
-            }
-        """;
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file_name
+                    where {
+                        ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                        ?my1_assoc cim:GroupComponent ?my0_dir .
+                        ?my1_assoc cim:PartComponent ?my2_file .
+                        ?my0_dir rdf:type cim:Win32_Directory .
+                        ?my0_dir cim:Name "C:\\\\WINDOWS\\\\SYSTEM32" .
+                        ?my2_file rdf:type cim:CIM_DataFile .
+                        ?my2_file cim:Name ?my_file_name .
+                    }
+                """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
@@ -786,7 +784,7 @@ public class SparqlToWmiTest {
                 .stream()
                 .map(entry -> entry.Elements.get("my_file_name").toUpperCase()).collect(Collectors.toSet());
         // These files must be in this directory.
-        // Beware of cases which are not stable.
+        // Filename cases in system directories are not stable, therefore uppercase.
         Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\NTDLL.DLL"));
         Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\USER32.DLL"));
     }
@@ -797,18 +795,89 @@ public class SparqlToWmiTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_1() throws Exception {
         String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_dir_name
+                    where {
+                        ?my0_file rdf:type cim:CIM_DataFile .
+                        ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+                        ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                        ?my1_assoc cim:PartComponent ?my0_file .
+                        ?my1_assoc cim:GroupComponent ?my2_dir .
+                        ?my2_dir rdf:type cim:Win32_Directory .
+                        ?my3_assoc rdf:type cim:Win32_SubDirectory .
+                        ?my3_assoc cim:PartComponent ?my2_dir .
+                        ?my3_assoc cim:GroupComponent ?my4_dir .
+                        ?my4_dir rdf:type cim:Win32_Directory .
+                        ?my4_dir cim:Name ?my_dir_name .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        Assert.assertEquals(the_rows.size(), 1);
+        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS");
+    }
+
+    @Test
+    /**
+     * This gets sub-sub-files of a directory.
+     */
+    public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_file_name
+                    where {
+                        ?my4_file rdf:type cim:CIM_DataFile .
+                        ?my4_file cim:Name ?my_file_name .
+                        ?my3_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                        ?my3_assoc cim:PartComponent ?my4_file .
+                        ?my3_assoc cim:GroupComponent ?my2_dir .
+                        ?my2_dir rdf:type cim:Win32_Directory .
+                        ?my1_assoc rdf:type cim:Win32_SubDirectory .
+                        ?my1_assoc cim:PartComponent ?my2_dir .
+                        ?my1_assoc cim:GroupComponent ?my0_dir .
+                        ?my0_dir rdf:type cim:Win32_Directory .
+                        ?my0_dir cim:Name "C:\\\\Program Files\\\\Internet Explorer" .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        Set<String> filesSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_file_name")).collect(Collectors.toSet());
+        // These files must be in this directory.
+        Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\en-US\\hmmapi.dll.mui"));
+        Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\images\\bing.ico"));
+    }
+
+
+    @Test
+    /**
+     * This gets the directories of all executables and libraries used by running processes.
+     * The order of evaluation is forced with the alphabetical order of main variables.
+     */
+    public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_1() throws Exception {
+        String sparql_query = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_dir_name
             where {
-                ?my0_file rdf:type cim:CIM_DataFile .
-                ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
-                ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
-                ?my1_assoc cim:PartComponent ?my0_file .
-                ?my1_assoc cim:GroupComponent ?my2_dir .
-                ?my2_dir rdf:type cim:Win32_Directory .
-                ?my3_assoc rdf:type cim:Win32_SubDirectory .
-                ?my3_assoc cim:PartComponent ?my2_dir .
+                ?my0_process rdf:type cim:Win32_Process .
+                ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my1_assoc cim:Dependent ?my0_process .
+                ?my1_assoc cim:Antecedent ?my2_file .
+                ?my2_file rdf:type cim:CIM_DataFile .
+                ?my3_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                ?my3_assoc cim:PartComponent ?my2_file .
                 ?my3_assoc cim:GroupComponent ?my4_dir .
                 ?my4_dir rdf:type cim:Win32_Directory .
                 ?my4_dir cim:Name ?my_dir_name .
@@ -820,25 +889,28 @@ public class SparqlToWmiTest {
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
-        Assert.assertEquals(the_rows.size(), 1);
-        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS");
+        System.out.println("Rows number=" + the_rows.size());
+
+        Set<String> dirsSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_dir_name")).collect(Collectors.toSet());
+        for(String oneLib: dirsSet) {
+            System.out.println("Lib=" + oneLib);
+        }
+        /*
+        Beware that filename cases are not stable. WMI returns for example:
+        "C:\WINDOWS\System32", "c:\windows\system32", "C:\WINDOWS\system32"
+         */
+        Assert.assertTrue(dirsSet.contains("C:\\WINDOWS"));
+        Assert.assertTrue(dirsSet.contains("C:\\WINDOWS\\system32"));
     }
+
 
     /**
      *         self.assertEqual(map_attributes["Win32_MountPoint.Directory"],
      *             {"predicate_type": "ref:Win32_Directory", "predicate_domain": ["Win32_Volume"]})
      *         self.assertEqual(map_attributes["Win32_MountPoint.Volume"],
      *             {"predicate_type": "ref:Win32_Volume", "predicate_domain": ["Win32_Directory"]})
-     *
-     *         self.assertEqual(map_attributes["CIM_ProcessExecutable.Antecedent"],
-     *             {"predicate_type": "ref:CIM_DataFile", "predicate_domain": ["CIM_Process"]})
-     *         self.assertEqual(map_attributes["CIM_ProcessExecutable.Dependent"],
-     *             {"predicate_type": "ref:CIM_Process", "predicate_domain": ["CIM_DataFile"]})
-     *
-     *         self.assertEqual(map_attributes["CIM_DirectoryContainsFile.GroupComponent"],
-     *             {"predicate_type": "ref:CIM_Directory", "predicate_domain": ["CIM_DataFile"]})
-     *         self.assertEqual(map_attributes["CIM_DirectoryContainsFile.PartComponent"],
-     *             {"predicate_type": "ref:CIM_DataFile", "predicate_domain": ["CIM_Directory"]})
      */
 
 
