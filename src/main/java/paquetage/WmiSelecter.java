@@ -2,7 +2,6 @@ package paquetage;
 
 import COM.Wbemcli;
 import COM.WbemcliUtil;
-import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
@@ -10,14 +9,12 @@ import com.sun.jna.platform.win32.COM.COMUtils;
 //import com.sun.jna.platform.win32.COM.WbemcliUtil;
 
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
 
 import java.util.*;
 // import java.util.function.Function;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import static com.sun.jna.platform.win32.COM.Wbemcli.IWbemLocator.CLSID_WbemLocator;
 import static com.sun.jna.platform.win32.Variant.VT_ARRAY;
 import static com.sun.jna.platform.win32.Variant.VT_BSTR;
 
@@ -105,19 +102,19 @@ public class WmiSelecter {
         long startTime;
 
         Statistics() {
-            Reset();
+            ResetAll();
         }
 
-        void Reset() {
+        void ResetAll() {
             statistics = new HashMap<>();
         }
 
-        void Start() {
+        void StartSample() {
             startTime = System.currentTimeMillis();
         }
 
-        void Update(String objectPath, Set<String> columns) {
-            String key = objectPath + String.join("_", columns);
+        void FinishSample(String objectPath, Set<String> columns) {
+            String key = objectPath + ":" + String.join(",", columns);
             Sample sample = statistics.get(key);
             if(sample != null) {
                 sample.elapsed += System.currentTimeMillis() - startTime;
@@ -131,12 +128,12 @@ public class WmiSelecter {
             startTime = -1;
         }
 
-        void Display() {
+        void DisplayAll() {
             long totalElapsed = 0;
             int totalCount = 0;
 
             long maxElapsed = 0;
-            int maxCount = 0;
+            int maxCount = 2; // One occurrence is not interesting.
 
             for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
                 Sample currentValue = entry.getValue();
@@ -151,9 +148,9 @@ public class WmiSelecter {
             for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
                 Sample currentValue = entry.getValue();
                 if((currentValue.elapsed >= maxElapsed) || (currentValue.count >= maxCount))
-                    System.out.println(entry.getKey() + ":" + (currentValue.elapsed / 1000.0) + " s " + currentValue.count);
+                    System.out.println(entry.getKey() + " " + (currentValue.elapsed / 1000.0) + " secs " + currentValue.count + " calls");
             }
-            System.out.println("TOTAL" + ":" + (totalElapsed / 1000.0) + " s " + totalCount);
+            System.out.println("TOTAL" + " " + (totalElapsed / 1000.0) + " secs " + totalCount + " calls " + statistics.size() + " lines");
         }
     }
 
@@ -214,7 +211,7 @@ public class WmiSelecter {
         }
     }
 
-    public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
+    ArrayList<Row> WqlSelectWMI(QueryData queryData) throws Exception {
         ArrayList<Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
         // Temporary debugging purpose.
@@ -292,6 +289,14 @@ public class WmiSelecter {
         }
 
         return resultRows;
+    }
+
+    public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
+        if(queryData.className == "CMI_DataFile")
+        {
+
+        }
+        return WqlSelectWMI(queryData);
     }
 
     public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<WhereEquality> wheres) throws Exception {

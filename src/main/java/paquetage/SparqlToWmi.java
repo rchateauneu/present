@@ -149,7 +149,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
             return;
         }
         WmiSelecter.QueryData queryData = prepared_queries.get(index);
-        queryData.statistics.Start();
+        queryData.statistics.StartSample();
         if(queryData.isMainVariableAvailable) {
             if(! queryData.queryWheres.isEmpty()) {
                 throw new Exception("Where clauses should be empty if the main variable is available");
@@ -169,7 +169,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                         : wmiSelecter.GetObjectProperty(objectNode, entry.getKey());
                 variablesContext.put(variableName, objectProperty);
             }
-            queryData.statistics.Update(objectPath, columns);
+            queryData.statistics.FinishSample(objectPath, columns);
             // New WQL query for this row only.
             ExecuteOneLevel(index + 1);
         } else {
@@ -195,7 +195,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
             Set<String> columnsWhere = queryData.queryWheres.stream()
                     .map(entry -> entry.predicate)
                     .collect(Collectors.toSet());
-            queryData.statistics.Update(queryData.className, columnsWhere);
+            queryData.statistics.FinishSample(queryData.className, columnsWhere);
 
             int numColumns = queryData.queryColumns.size();
             for(WmiSelecter.Row row: rows) {
@@ -220,7 +220,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
     {
         current_rows = new ArrayList<WmiSelecter.Row>();
         for(WmiSelecter.QueryData queryData : prepared_queries) {
-            queryData.statistics.Reset();
+            queryData.statistics.ResetAll();
         }
         ExecuteOneLevel(0);
         System.out.println("Queries levels:" + prepared_queries.size());
@@ -228,7 +228,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
         for(int indexQueryData = 0; indexQueryData < prepared_queries.size(); ++indexQueryData) {
             WmiSelecter.QueryData queryData = prepared_queries.get(indexQueryData);
             System.out.println("Query " + indexQueryData);
-            queryData.statistics.Display();
+            queryData.statistics.DisplayAll();
         }
         return current_rows;
     }
