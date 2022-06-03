@@ -22,40 +22,6 @@ import static com.sun.jna.platform.win32.Variant.VT_BSTR;
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
  */
 public class WmiSelecter {
-    static public class WhereEquality {
-        public String predicate;
-        public String value;
-        boolean isVariable;
-        public WhereEquality(String predicateArg, String valueStr, boolean isVariableArg) throws Exception {
-            if(predicateArg.contains("#")) {
-                throw new Exception("Invalid class:" + predicateArg);
-            }
-
-            predicate = predicateArg;
-            value = valueStr;
-            isVariable = isVariableArg;
-        }
-
-        public WhereEquality(String predicateArg, String valueStr) throws Exception {
-            this(predicateArg, valueStr, false);
-        }
-
-        public String ToEqualComparison() {
-            // Real examples in Powershell - they are quite fast:
-            // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
-            // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
-
-            // key = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
-
-            if(value == null) {
-                // This should not happen.
-                System.out.println("Value of " + predicate + " is null");
-            }
-            String escapedValue = value.replace("\\", "\\\\").replace("\"", "\\\"");
-            return "" + predicate + "" + " = \"" + escapedValue + "\"";
-        }
-    };
-
     /**
      * This is a row returned by a WMI select query.
      * For simplicity, each row contains all column names.
@@ -84,7 +50,6 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
-
     ArrayList<Row> WqlSelectWMI(QueryData queryData) throws Exception {
         ArrayList<Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
@@ -103,7 +68,7 @@ public class WmiSelecter {
         try {
             Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
             IntByReference pType = new IntByReference();
-            IntByReference plFlavor = null; new IntByReference();
+            IntByReference plFlavor = null;
             while (true) {
                 /**
                  * When selecting a single column "MyColumn", the returned effective columns are:
@@ -195,7 +160,7 @@ public class WmiSelecter {
         return WqlSelectWMI(queryData);
     }
 
-    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<WhereEquality> wheres) throws Exception {
+    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
         return WqlSelect(new QueryData(className, variable, false,columns, wheres));
     }
 

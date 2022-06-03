@@ -45,8 +45,8 @@ public class QueryDataTest {
         } else {
             Assert.assertEquals(expected.queryWheres.size(), actual.queryWheres.size());
             for (int index = 0; index < expected.queryWheres.size(); ++index) {
-                WmiSelecter.WhereEquality kv_expected = expected.queryWheres.get(index);
-                WmiSelecter.WhereEquality kv_actual = actual.queryWheres.get(index);
+                QueryData.WhereEquality kv_expected = expected.queryWheres.get(index);
+                QueryData.WhereEquality kv_actual = actual.queryWheres.get(index);
                 Assert.assertEquals(kv_expected.predicate, kv_actual.predicate);
                 Assert.assertEquals(kv_expected.value, kv_actual.value);
             }
@@ -120,7 +120,7 @@ public class QueryDataTest {
                 "my_process",
                 false,
                 null,
-                Arrays.asList(new WmiSelecter.WhereEquality("Handle", "123", false))
+                Arrays.asList(new QueryData.WhereEquality("Handle", "123", false))
         );
 
         List<QueryData> preparedQueries = patternSparql.prepared_queries;
@@ -152,7 +152,7 @@ public class QueryDataTest {
                 "my_directory",
                 false,
                 null,
-                Arrays.asList(new WmiSelecter.WhereEquality("Name", "C:", false))
+                Arrays.asList(new QueryData.WhereEquality("Name", "C:", false))
         );
 
         List<QueryData> preparedQueries = patternSparql.prepared_queries;
@@ -213,7 +213,7 @@ public class QueryDataTest {
                 false,
                 Map.of("Name", "my_process_name"),
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Handle", "12345", false)
+                        new QueryData.WhereEquality("Handle", "12345", false)
                 )
         );
 
@@ -254,7 +254,7 @@ public class QueryDataTest {
                 false,
                 null,
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Handle", "123", false)
+                        new QueryData.WhereEquality("Handle", "123", false)
                 )
         );
 
@@ -264,7 +264,7 @@ public class QueryDataTest {
                 false,
                 Map.of("Antecedent", "my_file"),
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Dependent", "my1_process", true)
+                        new QueryData.WhereEquality("Dependent", "my1_process", true)
                 )
         );
 
@@ -313,7 +313,7 @@ public class QueryDataTest {
                 false,
                 Map.of("Antecedent", "my_file"),
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Dependent", "my0_process", true)
+                        new QueryData.WhereEquality("Dependent", "my0_process", true)
                 )
         );
 
@@ -372,7 +372,7 @@ public class QueryDataTest {
                 true,
                 null,
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Handle", "123", false)
+                        new QueryData.WhereEquality("Handle", "123", false)
                 )
         );
 
@@ -419,7 +419,7 @@ public class QueryDataTest {
                 true,
                 null,
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Handle", "123", false)
+                        new QueryData.WhereEquality("Handle", "123", false)
                 )
         );
 
@@ -465,7 +465,7 @@ public class QueryDataTest {
                 false,
                 null,
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Handle", "123", false)
+                        new QueryData.WhereEquality("Handle", "123", false)
                 )
         );
 
@@ -475,7 +475,7 @@ public class QueryDataTest {
                 false,
                 Map.of("Antecedent", "my2_file"),
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Dependent", "my0_process", true)
+                        new QueryData.WhereEquality("Dependent", "my0_process", true)
                 )
         );
 
@@ -524,7 +524,7 @@ public class QueryDataTest {
                 false,
                 null,
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Name", "C:", false)
+                        new QueryData.WhereEquality("Name", "C:", false)
                 )
         );
 
@@ -534,7 +534,7 @@ public class QueryDataTest {
                 false,
                 Map.of("Dependent", "my2_process"),
                 Arrays.asList(
-                        new WmiSelecter.WhereEquality("Antecedent", "my0_file", true)
+                        new QueryData.WhereEquality("Antecedent", "my0_file", true)
                 )
         );
 

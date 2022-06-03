@@ -8,12 +8,65 @@ import java.util.stream.Collectors;
  */
 public class QueryData {
     String className;
+
+    // Name of the Sparql variable containing the object. Its rdf:type is a CIM class.
     String mainVariable;
+
+    // After sorting the QueryData in the right order before recursive evaluation, this indicates
+    // that the the main variable - the variable representing the object - is evaluated by the nesting queries.
     boolean isMainVariableAvailable;
-    // It maps a column name to a variable and is used to copy the column values to the variables.
-    // This sorted container guarantees the order to help comparison.
+
+    // It maps a column name to a Sparql variable and is used to copy the column values to the variables.
+    // This sorted container guarantees the order to help comparison in tests.
     SortedMap<String, String> queryColumns;
-    List<WmiSelecter.WhereEquality> queryWheres;
+
+    // To be appended in the WHERE clause of a WMI query.
+    List<WhereEquality> queryWheres;
+
+    static public class WhereEquality {
+        // This is a member of WMI class and used to build the WHERE clause of a WQL query.
+        public String predicate;
+
+        // This is the value or a variable name, compared with a WMI class member in a WQL query.
+        public String value;
+
+        // Tells if this is a Sparql variable (which must be evaluated in the nesting WQL queries) or a constant.
+        boolean isVariable;
+
+        public WhereEquality(String predicateArg, String valueStr, boolean isVariableArg) throws Exception {
+            if(predicateArg.contains("#")) {
+                // This ensures that the IRI of the RDF node is stripped of its prefix.
+                throw new Exception("Invalid class:" + predicateArg);
+            }
+
+            predicate = predicateArg;
+            value = valueStr;
+            isVariable = isVariableArg;
+        }
+
+        public WhereEquality(String predicateArg, String valueStr) throws Exception {
+            this(predicateArg, valueStr, false);
+        }
+
+        /**
+         * This is useful for building a WMI query only.
+         * @return
+         */
+        public String ToEqualComparison() {
+            // Real examples in Powershell - they are quite fast:
+            // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
+            // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
+
+            // key = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
+
+            if(value == null) {
+                // This should not happen.
+                System.out.println("Value of " + predicate + " is null");
+            }
+            String escapedValue = value.replace("\\", "\\\\").replace("\"", "\\\"");
+            return "" + predicate + "" + " = \"" + escapedValue + "\"";
+        }
+    };
 
     /** This is used to evaluate the cost of accessing a single object given its path.
      * The keys are the class name and the fetched columns, because this information can be used
@@ -87,7 +140,7 @@ public class QueryData {
 
     public Statistics statistics = new Statistics();
 
-    QueryData(String wmiClassName, String variable, boolean mainVariableAvailable, Map<String, String> columns, List<WmiSelecter.WhereEquality> wheres) throws Exception {
+    QueryData(String wmiClassName, String variable, boolean mainVariableAvailable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
         mainVariable = variable;
         isMainVariableAvailable = mainVariableAvailable;
         if(wmiClassName.contains("#")) {
@@ -113,7 +166,7 @@ public class QueryData {
         String columns = String.join(",", queryColumns.keySet());
 
         // If the keys of the class are given, __RELPATH is not calculated.
-        // Anyway, it seems that __PATH is calculated only when explicitely requested.
+        // Anyway, it seems that __PATH is calculated only when explicitly requested.
         if (queryColumns.isEmpty())
             columns += "__PATH";
         else
@@ -123,7 +176,7 @@ public class QueryData {
         if( (queryWheres != null) && (! queryWheres.isEmpty())) {
             wqlQuery += " where ";
             String whereClause = (String)queryWheres.stream()
-                    .map(WmiSelecter.WhereEquality::ToEqualComparison)
+                    .map(QueryData.WhereEquality::ToEqualComparison)
                     .collect(Collectors.joining(" and "));
             wqlQuery += whereClause;
         }

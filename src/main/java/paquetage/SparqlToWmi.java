@@ -30,7 +30,7 @@ abstract class SparqlToWmiAbstract {
         variablesContext = new HashMap<>();
 
         for(ObjectPattern pattern: patterns)  {
-            List<WmiSelecter.WhereEquality> wheres = new ArrayList<>();
+            List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
 
             // Now, split the variables of this object, between:
@@ -45,7 +45,7 @@ abstract class SparqlToWmiAbstract {
                 }
                 String shortPredicate = predicateName.split("#")[1];
 
-                WmiSelecter.WhereEquality wmiKeyValue = new WmiSelecter.WhereEquality(shortPredicate, valueContent, keyValue.isVariable());
+                QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(shortPredicate, valueContent, keyValue.isVariable());
 
                 if(keyValue.isVariable()) {
                     if(variablesContext.containsKey(valueContent))  {
@@ -173,8 +173,8 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
             // New WQL query for this row only.
             ExecuteOneLevel(index + 1);
         } else {
-            ArrayList<WmiSelecter.WhereEquality> substitutedWheres = new ArrayList<>();
-            for(WmiSelecter.WhereEquality kv : queryData.queryWheres) {
+            ArrayList<QueryData.WhereEquality> substitutedWheres = new ArrayList<>();
+            for(QueryData.WhereEquality kv : queryData.queryWheres) {
                 // This is not strictly the same type because the value of KeyValue is:
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
@@ -184,9 +184,9 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                         // This should not happen.
                         System.out.println("Value of " + kv.predicate + " variable=" + kv.value + " is null");
                     }
-                    substitutedWheres.add(new WmiSelecter.WhereEquality(kv.predicate, variableValue));
+                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, variableValue));
                 } else {
-                    substitutedWheres.add(new WmiSelecter.WhereEquality(kv.predicate, kv.value));
+                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, kv.value));
                 }
             }
 
