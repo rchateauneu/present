@@ -14,7 +14,7 @@ abstract class SparqlToWmiAbstract {
     /** It represented the nested WQL queries.
     There is one such query for each object exposed in a Sparql query.
      */
-    public List<WmiSelecter.QueryData> prepared_queries;
+    public List<QueryData> prepared_queries;
 
     /** This takes as input a list of object patterns, and assumes that each of them represents a WQL query,
      * there queries being nested into one another (top-level first).
@@ -24,7 +24,7 @@ abstract class SparqlToWmiAbstract {
      */
     public SparqlToWmiAbstract(List<ObjectPattern> patterns) throws Exception
     {
-        prepared_queries = new ArrayList<WmiSelecter.QueryData>();
+        prepared_queries = new ArrayList<QueryData>();
 
         // In this constructor, it is filled with all variables and null values.
         variablesContext = new HashMap<>();
@@ -77,7 +77,7 @@ abstract class SparqlToWmiAbstract {
             }
             String shortClassName = pattern.className.split("#")[1];
 
-            WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
+            QueryData queryData = new QueryData(shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
             prepared_queries.add(queryData);
         }
         if(prepared_queries.size() != patterns.size()) {
@@ -148,7 +148,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
             CreateCurrentRow();
             return;
         }
-        WmiSelecter.QueryData queryData = prepared_queries.get(index);
+        QueryData queryData = prepared_queries.get(index);
         queryData.statistics.StartSample();
         if(queryData.isMainVariableAvailable) {
             if(! queryData.queryWheres.isEmpty()) {
@@ -219,14 +219,14 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
     public ArrayList<WmiSelecter.Row> Execute() throws Exception
     {
         current_rows = new ArrayList<WmiSelecter.Row>();
-        for(WmiSelecter.QueryData queryData : prepared_queries) {
+        for(QueryData queryData : prepared_queries) {
             queryData.statistics.ResetAll();
         }
         ExecuteOneLevel(0);
         System.out.println("Queries levels:" + prepared_queries.size());
         System.out.println("Statistics:");
         for(int indexQueryData = 0; indexQueryData < prepared_queries.size(); ++indexQueryData) {
-            WmiSelecter.QueryData queryData = prepared_queries.get(indexQueryData);
+            QueryData queryData = prepared_queries.get(indexQueryData);
             System.out.println("Query " + indexQueryData);
             queryData.statistics.DisplayAll();
         }

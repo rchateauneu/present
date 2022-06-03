@@ -84,132 +84,6 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
-    /** This is used to evaluate the cost of accessing a single object given its path.
-     * The keys are the class name and the fetched columns, because this information can be used
-     * to create custom functions.
-     *
-     */
-    static public class Statistics {
-        class Sample {
-            public long elapsed;
-            public int count;
-            public Sample() {
-                elapsed = System.currentTimeMillis();
-                count = 0;
-            }
-        };
-        HashMap<String, Sample> statistics;
-        long startTime;
-
-        Statistics() {
-            ResetAll();
-        }
-
-        void ResetAll() {
-            statistics = new HashMap<>();
-        }
-
-        void StartSample() {
-            startTime = System.currentTimeMillis();
-        }
-
-        void FinishSample(String objectPath, Set<String> columns) {
-            String key = objectPath + ":" + String.join(",", columns);
-            Sample sample = statistics.get(key);
-            if(sample != null) {
-                sample.elapsed += System.currentTimeMillis() - startTime;
-                sample.count++;
-            } else {
-                sample = new Sample();
-                sample.elapsed = System.currentTimeMillis() - startTime;
-                sample.count = 1;
-                statistics.put(key, sample);
-            }
-            startTime = -1;
-        }
-
-        void DisplayAll() {
-            long totalElapsed = 0;
-            int totalCount = 0;
-
-            long maxElapsed = 0;
-            int maxCount = 2; // One occurrence is not interesting.
-
-            for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
-                Sample currentValue = entry.getValue();
-                totalElapsed += currentValue.elapsed;
-                totalCount += currentValue.count;
-                if(currentValue.elapsed >= maxElapsed)
-                    maxElapsed = currentValue.elapsed;
-                if(currentValue.count >= maxCount)
-                    maxCount = currentValue.count;
-            }
-            // Only display the most expensive fetches.
-            for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
-                Sample currentValue = entry.getValue();
-                if((currentValue.elapsed >= maxElapsed) || (currentValue.count >= maxCount))
-                    System.out.println(entry.getKey() + " " + (currentValue.elapsed / 1000.0) + " secs " + currentValue.count + " calls");
-            }
-            System.out.println("TOTAL" + " " + (totalElapsed / 1000.0) + " secs " + totalCount + " calls " + statistics.size() + " lines");
-        }
-    }
-
-    /**
-     * To be used when reconstructing a WQL query.
-     */
-    public static class QueryData {
-        String className;
-        String mainVariable;
-        boolean isMainVariableAvailable;
-        // It maps a column name to a variable and is used to copy the column values to the variables.
-        // This sorted container guarantees the order to help comparison.
-        SortedMap<String, String> queryColumns;
-        List<WhereEquality> queryWheres;
-        public Statistics statistics = new Statistics();
-
-        QueryData(String wmiClassName, String variable, boolean mainVariableAvailable, Map<String, String> columns, List<WhereEquality> wheres) throws Exception {
-            mainVariable = variable;
-            isMainVariableAvailable = mainVariableAvailable;
-            if(wmiClassName.contains("#")) {
-                throw new Exception("Invalid class:" + wmiClassName);
-            }
-            className = wmiClassName;
-            // Uniform representation of no columns selected (except the path).
-            if(columns == null)
-                queryColumns = new TreeMap<>();
-            else
-                queryColumns = new TreeMap<>(columns);
-            // Uniform representation of an empty where clause.
-            if(wheres == null)
-                queryWheres = new ArrayList<>();
-            else
-                // This sorts the where tests so the order is always the same and helps comparisons.
-                // This is not a problem performance-wise because there is only one such element per WQL query.
-                queryWheres = wheres.stream().sorted(Comparator.comparing(x -> x.predicate)).collect(Collectors.toList());
-        }
-
-        public String BuildWqlQuery() {
-            // The order of select columns is not very important because the results can be mapped to variables.
-            String columns = String.join(",", queryColumns.keySet());
-
-            // If the keys of the class are given, __RELPATH is not calculated.
-            // Anyway, it seems that __PATH is calculated only when explicitely requested.
-            if (queryColumns.isEmpty())
-                columns += "__PATH";
-            else
-                columns += ", __PATH";
-            String wqlQuery = "Select " + columns + " from " + className;
-
-            if( (queryWheres != null) && (! queryWheres.isEmpty())) {
-                wqlQuery += " where ";
-                String whereClause = (String)queryWheres.stream()
-                        .map(WhereEquality::ToEqualComparison)
-                        .collect(Collectors.joining(" and "));
-                wqlQuery += whereClause;
-            }
-            return wqlQuery;
-        }
-    }
 
     ArrayList<Row> WqlSelectWMI(QueryData queryData) throws Exception {
         ArrayList<Row> resultRows = new ArrayList<>();
@@ -292,6 +166,28 @@ public class WmiSelecter {
     }
 
     public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
+        /*
+        Most costly queries according to Statistics:
+
+        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll":Name:0.158 s 1
+        TOTAL:55.696 s 4395 calls 4395 lines
+
+        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\Users\\rchat\\AppData\\Local\\Microsoft\\OneDrive\\22.099.0508.0001\\Qt5Gui.dll"::0.573 s 1
+        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"::0.0 s 172
+        TOTAL:17.614 s 10376 calls 1276 lines
+
+        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll":Name:0.158 s 1
+        TOTAL:55.696 s 4395 calls 4395 lines
+
+        CIM_ProcessExecutable:Dependent:264.706 s 333
+        TOTAL:264.706 s 333 calls 1 lines
+
+        CIM_ProcessExecutable:Antecedent:106.719 s 120
+        TOTAL:106.719 s 120 calls 1 lines
+
+        CIM_DirectoryContainsFile:PartComponent:28.174 s 10376
+        TOTAL:28.174 s 10376 calls 1 lines
+        */
         if(queryData.className == "CMI_DataFile")
         {
 

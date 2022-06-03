@@ -11,7 +11,7 @@ import org.junit.Test;
 public class WmiSelecterTest {
     @Test
     public void TestBuildQuery() throws Exception {
-    WmiSelecter.QueryData queryData = new WmiSelecter.QueryData(
+    QueryData queryData = new QueryData(
                 "CIM_Process",
                 "any_variable",
                 false,
