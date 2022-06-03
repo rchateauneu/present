@@ -859,7 +859,6 @@ public class SparqlToWmiTest {
         Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\images\\bing.ico"));
     }
 
-
     @Test
     /**
      * This gets the directories of all executables and libraries used by running processes.
@@ -894,15 +893,55 @@ public class SparqlToWmiTest {
         Set<String> dirsSet = the_rows
                 .stream()
                 .map(entry -> entry.Elements.get("my_dir_name")).collect(Collectors.toSet());
-        for(String oneLib: dirsSet) {
-            System.out.println("Lib=" + oneLib);
-        }
+        //for(String oneLib: dirsSet) {
+        //    System.out.println("Lib=" + oneLib);
+        //}
         /*
         Beware that filename cases are not stable. WMI returns for example:
         "C:\WINDOWS\System32", "c:\windows\system32", "C:\WINDOWS\system32"
          */
         Assert.assertTrue(dirsSet.contains("C:\\WINDOWS"));
         Assert.assertTrue(dirsSet.contains("C:\\WINDOWS\\system32"));
+    }
+
+    @Test
+    /**
+     * Names of processes which have an executable or a library in a given directory.
+     */
+    public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?my_process_name
+            where {
+                ?my4_process rdf:type cim:Win32_Process .
+                ?my4_process cim:Name ?my_process_name .
+                ?my3_assoc rdf:type cim:CIM_ProcessExecutable .
+                ?my3_assoc cim:Dependent ?my4_process .
+                ?my3_assoc cim:Antecedent ?my2_file .
+                ?my2_file rdf:type cim:CIM_DataFile .
+                ?my1_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                ?my1_assoc cim:PartComponent ?my2_file .
+                ?my1_assoc cim:GroupComponent ?my0_dir .
+                ?my0_dir rdf:type cim:Win32_Directory .
+                ?my0_dir cim:Name "C:\\\\Program Files\\\\Java\\\\jdk-17.0.2\\\\bin" .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        System.out.println("Rows number=" + the_rows.size());
+
+        Set<String> namesSet = the_rows
+                .stream()
+                .map(entry -> entry.Elements.get("my_process_name")).collect(Collectors.toSet());
+        for(String oneName: namesSet) {
+            System.out.println("Name=" + oneName);
+        }
+        Assert.assertTrue(namesSet.contains("java.exe"));
     }
 
 
