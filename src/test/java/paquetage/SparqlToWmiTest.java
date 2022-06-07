@@ -24,11 +24,11 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         boolean foundCurrentPid = false;
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
-        for (WmiSelecter.Row row : the_rows) {
+        for (MetaSelecter.Row row : the_rows) {
             if (row.Elements.get("my_process_handle").equals(pidString)) {
                 foundCurrentPid = true;
                 break;
@@ -56,7 +56,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Assert.assertEquals(1, the_rows.size());
         Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
     }
@@ -85,7 +85,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Set<String> libsSet = the_rows
                 .stream()
                 .map(entry -> entry.Elements.get("my_file_name")).collect(Collectors.toSet());
@@ -126,7 +126,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
 
         Set<String> libsSet = the_rows
                 .stream()
@@ -167,7 +167,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
 
         Set<String> captionsSet = the_rows
                 .stream()
@@ -205,7 +205,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Assert.assertEquals(the_rows.size(), 1);
         Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS\\SYSTEM32");
     }
@@ -235,7 +235,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Set<String> filesSet = the_rows
                 .stream()
                 .map(entry -> entry.Elements.get("my_file_name").toUpperCase()).collect(Collectors.toSet());
@@ -273,7 +273,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Assert.assertEquals(the_rows.size(), 1);
         Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS");
     }
@@ -306,7 +306,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Set<String> filesSet = the_rows
                 .stream()
                 .map(entry -> entry.Elements.get("my_file_name")).collect(Collectors.toSet());
@@ -343,7 +343,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         System.out.println("Rows number=" + the_rows.size());
 
         Set<String> dirsSet = the_rows
@@ -388,7 +388,7 @@ public class SparqlToWmiTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<WmiSelecter.Row> the_rows = patternSparql.Execute();
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         System.out.println("Rows number=" + the_rows.size());
 
         Set<String> namesSet = the_rows

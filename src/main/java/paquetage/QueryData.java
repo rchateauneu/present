@@ -68,6 +68,34 @@ public class QueryData {
         }
     };
 
+    public boolean CompatibleQuery(String whereClassName, Set<String> whereColumns)
+    {
+        if(! className.equals(whereClassName)) {
+            return false;
+        }
+        Set<String> queryWhereColumns = queryWheres.stream().map(x -> x.predicate).collect(Collectors.toSet());
+
+        if(! queryWhereColumns.equals(whereColumns)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /** There should be a handful of elements so looping is OK.
+     *
+     * @param columnName "Handle", "Name", "PartComponent" etc...
+     * @return
+     */
+    public String GetWhereValue(String columnName) {
+        for(WhereEquality whereElement : queryWheres) {
+            if(whereElement.predicate.equals(columnName)) {
+                return whereElement.value;
+            }
+        }
+        return null;
+    }
+
     /** This is used to evaluate the cost of accessing a single object given its path.
      * The keys are the class name and the fetched columns, because this information can be used
      * to create custom functions.

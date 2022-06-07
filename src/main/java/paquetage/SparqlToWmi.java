@@ -1,7 +1,5 @@
 package paquetage;
 
-import COM.Wbemcli;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,57 +85,24 @@ abstract class SparqlToWmiAbstract {
 }
 
 public class SparqlToWmi extends SparqlToWmiAbstract {
-    ArrayList<WmiSelecter.Row> current_rows;
-    WmiSelecter wmiSelecter;
+    ArrayList<MetaSelecter.Row> current_rows;
+    MetaSelecter metaSelecter;
     SparqlBGPExtractor extractor;
 
     public SparqlToWmi(SparqlBGPExtractor input_extractor) throws Exception {
         super(input_extractor.patternsAsArray());
-        wmiSelecter = new WmiSelecter();
+        metaSelecter = new MetaSelecter();
         extractor = input_extractor;
     }
 
     void CreateCurrentRow()
     {
-        WmiSelecter.Row new_row = wmiSelecter.new Row();
+        MetaSelecter.Row new_row = new MetaSelecter.Row();
         for(String binding : extractor.bindings)
         {
             new_row.Elements.put(binding, variablesContext.get(binding));
         }
         current_rows.add(new_row);
-    }
-
-    /** This returns the object with the given WMI path. At least the specified properties must be set.
-     * This is slow and can be optimized with different ways:
-     * - Take from WMI only the required members.
-     * - Use a cache keyed by the path, if the same object is requested several times.
-     * - Extract the property values from the path if these are keys. For example a filename or process handle.
-     * - Calculate directory the properties without calling WMI.
-     *
-     * @param objectPath A string like '\\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="22292"'
-     * @param columns Set of properties, like ["Handle", "Caption"]
-     * @return
-     * @throws Exception
-     */
-    Wbemcli.IWbemClassObject PathToNode(String objectPath, Set<String> columns) throws Exception
-    {
-        Wbemcli.IWbemClassObject objectNode = null;
-        try {
-            if (false) {
-                objectNode = wmiSelecter.GetObjectNode(objectPath);
-            } else {
-                if (false) {
-                    // This works but this is not faster.
-                    objectNode = wmiSelecter.GetObjectNodePartial(objectPath, columns);
-                } else {
-                    // Not faster if all objects have different path.
-                    objectNode = wmiSelecter.GetObjectNodeCached(objectPath);
-                }
-            }
-        } catch(com.sun.jna.platform.win32.COM.COMException exc)  {
-            System.out.println("objectPath=" + objectPath + " Caught=" + exc);
-        }
-        return objectNode;
     }
 
     void ExecuteOneLevel(int index) throws Exception
@@ -155,21 +120,8 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                 throw new Exception("Where clauses should be empty if the main variable is available");
             }
             String objectPath = variablesContext.get(queryData.mainVariable);
-            Set<String> columns = queryData.queryColumns.keySet();
-            Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
-
-            // Now takes the values needed from the members of this object.
-            for( Map.Entry<String, String> entry: queryData.queryColumns.entrySet()) {
-                String variableName = entry.getValue();
-                if(!variablesContext.containsKey(variableName)){
-                    throw new Exception("Variable " + variableName + " from object not in context");
-                }
-                String objectProperty = objectNode == null
-                        ? "Object " + objectPath + " is null"
-                        : wmiSelecter.GetObjectProperty(objectNode, entry.getKey());
-                variablesContext.put(variableName, objectProperty);
-            }
-            queryData.statistics.FinishSample(objectPath, columns);
+            metaSelecter.GetVariablesFromNodePath(objectPath, queryData, variablesContext);
+            queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
             // New WQL query for this row only.
             ExecuteOneLevel(index + 1);
         } else {
@@ -190,7 +142,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                 }
             }
 
-            ArrayList<WmiSelecter.Row> rows = wmiSelecter.WqlSelect(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
+            ArrayList<MetaSelecter.Row> rows = metaSelecter.WqlSelect(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
             Set<String> columnsWhere = queryData.queryWheres.stream()
                     .map(entry -> entry.predicate)
@@ -198,10 +150,11 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
             queryData.statistics.FinishSample(queryData.className, columnsWhere);
 
             int numColumns = queryData.queryColumns.size();
-            for(WmiSelecter.Row row: rows) {
+            for(MetaSelecter.Row row: rows) {
                 // An extra column contains the path.
                 if(row.Elements.size() != numColumns + 1) {
-                    throw new Exception("Inconsistent size between returned results and columns");
+                    throw new Exception("Inconsistent size between returned results " + row.Elements.size()
+                            + " and columns:" + numColumns);
                 }
                 for(Map.Entry<String, String> entry : row.Elements.entrySet()) {
                     String variableName = entry.getKey();
@@ -216,9 +169,9 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
         }
     }
 
-    public ArrayList<WmiSelecter.Row> Execute() throws Exception
+    public ArrayList<MetaSelecter.Row> Execute() throws Exception
     {
-        current_rows = new ArrayList<WmiSelecter.Row>();
+        current_rows = new ArrayList<MetaSelecter.Row>();
         for(QueryData queryData : prepared_queries) {
             queryData.statistics.ResetAll();
         }

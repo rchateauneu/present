@@ -5,15 +5,10 @@ import COM.WbemcliUtil;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
-//import com.sun.jna.platform.win32.COM.Wbemcli;
-//import com.sun.jna.platform.win32.COM.WbemcliUtil;
-
 import com.sun.jna.ptr.IntByReference;
 
 import java.util.*;
-// import java.util.function.Function;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import static com.sun.jna.platform.win32.Variant.VT_ARRAY;
 import static com.sun.jna.platform.win32.Variant.VT_BSTR;
@@ -22,22 +17,6 @@ import static com.sun.jna.platform.win32.Variant.VT_BSTR;
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
  */
 public class WmiSelecter {
-    /**
-     * This is a row returned by a WMI select query.
-     * For simplicity, each row contains all column names.
-     */
-    public class Row {
-        Map<String, String> Elements;
-
-        public Row() {
-            Elements = new HashMap<String, String>();
-        }
-
-        public String toString() {
-            return Elements.toString();
-        }
-    }
-
     Wbemcli.IWbemServices svc = null;
 
     public WmiSelecter() {
@@ -50,13 +29,13 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
-    ArrayList<Row> WqlSelectWMI(QueryData queryData) throws Exception {
-        ArrayList<Row> resultRows = new ArrayList<>();
+    ArrayList<MetaSelecter.Row> WqlSelectWMI(QueryData queryData) throws Exception {
+        ArrayList<MetaSelecter.Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
         // Temporary debugging purpose.
         System.out.println("wqlQuery=" + wqlQuery);
 
-        if(queryData.isMainVariableAvailable) {
+        if (queryData.isMainVariableAvailable) {
             throw new Exception("Main variable should not be available in a WQL query.");
         }
 
@@ -79,9 +58,9 @@ public class WmiSelecter {
                 if (wqlResults.length == 0) {
                     break;
                 }
-                for(int indexRow = 0; indexRow < wqlResults.length; ++indexRow) {
+                for (int indexRow = 0; indexRow < wqlResults.length; ++indexRow) {
                     Wbemcli.IWbemClassObject wqlResult = wqlResults[indexRow];
-                    Row oneRow = new Row();
+                    MetaSelecter.Row oneRow = new MetaSelecter.Row();
                     // The path is always returned if the key is selected.
                     // This path should never be recalculated to ensure consistency with WMI.
                     // All values are NULL except, typically:
@@ -130,44 +109,6 @@ public class WmiSelecter {
         return resultRows;
     }
 
-    public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
-        /*
-        Most costly queries according to Statistics:
-
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll":Name:0.158 s 1
-        TOTAL:55.696 s 4395 calls 4395 lines
-
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\Users\\rchat\\AppData\\Local\\Microsoft\\OneDrive\\22.099.0508.0001\\Qt5Gui.dll"::0.573 s 1
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"::0.0 s 172
-        TOTAL:17.614 s 10376 calls 1276 lines
-
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll":Name:0.158 s 1
-        TOTAL:55.696 s 4395 calls 4395 lines
-
-        CIM_ProcessExecutable:Dependent:264.706 s 333
-        TOTAL:264.706 s 333 calls 1 lines
-
-        CIM_ProcessExecutable:Antecedent:106.719 s 120
-        TOTAL:106.719 s 120 calls 1 lines
-
-        CIM_DirectoryContainsFile:PartComponent:28.174 s 10376
-        TOTAL:28.174 s 10376 calls 1 lines
-        */
-        if(queryData.className == "CMI_DataFile")
-        {
-
-        }
-        return WqlSelectWMI(queryData);
-    }
-
-    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
-        return WqlSelect(new QueryData(className, variable, false,columns, wheres));
-    }
-
-    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns) throws Exception {
-        return WqlSelect(className, variable, columns, null);
-    }
-
     public class WmiProperty {
         public String Name;
         public String Description;
@@ -204,16 +145,16 @@ public class WmiSelecter {
             IntByReference pType = new IntByReference();
             IntByReference plFlavor = new IntByReference();
 
-            while(true) {
+            while (true) {
                 result = enumerator.Next(0, 1);
-                if(result.length == 0) {
+                if (result.length == 0) {
                     break;
                 }
 
                 Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
                 // String[] names = result[0].GetNames(null, Wbemcli.WBEM_CONDITION_FLAG_TYPE.WBEM_FLAG_NONSYSTEM_ONLY, pQualifierVal);
                 //String[] names = result[0].GetNames(null, 0, pQualifierVal);
-                String[] names = result[0].GetNames(null,0, pQualifierVal);
+                String[] names = result[0].GetNames(null, 0, pQualifierVal);
 
                 COMUtils.checkRC(result[0].Get("__CLASS", 0, pVal, pType, plFlavor));
                 WmiClass newClass = new WmiClass(pVal.stringValue());
@@ -221,16 +162,16 @@ public class WmiSelecter {
 
                 COMUtils.checkRC(result[0].Get("__SUPERCLASS", 0, pVal, pType, plFlavor));
                 Object baseClass = pVal.getValue();
-                if(baseClass != null) {
+                if (baseClass != null) {
                     newClass.BaseName = baseClass.toString();
                 }
                 OleAuto.INSTANCE.VariantClear(pVal);
 
-                if(names != null) {
+                if (names != null) {
                     for (String one_name : names) {
                         /* Filter properties such as __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH
                         __PROPERTY_COUNT, __DERIVATION, __SERVER, __NAMESPACE, __PATH */
-                        if(!one_name.startsWith("__")) {
+                        if (!one_name.startsWith("__")) {
                             WmiProperty newProperty = new WmiProperty(one_name);
                             newClass.Properties.put(one_name, newProperty);
                         }
@@ -247,25 +188,23 @@ public class WmiSelecter {
         return resultClasses;
     }
 
-    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath)
-    {
+    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) {
         return svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
     }
 
     // TODO: This should be thread-safe.
     static HashMap<String, Wbemcli.IWbemClassObject> cacheWbemClassObject = new HashMap<>();
 
-    public Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) {
+    Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) {
         Wbemcli.IWbemClassObject ret = cacheWbemClassObject.get(objectPath);
-        if(ret == null) {
+        if (ret == null) {
             ret = GetObjectNode(objectPath);
             cacheWbemClassObject.put(objectPath, ret);
         }
         return ret;
     }
 
-    public Wbemcli.IWbemClassObject GetObjectNodePartial(String objectPath, Set<String> properties)
-    {
+    Wbemcli.IWbemClassObject GetObjectNodePartial(String objectPath, Set<String> properties) {
         Wbemcli.IWbemContext pctxDrive = new Wbemcli.IWbemContext().create();
 
         // Add named values to the context object.
@@ -304,15 +243,67 @@ public class WmiSelecter {
         return svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
-    String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName)
-    {
+    String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         COMUtils.checkRC(obj.Get(propertyName, 0, pVal, null, null));
         String value = pVal.stringValue();
         OleAuto.INSTANCE.VariantClear(pVal);
         return value;
     }
+
+    /**
+     * This returns the object with the given WMI path. At least the specified properties must be set.
+     * This is slow and can be optimized with different ways:
+     * - Take from WMI only the required members.
+     * - Use a cache keyed by the path, if the same object is requested several times.
+     * - Extract the property values from the path if these are keys. For example a filename or process handle.
+     * - Calculate directory the properties without calling WMI.
+     *
+     * @param objectPath A string like '\\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="22292"'
+     * @param columns    Set of properties, like ["Handle", "Caption"]
+     * @return
+     * @throws Exception
+     */
+    Wbemcli.IWbemClassObject PathToNode(String objectPath, Set<String> columns) throws Exception {
+        Wbemcli.IWbemClassObject objectNode = null;
+        try {
+            if (false) {
+                objectNode = GetObjectNode(objectPath);
+            } else {
+                if (false) {
+                    // This works but this is not faster.
+                    objectNode = GetObjectNodePartial(objectPath, columns);
+                } else {
+                    // Not faster if all objects have different path.
+                    objectNode = GetObjectNodeCached(objectPath);
+                }
+            }
+        } catch (com.sun.jna.platform.win32.COM.COMException exc) {
+            System.out.println("objectPath=" + objectPath + " Caught=" + exc);
+        }
+        return objectNode;
+    }
+
+    void GetVariablesFromNodePath(String objectPath, QueryData queryData, Map<String, String> variablesContext) throws Exception {
+
+        Set<String> columns = queryData.queryColumns.keySet();
+        Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
+
+        // Now takes the values needed from the members of this object.
+        for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
+            String variableName = entry.getValue();
+            if (!variablesContext.containsKey(variableName)) {
+                throw new Exception("Variable " + variableName + " from object not in context");
+            }
+            String objectProperty = objectNode == null
+                    ? "Object " + objectPath + " is null"
+                    : GetObjectProperty(objectNode, entry.getKey());
+            variablesContext.put(variableName, objectProperty);
+        }
+    }
 }
+
+
 
 /*
 Same feature on Linux:
