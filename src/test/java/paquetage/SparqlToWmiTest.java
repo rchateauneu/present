@@ -207,7 +207,8 @@ public class SparqlToWmiTest {
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Assert.assertEquals(the_rows.size(), 1);
-        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS\\SYSTEM32");
+        // Filename cases are not stable wrt Windows version.
+        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS\\SYSTEM32");
     }
 
     @Test
@@ -275,7 +276,8 @@ public class SparqlToWmiTest {
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         Assert.assertEquals(the_rows.size(), 1);
-        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name"), "C:\\WINDOWS");
+        // Case of filenames are not stable wrt Windows version.
+        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS");
     }
 
     @Test
@@ -346,9 +348,10 @@ public class SparqlToWmiTest {
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         System.out.println("Rows number=" + the_rows.size());
 
+        // Filenames are converted to uppercase because cases are not stable depending on Windows version.
         Set<String> dirsSet = the_rows
                 .stream()
-                .map(entry -> entry.Elements.get("my_dir_name")).collect(Collectors.toSet());
+                .map(entry -> entry.Elements.get("my_dir_name").toUpperCase()).collect(Collectors.toSet());
         //for(String oneLib: dirsSet) {
         //    System.out.println("Lib=" + oneLib);
         //}
@@ -357,7 +360,7 @@ public class SparqlToWmiTest {
         "C:\WINDOWS\System32", "c:\windows\system32", "C:\WINDOWS\system32"
          */
         Assert.assertTrue(dirsSet.contains("C:\\WINDOWS"));
-        Assert.assertTrue(dirsSet.contains("C:\\WINDOWS\\system32"));
+        Assert.assertTrue(dirsSet.contains("C:\\WINDOWS\\SYSTEM32"));
     }
 
     @Test
