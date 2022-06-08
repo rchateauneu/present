@@ -1,5 +1,7 @@
 package paquetage;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.util.*;
 
@@ -14,11 +16,13 @@ abstract class Provider {
         if( ! MatchQuery(queryData)) {
             return null;
         }
+        System.out.println("Found provider:" + this.getClass().toString());
         return EffectiveSelect(queryData);
     }
 }
 
-// TODO: Test separately this provider.
+// TODO: Test separately these providers.
+
 class Provider_CIM_DataFile_Name extends Provider {
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DataFile", Set.of("Name"));
@@ -65,13 +69,9 @@ class Provider_CIM_DataFile_Name extends Provider {
             Version;
          */
 
-        for( Map.Entry<String, String> column : queryData.queryColumns.entrySet()) {
-            if(column.getKey().equals("FileName")) {
-                singleRow.Elements.put(queryData.mainVariable, fileName);
-            } else {
-                throw new Exception("Not implemented yet");
-            }
-        }
+        String variableName = queryData.ColumnToVariable("FileName");
+        if(variableName != null)
+            singleRow.Elements.put(variableName, fileName);
 
         // Add the main variable anyway.
         singleRow.Elements.put(queryData.mainVariable, pathFile);
@@ -81,7 +81,6 @@ class Provider_CIM_DataFile_Name extends Provider {
     }
 }
 
-// TODO: Test separately this provider.
 class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("PartComponent"));
@@ -96,11 +95,8 @@ class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
         String pathDirectory = ObjectPath.BuildPathWbem("Win32_Directory", Map.of("Name", parentPath));
 
         MetaSelecter.Row singleRow = new MetaSelecter.Row();
-        for( Map.Entry<String, String> column : queryData.queryColumns.entrySet()) {
-            if(column.getKey().equals("GroupComponent")) {
-                singleRow.Elements.put(column.getValue(), pathDirectory);
-            }
-        }
+        String variableName = queryData.ColumnToVariable("GroupComponent");
+        singleRow.Elements.put(variableName, pathDirectory);
 
         // It must also the path of the associator row, even if it will probably not be used.
         String pathAssoc = ObjectPath.BuildPathWbem(
@@ -114,26 +110,111 @@ class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
     }
 }
 
-// TODO: Test separately this provider.
+class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
+    public boolean MatchQuery(QueryData queryData) {
+        return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("GroupComponent"));
+    }
+    public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<MetaSelecter.Row> result = new ArrayList<>();
+        String valueGroupComponent = queryData.GetWhereValue("GroupComponent");
+        Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
+        String dirPath = properties.get("Name");
+        String pathGroupComponent = ObjectPath.BuildPathWbem("Win32_Directory", Map.of("Name", dirPath));
+
+        String variableName = queryData.ColumnToVariable("PartComponent");
+
+        File path = new File(dirPath);
+
+        File [] files = path.listFiles();
+        for (File aFile : files){
+            if (! aFile.isFile()){
+                continue;
+            }
+            String fileName = aFile.getAbsoluteFile().toString();
+
+            MetaSelecter.Row singleRow = new MetaSelecter.Row();
+
+            String valuePartComponent = ObjectPath.BuildPathWbem(
+                    "CIM_DataFile", Map.of(
+                            "Name", fileName));
+
+            singleRow.Elements.put(variableName, valuePartComponent);
+
+            // It must also the path of the associator row, even if it will probably not be used.
+            String pathAssoc = ObjectPath.BuildPathWbem(
+                    "CIM_DirectoryContainsFile", Map.of(
+                            "PartComponent", valuePartComponent,
+                            "GroupComponent", pathGroupComponent));
+            singleRow.Elements.put(queryData.mainVariable, pathAssoc);
+
+            result.add(singleRow);
+        }
+
+        return result;
+    }
+}
+
+/** The input os a module, a filename. It returns processes using it.
+ *
+ */
+class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
+    public boolean MatchQuery(QueryData queryData) {
+        return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Antecedent"));
+    }
+    public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<MetaSelecter.Row> result = new ArrayList<>();
+        String valueAntecedent = queryData.GetWhereValue("Antecedent");
+        Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
+        String filePath = properties.get("Name");
+        List<String> listPids = ProcessModules.GetFromModule(filePath);
+
+        String variableName = queryData.ColumnToVariable("Dependent");
+        for(String onePid : listPids) {
+            MetaSelecter.Row singleRow = new MetaSelecter.Row();
+            String pathDependent = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", onePid));
+            singleRow.Elements.put(variableName, pathDependent);
+
+            String pathAssoc = ObjectPath.BuildPathWbem(
+                    "CIM_DirectoryContainsFile", Map.of(
+                            "Dependent", pathDependent,
+                            "Antecedent", valueAntecedent));
+            singleRow.Elements.put(queryData.mainVariable, pathAssoc);
+
+            result.add(singleRow);
+        }
+
+        return result;
+    }
+}
+
+/** The input is a process and it returns its executable and libraries.
+ *
+ */
 class Provider_CIM_ProcessExecutable_Dependent extends Provider {
     public boolean MatchQuery(QueryData queryData) {
-        return false;
-        //return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
+        return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
     }
     public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<MetaSelecter.Row> result = new ArrayList<>();
         String valueDependent = queryData.GetWhereValue("Dependent");
+        Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
+        String pidStr = properties.get("Handle");
+        List<String> listModules = ProcessModules.GetFromPid(pidStr);
 
+        String variableName = queryData.ColumnToVariable("Antecedent");
+        for(String oneFile : listModules) {
+            MetaSelecter.Row singleRow = new MetaSelecter.Row();
+            String pathAntecedent = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", oneFile));
+            singleRow.Elements.put(variableName, pathAntecedent);
 
+            String pathAssoc = ObjectPath.BuildPathWbem(
+                    "CIM_DirectoryContainsFile", Map.of(
+                            "Dependent", valueDependent,
+                            "Antecedent", pathAntecedent));
+            singleRow.Elements.put(queryData.mainVariable, pathAssoc);
 
-
-        ProcessHandle.allProcesses().forEach(processHandle -> {
-            System.out.println(processHandle.pid()+" "+processHandle.info());
-        });
-        long pid = 12345;
-        Optional op = ProcessHandle.of(pid);
-        ProcessHandle.Info in = ProcessHandle.of(pid).get().info();
-
+            result.add(singleRow);
+        }
 
         return result;
     }
@@ -162,18 +243,6 @@ public class MetaSelecter {
     {}
 
     public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
-        /*
-        Most costly queries according to Statistics:
-
-        CIM_ProcessExecutable:Dependent:264.706 s 333
-        TOTAL:264.706 s 333 calls 1 lines
-
-        CIM_ProcessExecutable:Antecedent:106.719 s 120
-        TOTAL:106.719 s 120 calls 1 lines
-
-        CIM_DirectoryContainsFile:PartComponent:28.174 s 10376
-        TOTAL:28.174 s 10376 calls 1 lines
-        */
         if(1!= 1 + 1) {
             ArrayList<Row> result = null;
 
@@ -185,7 +254,15 @@ public class MetaSelecter {
             if (result != null) {
                 return result;
             }
+            result = new Provider_CIM_DirectoryContainsFile_GroupComponent().TrySelect(queryData);
+            if (result != null) {
+                return result;
+            }
             result = new Provider_CIM_ProcessExecutable_Dependent().TrySelect(queryData);
+            if (result != null) {
+                return result;
+            }
+            result = new Provider_CIM_ProcessExecutable_Antecedent().TrySelect(queryData);
             if (result != null) {
                 return result;
             }

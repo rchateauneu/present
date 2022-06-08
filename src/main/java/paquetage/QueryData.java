@@ -96,6 +96,16 @@ public class QueryData {
         return null;
     }
 
+    public String ColumnToVariable(String columnName) {
+        for( Map.Entry<String, String> column : queryColumns.entrySet()) {
+            if (column.getKey().equals(columnName)) {
+                return column.getValue();
+            }
+        }
+        return null;
+    }
+
+
     /** This is used to evaluate the cost of accessing a single object given its path.
      * The keys are the class name and the fetched columns, because this information can be used
      * to create custom functions.

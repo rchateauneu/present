@@ -64,6 +64,10 @@ interface ProcessPathKernel32 extends Kernel32 {
 
 public class ProcessModules {
 
+    /** This returns all pids anf for each pid, the modules it is linked to.
+     * The first module of each array is the executable.
+     * @return
+     */
     public static Map<String, ArrayList<String>> GetAll() {
         HashMap<String, ArrayList<String>> result = new HashMap<>();
 
@@ -74,27 +78,8 @@ public class ProcessModules {
         try {
 
             while (kernel32.Process32Next(processSnapshot, processEntry)) {
-                // looks for a specific process
-                // if (Native.toString(processEntry.szExeFile).equalsIgnoreCase("textpad.exe")) {
-                ArrayList<String> newList = new ArrayList<>();
-                //System.out.println(processEntry.th32ProcessID + "\t" + Native.toString(processEntry.szExeFile));
-                WinNT.HANDLE moduleSnapshot =
-                        kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPMODULE, processEntry.th32ProcessID);
-                try {
-                    ProcessPathKernel32.MODULEENTRY32.ByReference me = new ProcessPathKernel32.MODULEENTRY32.ByReference();
-                    if (ProcessPathKernel32.INSTANCE.Module32First(moduleSnapshot, me)) {
-                        //System.out.println("\t" + me.szExePath() );
-                        //newList.add(me.szExePath());
-                        do {
-                            newList.add(me.szExePath());
-                            //System.out.println("\t" + me.szExePath());
-                        } while (ProcessPathKernel32.INSTANCE.Module32Next(moduleSnapshot, me));
-                    }
-                }
-                finally {
-                    kernel32.CloseHandle(moduleSnapshot);
-                }
-                result.put(processEntry.th32ProcessID.toString(), newList);
+                ArrayList<String> modulesList = GetFromPidDWord(processEntry.th32ProcessID);
+                result.put(processEntry.th32ProcessID.toString(), modulesList);
             }
         }
         finally {
@@ -102,4 +87,73 @@ public class ProcessModules {
         }
         return result;
     }
+
+    /** This returns an array of all pids using a given module.
+     *
+     * @param moduleName The file name.
+     * @return An array of pids as strings.
+     */
+    public static List<String> GetFromModule(String moduleName)
+    {
+        ArrayList<String> pidsList = new ArrayList<>();
+
+        Kernel32 kernel32 = (Kernel32) Native.loadLibrary(Kernel32.class, W32APIOptions.DEFAULT_OPTIONS);
+        Tlhelp32.PROCESSENTRY32.ByReference processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();
+        WinNT.HANDLE processSnapshot =
+                kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0));
+        try {
+            while (kernel32.Process32Next(processSnapshot, processEntry)) {
+                WinNT.HANDLE moduleSnapshot = kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPMODULE, processEntry.th32ProcessID);
+                try {
+                    ProcessPathKernel32.MODULEENTRY32.ByReference me = new ProcessPathKernel32.MODULEENTRY32.ByReference();
+                    if (ProcessPathKernel32.INSTANCE.Module32First(moduleSnapshot, me)) {
+                        do {
+                            if( moduleName.equals(me.szExePath()))
+                                pidsList.add(processEntry.th32ProcessID.toString());
+                        } while (ProcessPathKernel32.INSTANCE.Module32Next(moduleSnapshot, me));
+                    }
+                }
+                finally {
+                    kernel32.CloseHandle(moduleSnapshot);
+                }
+            }
+        }
+        finally {
+            kernel32.CloseHandle(processSnapshot);
+        }
+
+        return pidsList;
+    }
+
+    /** This returns the array of all modules used by a process.
+     *
+     * @param intProc The pid as DWORD.
+     * @return An array of module, the first one being the executable and is always present.
+     */
+    public static ArrayList<String> GetFromPidDWord(WinDef.DWORD intProc)
+    {
+        ArrayList<String> modulesList = new ArrayList<>();
+
+        Kernel32 kernel32 = (Kernel32) Native.loadLibrary(Kernel32.class, W32APIOptions.DEFAULT_OPTIONS);
+        WinNT.HANDLE moduleSnapshot = kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPMODULE, intProc);
+        try {
+            ProcessPathKernel32.MODULEENTRY32.ByReference me = new ProcessPathKernel32.MODULEENTRY32.ByReference();
+            if (ProcessPathKernel32.INSTANCE.Module32First(moduleSnapshot, me)) {
+                do {
+                    modulesList.add(me.szExePath());
+                } while (ProcessPathKernel32.INSTANCE.Module32Next(moduleSnapshot, me));
+            }
+        }
+        finally {
+            kernel32.CloseHandle(moduleSnapshot);
+        }
+
+        return modulesList;
+    }
+
+    public static List<String> GetFromPid(String strPid) {
+        WinDef.DWORD intProc = new WinDef.DWORD(Long.parseLong(strPid));
+        return GetFromPidDWord(intProc);
+    }
+
 }

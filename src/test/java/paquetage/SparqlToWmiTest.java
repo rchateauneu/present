@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 
 public class SparqlToWmiTest {
+    String pidString = String.valueOf(ProcessHandle.current().pid());
+
     @Test
     public void Execution_Win32_Process_1() throws Exception {
         String sparql_query = """
@@ -39,9 +41,6 @@ public class SparqlToWmiTest {
 
     @Test
     public void Execution_Win32_Process_2() throws Exception {
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
-
         String sparql_query = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -63,9 +62,6 @@ public class SparqlToWmiTest {
 
     @Test
     public void Execution_Forced_CIM_ProcessExecutable_1() throws Exception {
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
-
         String sparql_query = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -104,9 +100,6 @@ public class SparqlToWmiTest {
      * TODO: This test might fail is a process unexpectedly leaves in the middle of the query.
      */
     public void Execution_Forced_CIM_ProcessExecutable_2() throws Exception {
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
-
         String sparql_query = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -144,9 +137,6 @@ public class SparqlToWmiTest {
      * of main variables.
      */
     public void Execution_Forced_CIM_ProcessExecutable_3() throws Exception {
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
-
         String sparql_query = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -352,9 +342,6 @@ public class SparqlToWmiTest {
         Set<String> dirsSet = the_rows
                 .stream()
                 .map(entry -> entry.Elements.get("my_dir_name").toUpperCase()).collect(Collectors.toSet());
-        //for(String oneLib: dirsSet) {
-        //    System.out.println("Lib=" + oneLib);
-        //}
         /*
         Beware that filename cases are not stable. WMI returns for example:
         "C:\WINDOWS\System32", "c:\windows\system32", "C:\WINDOWS\system32"
