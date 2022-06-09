@@ -137,7 +137,6 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
             String valuePartComponent = ObjectPath.BuildPathWbem(
                     "CIM_DataFile", Map.of(
                             "Name", fileName));
-
             singleRow.Elements.put(variableName, valuePartComponent);
 
             // It must also the path of the associator row, even if it will probably not be used.
@@ -174,6 +173,7 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
             String pathDependent = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", onePid));
             singleRow.Elements.put(variableName, pathDependent);
 
+            // It must also the path of the associator row, even if it will probably not be used.
             String pathAssoc = ObjectPath.BuildPathWbem(
                     "CIM_DirectoryContainsFile", Map.of(
                             "Dependent", pathDependent,
@@ -207,6 +207,7 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
             String pathAntecedent = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", oneFile));
             singleRow.Elements.put(variableName, pathAntecedent);
 
+            // It must also the path of the associator row, even if it will probably not be used.
             String pathAssoc = ObjectPath.BuildPathWbem(
                     "CIM_DirectoryContainsFile", Map.of(
                             "Dependent", valueDependent,
@@ -219,6 +220,45 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
         return result;
     }
 }
+
+abstract class ObjectGetter {
+    public abstract boolean MatchGet(QueryData queryData);
+
+    // This assumes that all needed columns can be calculated.
+    public abstract MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
+
+    public MetaSelecter.Row TryGetObject(String objectPath, QueryData queryData) throws Exception
+    {
+        if( ! MatchGet(queryData)) {
+            return null;
+        }
+        System.out.println("Found provider:" + this.getClass().toString());
+        return GetSingleObject(objectPath, queryData);
+    }
+}
+
+class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
+    public boolean MatchGet(QueryData queryData) {
+        return queryData.ColumnsSubsetOf("CIM_DataFile", Set.of("Name"));
+    }
+    public MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+        Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
+        String fileName = properties.get("Name");
+        MetaSelecter.Row singleRow = new MetaSelecter.Row();
+        String variableName = queryData.ColumnToVariable("Name");
+        if(variableName != null) {
+            singleRow.Elements.put(variableName, fileName);
+        }
+
+        // It must also the path of the variable of the object, because it may be used by an associator.
+        String pathFile = ObjectPath.BuildPathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", fileName));
+        singleRow.Elements.put(queryData.mainVariable, pathFile);
+        return singleRow;
+    }
+}
+
 
 public class MetaSelecter {
     /**
@@ -244,27 +284,28 @@ public class MetaSelecter {
 
     public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
         if(1!= 1 + 1) {
-            ArrayList<Row> result = null;
+            // TODO : Vary tests by enabling/disabling providers.
+            ArrayList<Row> rowsArray = null;
 
-            result = new Provider_CIM_DataFile_Name().TrySelect(queryData);
-            if (result != null) {
-                return result;
+            rowsArray = new Provider_CIM_DataFile_Name().TrySelect(queryData);
+            if (rowsArray != null) {
+                return rowsArray;
             }
-            result = new Provider_CIM_DirectoryContainsFile_PartComponent().TrySelect(queryData);
-            if (result != null) {
-                return result;
+            rowsArray = new Provider_CIM_DirectoryContainsFile_PartComponent().TrySelect(queryData);
+            if (rowsArray != null) {
+                return rowsArray;
             }
-            result = new Provider_CIM_DirectoryContainsFile_GroupComponent().TrySelect(queryData);
-            if (result != null) {
-                return result;
+            rowsArray = new Provider_CIM_DirectoryContainsFile_GroupComponent().TrySelect(queryData);
+            if (rowsArray != null) {
+                return rowsArray;
             }
-            result = new Provider_CIM_ProcessExecutable_Dependent().TrySelect(queryData);
-            if (result != null) {
-                return result;
+            rowsArray = new Provider_CIM_ProcessExecutable_Dependent().TrySelect(queryData);
+            if (rowsArray != null) {
+                return rowsArray;
             }
-            result = new Provider_CIM_ProcessExecutable_Antecedent().TrySelect(queryData);
-            if (result != null) {
-                return result;
+            rowsArray = new Provider_CIM_ProcessExecutable_Antecedent().TrySelect(queryData);
+            if (rowsArray != null) {
+                return rowsArray;
             }
         }
         return wmiSelecter.WqlSelectWMI(queryData);
@@ -278,21 +319,16 @@ public class MetaSelecter {
         return WqlSelect(className, variable, columns, null);
     }
 
-    void GetVariablesFromNodePath(String objectPath, QueryData queryData, Map<String, String> variablesContext) throws Exception {
-        /*
-        Most costly queries according to Statistics:
+    Row GetVariablesFromNodePath(String objectPath, QueryData queryData) throws Exception {
+        if(1!= 1 + 1) {
+            // TODO : Vary tests by enabling/disabling providers.
+            Row singleRow = null;
+            singleRow = new ObjectGetter_Cim_DataFile_Name().TryGetObject(objectPath, queryData);
+            if (singleRow != null) {
+                return singleRow;
+            }
+        }
 
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll":Name:0.158 s 1
-        TOTAL:55.696 s 4395 calls 4395 lines
-
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\Users\\rchat\\AppData\\Local\\Microsoft\\OneDrive\\22.099.0508.0001\\Qt5Gui.dll"::0.573 s 1
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"::0.0 s 172
-        TOTAL:17.614 s 10376 calls 1276 lines
-
-        \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll":Name:0.158 s 1
-        TOTAL:55.696 s 4395 calls 4395 lines
-
-        */
-        wmiSelecter.GetVariablesFromNodePath(objectPath, queryData, variablesContext);
+            return wmiSelecter.GetVariablesFromNodePath(objectPath, queryData);
     }
 }

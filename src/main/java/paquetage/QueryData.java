@@ -82,6 +82,16 @@ public class QueryData {
         return true;
     }
 
+    public boolean ColumnsSubsetOf(String whereClassName, Set<String> selectedColumns) {
+        if(! className.equals(whereClassName)) {
+            return false;
+        }
+        Set<String> requiredColumns = queryColumns.keySet();
+        return selectedColumns.containsAll(requiredColumns);
+    }
+
+
+
     /** There should be a handful of elements so looping is OK.
      *
      * @param columnName "Handle", "Name", "PartComponent" etc...

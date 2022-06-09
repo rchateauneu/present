@@ -105,6 +105,16 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
         current_rows.add(new_row);
     }
 
+    void RowToContext(MetaSelecter.Row singleRow) throws Exception {
+        for(Map.Entry<String, String> entry : singleRow.Elements.entrySet()) {
+            String variableName = entry.getKey();
+            if(!variablesContext.containsKey(variableName)){
+                throw new Exception("Variable " + variableName + " from selection not in context");
+            }
+            variablesContext.put(variableName, entry.getValue());
+        }
+    }
+
     void ExecuteOneLevel(int index) throws Exception
     {
         if(index == prepared_queries.size())
@@ -120,8 +130,10 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                 throw new Exception("Where clauses should be empty if the main variable is available");
             }
             String objectPath = variablesContext.get(queryData.mainVariable);
-            metaSelecter.GetVariablesFromNodePath(objectPath, queryData, variablesContext);
+            MetaSelecter.Row singleRow = metaSelecter.GetVariablesFromNodePath(objectPath, queryData);
             queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
+
+            RowToContext(singleRow);
             // New WQL query for this row only.
             ExecuteOneLevel(index + 1);
         } else {
@@ -156,13 +168,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                     throw new Exception("Inconsistent size between returned results " + row.Elements.size()
                             + " and columns:" + numColumns);
                 }
-                for(Map.Entry<String, String> entry : row.Elements.entrySet()) {
-                    String variableName = entry.getKey();
-                    if(!variablesContext.containsKey(variableName)){
-                        throw new Exception("Variable " + variableName + " from selection not in context");
-                    }
-                    variablesContext.put(variableName, entry.getValue());
-                }
+                RowToContext(row);
                 // New WQL query for this row.
                 ExecuteOneLevel(index + 1);
             } //  Next fetched row.

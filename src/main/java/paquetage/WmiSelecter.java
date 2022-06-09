@@ -284,22 +284,23 @@ public class WmiSelecter {
         return objectNode;
     }
 
-    void GetVariablesFromNodePath(String objectPath, QueryData queryData, Map<String, String> variablesContext) throws Exception {
+    MetaSelecter.Row GetVariablesFromNodePath(String objectPath, QueryData queryData) throws Exception {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
 
-        // Now takes the values needed from the members of this object.
+        MetaSelecter.Row singleRow = new MetaSelecter.Row();
         for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
             String variableName = entry.getValue();
-            if (!variablesContext.containsKey(variableName)) {
-                throw new Exception("Variable " + variableName + " from object not in context");
+            if(variableName == null) {
+                throw new Exception("Null variable name for objectPath=" + objectPath);
             }
             String objectProperty = objectNode == null
                     ? "Object " + objectPath + " is null"
                     : GetObjectProperty(objectNode, entry.getKey());
-            variablesContext.put(variableName, objectProperty);
+            singleRow.Elements.put(variableName, objectProperty);
         }
+        return singleRow;
     }
 }
 
