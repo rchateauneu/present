@@ -64,14 +64,15 @@ interface ProcessPathKernel32 extends Kernel32 {
 
 public class ProcessModules {
 
+    Kernel32 kernel32 = (Kernel32) Native.loadLibrary(Kernel32.class, W32APIOptions.DEFAULT_OPTIONS);
+
     /** This returns all pids anf for each pid, the modules it is linked to.
      * The first module of each array is the executable.
      * @return
      */
-    public static Map<String, ArrayList<String>> GetAll() {
+    public Map<String, ArrayList<String>> GetAll() {
         HashMap<String, ArrayList<String>> result = new HashMap<>();
 
-        Kernel32 kernel32 = (Kernel32) Native.loadLibrary(Kernel32.class, W32APIOptions.DEFAULT_OPTIONS);
         Tlhelp32.PROCESSENTRY32.ByReference processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();
         WinNT.HANDLE processSnapshot =
                 kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0));
@@ -93,11 +94,10 @@ public class ProcessModules {
      * @param moduleName The file name.
      * @return An array of pids as strings.
      */
-    public static List<String> GetFromModule(String moduleName)
+    public List<String> GetFromModule(String moduleName)
     {
         ArrayList<String> pidsList = new ArrayList<>();
 
-        Kernel32 kernel32 = (Kernel32) Native.loadLibrary(Kernel32.class, W32APIOptions.DEFAULT_OPTIONS);
         Tlhelp32.PROCESSENTRY32.ByReference processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();
         WinNT.HANDLE processSnapshot =
                 kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0));
@@ -130,11 +130,10 @@ public class ProcessModules {
      * @param intProc The pid as DWORD.
      * @return An array of module, the first one being the executable and is always present.
      */
-    public static ArrayList<String> GetFromPidDWord(WinDef.DWORD intProc)
+    public ArrayList<String> GetFromPidDWord(WinDef.DWORD intProc)
     {
         ArrayList<String> modulesList = new ArrayList<>();
 
-        Kernel32 kernel32 = (Kernel32) Native.loadLibrary(Kernel32.class, W32APIOptions.DEFAULT_OPTIONS);
         WinNT.HANDLE moduleSnapshot = kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPMODULE, intProc);
         try {
             ProcessPathKernel32.MODULEENTRY32.ByReference me = new ProcessPathKernel32.MODULEENTRY32.ByReference();
@@ -151,7 +150,7 @@ public class ProcessModules {
         return modulesList;
     }
 
-    public static List<String> GetFromPid(String strPid) {
+    public List<String> GetFromPid(String strPid) {
         WinDef.DWORD intProc = new WinDef.DWORD(Long.parseLong(strPid));
         return GetFromPidDWord(intProc);
     }

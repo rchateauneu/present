@@ -153,10 +153,12 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
     }
 }
 
-/** The input os a module, a filename. It returns processes using it.
+/** The input is a module, a filename. It returns processes using it.
  *
  */
 class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
+    ProcessModules processModules = new ProcessModules();
+
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Antecedent"));
     }
@@ -165,7 +167,7 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
         String valueAntecedent = queryData.GetWhereValue("Antecedent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
         String filePath = properties.get("Name");
-        List<String> listPids = ProcessModules.GetFromModule(filePath);
+        List<String> listPids = processModules.GetFromModule(filePath);
 
         String variableName = queryData.ColumnToVariable("Dependent");
         for(String onePid : listPids) {
@@ -191,6 +193,8 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
  *
  */
 class Provider_CIM_ProcessExecutable_Dependent extends Provider {
+    ProcessModules processModules = new ProcessModules();
+
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
     }
@@ -199,7 +203,7 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
         String valueDependent = queryData.GetWhereValue("Dependent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
         String pidStr = properties.get("Handle");
-        List<String> listModules = ProcessModules.GetFromPid(pidStr);
+        List<String> listModules = processModules.GetFromPid(pidStr);
 
         String variableName = queryData.ColumnToVariable("Antecedent");
         for(String oneFile : listModules) {
@@ -279,6 +283,14 @@ public class MetaSelecter {
 
     WmiSelecter wmiSelecter = new WmiSelecter();
 
+    Provider[] providers = {
+        new Provider_CIM_DataFile_Name(),
+        new Provider_CIM_DirectoryContainsFile_PartComponent(),
+        new Provider_CIM_DirectoryContainsFile_GroupComponent(),
+        new Provider_CIM_ProcessExecutable_Dependent(),
+        new Provider_CIM_ProcessExecutable_Antecedent()
+    };
+
     public MetaSelecter()
     {}
 
@@ -286,26 +298,11 @@ public class MetaSelecter {
         if(1!= 1 + 1) {
             // TODO : Vary tests by enabling/disabling providers.
             ArrayList<Row> rowsArray = null;
-
-            rowsArray = new Provider_CIM_DataFile_Name().TrySelect(queryData);
-            if (rowsArray != null) {
-                return rowsArray;
-            }
-            rowsArray = new Provider_CIM_DirectoryContainsFile_PartComponent().TrySelect(queryData);
-            if (rowsArray != null) {
-                return rowsArray;
-            }
-            rowsArray = new Provider_CIM_DirectoryContainsFile_GroupComponent().TrySelect(queryData);
-            if (rowsArray != null) {
-                return rowsArray;
-            }
-            rowsArray = new Provider_CIM_ProcessExecutable_Dependent().TrySelect(queryData);
-            if (rowsArray != null) {
-                return rowsArray;
-            }
-            rowsArray = new Provider_CIM_ProcessExecutable_Antecedent().TrySelect(queryData);
-            if (rowsArray != null) {
-                return rowsArray;
+            for(Provider provider: providers) {
+                rowsArray = provider.TrySelect(queryData);
+                if (rowsArray != null) {
+                    return rowsArray;
+                }
             }
         }
         return wmiSelecter.WqlSelectWMI(queryData);
@@ -319,16 +316,22 @@ public class MetaSelecter {
         return WqlSelect(className, variable, columns, null);
     }
 
+    ObjectGetter[] objectGetters = {
+        new ObjectGetter_Cim_DataFile_Name()
+    };
+
     Row GetVariablesFromNodePath(String objectPath, QueryData queryData) throws Exception {
         if(1!= 1 + 1) {
             // TODO : Vary tests by enabling/disabling providers.
             Row singleRow = null;
-            singleRow = new ObjectGetter_Cim_DataFile_Name().TryGetObject(objectPath, queryData);
-            if (singleRow != null) {
-                return singleRow;
+            for(ObjectGetter objectGetter: objectGetters) {
+                singleRow = objectGetter.TryGetObject(objectPath, queryData);
+                if (singleRow != null) {
+                    return singleRow;
+                }
             }
         }
 
-            return wmiSelecter.GetVariablesFromNodePath(objectPath, queryData);
+        return wmiSelecter.GetVariablesFromNodePath(objectPath, queryData);
     }
 }

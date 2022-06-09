@@ -11,6 +11,18 @@ import java.util.stream.Collectors;
 public class SparqlToWmiTest {
     String pidString = String.valueOf(ProcessHandle.current().pid());
 
+    static Set<String> RowColumnAsSet(ArrayList<MetaSelecter.Row> rowsList, String columnName) {
+        return rowsList
+                .stream()
+                .map(entry -> entry.Elements.get(columnName)).collect(Collectors.toSet());
+    }
+
+    static Set<String> RowColumnAsSetUppercase(ArrayList<MetaSelecter.Row> rowsList, String columnName) {
+        return rowsList
+                .stream()
+                .map(entry -> entry.Elements.get(columnName).toUpperCase()).collect(Collectors.toSet());
+    }
+
     @Test
     public void Execution_Win32_Process_1() throws Exception {
         String sparql_query = """
@@ -82,9 +94,7 @@ public class SparqlToWmiTest {
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
-        Set<String> libsSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_file_name")).collect(Collectors.toSet());
+        Set<String> libsSet = RowColumnAsSet(the_rows, "my_file_name");
         // This tests the presence of some libraries which are used by the current Java process.
         Assert.assertTrue(libsSet.contains("C:\\Program Files\\Java\\jdk-17.0.2\\bin\\java.exe"));
         Assert.assertTrue(libsSet.contains("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"));
@@ -121,10 +131,8 @@ public class SparqlToWmiTest {
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
 
-        Set<String> libsSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_handle")).collect(Collectors.toSet());
         // The current pid must be there because it uses this library.
+        Set<String> libsSet = RowColumnAsSet(the_rows, "my_handle");
         Assert.assertTrue(libsSet.contains(pidString));
     }
 
@@ -159,15 +167,12 @@ public class SparqlToWmiTest {
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
 
-        Set<String> captionsSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_caption")).collect(Collectors.toSet());
         // The current caption must be there because it uses this library.
+        Set<String> captionsSet = RowColumnAsSet(the_rows, "my_caption");
         Assert.assertTrue(captionsSet.contains("java.exe"));
-        Set<String> libsSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_handle")).collect(Collectors.toSet());
+
         // The current pid must be there because it uses this library.
+        Set<String> libsSet = RowColumnAsSet(the_rows, "my_handle");
         Assert.assertTrue(libsSet.contains(pidString));
     }
 
@@ -227,11 +232,10 @@ public class SparqlToWmiTest {
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
-        Set<String> filesSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_file_name").toUpperCase()).collect(Collectors.toSet());
+
         // These files must be in this directory.
         // Filename cases in system directories are not stable, therefore uppercase.
+        Set<String> filesSet = RowColumnAsSetUppercase(the_rows, "my_file_name");
         Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\NTDLL.DLL"));
         Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\USER32.DLL"));
     }
@@ -299,12 +303,55 @@ public class SparqlToWmiTest {
 
         SparqlToWmi patternSparql = new SparqlToWmi(extractor);
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
-        Set<String> filesSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_file_name")).collect(Collectors.toSet());
+
         // These files must be in this directory.
+        Set<String> filesSet = RowColumnAsSet(the_rows, "my_file_name");
         Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\en-US\\hmmapi.dll.mui"));
         Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\images\\bing.ico"));
+    }
+
+    @Test
+    /**
+     * This gets the grandparent of the sub-sub-files of a directory. It must be the same.
+     */
+    public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_3() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_dir_name
+                    where {
+                        ?my8_dir rdf:type cim:Win32_Directory .
+                        ?my8_dir cim:Name ?my_dir_name .
+                        ?my7_assoc rdf:type cim:Win32_SubDirectory .
+                        ?my7_assoc cim:PartComponent ?my6_dir .
+                        ?my7_assoc cim:GroupComponent ?my8_dir .
+                        ?my6_dir rdf:type cim:Win32_Directory .
+                        ?my5_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                        ?my5_assoc cim:PartComponent ?my4_file .
+                        ?my5_assoc cim:GroupComponent ?my6_dir .
+                        ?my4_file rdf:type cim:CIM_DataFile .
+                        ?my3_assoc rdf:type cim:CIM_DirectoryContainsFile .
+                        ?my3_assoc cim:PartComponent ?my4_file .
+                        ?my3_assoc cim:GroupComponent ?my2_dir .
+                        ?my2_dir rdf:type cim:Win32_Directory .
+                        ?my1_assoc rdf:type cim:Win32_SubDirectory .
+                        ?my1_assoc cim:PartComponent ?my2_dir .
+                        ?my1_assoc cim:GroupComponent ?my0_dir .
+                        ?my0_dir rdf:type cim:Win32_Directory .
+                        ?my0_dir cim:Name "C:\\\\Program Files\\\\Internet Explorer" .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        // It must fall back to the initial directory.
+        Set<String> dirsSet = RowColumnAsSet(the_rows, "my_dir_name");
+        Assert.assertEquals(1, dirsSet.size());
+        Assert.assertTrue(dirsSet.contains("C:\\Program Files\\Internet Explorer"));
     }
 
     @Test
@@ -338,14 +385,11 @@ public class SparqlToWmiTest {
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         System.out.println("Rows number=" + the_rows.size());
 
-        // Filenames are converted to uppercase because cases are not stable depending on Windows version.
-        Set<String> dirsSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_dir_name").toUpperCase()).collect(Collectors.toSet());
         /*
         Beware that filename cases are not stable. WMI returns for example:
         "C:\WINDOWS\System32", "c:\windows\system32", "C:\WINDOWS\system32"
          */
+        Set<String> dirsSet = RowColumnAsSetUppercase(the_rows, "my_dir_name");
         Assert.assertTrue(dirsSet.contains("C:\\WINDOWS"));
         Assert.assertTrue(dirsSet.contains("C:\\WINDOWS\\SYSTEM32"));
     }
@@ -381,9 +425,7 @@ public class SparqlToWmiTest {
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
         System.out.println("Rows number=" + the_rows.size());
 
-        Set<String> namesSet = the_rows
-                .stream()
-                .map(entry -> entry.Elements.get("my_process_name")).collect(Collectors.toSet());
+        Set<String> namesSet = RowColumnAsSet(the_rows, "my_process_name");
         for(String oneName: namesSet) {
             System.out.println("Name=" + oneName);
         }
@@ -392,11 +434,75 @@ public class SparqlToWmiTest {
 
 
     /**
-     *         self.assertEqual(map_attributes["Win32_MountPoint.Directory"],
-     *             {"predicate_type": "ref:Win32_Directory", "predicate_domain": ["Win32_Volume"]})
-     *         self.assertEqual(map_attributes["Win32_MountPoint.Volume"],
-     *             {"predicate_type": "ref:Win32_Volume", "predicate_domain": ["Win32_Directory"]})
+     Look for the volume that disk "C:" is mapped to.
+     __PATH           : \\LAPTOP-R89KG6V1\root\cimv2:Win32_MountPoint.Directory="Win32_Directory.Name=\"C:\\\\\"",Volume="Win32_Volume.DeviceID=\"\\\\\\\\?\\\\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\\\\\""
+     Directory        : Win32_Directory.Name="C:\\"
+     Volume           : Win32_Volume.DeviceID="\\\\?\\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\\"
+
+     Get-WmiObject -Query 'Select * from Win32_MountPoint where Directory = "Win32_Directory.Name=\"C:\\\\\""'
      */
+    @Test
+    public void Execution_Forced_Win32_MountPoint_1() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?device_id
+            where {
+                ?my2_volume cim:DeviceID ?device_id .
+                ?my2_volume rdf:type cim:Win32_Volume .
+                ?my1_assoc rdf:type cim:Win32_MountPoint .
+                ?my1_assoc cim:Volume ?my2_volume .
+                ?my1_assoc cim:Directory ?my0_dir .
+                ?my0_dir rdf:type cim:Win32_Directory .
+                ?my0_dir cim:Name "C:\\\\" .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        // Disk "C:" must be found.
+        Set<String> volumesSet = RowColumnAsSet(the_rows, "device_id");
+        for(String deviceId: volumesSet) {
+            System.out.println("DeviceId=" + deviceId);
+        }
+        Assert.assertTrue(volumesSet.size() > 0);
+    }
+
+    /***
+     * Look for mounted volumes.
+     */
+    @Test
+    public void Execution_Forced_Win32_MountPoint_2() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?dir_name
+            where {
+                ?my0_assoc rdf:type cim:Win32_MountPoint .
+                ?my0_assoc cim:Directory ?my1_dir .
+                ?my1_dir rdf:type cim:Win32_Directory .
+                ?my1_dir cim:Name ?dir_name .
+            }
+        """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        // Disk "C:" must be found.
+        Set<String> dirsSet = RowColumnAsSet(the_rows, "dir_name");
+        for(String oneName: dirsSet) {
+            System.out.println("Dir=" + dirsSet);
+        }
+        Assert.assertTrue(dirsSet.size() > 0);
+        Assert.assertTrue(dirsSet.contains("C:\\"));
+    }
 
 
 
