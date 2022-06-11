@@ -101,15 +101,19 @@ public class ProcessModules {
         Tlhelp32.PROCESSENTRY32.ByReference processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();
         WinNT.HANDLE processSnapshot =
                 kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0));
+        ProcessPathKernel32.MODULEENTRY32.ByReference me = new ProcessPathKernel32.MODULEENTRY32.ByReference();
         try {
             while (kernel32.Process32Next(processSnapshot, processEntry)) {
                 WinNT.HANDLE moduleSnapshot = kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPMODULE, processEntry.th32ProcessID);
                 try {
-                    ProcessPathKernel32.MODULEENTRY32.ByReference me = new ProcessPathKernel32.MODULEENTRY32.ByReference();
+                    // ProcessPathKernel32.MODULEENTRY32.ByReference me = new ProcessPathKernel32.MODULEENTRY32.ByReference();
                     if (ProcessPathKernel32.INSTANCE.Module32First(moduleSnapshot, me)) {
                         do {
-                            if( moduleName.equals(me.szExePath()))
+                            if( moduleName.equals(me.szExePath())) {
                                 pidsList.add(processEntry.th32ProcessID.toString());
+                                // No need to look further.
+                                break;
+                            }
                         } while (ProcessPathKernel32.INSTANCE.Module32Next(moduleSnapshot, me));
                     }
                 }

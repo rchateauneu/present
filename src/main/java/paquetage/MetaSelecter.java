@@ -263,6 +263,28 @@ class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
     }
 }
 
+class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
+    public boolean MatchGet(QueryData queryData) {
+        return queryData.ColumnsSubsetOf("Win32_Process", Set.of("Handle"));
+    }
+    public MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+        Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
+        String fileName = properties.get("Handle");
+        MetaSelecter.Row singleRow = new MetaSelecter.Row();
+        String variableName = queryData.ColumnToVariable("Handle");
+        if(variableName != null) {
+            singleRow.Elements.put(variableName, fileName);
+        }
+
+        // It must also the path of the variable of the object, because it may be used by an associator.
+        String pathFile = ObjectPath.BuildPathWbem(
+                "Win32_Process", Map.of(
+                        "Handle", fileName));
+        singleRow.Elements.put(queryData.mainVariable, pathFile);
+        return singleRow;
+    }
+}
+
 
 public class MetaSelecter {
     /**
@@ -317,7 +339,8 @@ public class MetaSelecter {
     }
 
     ObjectGetter[] objectGetters = {
-        new ObjectGetter_Cim_DataFile_Name()
+        new ObjectGetter_Cim_DataFile_Name(),
+        new ObjectGetter_Win32_Process_Handle()
     };
 
     Row GetVariablesFromNodePath(String objectPath, QueryData queryData) throws Exception {

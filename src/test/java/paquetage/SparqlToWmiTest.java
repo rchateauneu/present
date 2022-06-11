@@ -504,6 +504,192 @@ public class SparqlToWmiTest {
         Assert.assertTrue(dirsSet.contains("C:\\"));
     }
 
+    /***
+     * Volume of a given directory.
+     */
+    @Test
+    public void Execution_Forced_Win32_MountPoint_3() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?device_id
+                    where {
+                        ?my3_volume cim:DeviceID ?device_id .
+                        ?my3_volume rdf:type cim:Win32_Volume .
+                        ?my2_assoc rdf:type cim:Win32_MountPoint .
+                        ?my2_assoc cim:Volume ?my3_volume .
+                        ?my2_assoc cim:Directory ?my1_dir .
+                        ?my1_dir rdf:type cim:Win32_Directory .
+                        ?my1_dir cim:Name ?my_drive .
+                        ?my0_dir rdf:type cim:Win32_Directory .
+                        ?my0_dir cim:Name "C:\\\\Program Files (x86)" .
+                        ?my0_dir cim:Drive ?my_drive .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        // Disk "C:" must be found.
+        Set<String> devicesSet = RowColumnAsSet(the_rows, "device_id");
+        for(String drive: devicesSet) {
+            System.out.println("Drive=" + drive);
+        }
+        // Il faut "C:\\" mais pas "C:"
+        Assert.assertEquals(1, devicesSet.size());
+        Assert.assertTrue(devicesSet.contains("C:"));
+    }
+
+    /***
+     * Drive of a given directory.
+     */
+    @Test
+    public void Execution_Forced_Win32_Directory_Drive_1() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_drive ?my1_dir
+                    where {
+                        ?my1_dir rdf:type cim:Win32_Directory .
+                        ?my1_dir cim:Name ?my_drive .
+                        ?my0_dir rdf:type cim:Win32_Directory .
+                        ?my0_dir cim:Name "C:\\\\Program Files (x86)" .
+                        ?my0_dir cim:Drive ?my_drive .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_drive", "my1_dir"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        // Disk "C:" must be found.
+        Set<String> drivesSet = RowColumnAsSet(the_rows, "my_drive");
+        for(String drive: drivesSet) {
+            System.out.println("Drive=" + drive);
+        }
+        Assert.assertTrue(drivesSet.size() == 1);
+        Assert.assertTrue(drivesSet.contains("c:"));
+
+        // Display the dir path.
+        Set<String> dirsSet = RowColumnAsSet(the_rows, "my1_dir");
+        for(String dir: dirsSet) {
+            System.out.println("Dir=" + dir);
+        }
+    }
+
+    @Test
+    public void Execution_Forced_Win32_Account() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_account_name
+                    where {
+                        ?my_account rdf:type cim:Win32_Account .
+                        ?my_account cim:Name ?my_account_name .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_account_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        Set<String> accountsSet = RowColumnAsSet(the_rows, "my_account_name");
+        Assert.assertTrue(accountsSet.contains("Users"));
+    }
+
+    @Test
+    public void Execution_Forced_Win32_COMClass() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_class_name
+                    where {
+                        ?my_com_class rdf:type cim:Win32_COMClass .
+                        ?my_com_class cim:Name ?my_class_name .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_class_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        Set<String> classesSet = RowColumnAsSet(the_rows, "my_class_name");
+        for(String className: classesSet) {
+            System.out.println("Class=" + className);
+        }
+        // Some randomly-chosen classes.
+        Assert.assertTrue(classesSet.contains("Memory Allocator"));
+        Assert.assertTrue(classesSet.contains("System.Exception"));
+    }
+
+    @Test
+    public void Execution_Forced_Win32_Thread() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_thread_name
+                    where {
+                        ?my_thread rdf:type cim:Win32_Thread .
+                        ?my_thread cim:Name ?my_thread_name .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        Set<String> threadsSet = RowColumnAsSet(the_rows, "my_thread_name");
+        for(String threadName: threadsSet) {
+            if((threadName != null) && ! threadName.equals(""))
+                System.out.println("Thread=" + threadName);
+        }
+        // Most threads have no name.
+        Assert.assertTrue(threadsSet.contains(null));
+    }
+
+    @Test
+    public void Execution_Forced_Win32_Product() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_product_name
+                    where {
+                        ?my_product rdf:type cim:Win32_Product .
+                        ?my_product cim:Name ?my_product_name .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_product_name"));
+
+        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+
+        Set<String> productsSet = RowColumnAsSet(the_rows, "my_product_name");
+        for(String productName: productsSet) {
+            if((productName != null) && ! productName.equals(""))
+                System.out.println("Product=" + productName);
+        }
+        // Most threads have no name.
+        Assert.assertTrue(productsSet.contains(null));
+    }
+
+    /*
+    PS C:\Users\rchat> Get-WmiObject -Query 'Select * from Win32_DCOMApplication'
+    PS C:\Users\rchat> Get-WmiObject -Query 'Select * from Win32_DCOMApplicationSetting'
+    PS C:\Users\rchat> Get-WmiObject -Query 'Select * from CIM_ElementSetting'
+    */
 
 
     /*
