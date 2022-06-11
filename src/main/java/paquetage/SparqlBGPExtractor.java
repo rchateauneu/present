@@ -19,14 +19,12 @@ import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
  * This extracts the BGP (basic graph patterns) from a Sparql query.
  */
 public class SparqlBGPExtractor {
-    public String sparql_query;
     public Set<String> bindings;
     Map<String, ObjectPattern> patternsMap;
 
     public SparqlBGPExtractor(String input_query) throws Exception {
-        sparql_query = input_query;
         patternsMap = null;
-        ParseQuery();
+        ParseQuery(input_query);
     }
 
     /**
@@ -39,7 +37,7 @@ public class SparqlBGPExtractor {
         return patternsArray;
     }
 
-    void ParseQuery() throws Exception {
+    void ParseQuery(String sparql_query) throws Exception {
         SPARQLParser parser = new SPARQLParser();
         ParsedQuery pq = parser.parseQuery(sparql_query, null);
         TupleExpr tupleExpr = pq.getTupleExpr();
@@ -87,6 +85,9 @@ public class SparqlBGPExtractor {
         }
     }
 
+    /** This is used to extract the BGPs of a Sparql query.
+     *
+     */
     static class PatternsVisitor extends AbstractQueryModelVisitor {
         public void meet(TripleRef node) {
         }

@@ -3,133 +3,81 @@ package paquetage;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * This does not optimize the queries by changing the order of queried WMI classes.
+
+/** This implements the nested execution of queries based on a list of BGP patterns.
  */
-abstract class SparqlToWmiAbstract {
-    HashMap<String, String> variablesContext;
-
-    /** It represented the nested WQL queries.
-    There is one such query for each object exposed in a Sparql query.
-     */
-    public List<QueryData> prepared_queries;
-
-    /** This takes as input a list of object patterns, and assumes that each of them represents a WQL query,
-     * there queries being nested into one another (top-level first).
-     * The executino of WQL queries can be optimising be changing the order of the patterns list.
-     * @param patterns
-     * @throws Exception
-     */
-    public SparqlToWmiAbstract(List<ObjectPattern> patterns) throws Exception
-    {
-        prepared_queries = new ArrayList<QueryData>();
-
-        // In this constructor, it is filled with all variables and null values.
-        variablesContext = new HashMap<>();
-
-        for(ObjectPattern pattern: patterns)  {
-            List<QueryData.WhereEquality> wheres = new ArrayList<>();
-            Map<String, String> selected_variables = new HashMap<>();
-
-            // Now, split the variables of this object, between:
-            // - the variables known at this stage from the previous queries, which can be used in the "WHERE" clause,
-            // - the variables which are not known yet, and returned by this WQL query.
-            // The variable representing the object is selected anyway and contains the WMI relative path.
-            for(ObjectPattern.PredicateObject keyValue: pattern.Members) {
-                String predicateName = keyValue.Predicate();
-                String valueContent = keyValue.Content();
-                if(! predicateName.contains("#")) {
-                    throw new Exception("Invalid predicate:" + predicateName);
-                }
-                String shortPredicate = predicateName.split("#")[1];
-
-                QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(shortPredicate, valueContent, keyValue.isVariable());
-
-                if(keyValue.isVariable()) {
-                    if(variablesContext.containsKey(valueContent))  {
-                        // If it is a variable calculated in the previous queries, its value is known when executing.
-                        wheres.add(wmiKeyValue);
-                    } else {
-                        selected_variables.put(shortPredicate, valueContent);
-                    }
-                } else {
-                    // If the value of the predicate is known because it is a constant.
-                    wheres.add(wmiKeyValue);
-                }
-            }
-
-            // The same variables might be added several times.
-            for(String variable_name : selected_variables.values()) {
-                variablesContext.put(variable_name, null);
-            }
-
-            // The variable which defines the object will receive a value with the execution of this WQL query,
-            // but maybe it is already known because of an association request done before.
-            boolean isMainVariableAvailable = variablesContext.containsKey(pattern.VariableName);
-            if(!isMainVariableAvailable) {
-                variablesContext.put(pattern.VariableName, null);
-            }
-
-            if(! pattern.className.contains("#")) {
-                throw new Exception("Invalid class name:" + pattern.className);
-            }
-            String shortClassName = pattern.className.split("#")[1];
-
-            QueryData queryData = new QueryData(shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
-            prepared_queries.add(queryData);
-        }
-        if(prepared_queries.size() != patterns.size()) {
-            throw new Exception("Inconsistent QueryData creation");
-        }
-    }
-}
-
-public class SparqlToWmi extends SparqlToWmiAbstract {
+public class SparqlToWmi {
+    DependenciesBuilder dependencies;
     ArrayList<MetaSelecter.Row> current_rows;
     MetaSelecter metaSelecter;
     SparqlBGPExtractor extractor;
 
     public SparqlToWmi(SparqlBGPExtractor input_extractor) throws Exception {
-        super(input_extractor.patternsAsArray());
+        // TODO: Mettre ici l'optimisation des QueryData car ici, on a la connaissance des providers.
+        dependencies = new DependenciesBuilder(input_extractor.patternsAsArray());
         metaSelecter = new MetaSelecter();
         extractor = input_extractor;
     }
 
+    /**
+     * This is used only for testing because what is important is to created RDF triples which are inserted
+     * in the target repository.
+     */
     void CreateCurrentRow()
     {
         MetaSelecter.Row new_row = new MetaSelecter.Row();
         for(String binding : extractor.bindings)
         {
-            new_row.Elements.put(binding, variablesContext.get(binding));
+            new_row.Elements.put(binding, dependencies.variablesContext.get(binding));
         }
         current_rows.add(new_row);
     }
 
+    /** It uses the generated rows and the BGPs to created RDF triples which are inserted in the targer repository.
+     * It would be faster to insert them on the fly.
+     * It is possible to create a triple each time the context is filled with a new variable value:
+     * At this moment, it is possible to find the patterns which need this variable.
+     * But first, the patterns must be keyed in a special way which gives the list of triples in the BGPs
+     * when one of their input variables are set. Special conditions:
+     * - Some triples in the BGPs are constant and are initialised once only.
+     * - Some triples might depend on two or three variables (this is not the case now, only the value can change)
+     * - Each variable triple must point to its variables if it depends on several variables.
+     * - Possibly have one container for BGP triples which depend on one variable only: This is implicitly
+     *   what is done here. Have a variable subject or predicate requires a different processing.
+     *
+     * However, this function is slower but simpler because there is an intermediate stage where all combinations
+     * of variables are exposed.
+     */
+    void GenerateTriples()
+    {}
+
     void RowToContext(MetaSelecter.Row singleRow) throws Exception {
         for(Map.Entry<String, String> entry : singleRow.Elements.entrySet()) {
             String variableName = entry.getKey();
-            if(!variablesContext.containsKey(variableName)){
+            if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new Exception("Variable " + variableName + " from selection not in context");
             }
-            variablesContext.put(variableName, entry.getValue());
+            // And generates new triples for all BGP triples depending on this variable.
+            dependencies.variablesContext.put(variableName, entry.getValue());
         }
     }
 
     void ExecuteOneLevel(int index) throws Exception
     {
-        if(index == prepared_queries.size())
+        if(index == dependencies.prepared_queries.size())
         {
             // The most nested WQL query is reached. Store data then return.
+            // THIS IS WRONG ! It should rather return RDF triples to be inserted in the target repository.
             CreateCurrentRow();
             return;
         }
-        QueryData queryData = prepared_queries.get(index);
+        QueryData queryData = dependencies.prepared_queries.get(index);
         queryData.statistics.StartSample();
         if(queryData.isMainVariableAvailable) {
             if(! queryData.queryWheres.isEmpty()) {
                 throw new Exception("Where clauses should be empty if the main variable is available");
             }
-            String objectPath = variablesContext.get(queryData.mainVariable);
+            String objectPath = dependencies.variablesContext.get(queryData.mainVariable);
             MetaSelecter.Row singleRow = metaSelecter.GetVariablesFromNodePath(objectPath, queryData);
             queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
 
@@ -143,7 +91,7 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
                 if(kv.isVariable) {
-                    String variableValue = variablesContext.get(kv.value);
+                    String variableValue = dependencies.variablesContext.get(kv.value);
                     if (variableValue == null) {
                         // This should not happen.
                         System.out.println("Value of " + kv.predicate + " variable=" + kv.value + " is null");
@@ -178,14 +126,14 @@ public class SparqlToWmi extends SparqlToWmiAbstract {
     public ArrayList<MetaSelecter.Row> Execute() throws Exception
     {
         current_rows = new ArrayList<MetaSelecter.Row>();
-        for(QueryData queryData : prepared_queries) {
+        for(QueryData queryData : dependencies.prepared_queries) {
             queryData.statistics.ResetAll();
         }
         ExecuteOneLevel(0);
-        System.out.println("Queries levels:" + prepared_queries.size());
+        System.out.println("Queries levels:" + dependencies.prepared_queries.size());
         System.out.println("Statistics:");
-        for(int indexQueryData = 0; indexQueryData < prepared_queries.size(); ++indexQueryData) {
-            QueryData queryData = prepared_queries.get(indexQueryData);
+        for(int indexQueryData = 0; indexQueryData < dependencies.prepared_queries.size(); ++indexQueryData) {
+            QueryData queryData = dependencies.prepared_queries.get(indexQueryData);
             System.out.println("Query " + indexQueryData);
             queryData.statistics.DisplayAll();
         }

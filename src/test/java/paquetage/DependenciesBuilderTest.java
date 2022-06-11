@@ -5,33 +5,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-class SparqlToWmiPlan extends SparqlToWmiAbstract {
-    public SparqlToWmiPlan(List<ObjectPattern> patterns) throws Exception {
-        super(patterns);
-    }
-
-    /**
-     * This is for testing only a gives a symbolic representation of nested WQL queries
-     * created from a Sparql query.
-     * @return A multi-line string.
-     */
-    String SymbolicQuery() throws Exception
-    {
-        String result = "";
-        String margin = "";
-        for(int index = 0; index < prepared_queries.size(); ++index) {
-            QueryData queryData = prepared_queries.get(index);
-            String line = margin + queryData.BuildWqlQuery() + "\n";
-            result += line;
-            margin += "\t";
-        }
-        return result;
-    }
-}
-
-public class QueryDataTest {
+public class DependenciesBuilderTest {
     void CompareQueryData(QueryData expected, QueryData actual) {
         Assert.assertEquals(expected.className, actual.className);
         Assert.assertEquals(expected.mainVariable, actual.mainVariable);
@@ -63,7 +38,7 @@ public class QueryDataTest {
                 "my_process", WmiOntology.survol_url_prefix + "Win32_Process");
         objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false, "123");
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
+        DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
         // This selects as few columns as possible (but the keys are returned anyway, and the path).
         Assert.assertEquals("Select __PATH from Win32_Process where Handle = \"123\"\n", symbolicQuery);
@@ -77,7 +52,7 @@ public class QueryDataTest {
         objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false, "C:");
         objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Caption", true, "any_variable");
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
+        DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
         Assert.assertEquals("Select Caption, __PATH from CIM_DataFile where Name = \"C:\"\n", symbolicQuery);
     }
@@ -95,7 +70,7 @@ public class QueryDataTest {
         objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Dependent", true, "my_process");
         objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Antecedent", true, "my_file");
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern0, objectPattern1));
+        DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern0, objectPattern1));
         String symbolicQuery = patternSparql.SymbolicQuery();
         System.out.println("symbolicQuery=" + symbolicQuery);
         Assert.assertEquals(
@@ -113,7 +88,7 @@ public class QueryDataTest {
         ObjectPattern objectPattern = new ObjectPattern("my_process", WmiOntology.survol_url_prefix + "Win32_Process");
         objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false, "123");
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(Arrays.asList(objectPattern));
+        DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
 
         QueryData queryData0 = new QueryData(
                 "Win32_Process",
@@ -145,7 +120,7 @@ public class QueryDataTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_directory"));
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "Win32_Directory",
@@ -175,7 +150,7 @@ public class QueryDataTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name", "my_process_handle"));
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "CIM_Process",
@@ -205,7 +180,7 @@ public class QueryDataTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name", "my_process_handle"));
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "CIM_Process",
@@ -246,7 +221,7 @@ public class QueryDataTest {
         // Their order in the nested loops, which input variables they need for the WHERE clause,
         // which variables they can produce.
         // The variable names of the subject fo the triples are chosen to force their order.
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "Win32_Process",
@@ -297,7 +272,7 @@ public class QueryDataTest {
         // Their order in the nested loops, which input variables they need for the WHERE clause,
         // which variables they can produce.
         // The variable names of the subject fo the triples are chosen to force their order.
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "Win32_Process",
@@ -347,7 +322,7 @@ public class QueryDataTest {
         // Therefore, this order is deterministic, and it is possible to know how the WQL queries are generated:
         // Their order in the nested loops, which input variables they need for the WHERE clause,
         // which variables they can produce.
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "CIM_ProcessExecutable",
@@ -402,7 +377,7 @@ public class QueryDataTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "CIM_ProcessExecutable",
@@ -457,7 +432,7 @@ public class QueryDataTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
                 "Win32_Process",
@@ -515,7 +490,7 @@ public class QueryDataTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
-        SparqlToWmiPlan patternSparql = new SparqlToWmiPlan(extractor.patternsAsArray());
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         // No need to select anything because the object is already known.
         QueryData queryData0 = new QueryData(

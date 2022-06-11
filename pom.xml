@@ -26,11 +26,6 @@
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>cn.chenlichao</groupId>
-            <artifactId>wmi4j</artifactId>
-            <version>0.9</version>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-model</artifactId>
             <version>3.7.6</version>
@@ -150,6 +145,11 @@
             <groupId>org.sblim.wbem</groupId>
             <artifactId>sblimCIMClient</artifactId>
             <version>1.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-http-workbench</artifactId>
+            <version>4.0.1</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
