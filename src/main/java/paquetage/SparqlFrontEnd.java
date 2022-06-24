@@ -1,5 +1,10 @@
 package paquetage;
 
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Triple;
+import org.eclipse.rdf4j.query.algebra.StatementPattern;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class SparqlFrontEnd {
@@ -13,18 +18,18 @@ public class SparqlFrontEnd {
      * - Return the triples.
      */
 
-    class TripleSomething {}
-    public List<TripleSomething> Execute(String sparqlQuery) throws Exception
-    {
-        // But it would be faster to insert them directly in a repository.
-        List<TripleSomething> ret = null;
 
+    public void Execute(String sparqlQuery) throws Exception
+    {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
 
-        SparqlToWmi towmi = new SparqlToWmi(extractor);
+        SparqlExecution toRows = new SparqlExecution(extractor);
 
-        towmi.Execute();
+        ArrayList<MetaSelecter.Row> rows = toRows.ExecuteToRows();
 
-        return ret;
+        List<Triple> triples = extractor.GenerateTriples(rows);
+
+        RepositoryWrapper repositoryWrapper = new RepositoryWrapper();
+        repositoryWrapper.InsertTriples(triples);
     }
 }

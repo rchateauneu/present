@@ -7,12 +7,13 @@ import java.util.Map;
 
 public class DependenciesBuilder {
     /**
-     * This bever changes whatever the order of input BGPs is.
+     * This never changes whatever the order of input BGPs is.
      */
     HashMap<String, String> variablesContext;
 
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.
+     The order, and input and output columns, and the performance depend highly on the order of the input BGPs.
      */
     public List<QueryData> prepared_queries;
 
@@ -27,6 +28,8 @@ public class DependenciesBuilder {
         prepared_queries = new ArrayList<QueryData>();
 
         // In this constructor, it is filled with all variables and null values.
+        // ON A BESOIN DE LE RECONSTRUIRE AU FIL DES DEPENDANCES.
+        // DONC ON NE PEUT PAS FAIRE CA EN DEUX ETAPES.
         variablesContext = new HashMap<>();
 
         for(ObjectPattern pattern: patterns)  {
@@ -37,7 +40,7 @@ public class DependenciesBuilder {
             // - the variables known at this stage from the previous queries, which can be used in the "WHERE" clause,
             // - the variables which are not known yet, and returned by this WQL query.
             // The variable representing the object is selected anyway and contains the WMI relative path.
-            for(ObjectPattern.PredicateObject keyValue: pattern.Members) {
+            for(ObjectPattern.PredicateObjectPair keyValue: pattern.Members) {
                 String predicateName = keyValue.Predicate();
                 String valueContent = keyValue.Content();
                 if(! predicateName.contains("#")) {

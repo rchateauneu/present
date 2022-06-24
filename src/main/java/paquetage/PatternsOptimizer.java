@@ -4,6 +4,15 @@ import java.util.List;
 
 public class PatternsOptimizer {
     double PatternsCost(List<ObjectPattern> patterns) throws Exception {
+        /*
+        How to index actual performance of a query ?
+        - Save performance of each query before the end: So if the loop is very, very slow, it can be stopped
+        on the fly, but performance are already available.
+        - Index with the Where columns: A new query must have all of them.
+        Each perf sample is index by each of its query.
+        So when a new query must be evaluated, take its columns, and do the intersection of the samples
+        indexed by these columns.
+         */
         return -1.0;
     }
 

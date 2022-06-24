@@ -3,15 +3,15 @@ package paquetage;
 import junit.framework.TestCase;
 import org.junit.Test;
 
-public class CreateRepositoryTest extends TestCase {
+public class RepositoryWrapperTest extends TestCase {
     @Test
     public static void testFromMemory() throws Exception {
-        CreateRepository.CreateSailRepositoryFromMemory();
+        new RepositoryWrapper().CreateSailRepositoryFromMemory();
     }
 
     @Test
     public static void testFromDir() throws Exception {
-        CreateRepository.CreateSailRepositoryFromFile(
+        new RepositoryWrapper().CreateSailRepositoryFromFile(
                 ".");
     }
 }

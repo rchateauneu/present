@@ -6,17 +6,23 @@ import java.util.stream.Collectors;
 
 /** This implements the nested execution of queries based on a list of BGP patterns.
  */
-public class SparqlToWmi {
+public class SparqlExecution {
     DependenciesBuilder dependencies;
     ArrayList<MetaSelecter.Row> current_rows;
-    MetaSelecter metaSelecter;
-    SparqlBGPExtractor extractor;
+    MetaSelecter metaSelecter = new MetaSelecter();
+    Set<String> bindings;
 
-    public SparqlToWmi(SparqlBGPExtractor input_extractor) throws Exception {
-        // TODO: Mettre ici l'optimisation des QueryData car ici, on a la connaissance des providers.
-        dependencies = new DependenciesBuilder(input_extractor.patternsAsArray());
-        metaSelecter = new MetaSelecter();
-        extractor = input_extractor;
+    public SparqlExecution(SparqlBGPExtractor input_extractor) throws Exception {
+        // TODO: Optimize QueryData list here. Providers are necessary.
+        List<ObjectPattern> patterns = input_extractor.patternsAsArray();
+        bindings = input_extractor.bindings;
+
+        if( 1 == 2) {
+            // Il faut le recreer a chaque vois meme si variableContext est le meme.
+            PatternsOptimizer optimizer = new PatternsOptimizer();
+            optimizer.ReorderPatterns(patterns);
+        }
+        dependencies = new DependenciesBuilder(patterns);
     }
 
     /**
@@ -26,7 +32,7 @@ public class SparqlToWmi {
     void CreateCurrentRow()
     {
         MetaSelecter.Row new_row = new MetaSelecter.Row();
-        for(String binding : extractor.bindings)
+        for(String binding : bindings)
         {
             new_row.Elements.put(binding, dependencies.variablesContext.get(binding));
         }
@@ -57,7 +63,7 @@ public class SparqlToWmi {
             if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new Exception("Variable " + variableName + " from selection not in context");
             }
-            // And generates new triples for all BGP triples depending on this variable.
+            // Or generates new triples for all BGP triples depending on this variable.
             dependencies.variablesContext.put(variableName, entry.getValue());
         }
     }
@@ -78,7 +84,7 @@ public class SparqlToWmi {
                 throw new Exception("Where clauses should be empty if the main variable is available");
             }
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable);
-            MetaSelecter.Row singleRow = metaSelecter.GetVariablesFromNodePath(objectPath, queryData);
+            MetaSelecter.Row singleRow = metaSelecter.GetObjectFromPath(objectPath, queryData);
             queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
 
             RowToContext(singleRow);
@@ -102,7 +108,7 @@ public class SparqlToWmi {
                 }
             }
 
-            ArrayList<MetaSelecter.Row> rows = metaSelecter.WqlSelect(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
+            ArrayList<MetaSelecter.Row> rows = metaSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
             Set<String> columnsWhere = queryData.queryWheres.stream()
                     .map(entry -> entry.predicate)
@@ -123,7 +129,7 @@ public class SparqlToWmi {
         }
     }
 
-    public ArrayList<MetaSelecter.Row> Execute() throws Exception
+    public ArrayList<MetaSelecter.Row> ExecuteToRows() throws Exception
     {
         current_rows = new ArrayList<MetaSelecter.Row>();
         for(QueryData queryData : dependencies.prepared_queries) {
@@ -138,5 +144,10 @@ public class SparqlToWmi {
             queryData.statistics.DisplayAll();
         }
         return current_rows;
+    }
+
+
+    void DryRun() throws Exception {
+        // For performance evaluation and optimisation.
     }
 }

@@ -1,7 +1,5 @@
 package paquetage;
 
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.util.*;
 
@@ -11,7 +9,7 @@ abstract class Provider {
     // This assumes that all needed columns can be calculated.
     public abstract ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception;
 
-    public ArrayList<MetaSelecter.Row> TrySelect(QueryData queryData) throws Exception
+    public ArrayList<MetaSelecter.Row> TrySelectFromWhere(QueryData queryData) throws Exception
     {
         if( ! MatchQuery(queryData)) {
             return null;
@@ -19,6 +17,8 @@ abstract class Provider {
         System.out.println("Found provider:" + this.getClass().toString());
         return EffectiveSelect(queryData);
     }
+
+    // TODO: Estimate cost.
 }
 
 // TODO: Test separately these providers.
@@ -239,6 +239,8 @@ abstract class ObjectGetter {
         System.out.println("Found provider:" + this.getClass().toString());
         return GetSingleObject(objectPath, queryData);
     }
+
+    // TODO: Cost estimation.
 }
 
 class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
@@ -298,6 +300,14 @@ public class MetaSelecter {
             Elements = new HashMap<String, String>();
         }
 
+        /**
+         * This is for testing. An input row is inserted, then triples are created using an existing list of patterns.
+         * @param elements
+         */
+        public Row(Map<String, String> elements) {
+            Elements = elements;
+        }
+
         public String toString() {
             return Elements.toString();
         }
@@ -316,26 +326,26 @@ public class MetaSelecter {
     public MetaSelecter()
     {}
 
-    public ArrayList<Row> WqlSelect(QueryData queryData) throws Exception {
+    public ArrayList<Row> SelectVariablesFromWhere(QueryData queryData) throws Exception {
         if(1!= 1 + 1) {
             // TODO : Vary tests by enabling/disabling providers.
             ArrayList<Row> rowsArray = null;
             for(Provider provider: providers) {
-                rowsArray = provider.TrySelect(queryData);
+                rowsArray = provider.TrySelectFromWhere(queryData);
                 if (rowsArray != null) {
                     return rowsArray;
                 }
             }
         }
-        return wmiSelecter.WqlSelectWMI(queryData);
+        return wmiSelecter.TrySelectFromWhere(queryData);
     }
 
-    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
-        return WqlSelect(new QueryData(className, variable, false,columns, wheres));
+    public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
+        return SelectVariablesFromWhere(new QueryData(className, variable, false,columns, wheres));
     }
 
-    public ArrayList<Row> WqlSelect(String className, String variable, Map<String, String> columns) throws Exception {
-        return WqlSelect(className, variable, columns, null);
+    public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns) throws Exception {
+        return SelectVariablesFromWhere(className, variable, columns, null);
     }
 
     ObjectGetter[] objectGetters = {
@@ -343,7 +353,7 @@ public class MetaSelecter {
         new ObjectGetter_Win32_Process_Handle()
     };
 
-    Row GetVariablesFromNodePath(String objectPath, QueryData queryData) throws Exception {
+    Row GetObjectFromPath(String objectPath, QueryData queryData) throws Exception {
         if(1!= 1 + 1) {
             // TODO : Vary tests by enabling/disabling providers.
             Row singleRow = null;
@@ -355,6 +365,15 @@ public class MetaSelecter {
             }
         }
 
-        return wmiSelecter.GetVariablesFromNodePath(objectPath, queryData);
+        return wmiSelecter.TryGetObject(objectPath, queryData);
     }
 }
+
+/*
+Other features to add:
+
+Ghidra
+https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/Base/src/main/java/ghidra/app/util/bin/format/pe/PortableExecutable.java
+https://reverseengineering.stackexchange.com/questions/21207/use-ghidra-decompiler-with-command-line
+https://static.grumpycoder.net/pixel/support/analyzeHeadlessREADME.html
+ */

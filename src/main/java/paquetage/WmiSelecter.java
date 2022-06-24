@@ -29,7 +29,7 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
-    ArrayList<MetaSelecter.Row> WqlSelectWMI(QueryData queryData) throws Exception {
+    ArrayList<MetaSelecter.Row> TrySelectFromWhere(QueryData queryData) throws Exception {
         ArrayList<MetaSelecter.Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
         // Temporary debugging purpose.
@@ -284,7 +284,7 @@ public class WmiSelecter {
         return objectNode;
     }
 
-    MetaSelecter.Row GetVariablesFromNodePath(String objectPath, QueryData queryData) throws Exception {
+    MetaSelecter.Row TryGetObject(String objectPath, QueryData queryData) throws Exception {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);

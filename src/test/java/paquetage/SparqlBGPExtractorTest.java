@@ -1,23 +1,31 @@
 package paquetage;
 
 import com.google.common.collect.Sets;
+import org.eclipse.rdf4j.model.Triple;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 public class SparqlBGPExtractorTest {
     static ObjectPattern FindObjectPattern(SparqlBGPExtractor extractor, String variable) {
         ObjectPattern pattern = extractor.patternsMap.get(variable);
-        Assert.assertNotEquals(pattern, null);
-        Assert.assertEquals(pattern.VariableName, variable);
+        Assert.assertNotEquals(null, pattern);
+        Assert.assertEquals(variable, pattern.VariableName);
         return pattern;
     }
 
+    static String toSurvol(String term) {
+        return WmiOntology.survol_url_prefix + term;
+    }
+
     @Test
-    public void ParseTest1() throws Exception {
+    public void ParsePlainQuery() throws Exception {
         String sparql_query = """
             prefix function: <http://org.apache.rya/function#>
             prefix time: <http://www.w3.org/2006/time#>
@@ -31,22 +39,22 @@ public class SparqlBGPExtractorTest {
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("obs", "time", "lat"));
-        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
-        Assert.assertNotEquals(FindObjectPattern(extractor, "obs"), null);
+        Assert.assertEquals(Sets.newHashSet("obs", "time", "lat"), extractor.bindings);
+        Assert.assertEquals(1, extractor.patternsAsArray().size());
+        Assert.assertNotEquals(null, FindObjectPattern(extractor, "obs"));
     }
 
-    static void CompareKeyValue(ObjectPattern.PredicateObject a, String predicate, boolean isVariable, String content) {
-        Assert.assertEquals(a.Predicate(), predicate);
-        Assert.assertEquals(a.isVariable(), isVariable);
-        Assert.assertEquals(a.Content(), content);
+    static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
+        Assert.assertEquals(predicate, a.Predicate());
+        Assert.assertEquals(isVariable, a.isVariable());
+        Assert.assertEquals(content, a.Content());
     }
 
     @Test
     /***
      * Checks patterns detection.
      */
-    public void ParseTest2() throws Exception {
+    public void Parse_Win32_Directory_NoVariable() throws Exception {
         String sparql_query = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -59,19 +67,19 @@ public class SparqlBGPExtractorTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_directory"));
 
-        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+        Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(patternWin32_Directory.className, WmiOntology.survol_url_prefix + "Win32_Directory");
-        Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        CompareKeyValue(patternWin32_Directory.Members.get(0), WmiOntology.survol_url_prefix + "Name", false, "C:");
+        Assert.assertEquals(toSurvol("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(1, patternWin32_Directory.Members.size());
+        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), false, "C:");
     }
 
     @Test
     /***
      * Checks that a pattern with a value is detected.
      */
-    public void ParseTest3() throws Exception {
+    public void Parse_Win32_Directory_OneVariable() throws Exception {
         String sparql_query = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -84,27 +92,27 @@ public class SparqlBGPExtractorTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_name"));
 
-        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+        Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(patternWin32_Directory.className, WmiOntology.survol_url_prefix + "Win32_Directory");
-        Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        CompareKeyValue(patternWin32_Directory.Members.get(0), WmiOntology.survol_url_prefix + "Name", true, "my_name");
+        Assert.assertEquals(toSurvol("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(1, patternWin32_Directory.Members.size());
+        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "my_name");
     }
 
-    static void FindAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObject> members, String predicate, boolean is_variable, String content) {
-        ObjectPattern.PredicateObject memberName = members.stream()
-                .filter(x -> x.Predicate().equals(WmiOntology.survol_url_prefix + predicate))
+    static void FindAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObjectPair> members, String predicate, boolean is_variable, String content) {
+        ObjectPattern.PredicateObjectPair pairPredObj = members.stream()
+                .filter(x -> x.Predicate().equals(predicate))
                 .findFirst().orElse(null);
-        Assert.assertNotEquals(memberName, null);
-        CompareKeyValue(memberName, WmiOntology.survol_url_prefix + predicate, is_variable, content);
+        Assert.assertNotEquals(null, pairPredObj);
+        CompareKeyValue(pairPredObj, predicate, is_variable, content);
     }
 
     @Test
     /***
-     * Several object patterns.
+     * Checks the BGPs extracted from a query with three types.
      */
-    public void ParseTest4() throws Exception {
+    public void Parse_CIM_ProcessExecutable_Win32_Process_CIM_DataFile() throws Exception {
         String sparql_query = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -125,21 +133,118 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(extractor.patternsAsArray().size(), 3);
 
         ObjectPattern patternCIM_ProcessExecutable = FindObjectPattern(extractor, "my_assoc");
-        Assert.assertEquals(patternCIM_ProcessExecutable.className, WmiOntology.survol_url_prefix + "CIM_ProcessExecutable");
+        Assert.assertEquals(patternCIM_ProcessExecutable.className, toSurvol("CIM_ProcessExecutable"));
         Assert.assertEquals(patternCIM_ProcessExecutable.Members.size(), 2);
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, "Dependent", true, "my_process");
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, "Antecedent", true, "my_file");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, toSurvol("Dependent"), true, "my_process");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, toSurvol("Antecedent"), true, "my_file");
 
         ObjectPattern patternWin32_Process = FindObjectPattern(extractor, "my_process");
-        Assert.assertEquals(patternWin32_Process.className, WmiOntology.survol_url_prefix + "Win32_Process");
+        Assert.assertEquals(patternWin32_Process.className, toSurvol("Win32_Process"));
         Assert.assertEquals(patternWin32_Process.Members.size(), 1);
-        FindAndCompareKeyValue(patternWin32_Process.Members, "Handle", true, "my_process_handle");
+        FindAndCompareKeyValue(patternWin32_Process.Members, toSurvol("Handle"), true, "my_process_handle");
 
         ObjectPattern patternCIM_DataFile = FindObjectPattern(extractor, "my_file");
-        Assert.assertEquals(patternCIM_DataFile.className, WmiOntology.survol_url_prefix + "CIM_DataFile");
+        Assert.assertEquals(patternCIM_DataFile.className, toSurvol("CIM_DataFile"));
         Assert.assertEquals(patternCIM_DataFile.Members.size(), 1);
-        FindAndCompareKeyValue(patternCIM_DataFile.Members, "Name", false, "C:\\WINDOWS\\System32\\kernel32.dll");
+        FindAndCompareKeyValue(patternCIM_DataFile.Members, toSurvol("Name"), false, "C:\\WINDOWS\\System32\\kernel32.dll");
     }
+
+    @Test
+    /***
+     * Checks the BGPs extracted from a query with a union.
+     */
+    public void Parse_Union() throws Exception {
+        String sparql_query = """
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+                SELECT * WHERE
+                {
+                {
+                    SELECT ?page ("A" AS ?type) WHERE
+                    {
+                         ?s rdfs:label "Microsoft"@en;
+                            foaf:page ?page
+                    }
+                }
+                UNION
+                {
+                    SELECT ?page ("B" AS ?type) WHERE
+                    {
+                         ?s rdfs:label "Apple"@en;
+                            foaf:page ?page
+                    }
+                }
+                }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        System.out.println("Bindings=" + extractor.bindings);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("page", "type"));
+        List<ObjectPattern> patterns = extractor.patternsAsArray();
+        Assert.assertEquals(1, patterns.size());
+        Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
+        ObjectPattern firstPattern = patterns.get(0);
+        Assert.assertEquals(4, firstPattern.Members.size());
+
+        CompareKeyValue(firstPattern.Members.get(0), "http://www.w3.org/2000/01/rdf-schema#label", false, "Microsoft");
+        CompareKeyValue(firstPattern.Members.get(1), "http://xmlns.com/foaf/0.1/page", true, "page");
+        CompareKeyValue(firstPattern.Members.get(2), "http://www.w3.org/2000/01/rdf-schema#label", false, "Apple");
+        CompareKeyValue(firstPattern.Members.get(3), "http://xmlns.com/foaf/0.1/page", true, "page");
+    }
+
+    @Test
+    /***
+     * Fills a repository of triples with BGPs and constant values.
+     */
+    public void TriplesGenerationFromBGPs_1() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?dir_name
+            where {
+                ?my_dir rdf:type cim:Win32_Directory .
+                ?my_dir cim:Name ?dir_name .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
+
+        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+
+        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
+        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
+        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+
+        List<MetaSelecter.Row> rows = Arrays.asList(new MetaSelecter.Row(Map.of("dir_name", "C:")));
+
+        List<Triple> triples = extractor.GenerateTriples(rows);
+
+        for(Triple triple: triples) {
+            System.out.println("T=" + triple);
+        }
+
+        /*
+        RepositoryWrapper repositoryWrapper = new RepositoryWrapper();
+        List<Triple> triples =         RepositoryWrapper repositoryWrapper = new RepositoryWrapper();
+
+        repositoryWrapper.InsertTriples(triples);
+
+        // Now checks the triples inserted in the repository.
+        IRI alice = Values.iri("http://example.org/people/alice");
+        IRI bob = Values.iri("http://example.org/people/bob");
+        IRI name = Values.iri("http://example.org/ontology/name");
+        IRI person = Values.iri("http://example.org/ontology/Person");
+        Literal bobsName = Values.literal("Bob");
+        Literal alicesName = Values.literal("Alice");
+        */
+
+    }
+
+    /*
+    Tests a faire apres: relancer la query sur le nouveau repository.
+     */
+
 }
 
                 /*

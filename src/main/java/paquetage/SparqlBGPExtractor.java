@@ -4,7 +4,16 @@ package paquetage;
 // https://rdf4j.org/documentation/programming/repository/
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
+import com.sun.jna.platform.win32.COM.COMUtils;
+import com.sun.jna.platform.win32.OleAuto;
+import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.impl.SimpleStatement;
+import org.eclipse.rdf4j.model.impl.SimpleTriple;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
@@ -21,6 +30,10 @@ import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
 public class SparqlBGPExtractor {
     public Set<String> bindings;
     Map<String, ObjectPattern> patternsMap;
+
+    List<StatementPattern> visitorPatterns;
+
+    List<ObjectPattern> patternsArray;
 
     public SparqlBGPExtractor(String input_query) throws Exception {
         patternsMap = null;
@@ -44,9 +57,9 @@ public class SparqlBGPExtractor {
         bindings = tupleExpr.getBindingNames();
         PatternsVisitor myVisitor = new PatternsVisitor();
         tupleExpr.visit(myVisitor);
-
+        visitorPatterns = myVisitor.patterns();
         patternsMap = new HashMap<String, ObjectPattern>();
-        for(StatementPattern myPattern : myVisitor.patterns())
+        for(StatementPattern myPattern : visitorPatterns)
         {
             Var subject = myPattern.getSubjectVar();
             String subjectName = subject.getName();
@@ -85,6 +98,113 @@ public class SparqlBGPExtractor {
         }
     }
 
+    List<Triple> GenerateTriples(List<MetaSelecter.Row> rows) throws Exception {
+        // Reorganize statements by input variable.
+        HashMap<String, List<StatementPattern>> triplesWithVariable = new HashMap<>();
+
+        List<Triple> generatedTriples = new ArrayList<>();
+
+        ValueFactory factory = SimpleValueFactory.getInstance();
+
+
+        // This lambda adds an IRI.
+        BiConsumer<Var, StatementPattern> storeIri = (Var iri, StatementPattern myPattern) -> {
+            if(!iri.isConstant()) {
+                //if (iri.isAnonymous()) {
+                //    throw new Exception("Iri isConstant and not isAnonymous");
+                //}
+                if(triplesWithVariable.containsKey(iri.getName())) {
+                    triplesWithVariable.get(iri.getName()).add(myPattern);
+                } else {
+                    List<StatementPattern> patternsList = new ArrayList<>();
+                    patternsList.add(myPattern);
+                    triplesWithVariable.put(iri.getName(), patternsList);
+                }
+            }
+        } ;
+
+        for(StatementPattern myPattern : visitorPatterns)
+        {
+            Var subject = myPattern.getSubjectVar();
+            storeIri.accept(subject, myPattern);
+            /*
+            if(!subject.isConstant()) {
+                if (subject.isAnonymous()) {
+                    throw new Exception("Subject isConstant and not isAnonymous");
+                }
+                if(triplesWithVariable.containsKey(subject.getName())) {
+                    triplesWithVariable.get(subject.getName()).add(myPattern);
+                } else {
+                    triplesWithVariable.put(subject.getName(), Arrays.asList(myPattern));
+                }
+            }
+
+             */
+
+            Var object = myPattern.getObjectVar();
+            storeIri.accept(object, myPattern);
+            /*
+            if(!object.isConstant()) {
+                if (object.isAnonymous()) {
+                    throw new Exception("Object isConstant and not isAnonymous");
+                }
+                if(triplesWithVariable.containsKey(object.getName())) {
+                    triplesWithVariable.get(object.getName()).add(myPattern);
+                } else {
+                    triplesWithVariable.put(object.getName(), Arrays.asList(myPattern));
+                }
+            }
+
+             */
+
+            /*
+            POURQUOI INSERER LES PATTERNS CONSTANTS ???
+            Si on entre l'IRI d'un objet constant. Mais il faudrait verifier qu'il est effectivement present.
+            Seul cas ou ca peut etre necessaire: Si
+            */
+            if(false) {
+                if (subject.isConstant() && object.isConstant()) {
+                    generatedTriples.add(factory.createTriple(
+                            (Resource) subject,
+                            (IRI) myPattern.getPredicateVar(),
+                            Values.literal(object))); // (Value) object));
+                }
+            }
+        }
+
+        for(MetaSelecter.Row row: rows) {
+            for(Map.Entry<String, String> variable_value_pair : row.Elements.entrySet()) {
+                String variableName = variable_value_pair.getKey();
+                String variableValue = variable_value_pair.getValue();
+                List<StatementPattern> patternsList = triplesWithVariable.get(variableName);
+                if (patternsList == null) {
+                    throw new Exception("Unexpected unknown variable=" + variableName);
+                }
+
+                for(StatementPattern myPattern : patternsList) {
+                    Var subject = myPattern.getSubjectVar();
+                    String subjectString = subject.isConstant()
+                            ? subject.getValue().stringValue()
+                            : variableValue;
+                    Resource resourceSubject = Values.iri(subjectString); // factory.createIRI(subjectString);
+                    Var object = myPattern.getObjectVar();
+                    String objectString = object.isConstant()
+                            ? object.getValue().stringValue()
+                            : variableValue;
+                    Value resourceObject = patternsMap.containsKey(variableName)
+                            ? Values.iri(objectString) // factory.createIRI(objectString)
+                            : Values.literal(objectString); // factory.createLiteral(objectString);
+                    generatedTriples.add(factory.createTriple(
+                            resourceSubject,
+                            Values.iri(myPattern.getPredicateVar().getValue().stringValue()),
+                            resourceObject));
+                }
+            }
+        }
+
+        return generatedTriples;
+    }
+
     /** This is used to extract the BGPs of a Sparql query.
      *
      */
@@ -92,15 +212,15 @@ public class SparqlBGPExtractor {
         public void meet(TripleRef node) {
         }
 
-        private List<StatementPattern> antecedentStatementPatterns = new ArrayList<StatementPattern>();
+        private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
 
         @Override
         public void meet(StatementPattern sp) {
-            antecedentStatementPatterns.add(sp.clone());
+            visitedStatementPatterns.add(sp.clone());
         }
 
         public List<StatementPattern> patterns() {
-            return antecedentStatementPatterns;
+            return visitedStatementPatterns;
         }
     }
 }

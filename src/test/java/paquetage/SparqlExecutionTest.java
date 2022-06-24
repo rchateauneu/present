@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class SparqlToWmiTest {
+public class SparqlExecutionTest {
     String pidString = String.valueOf(ProcessHandle.current().pid());
 
     static Set<String> RowColumnAsSet(ArrayList<MetaSelecter.Row> rowsList, String columnName) {
@@ -37,8 +37,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         boolean foundCurrentPid = false;
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
@@ -66,8 +66,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(1, the_rows.size());
         Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
     }
@@ -92,8 +92,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_file_name");
         // This tests the presence of some libraries which are used by the current Java process.
         Assert.assertTrue(libsSet.contains("C:\\Program Files\\Java\\jdk-17.0.2\\bin\\java.exe"));
@@ -128,8 +128,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // The current pid must be there because it uses this library.
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_handle");
@@ -164,8 +164,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // The current caption must be there because it uses this library.
         Set<String> captionsSet = RowColumnAsSet(the_rows, "my_caption");
@@ -199,8 +199,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Filename cases are not stable wrt Windows version.
         Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS\\SYSTEM32");
@@ -230,8 +230,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // These files must be in this directory.
         // Filename cases in system directories are not stable, therefore uppercase.
@@ -267,8 +267,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Case of filenames are not stable wrt Windows version.
         Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS");
@@ -301,8 +301,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // These files must be in this directory.
         Set<String> filesSet = RowColumnAsSet(the_rows, "my_file_name");
@@ -345,8 +345,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // It must fall back to the initial directory.
         Set<String> dirsSet = RowColumnAsSet(the_rows, "my_dir_name");
@@ -381,8 +381,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         System.out.println("Rows number=" + the_rows.size());
 
         /*
@@ -421,8 +421,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         System.out.println("Rows number=" + the_rows.size());
 
         Set<String> namesSet = RowColumnAsSet(the_rows, "my_process_name");
@@ -461,8 +461,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> volumesSet = RowColumnAsSet(the_rows, "device_id");
@@ -492,8 +492,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> dirsSet = RowColumnAsSet(the_rows, "dir_name");
@@ -530,8 +530,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> devicesSet = RowColumnAsSet(the_rows, "device_id");
@@ -564,8 +564,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_drive", "my1_dir"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> drivesSet = RowColumnAsSet(the_rows, "my_drive");
@@ -597,8 +597,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_account_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> accountsSet = RowColumnAsSet(the_rows, "my_account_name");
         Assert.assertTrue(accountsSet.contains("Users"));
@@ -619,8 +619,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_class_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> classesSet = RowColumnAsSet(the_rows, "my_class_name");
         for(String className: classesSet) {
@@ -646,8 +646,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> threadsSet = RowColumnAsSet(the_rows, "my_thread_name");
         for(String threadName: threadsSet) {
@@ -673,8 +673,8 @@ public class SparqlToWmiTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_product_name"));
 
-        SparqlToWmi patternSparql = new SparqlToWmi(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.Execute();
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> productsSet = RowColumnAsSet(the_rows, "my_product_name");
         for(String productName: productsSet) {
