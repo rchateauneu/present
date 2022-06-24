@@ -151,7 +151,7 @@ public class SparqlBGPExtractorTest {
 
     @Test
     /***
-     * Checks the BGPs extracted from a query with a union.
+     * Checks the BGPs extracted from an arbitrary query with a union.
      */
     public void Parse_Union() throws Exception {
         String sparql_query = """
@@ -178,18 +178,55 @@ public class SparqlBGPExtractorTest {
                 }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        System.out.println("Bindings=" + extractor.bindings);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("page", "type"));
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         Assert.assertEquals(1, patterns.size());
         Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
         ObjectPattern firstPattern = patterns.get(0);
+        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals("s", firstPattern.VariableName);
         Assert.assertEquals(4, firstPattern.Members.size());
 
         CompareKeyValue(firstPattern.Members.get(0), "http://www.w3.org/2000/01/rdf-schema#label", false, "Microsoft");
         CompareKeyValue(firstPattern.Members.get(1), "http://xmlns.com/foaf/0.1/page", true, "page");
         CompareKeyValue(firstPattern.Members.get(2), "http://www.w3.org/2000/01/rdf-schema#label", false, "Apple");
         CompareKeyValue(firstPattern.Members.get(3), "http://xmlns.com/foaf/0.1/page", true, "page");
+    }
+    @Test
+    /***
+     * Checks the BGPs extracted from an arbitrary query with a filter statement.
+     */
+    public void Parse_Filter() throws Exception {
+        String sparql_query = """
+                PREFIX schema: <http://schema.org/>
+                SELECT ?subject_name
+                FROM <http://www.worldcat.org/oclc/660967222>
+                WHERE {
+                ?s schema:about ?about .
+                ?about schema:name ?subject_name
+                FILTER regex(STR(?about), "fast").
+                }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("subject_name"));
+        List<ObjectPattern> patterns = extractor.patternsAsArray();
+        Assert.assertEquals(2, patterns.size());
+
+        Assert.assertNotEquals(FindObjectPattern(extractor, "about"), null);
+        ObjectPattern firstPattern = patterns.get(0);
+        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals("about", firstPattern.VariableName);
+
+        Assert.assertEquals(1, firstPattern.Members.size());
+        CompareKeyValue(firstPattern.Members.get(0), "http://schema.org/name", true, "subject_name");
+
+        Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
+        ObjectPattern secondPattern = patterns.get(1);
+        Assert.assertEquals(null, secondPattern.className);
+        Assert.assertEquals("s", secondPattern.VariableName);
+
+        Assert.assertEquals(1, secondPattern.Members.size());
+        CompareKeyValue(secondPattern.Members.get(0), "http://schema.org/about", true, "about");
     }
 
     @Test
