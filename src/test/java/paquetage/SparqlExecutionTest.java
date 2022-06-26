@@ -23,6 +23,84 @@ public class SparqlExecutionTest {
                 .map(entry -> entry.Elements.get(columnName).toUpperCase()).collect(Collectors.toSet());
     }
 
+    /** Loads a file with its name and checks the correctness of the attributes.
+
+     string   Caption;
+     string   Description;
+     datetime InstallDate;
+     string   Status;
+     uint32   AccessMask;
+     boolean  Archive;
+     boolean  Compressed;
+     string   CompressionMethod;
+     string   CreationClassName;
+     datetime CreationDate;
+     string   CSCreationClassName;
+     string   CSName;
+     string   Drive;
+     string   EightDotThreeFileName;
+     boolean  Encrypted;
+     string   EncryptionMethod;
+     string   Name;
+     string   Extension;
+     string   FileName;
+     uint64   FileSize;
+     string   FileType;
+     string   FSCreationClassName;
+     string   FSName;
+     boolean  Hidden;
+     uint64   InUseCount;
+     datetime LastAccessed;
+     datetime LastModified;
+     string   Path;
+     boolean  Readable;
+     boolean  System;
+     boolean  Writeable;
+     string   Manufacturer;
+     string   Version;
+     };
+
+     *
+     * @throws Exception
+     */
+    @Test
+    public void Execution_Forced_CIM_DataFile() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?file_Caption ?file_Drive ?file_FileSize ?file_Path
+                    where {
+                        ?my0_file rdf:type cim:CIM_DataFile .
+                        ?my0_file cim:Caption ?file_Caption .
+                        ?my0_file cim:Drive ?file_Drive .
+                        ?my0_file cim:FileSize ?file_FileSize .
+                        ?my0_file cim:Name "C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll" .
+                        ?my0_file cim:Path ?file_Path .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet(
+                "file_Caption", "file_FileSize", "file_Drive", "file_Path"));
+
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+
+        Assert.assertEquals(1, the_rows.size());
+
+        Map<String, String> firstRow = the_rows.get(0).Elements;
+
+        // The current pid must be there because it uses this library.
+        Assert.assertEquals("C:\\WINDOWS\\SYSTEM32\\ntdll.dll", firstRow.get("file_Caption"));
+        Assert.assertEquals("c:", firstRow.get("file_Drive"));
+        Assert.assertEquals("2027376", firstRow.get("file_FileSize"));
+        Assert.assertEquals("\\windows\\system32\\", firstRow.get("file_Path"));
+    }
+
+    /** This runs a SPARQL query which returns pids of all processes and checks that the current pid is found.
+     *
+     * @throws Exception
+     */
     @Test
     public void Execution_Win32_Process_1() throws Exception {
         String sparql_query = """
@@ -51,6 +129,10 @@ public class SparqlExecutionTest {
         Assert.assertTrue(foundCurrentPid);
     }
 
+    /** Checks the caption of the current process selected with the current pid.
+     *
+     * @throws Exception
+     */
     @Test
     public void Execution_Win32_Process_2() throws Exception {
         String sparql_query = String.format("""
@@ -101,7 +183,6 @@ public class SparqlExecutionTest {
         Assert.assertTrue(libsSet.contains("C:\\WINDOWS\\System32\\USER32.dll"));
     }
 
-    @Test
     /**
      * The current pid must be found in the processes using a specific library.
      * The order of evaluation, i.e. the order of object patterns, is forced with the alphabetical order
@@ -109,6 +190,7 @@ public class SparqlExecutionTest {
      *
      * TODO: This test might fail is a process unexpectedly leaves in the middle of the query.
      */
+    @Test
     public void Execution_Forced_CIM_ProcessExecutable_2() throws Exception {
         String sparql_query = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
@@ -136,7 +218,6 @@ public class SparqlExecutionTest {
         Assert.assertTrue(libsSet.contains(pidString));
     }
 
-    @Test
     /**
      * This gets the handle and caption of all processes using a specific library.
      * The current pid must be found in the processes using a specific library.
@@ -144,6 +225,7 @@ public class SparqlExecutionTest {
      * The order of evaluation, i.e. the order of object patterns, is forced with the alphabetical order
      * of main variables.
      */
+    @Test
     public void Execution_Forced_CIM_ProcessExecutable_3() throws Exception {
         String sparql_query = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>

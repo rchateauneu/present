@@ -1,6 +1,8 @@
 package paquetage;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 abstract class Provider {
@@ -69,9 +71,44 @@ class Provider_CIM_DataFile_Name extends Provider {
             Version;
          */
 
-        String variableName = queryData.ColumnToVariable("FileName");
-        if(variableName != null)
-            singleRow.Elements.put(variableName, fileName);
+        // Get-WmiObject -Query 'select Drive from CIM_DataFile where Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"'
+
+        String variableCaption = queryData.ColumnToVariable("Caption");
+        if(variableCaption != null)
+            singleRow.Elements.put(variableCaption, fileName);
+        String variableDrive = queryData.ColumnToVariable("Drive");
+        if(variableDrive != null) {
+            Path p = Paths.get(fileName);
+            String driveStrRaw = p.getRoot().toString();
+            String driveStr = driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1);
+            singleRow.Elements.put(variableDrive, driveStr);
+        }
+        String variableFileName = queryData.ColumnToVariable("FileName");
+        if(variableFileName != null) {
+            Path p = Paths.get(fileName);
+            String fileNameShort = p.getFileName().toString();
+            String fileNameNoExt = fileNameShort.substring(0, fileNameShort.lastIndexOf("."));
+            singleRow.Elements.put(variableFileName, fileNameNoExt);
+        }
+        String variableFileSize = queryData.ColumnToVariable("FileSize");
+        if(variableFileSize != null) {
+            File f = new File(fileName);
+            long fileSize = f.length();
+            String fileSizeStr = Long.toString(fileSize);
+            singleRow.Elements.put(variableFileSize, fileSizeStr);
+        }
+        // Application Extension
+        if(false) {
+            String variableFileType = queryData.ColumnToVariable("FileType");
+            if (variableFileType != null)
+                singleRow.Elements.put(variableFileType, fileName);
+        }
+        String variablePath = queryData.ColumnToVariable("Path");
+        if(variablePath != null) {
+            Path p = Paths.get(fileName);
+            String pa = p.getParent().toString().toLowerCase().substring(2) + "\\";
+            singleRow.Elements.put(variablePath, pa);
+        }
 
         // Add the main variable anyway.
         singleRow.Elements.put(queryData.mainVariable, pathFile);
@@ -326,8 +363,8 @@ public class MetaSelecter {
     public MetaSelecter()
     {}
 
-    public ArrayList<Row> SelectVariablesFromWhere(QueryData queryData) throws Exception {
-        if(1!= 1 + 1) {
+    public ArrayList<Row> SelectVariablesFromWhere(QueryData queryData, boolean withCustom) throws Exception {
+        if(withCustom) {
             // TODO : Vary tests by enabling/disabling providers.
             ArrayList<Row> rowsArray = null;
             for(Provider provider: providers) {
@@ -341,7 +378,7 @@ public class MetaSelecter {
     }
 
     public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
-        return SelectVariablesFromWhere(new QueryData(className, variable, false,columns, wheres));
+        return SelectVariablesFromWhere(new QueryData(className, variable, false,columns, wheres), true);
     }
 
     public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns) throws Exception {
@@ -353,8 +390,8 @@ public class MetaSelecter {
         new ObjectGetter_Win32_Process_Handle()
     };
 
-    Row GetObjectFromPath(String objectPath, QueryData queryData) throws Exception {
-        if(1!= 1 + 1) {
+    Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom) throws Exception {
+        if(withCustom) {
             // TODO : Vary tests by enabling/disabling providers.
             Row singleRow = null;
             for(ObjectGetter objectGetter: objectGetters) {

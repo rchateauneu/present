@@ -84,7 +84,7 @@ public class SparqlExecution {
                 throw new Exception("Where clauses should be empty if the main variable is available");
             }
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable);
-            MetaSelecter.Row singleRow = metaSelecter.GetObjectFromPath(objectPath, queryData);
+            MetaSelecter.Row singleRow = metaSelecter.GetObjectFromPath(objectPath, queryData, true);
             queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
 
             RowToContext(singleRow);
@@ -119,6 +119,10 @@ public class SparqlExecution {
             for(MetaSelecter.Row row: rows) {
                 // An extra column contains the path.
                 if(row.Elements.size() != numColumns + 1) {
+                    /*
+                    This is a hint that the values of some required variables were not found.
+                    TODO: Do this once only, the result set should separately contain the header.
+                    */
                     throw new Exception("Inconsistent size between returned results " + row.Elements.size()
                             + " and columns:" + numColumns);
                 }

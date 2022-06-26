@@ -3,6 +3,7 @@ package paquetage;
 import COM.Wbemcli;
 import COM.WbemcliUtil;
 import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
 import com.sun.jna.ptr.IntByReference;
@@ -245,7 +246,12 @@ public class WmiSelecter {
 
     String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
-        COMUtils.checkRC(obj.Get(propertyName, 0, pVal, null, null));
+        try {
+            COMUtils.checkRC(obj.Get(propertyName, 0, pVal, null, null));
+        } catch (COMException exc) {
+            // So it is easier to debug.
+            throw exc;
+        }
         String value = pVal.stringValue();
         OleAuto.INSTANCE.VariantClear(pVal);
         return value;

@@ -107,12 +107,7 @@ public class QueryData {
     }
 
     public String ColumnToVariable(String columnName) {
-        for( Map.Entry<String, String> column : queryColumns.entrySet()) {
-            if (column.getKey().equals(columnName)) {
-                return column.getValue();
-            }
-        }
-        return null;
+        return queryColumns.get(columnName);
     }
 
 
@@ -188,7 +183,12 @@ public class QueryData {
 
     public Statistics statistics = new Statistics();
 
-    QueryData(String wmiClassName, String variable, boolean mainVariableAvailable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
+    QueryData(
+            String wmiClassName,
+            String variable,
+            boolean mainVariableAvailable,
+            Map<String, String> columns,
+            List<QueryData.WhereEquality> wheres) throws Exception {
         mainVariable = variable;
         isMainVariableAvailable = mainVariableAvailable;
         if(wmiClassName.contains("#")) {

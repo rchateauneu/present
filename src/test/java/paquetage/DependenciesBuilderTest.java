@@ -7,6 +7,11 @@ import org.junit.Test;
 import java.util.*;
 
 public class DependenciesBuilderTest {
+
+    static String toSurvol(String term) {
+        return WmiOntology.survol_url_prefix + term;
+    }
+
     void CompareQueryData(QueryData expected, QueryData actual) {
         Assert.assertEquals(expected.className, actual.className);
         Assert.assertEquals(expected.mainVariable, actual.mainVariable);
@@ -35,8 +40,8 @@ public class DependenciesBuilderTest {
      */
     public void SymbolicQuery1Test() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern(
-                "my_process", WmiOntology.survol_url_prefix + "Win32_Process");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false, "123");
+                "my_process", toSurvol("Win32_Process"));
+        objectPattern.AddKeyValue(toSurvol("Handle"), false, "123");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -48,9 +53,9 @@ public class DependenciesBuilderTest {
     public void SymbolicQuery2Test() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process",
-                WmiOntology.survol_url_prefix + "CIM_DataFile");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false, "C:");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Caption", true, "any_variable");
+                toSurvol("CIM_DataFile"));
+        objectPattern.AddKeyValue(toSurvol("Name"), false, "C:");
+        objectPattern.AddKeyValue(toSurvol("Caption"), true, "any_variable");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -61,14 +66,14 @@ public class DependenciesBuilderTest {
     public void SymbolicQuery3Test() throws Exception {
         ObjectPattern objectPattern0 = new ObjectPattern(
                 "my_process",
-                WmiOntology.survol_url_prefix + "Win32_Process");
-        objectPattern0.AddKeyValue(WmiOntology.survol_url_prefix + "Name", false, "C:");
+                toSurvol("Win32_Process"));
+        objectPattern0.AddKeyValue(toSurvol("Name"), false, "C:");
 
         ObjectPattern objectPattern1 = new ObjectPattern(
                 "my_assoc",
-                WmiOntology.survol_url_prefix + "CIM_ProcessExecutable");
-        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Dependent", true, "my_process");
-        objectPattern1.AddKeyValue(WmiOntology.survol_url_prefix + "Antecedent", true, "my_file");
+                toSurvol("CIM_ProcessExecutable"));
+        objectPattern1.AddKeyValue(toSurvol("Dependent"), true, "my_process");
+        objectPattern1.AddKeyValue(toSurvol("Antecedent"), true, "my_file");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern0, objectPattern1));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -85,8 +90,8 @@ public class DependenciesBuilderTest {
      * are properly created.
      */
     public void InternalQueryDataTest() throws Exception {
-        ObjectPattern objectPattern = new ObjectPattern("my_process", WmiOntology.survol_url_prefix + "Win32_Process");
-        objectPattern.AddKeyValue(WmiOntology.survol_url_prefix + "Handle", false, "123");
+        ObjectPattern objectPattern = new ObjectPattern("my_process", toSurvol("Win32_Process"));
+        objectPattern.AddKeyValue(toSurvol("Handle"), false, "123");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
 

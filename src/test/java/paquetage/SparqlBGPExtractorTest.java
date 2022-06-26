@@ -228,6 +228,47 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, secondPattern.Members.size());
         CompareKeyValue(secondPattern.Members.get(0), "http://schema.org/about", true, "about");
     }
+    @Test
+    /***
+     * Checks the BGPs extracted from an arbitrary query with an optional statement.
+     */
+    public void Parse_Optional() throws Exception {
+        String sparql_query = """
+                    PREFIX schema: <http://schema.org/>
+                    SELECT ?creator_name ?author_name
+                    FROM <http://www.worldcat.org/oclc/660967222>
+                    WHERE {
+                    ?s schema:creator ?creator .
+                    ?creator schema:name ?creator_name
+                    OPTIONAL {?s schema:author ?author .
+                    ?author schema:name ?author_name} .
+                    }
+            """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(Sets.newHashSet("creator_name", "author_name"), extractor.bindings);
+        List<ObjectPattern> patterns = extractor.patternsAsArray();
+        Assert.assertEquals(3, patterns.size());
+
+        Assert.assertNotEquals(FindObjectPattern(extractor, "author"), null);
+        ObjectPattern firstPattern = patterns.get(0);
+        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals("author", firstPattern.VariableName);
+        Assert.assertEquals(1, firstPattern.Members.size());
+        CompareKeyValue(firstPattern.Members.get(0), "http://schema.org/name", true, "author_name");
+
+        Assert.assertNotEquals(FindObjectPattern(extractor, "creator"), null);
+        ObjectPattern secondPattern = patterns.get(1);
+        Assert.assertEquals(null, secondPattern.className);
+        Assert.assertEquals("creator", secondPattern.VariableName);
+        CompareKeyValue(secondPattern.Members.get(0), "http://schema.org/name", true, "creator_name");
+
+        Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
+        ObjectPattern thirdPattern = patterns.get(2);
+        Assert.assertEquals(null, thirdPattern.className);
+        Assert.assertEquals("s", thirdPattern.VariableName);
+        Assert.assertEquals(2, thirdPattern.Members.size());
+        CompareKeyValue(thirdPattern.Members.get(0), "http://schema.org/creator", true, "creator");
+    }
 
     @Test
     /***

@@ -126,6 +126,9 @@ public class WmiSelecterTest {
         }
     }
 
+    /** This loads all WMI classes and checks the presence of some classes and their properties, arbitrarily chosen.
+     *
+     */
     @Test
     public void TestClassesList() {
         WmiSelecter selecter = new WmiSelecter();
@@ -138,6 +141,9 @@ public class WmiSelecterTest {
         Assert.assertTrue(properties.containsKey("Handle"));
     }
 
+    /** This creates an CIM_DataFile object based on its path only,
+     * and checks that some of its properties are defined.
+     */
     @Test
     public void TestGetObject_CIM_DataFile() {
         String objectPath = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clbcatq.dll\"";
@@ -150,7 +156,9 @@ public class WmiSelecterTest {
         Assert.assertEquals(selecter.GetObjectProperty(obj, "CreationClassName"), "CIM_LogicalFile");
     }
 
-    @Test
+    /** This creates an Win32_Process object based on its path only,
+     * and checks that some of its properties are defined.
+     */    @Test
     public void TestGetObject_Win32_Process() {
         long pid = ProcessHandle.current().pid();
         String objectPath = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"" + pid + "\"";
