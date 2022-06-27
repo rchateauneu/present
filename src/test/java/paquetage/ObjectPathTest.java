@@ -60,7 +60,7 @@ public class ObjectPathTest {
                 "Win32_Process",
                 Map.of("Handle", "1234"));
         Assert.assertEquals(
-                "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:Win32_Process.Handle=\"1234\"",
+                PresentUtils.PrefixPath("Win32_Process.Handle=\"1234\""),
                 createdPath
         );
     }
@@ -71,7 +71,7 @@ public class ObjectPathTest {
                 "CIM_DataFile",
                 Map.of("Name", "C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll"));
         Assert.assertEquals(
-                "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"",
+                PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\""),
                 createdPath
         );
     }

@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,9 +92,13 @@ public class SparqlExecutionTest {
         Map<String, String> firstRow = the_rows.get(0).Elements;
 
         // The current pid must be there because it uses this library.
-        Assert.assertEquals("C:\\WINDOWS\\SYSTEM32\\ntdll.dll", firstRow.get("file_Caption"));
+        String fileName = "C:\\WINDOWS\\SYSTEM32\\ntdll.dll";
+        Assert.assertEquals(fileName, firstRow.get("file_Caption"));
         Assert.assertEquals("c:", firstRow.get("file_Drive"));
-        Assert.assertEquals("2027376", firstRow.get("file_FileSize"));
+        File f = new File(fileName);
+        long fileSize = f.length();
+        String fileSizeStr = Long.toString(fileSize);
+        Assert.assertEquals(fileSizeStr, firstRow.get("file_FileSize"));
         Assert.assertEquals("\\windows\\system32\\", firstRow.get("file_Path"));
     }
 
@@ -178,7 +183,9 @@ public class SparqlExecutionTest {
         ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_file_name");
         // This tests the presence of some libraries which are used by the current Java process.
-        Assert.assertTrue(libsSet.contains("C:\\Program Files\\Java\\jdk-17.0.2\\bin\\java.exe"));
+        String javabin = PresentUtils.CurrentJavaBinary();
+        Assert.assertTrue(libsSet.contains(javabin));
+
         Assert.assertTrue(libsSet.contains("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"));
         Assert.assertTrue(libsSet.contains("C:\\WINDOWS\\System32\\USER32.dll"));
     }
@@ -388,7 +395,7 @@ public class SparqlExecutionTest {
 
         // These files must be in this directory.
         Set<String> filesSet = RowColumnAsSet(the_rows, "my_file_name");
-        Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\en-US\\hmmapi.dll.mui"));
+        //Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\en-US\\hmmapi.dll.mui"));
         Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\images\\bing.ico"));
     }
 
