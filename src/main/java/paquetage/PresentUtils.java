@@ -22,4 +22,10 @@ public class PresentUtils {
     public static String PrefixPath(String shortPath) {
         return "\\\\" + getComputerName() + "\\ROOT\\CIMV2:" + shortPath;
     }
+
+    public static String CurrentJavaBinary() {
+        String javaHome = System.getProperty("java.home");
+        return javaHome + "\\bin\\java.exe";
+
+    }
 }
