@@ -60,7 +60,7 @@ public class ObjectPathTest {
                 "Win32_Process",
                 Map.of("Handle", "1234"));
         Assert.assertEquals(
-                "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"1234\"",
+                "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:Win32_Process.Handle=\"1234\"",
                 createdPath
         );
     }
@@ -71,7 +71,7 @@ public class ObjectPathTest {
                 "CIM_DataFile",
                 Map.of("Name", "C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll"));
         Assert.assertEquals(
-                "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"",
+                "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"",
                 createdPath
         );
     }
@@ -86,7 +86,7 @@ public class ObjectPathTest {
                         )
                 );
         Assert.assertEquals(
-                "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_ProcessExecutable.Antecedent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:CIM_DataFile.Name=\\\"C:\\\\\\\\WINDOWS\\\\\\\\System32\\\\\\\\msvcp_win.dll\\\"\",Dependent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:Win32_Process.Handle=\\\"2088\\\"\"",
+                "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:CIM_ProcessExecutable.Antecedent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:CIM_DataFile.Name=\\\"C:\\\\\\\\WINDOWS\\\\\\\\System32\\\\\\\\msvcp_win.dll\\\"\",Dependent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:Win32_Process.Handle=\\\"2088\\\"\"",
                 createdPath
         );
     }

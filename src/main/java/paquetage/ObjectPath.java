@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Vector;
 
 // See also: import javax.cim;
-//import org.sblim.wbem.cim.CIMObjectPath;
 import org.sblim.wbem.cim.CIMDataType;
 import org.sblim.wbem.cim.CIMObjectPath;
 import org.sblim.wbem.cim.CIMProperty;
@@ -88,7 +87,7 @@ public class ObjectPath {
             propertyArray.add(new CIMProperty(entry.getKey(), cimValue));
         }
         CIMObjectPath wbemPath = new CIMObjectPath(className, propertyArray);
-        // TODO: This is temporary.
-        return "\\\\LAPTOP-R89KG6V1\\root\\cimv2:" + wbemPath.toString();
+        // This adds the host name and the namespace.
+        return PresentUtils.PrefixPath(wbemPath.toString());
     }
 }
