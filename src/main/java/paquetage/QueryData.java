@@ -23,6 +23,14 @@ public class QueryData {
     // To be appended in the WHERE clause of a WMI query.
     List<WhereEquality> queryWheres;
 
+    public String toString() {
+        String cols = String.join("+", queryColumns.keySet());
+        String wheres =  (String)queryWheres.stream()
+                .map(w -> w.predicate)
+                .collect(Collectors.joining("/"));
+        return "C=" + className + " V=" + mainVariable + " Cols=" + cols + " W=" + wheres;
+    }
+
     static public class WhereEquality {
         // This is a member of WMI class and used to build the WHERE clause of a WQL query.
         public String predicate;

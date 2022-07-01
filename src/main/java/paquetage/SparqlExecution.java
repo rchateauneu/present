@@ -150,7 +150,6 @@ public class SparqlExecution {
         return current_rows;
     }
 
-
     void DryRun() throws Exception {
         // For performance evaluation and optimisation.
     }

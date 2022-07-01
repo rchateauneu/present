@@ -30,7 +30,7 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
-    ArrayList<MetaSelecter.Row> TrySelectFromWhere(QueryData queryData) throws Exception {
+    ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<MetaSelecter.Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
         // Temporary debugging purpose.
@@ -246,15 +246,27 @@ public class WmiSelecter {
 
     String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
+        IntByReference pType = new IntByReference();
         try {
-            COMUtils.checkRC(obj.Get(propertyName, 0, pVal, null, null));
+            COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, null));
         } catch (COMException exc) {
             // So it is easier to debug.
             throw exc;
         }
-        String value = pVal.stringValue();
-        OleAuto.INSTANCE.VariantClear(pVal);
-        return value;
+        try {
+            String value = null;
+            if(pType.getValue() == Wbemcli.CIM_UINT32) {
+                // Needed for example for Win32_Process.ProcessId.
+                value = Integer.toString(pVal.intValue());
+            } else {
+                value = pVal.stringValue();
+            }
+            OleAuto.INSTANCE.VariantClear(pVal);
+            return value;
+        } catch (ClassCastException exc) {
+            // So it is easier to debug.
+            throw exc;
+        }
     }
 
     /**
@@ -290,7 +302,7 @@ public class WmiSelecter {
         return objectNode;
     }
 
-    MetaSelecter.Row TryGetObject(String objectPath, QueryData queryData) throws Exception {
+    MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
@@ -306,6 +318,8 @@ public class WmiSelecter {
                     : GetObjectProperty(objectNode, entry.getKey());
             singleRow.Elements.put(variableName, objectProperty);
         }
+        // TODO: Is it necessary ?
+        singleRow.Elements.put(queryData.mainVariable, GetObjectProperty(objectNode, "__PATH"));
         return singleRow;
     }
 }

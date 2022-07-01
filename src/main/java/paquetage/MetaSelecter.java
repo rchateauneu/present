@@ -1,9 +1,14 @@
 package paquetage;
 
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinNT;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Function;
 
 abstract class Provider {
     public abstract boolean MatchQuery(QueryData queryData);
@@ -11,14 +16,6 @@ abstract class Provider {
     // This assumes that all needed columns can be calculated.
     public abstract ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception;
 
-    public ArrayList<MetaSelecter.Row> TrySelectFromWhere(QueryData queryData) throws Exception
-    {
-        if( ! MatchQuery(queryData)) {
-            return null;
-        }
-        System.out.println("Found provider:" + this.getClass().toString());
-        return EffectiveSelect(queryData);
-    }
 
     // TODO: Estimate cost.
 }
@@ -29,86 +26,14 @@ class Provider_CIM_DataFile_Name extends Provider {
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DataFile", Set.of("Name"));
     }
+
     public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<MetaSelecter.Row> result = new ArrayList<>();
         String fileName = queryData.GetWhereValue("Name");
         String pathFile = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", fileName));
-
         MetaSelecter.Row singleRow = new MetaSelecter.Row();
-        /* Possibly required fields:
-            Caption;
-            Description;
-            InstallDate;
-            Status;
-            AccessMask;
-            Archive;
-            Compressed;
-            CompressionMethod;
-            CreationClassName;
-            CreationDate;
-            CSCreationClassName;
-            CSName;
-            Drive;
-            EightDotThreeFileName;
-            Encrypted;
-            EncryptionMethod;
-            Name;
-            Extension;
-            FileName;
-            FileSize;
-            FileType;
-            FSCreationClassName;
-            FSName;
-            Hidden;
-            InUseCount;
-            LastAccessed;
-            LastModified;
-            Path;
-            Readable;
-            System;
-            Writeable;
-            Manufacturer;
-            Version;
-         */
 
-        // Get-WmiObject -Query 'select Drive from CIM_DataFile where Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"'
-
-        String variableCaption = queryData.ColumnToVariable("Caption");
-        if(variableCaption != null)
-            singleRow.Elements.put(variableCaption, fileName);
-        String variableDrive = queryData.ColumnToVariable("Drive");
-        if(variableDrive != null) {
-            Path p = Paths.get(fileName);
-            String driveStrRaw = p.getRoot().toString();
-            String driveStr = driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1);
-            singleRow.Elements.put(variableDrive, driveStr);
-        }
-        String variableFileName = queryData.ColumnToVariable("FileName");
-        if(variableFileName != null) {
-            Path p = Paths.get(fileName);
-            String fileNameShort = p.getFileName().toString();
-            String fileNameNoExt = fileNameShort.substring(0, fileNameShort.lastIndexOf("."));
-            singleRow.Elements.put(variableFileName, fileNameNoExt);
-        }
-        String variableFileSize = queryData.ColumnToVariable("FileSize");
-        if(variableFileSize != null) {
-            File f = new File(fileName);
-            long fileSize = f.length();
-            String fileSizeStr = Long.toString(fileSize);
-            singleRow.Elements.put(variableFileSize, fileSizeStr);
-        }
-        // Application Extension
-        if(false) {
-            String variableFileType = queryData.ColumnToVariable("FileType");
-            if (variableFileType != null)
-                singleRow.Elements.put(variableFileType, fileName);
-        }
-        String variablePath = queryData.ColumnToVariable("Path");
-        if(variablePath != null) {
-            Path p = Paths.get(fileName);
-            String pa = p.getParent().toString().toLowerCase().substring(2) + "\\";
-            singleRow.Elements.put(variablePath, pa);
-        }
+        ObjectGetter_Cim_DataFile_Name.FillRowFromQuery(singleRow, queryData, fileName);
 
         // Add the main variable anyway.
         singleRow.Elements.put(queryData.mainVariable, pathFile);
@@ -194,7 +119,7 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
  *
  */
 class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
-    ProcessModules processModules = new ProcessModules();
+    static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Antecedent"));
@@ -230,7 +155,7 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
  *
  */
 class Provider_CIM_ProcessExecutable_Dependent extends Provider {
-    ProcessModules processModules = new ProcessModules();
+    static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
@@ -268,57 +193,214 @@ abstract class ObjectGetter {
     // This assumes that all needed columns can be calculated.
     public abstract MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
 
-    public MetaSelecter.Row TryGetObject(String objectPath, QueryData queryData) throws Exception
-    {
-        if( ! MatchGet(queryData)) {
-            return null;
-        }
-        System.out.println("Found provider:" + this.getClass().toString());
-        return GetSingleObject(objectPath, queryData);
-    }
-
     // TODO: Cost estimation.
 }
 
 class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
+        /* Possibly required fields:
+            Caption;
+            Description;
+            InstallDate;
+            Status;
+            AccessMask;
+            Archive;
+            Compressed;
+            CompressionMethod;
+            CreationClassName;
+            CreationDate;
+            CSCreationClassName;
+            CSName;
+            Drive;
+            EightDotThreeFileName;
+            Encrypted;
+            EncryptionMethod;
+            Name;
+            Extension;
+            FileName;
+            FileSize;
+            FileType;
+            FSCreationClassName;
+            FSName;
+            Hidden;
+            InUseCount;
+            LastAccessed;
+            LastModified;
+            Path;
+            Readable;
+            System;
+            Writeable;
+            Manufacturer;
+            Version;
+         */
+
+    // Get-WmiObject -Query 'select Drive from CIM_DataFile where Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"'
     public boolean MatchGet(QueryData queryData) {
-        return queryData.ColumnsSubsetOf("CIM_DataFile", Set.of("Name"));
+        return queryData.ColumnsSubsetOf("CIM_DataFile", columnsMap.keySet());
     }
+
+    static String FileToDrive(String fileName) {
+        Path p = Paths.get(fileName);
+        String driveStrRaw = p.getRoot().toString();
+        return driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1);
+    }
+
+    static String FileToName(String fileName) {
+        Path p = Paths.get(fileName);
+        String fileNameShort = p.getFileName().toString();
+        return fileNameShort.substring(0, fileNameShort.lastIndexOf("."));
+    }
+
+    static String FileToSize(String fileName) {
+        File f = new File(fileName);
+        long fileSize = f.length();
+        return Long.toString(fileSize);
+    }
+
+    static String FileToPath(String fileName) {
+        Path p = Paths.get(fileName);
+        return p.getParent().toString().toLowerCase().substring(2) + "\\";
+    }
+
+    static Map<String, Function<String, String>> columnsMap = Map.of(
+            "Caption", (String fileName) -> fileName,
+            "Drive", (String fileName) -> FileToDrive(fileName),
+            "FileName", (String fileName) -> FileToName(fileName),
+            "FileSize", (String fileName) -> FileToSize(fileName),
+            // "FileType", (String fileName) -> "Application Extension",
+            "Path", (String fileName) -> FileToPath(fileName)
+            );
+
+    public static void FillRowFromQuery(MetaSelecter.Row singleRow, QueryData queryData, String fileName) {
+        for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
+            Function<String, String> lambda = columnsMap.get(qCol.getKey());
+            String variableValue = lambda.apply(fileName);
+            singleRow.Elements.put(qCol.getValue(), variableValue);
+        }
+    }
+
     public MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String fileName = properties.get("Name");
         MetaSelecter.Row singleRow = new MetaSelecter.Row();
-        String variableName = queryData.ColumnToVariable("Name");
-        if(variableName != null) {
-            singleRow.Elements.put(variableName, fileName);
-        }
+        FillRowFromQuery(singleRow, queryData, fileName);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
         String pathFile = ObjectPath.BuildPathWbem(
                 "CIM_DataFile", Map.of(
                         "Name", fileName));
+        // TODO: Is it necessary ?
         singleRow.Elements.put(queryData.mainVariable, pathFile);
         return singleRow;
     }
 }
 
 class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
-    public boolean MatchGet(QueryData queryData) {
-        return queryData.ColumnsSubsetOf("Win32_Process", Set.of("Handle"));
+        /*
+        string   CreationClassName;
+        string   Caption;
+        string   CommandLine;
+        datetime CreationDate;
+        string   CSCreationClassName;
+        string   CSName;
+        string   Description;
+        string   ExecutablePath;
+        uint16   ExecutionState;
+        string   Handle;
+        uint32   HandleCount;
+        datetime InstallDate;
+        uint64   KernelModeTime;
+        uint32   MaximumWorkingSetSize;
+        uint32   MinimumWorkingSetSize;
+        string   Name;
+        string   OSCreationClassName;
+        string   OSName;
+        uint64   OtherOperationCount;
+        uint64   OtherTransferCount;
+        uint32   PageFaults;
+        uint32   PageFileUsage;
+        uint32   ParentProcessId;
+        uint32   PeakPageFileUsage;
+        uint64   PeakVirtualSize;
+        uint32   PeakWorkingSetSize;
+        uint32   Priority;
+        uint64   PrivatePageCount;
+        uint32   ProcessId;
+        uint32   QuotaNonPagedPoolUsage;
+        uint32   QuotaPagedPoolUsage;
+        uint32   QuotaPeakNonPagedPoolUsage;
+        uint32   QuotaPeakPagedPoolUsage;
+        uint64   ReadOperationCount;
+        uint64   ReadTransferCount;
+        uint32   SessionId;
+        string   Status;
+        datetime TerminationDate;
+        uint32   ThreadCount;
+        uint64   UserModeTime;
+        uint64   VirtualSize;
+        string   WindowsVersion;
+        uint64   WorkingSetSize;
+        uint64   WriteOperationCount;
+        uint64   WriteTransferCount;
+        */
+
+
+        public boolean MatchGet(QueryData queryData) {
+            return queryData.ColumnsSubsetOf("Win32_Process", columnsMap.keySet());
+        }
+
+        static ProcessModules processModules = new ProcessModules();
+
+        static String ProcessToName(String processId) {
+                List<String> listModules = processModules.GetFromPid(processId);
+                String executablePath = listModules.get(0);
+                Path p = Paths.get(executablePath);
+                String fileNameShort = p.getFileName().toString();
+                return fileNameShort;
+            }
+
+        static String WindowsVersion(String processId) {
+            Kernel32 kernel = Kernel32.INSTANCE;
+            WinNT.OSVERSIONINFOEX vex = new WinNT.OSVERSIONINFOEX();
+            if (kernel.GetVersionEx(vex)) {
+                return MessageFormat.format("{0}.{1}.{2}",
+                        vex.dwMajorVersion.toString(),
+                        vex.dwMinorVersion.toString(),
+                        vex.dwBuildNumber.toString());
+            } else {
+                return "Cannot get  Windows version";
+            }
+        }
+
+
+        static Map<String, Function<String, String>> columnsMap = Map.of(
+                "Handle", (String processId) -> processId,
+                "Name", (String processId) -> ProcessToName(processId),
+                "ProcessId", (String processId) -> processId,
+                "WindowsVersion", (String processId) -> WindowsVersion(processId)
+        );
+
+        public static void FillRowFromQuery(MetaSelecter.Row singleRow, QueryData queryData, String fileName) throws Exception {
+            for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
+                Function<String, String> lambda = columnsMap.get(qCol.getKey());
+                if(lambda == null) {
+                    throw new Exception("Cannot find lambda for " + qCol.getKey());
+                }
+                String variableValue = lambda.apply(fileName);
+                singleRow.Elements.put(qCol.getValue(), variableValue);
+            }
     }
+
     public MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
-        String fileName = properties.get("Handle");
+        String processId = properties.get("Handle");
         MetaSelecter.Row singleRow = new MetaSelecter.Row();
-        String variableName = queryData.ColumnToVariable("Handle");
-        if(variableName != null) {
-            singleRow.Elements.put(variableName, fileName);
-        }
+        FillRowFromQuery(singleRow, queryData, processId);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
         String pathFile = ObjectPath.BuildPathWbem(
                 "Win32_Process", Map.of(
-                        "Handle", fileName));
+                        "Handle", processId));
+        // TODO: Is it necessary ?
         singleRow.Elements.put(queryData.mainVariable, pathFile);
         return singleRow;
     }
@@ -363,18 +445,25 @@ public class MetaSelecter {
     public MetaSelecter()
     {}
 
-    public ArrayList<Row> SelectVariablesFromWhere(QueryData queryData, boolean withCustom) throws Exception {
-        if(withCustom) {
-            // TODO : Vary tests by enabling/disabling providers.
-            ArrayList<Row> rowsArray = null;
-            for(Provider provider: providers) {
-                rowsArray = provider.TrySelectFromWhere(queryData);
-                if (rowsArray != null) {
-                    return rowsArray;
-                }
+    public Provider FindCustomProvider(QueryData queryData) throws Exception {
+        for(Provider provider: providers) {
+            if (provider.MatchQuery(queryData)) {
+                System.out.println("Found provider for " + queryData.toString());
+                return provider;
             }
         }
-        return wmiSelecter.TrySelectFromWhere(queryData);
+        return null;
+    }
+
+    public ArrayList<Row> SelectVariablesFromWhere(QueryData queryData, boolean withCustom) throws Exception {
+        if(withCustom) {
+            Provider provider = FindCustomProvider(queryData);
+            if(provider != null) {
+                return provider.EffectiveSelect(queryData);
+            }
+            System.out.println("No provider found for " + queryData.toString());
+        }
+        return wmiSelecter.EffectiveSelect(queryData);
     }
 
     public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
@@ -390,19 +479,26 @@ public class MetaSelecter {
         new ObjectGetter_Win32_Process_Handle()
     };
 
-    Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom) throws Exception {
-        if(withCustom) {
-            // TODO : Vary tests by enabling/disabling providers.
-            Row singleRow = null;
-            for(ObjectGetter objectGetter: objectGetters) {
-                singleRow = objectGetter.TryGetObject(objectPath, queryData);
-                if (singleRow != null) {
-                    return singleRow;
-                }
+    public ObjectGetter FindCustomGetter(QueryData queryData) throws Exception {
+        for(ObjectGetter getter: objectGetters) {
+            if (getter.MatchGet(queryData)) {
+                //System.out.println("Found getter for " + queryData.toString());
+                return getter;
             }
         }
+        return null;
+    }
 
-        return wmiSelecter.TryGetObject(objectPath, queryData);
+    Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom) throws Exception {
+        if(withCustom) {
+            ObjectGetter objectGetter = FindCustomGetter(queryData);
+            if(objectGetter != null) {
+                return objectGetter.GetSingleObject(objectPath, queryData);
+            }
+            //System.out.println("No getter found for " + queryData.toString());
+        }
+
+        return wmiSelecter.GetSingleObject(objectPath, queryData);
     }
 }
 

@@ -518,6 +518,7 @@ public class SparqlExecutionTest {
         for(String oneName: namesSet) {
             System.out.println("Name=" + oneName);
         }
+        System.out.println("namesSet=" + namesSet.toString());
         Assert.assertTrue(namesSet.contains("java.exe"));
     }
 
