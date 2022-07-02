@@ -1,8 +1,6 @@
 package paquetage;
 
-import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
-import org.eclipse.rdf4j.query.algebra.StatementPattern;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +23,7 @@ public class SparqlFrontEnd {
 
         SparqlExecution toRows = new SparqlExecution(extractor);
 
-        ArrayList<MetaSelecter.Row> rows = toRows.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> rows = toRows.ExecuteToRows();
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 

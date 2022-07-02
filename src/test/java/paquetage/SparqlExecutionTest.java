@@ -12,13 +12,13 @@ import java.util.stream.Collectors;
 public class SparqlExecutionTest {
     String pidString = String.valueOf(ProcessHandle.current().pid());
 
-    static Set<String> RowColumnAsSet(ArrayList<MetaSelecter.Row> rowsList, String columnName) {
+    static Set<String> RowColumnAsSet(ArrayList<GenericSelecter.Row> rowsList, String columnName) {
         return rowsList
                 .stream()
                 .map(entry -> entry.Elements.get(columnName)).collect(Collectors.toSet());
     }
 
-    static Set<String> RowColumnAsSetUppercase(ArrayList<MetaSelecter.Row> rowsList, String columnName) {
+    static Set<String> RowColumnAsSetUppercase(ArrayList<GenericSelecter.Row> rowsList, String columnName) {
         return rowsList
                 .stream()
                 .map(entry -> entry.Elements.get(columnName).toUpperCase()).collect(Collectors.toSet());
@@ -85,7 +85,7 @@ public class SparqlExecutionTest {
                 "file_Caption", "file_FileSize", "file_Drive", "file_Path"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Assert.assertEquals(1, the_rows.size());
 
@@ -121,11 +121,11 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         boolean foundCurrentPid = false;
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
-        for (MetaSelecter.Row row : the_rows) {
+        for (GenericSelecter.Row row : the_rows) {
             if (row.Elements.get("my_process_handle").equals(pidString)) {
                 foundCurrentPid = true;
                 break;
@@ -154,7 +154,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(1, the_rows.size());
         Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
     }
@@ -180,7 +180,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_file_name");
         // This tests the presence of some libraries which are used by the current Java process.
         String javabin = PresentUtils.CurrentJavaBinary();
@@ -218,7 +218,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // The current pid must be there because it uses this library.
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_handle");
@@ -254,7 +254,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // The current caption must be there because it uses this library.
         Set<String> captionsSet = RowColumnAsSet(the_rows, "my_caption");
@@ -289,7 +289,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Filename cases are not stable wrt Windows version.
         Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS\\SYSTEM32");
@@ -320,7 +320,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // These files must be in this directory.
         // Filename cases in system directories are not stable, therefore uppercase.
@@ -357,7 +357,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Case of filenames are not stable wrt Windows version.
         Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS");
@@ -391,7 +391,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // These files must be in this directory.
         Set<String> filesSet = RowColumnAsSet(the_rows, "my_file_name");
@@ -435,7 +435,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // It must fall back to the initial directory.
         Set<String> dirsSet = RowColumnAsSet(the_rows, "my_dir_name");
@@ -471,7 +471,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         System.out.println("Rows number=" + the_rows.size());
 
         /*
@@ -511,7 +511,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         System.out.println("Rows number=" + the_rows.size());
 
         Set<String> namesSet = RowColumnAsSet(the_rows, "my_process_name");
@@ -552,7 +552,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> volumesSet = RowColumnAsSet(the_rows, "device_id");
@@ -583,7 +583,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> dirsSet = RowColumnAsSet(the_rows, "dir_name");
@@ -621,7 +621,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> devicesSet = RowColumnAsSet(the_rows, "device_id");
@@ -655,7 +655,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_drive", "my1_dir"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
         Set<String> drivesSet = RowColumnAsSet(the_rows, "my_drive");
@@ -688,7 +688,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_account_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> accountsSet = RowColumnAsSet(the_rows, "my_account_name");
         Assert.assertTrue(accountsSet.contains("Users"));
@@ -710,7 +710,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_class_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> classesSet = RowColumnAsSet(the_rows, "my_class_name");
         for(String className: classesSet) {
@@ -737,7 +737,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> threadsSet = RowColumnAsSet(the_rows, "my_thread_name");
         for(String threadName: threadsSet) {
@@ -753,30 +753,91 @@ public class SparqlExecutionTest {
         String sparql_query = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?my_product_name
+                    select ?my_product_number ?my_product_name ?my_product_vendor ?my_product_caption ?my_product_version
                     where {
                         ?my_product rdf:type cim:Win32_Product .
+                        ?my_product cim:IdentifyingNumber ?my_product_number .
                         ?my_product cim:Name ?my_product_name .
+                        ?my_product cim:Vendor ?my_product_vendor .
+                        ?my_product cim:Caption ?my_product_caption .
+                        ?my_product cim:Version ?my_product_version .
                     }
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_product_name"));
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet(
+                "my_product_number", "my_product_name", "my_product_vendor", "my_product_caption", "my_product_version"));
 
         SparqlExecution patternSparql = new SparqlExecution(extractor);
-        ArrayList<MetaSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
-        Set<String> productsSet = RowColumnAsSet(the_rows, "my_product_name");
-        for(String productName: productsSet) {
-            if((productName != null) && ! productName.equals(""))
-                System.out.println("Product=" + productName);
-        }
-        // Most threads have no name.
-        Assert.assertTrue(productsSet.contains(null));
+        Set<String> productNamesSet = RowColumnAsSet(the_rows, "my_product_name");
+        Assert.assertTrue(productNamesSet.contains("Windows SDK Signing Tools"));
+        Assert.assertTrue(productNamesSet.contains("Microsoft Update Health Tools"));
+
+        Set<String> productVendorsSet = RowColumnAsSet(the_rows, "my_product_vendor");
+        Assert.assertTrue(productVendorsSet.contains("Microsoft Corporation"));
+    }
+
+    @Test
+    public void Execution_Forced_Win32_DCOMApplication() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_application_name
+                    where {
+                        ?my_application rdf:type cim:Win32_DCOMApplication .
+                        ?my_application cim:Name ?my_application_name .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name"));
+
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+
+        Set<String> applicationsSet = RowColumnAsSet(the_rows, "my_application_name");
+        Assert.assertTrue(applicationsSet.contains("User Notification"));
+        Assert.assertTrue(applicationsSet.contains("IMAPI2"));
+    }
+
+    /** Join between two lists of objects with Win32_DCOMApplication.AppID == Win32_DCOMApplicationSetting.AppID
+     *
+     * @throws Exception
+     */
+    @Test
+    public void Execution_Forced_Win32_DCOMApplication_Win32_DCOMApplicationSetting() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_application_name ?my_local_service
+                    where {
+                        ?my_application rdf:type cim:Win32_DCOMApplication .
+                        ?my_application cim:Name ?my_application_name .
+                        ?my_application cim:AppID ?my_app_id .
+                        ?my_setting rdf:type cim:Win32_DCOMApplicationSetting .
+                        ?my_setting cim:AppID ?my_app_id .
+                        ?my_setting cim:LocalService ?my_local_service .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name", "my_local_service"));
+
+        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+
+        Set<String> applicationsSet = RowColumnAsSet(the_rows, "my_application_name");
+        Assert.assertTrue(applicationsSet.contains("User Notification"));
+        Assert.assertTrue(applicationsSet.contains("IMAPI2"));
+
+        Set<String> servicesSet = RowColumnAsSet(the_rows, "my_local_service");
+        Assert.assertTrue(servicesSet.contains("wlansvc"));
+        Assert.assertTrue(servicesSet.contains("upnphost"));
     }
 
     /*
-    PS C:\Users\rchat> Get-WmiObject -Query 'Select * from Win32_DCOMApplication'
     PS C:\Users\rchat> Get-WmiObject -Query 'Select * from Win32_DCOMApplicationSetting'
     PS C:\Users\rchat> Get-WmiObject -Query 'Select * from CIM_ElementSetting'
     */

@@ -23,8 +23,8 @@ public class WmiSelecterTest {
 
     @Test
     public void TestCIM_Process() throws Exception {
-        MetaSelecter selecter = new MetaSelecter();
-        ArrayList<MetaSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericSelecter selecter = new GenericSelecter();
+        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"));
@@ -32,7 +32,7 @@ public class WmiSelecterTest {
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
         boolean isIn = false;
-        for(MetaSelecter.Row aRow : listResults)
+        for(GenericSelecter.Row aRow : listResults)
         {
             if(aRow.Elements.get("var_handle").equals(pidString))
             {
@@ -48,8 +48,8 @@ public class WmiSelecterTest {
         long pid = ProcessHandle.current().pid();
         String pidString = String.valueOf(pid);
 
-        MetaSelecter selecter = new MetaSelecter();
-        ArrayList<MetaSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericSelecter selecter = new GenericSelecter();
+        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
@@ -68,8 +68,8 @@ public class WmiSelecterTest {
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
-        MetaSelecter selecter = new MetaSelecter();
-        ArrayList<MetaSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericSelecter selecter = new GenericSelecter();
+        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
@@ -88,8 +88,8 @@ public class WmiSelecterTest {
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
-        MetaSelecter selecter = new MetaSelecter();
-        ArrayList<MetaSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericSelecter selecter = new GenericSelecter();
+        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
@@ -107,8 +107,8 @@ public class WmiSelecterTest {
     public void TestCIM_ProcessExecutableAntecedent() throws Exception {
         String antecedentString = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"";
 
-        MetaSelecter selecter = new MetaSelecter();
-        ArrayList<MetaSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericSelecter selecter = new GenericSelecter();
+        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"),
@@ -119,7 +119,7 @@ public class WmiSelecterTest {
         System.out.println(listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
-        for(MetaSelecter.Row row : listResults) {
+        for(GenericSelecter.Row row : listResults) {
             Assert.assertEquals(row.Elements.size(), 2);
             Assert.assertTrue(row.Elements.containsKey("any_variable"));
             Assert.assertTrue(row.Elements.containsKey("var_dependent"));

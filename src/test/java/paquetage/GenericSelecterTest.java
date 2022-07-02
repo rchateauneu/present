@@ -5,8 +5,8 @@ import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MetaSelecterTest {
-    static void CompareRows(MetaSelecter.Row row1, MetaSelecter.Row row2) {
+public class GenericSelecterTest {
+    static void CompareRows(GenericSelecter.Row row1, GenericSelecter.Row row2) {
         System.out.println("row1=" + row1.Elements.keySet());
         System.out.println("row2=" + row2.Elements.keySet());
         Assert.assertEquals(row1.Elements.size(), row2.Elements.size());
@@ -38,12 +38,12 @@ public class MetaSelecterTest {
                         "Path", "var_path"),
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
-        MetaSelecter metaSelecter = new MetaSelecter();
+        GenericSelecter genericSelecter = new GenericSelecter();
         // Checks that the custom provider can be found.
-        Assert.assertTrue(metaSelecter.FindCustomProvider(queryData) != null);
+        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
 
-        ArrayList<MetaSelecter.Row> rowsProviderCustom = metaSelecter.SelectVariablesFromWhere(queryData, true);
-        ArrayList<MetaSelecter.Row> rowsProviderGeneric = metaSelecter.SelectVariablesFromWhere(queryData, false);
+        ArrayList<GenericSelecter.Row> rowsProviderCustom = genericSelecter.SelectVariablesFromWhere(queryData, true);
+        ArrayList<GenericSelecter.Row> rowsProviderGeneric = genericSelecter.SelectVariablesFromWhere(queryData, false);
 
         Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
         for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
@@ -64,8 +64,8 @@ public class MetaSelecterTest {
                 Map.of("GroupComponent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("PartComponent", "abc")));
 
-        MetaSelecter metaSelecter = new MetaSelecter();
-        Assert.assertTrue(metaSelecter.FindCustomProvider(queryData) != null);
+        GenericSelecter genericSelecter = new GenericSelecter();
+        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
     }
 
     /** This checks the presence of a custom provider emulating a WMI query similar to:
@@ -82,8 +82,8 @@ public class MetaSelecterTest {
                 Map.of("PartComponent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("GroupComponent", "abc")));
 
-        MetaSelecter metaSelecter = new MetaSelecter();
-        Assert.assertTrue(metaSelecter.FindCustomProvider(queryData) != null);
+        GenericSelecter genericSelecter = new GenericSelecter();
+        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
     }
 
     @Test
@@ -95,8 +95,8 @@ public class MetaSelecterTest {
                 Map.of("Antecedent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("Dependent", "abc")));
 
-        MetaSelecter metaSelecter = new MetaSelecter();
-        Assert.assertTrue(metaSelecter.FindCustomProvider(queryData) != null);
+        GenericSelecter genericSelecter = new GenericSelecter();
+        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
     }
 
     @Test
@@ -108,8 +108,8 @@ public class MetaSelecterTest {
                 Map.of("Dependent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("Antecedent", "abc")));
 
-        MetaSelecter metaSelecter = new MetaSelecter();
-        Assert.assertTrue(metaSelecter.FindCustomProvider(queryData) != null);
+        GenericSelecter genericSelecter = new GenericSelecter();
+        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
     }
 
     /** This instantiates object associated to a file, by two ways:
@@ -132,12 +132,12 @@ public class MetaSelecterTest {
                         "Path", "var_path"),
                 Arrays.asList(new QueryData.WhereEquality("Name", filePath)));
 
-        MetaSelecter metaSelecter = new MetaSelecter();
-        Assert.assertTrue(metaSelecter.FindCustomGetter(queryData) != null);
+        GenericSelecter genericSelecter = new GenericSelecter();
+        Assert.assertTrue(genericSelecter.FindCustomGetter(queryData) != null);
 
         String objectPath = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", filePath));
-        MetaSelecter.Row rowGetterCustom = metaSelecter.GetObjectFromPath(objectPath, queryData, true);
-        MetaSelecter.Row rowGetterGeneric = metaSelecter.GetObjectFromPath(objectPath, queryData, false);
+        GenericSelecter.Row rowGetterCustom = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
+        GenericSelecter.Row rowGetterGeneric = genericSelecter.GetObjectFromPath(objectPath, queryData, false);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 
@@ -161,13 +161,13 @@ public class MetaSelecterTest {
                         "WindowsVersion", "var_windowsversion"),
                 Arrays.asList(new QueryData.WhereEquality("Handle", pidString)));
 
-        MetaSelecter metaSelecter = new MetaSelecter();
+        GenericSelecter genericSelecter = new GenericSelecter();
         // This ensures that the custom function getter is found.
-        Assert.assertTrue(metaSelecter.FindCustomGetter(queryData) != null);
+        Assert.assertTrue(genericSelecter.FindCustomGetter(queryData) != null);
 
         String objectPath = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", pidString));
-        MetaSelecter.Row rowGetterCustom = metaSelecter.GetObjectFromPath(objectPath, queryData, true);
-        MetaSelecter.Row rowGetterGeneric = metaSelecter.GetObjectFromPath(objectPath, queryData, false);
+        GenericSelecter.Row rowGetterCustom = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
+        GenericSelecter.Row rowGetterGeneric = genericSelecter.GetObjectFromPath(objectPath, queryData, false);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 }

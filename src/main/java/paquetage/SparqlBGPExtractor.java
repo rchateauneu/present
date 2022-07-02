@@ -5,13 +5,8 @@ package paquetage;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
-import com.sun.jna.platform.win32.COM.COMUtils;
-import com.sun.jna.platform.win32.OleAuto;
 import org.eclipse.rdf4j.model.*;
-import org.eclipse.rdf4j.model.impl.SimpleStatement;
-import org.eclipse.rdf4j.model.impl.SimpleTriple;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -98,7 +93,7 @@ public class SparqlBGPExtractor {
         }
     }
 
-    List<Triple> GenerateTriples(List<MetaSelecter.Row> rows) throws Exception {
+    List<Triple> GenerateTriples(List<GenericSelecter.Row> rows) throws Exception {
         // Reorganize statements by input variable.
         HashMap<String, List<StatementPattern>> triplesWithVariable = new HashMap<>();
 
@@ -172,7 +167,7 @@ public class SparqlBGPExtractor {
             }
         }
 
-        for(MetaSelecter.Row row: rows) {
+        for(GenericSelecter.Row row: rows) {
             for(Map.Entry<String, String> variable_value_pair : row.Elements.entrySet()) {
                 String variableName = variable_value_pair.getKey();
                 String variableValue = variable_value_pair.getValue();

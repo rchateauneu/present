@@ -30,8 +30,8 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
-    ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<MetaSelecter.Row> resultRows = new ArrayList<>();
+    ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericSelecter.Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
         // Temporary debugging purpose.
         System.out.println("wqlQuery=" + wqlQuery);
@@ -61,7 +61,7 @@ public class WmiSelecter {
                 }
                 for (int indexRow = 0; indexRow < wqlResults.length; ++indexRow) {
                     Wbemcli.IWbemClassObject wqlResult = wqlResults[indexRow];
-                    MetaSelecter.Row oneRow = new MetaSelecter.Row();
+                    GenericSelecter.Row oneRow = new GenericSelecter.Row();
                     // The path is always returned if the key is selected.
                     // This path should never be recalculated to ensure consistency with WMI.
                     // All values are NULL except, typically:
@@ -302,12 +302,12 @@ public class WmiSelecter {
         return objectNode;
     }
 
-    MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
 
-        MetaSelecter.Row singleRow = new MetaSelecter.Row();
+        GenericSelecter.Row singleRow = new GenericSelecter.Row();
         for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
             String variableName = entry.getValue();
             if(variableName == null) {

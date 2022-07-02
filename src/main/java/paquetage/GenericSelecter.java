@@ -14,7 +14,7 @@ abstract class Provider {
     public abstract boolean MatchQuery(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception;
+    public abstract ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception;
 
 
     // TODO: Estimate cost.
@@ -27,11 +27,11 @@ class Provider_CIM_DataFile_Name extends Provider {
         return queryData.CompatibleQuery("CIM_DataFile", Set.of("Name"));
     }
 
-    public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<MetaSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
         String fileName = queryData.GetWhereValue("Name");
         String pathFile = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", fileName));
-        MetaSelecter.Row singleRow = new MetaSelecter.Row();
+        GenericSelecter.Row singleRow = new GenericSelecter.Row();
 
         ObjectGetter_Cim_DataFile_Name.FillRowFromQuery(singleRow, queryData, fileName);
 
@@ -47,8 +47,8 @@ class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("PartComponent"));
     }
-    public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<MetaSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
         String valuePartComponent = queryData.GetWhereValue("PartComponent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valuePartComponent);
         String filePath = properties.get("Name");
@@ -56,7 +56,7 @@ class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
         String parentPath = file.getAbsoluteFile().getParent();
         String pathDirectory = ObjectPath.BuildPathWbem("Win32_Directory", Map.of("Name", parentPath));
 
-        MetaSelecter.Row singleRow = new MetaSelecter.Row();
+        GenericSelecter.Row singleRow = new GenericSelecter.Row();
         String variableName = queryData.ColumnToVariable("GroupComponent");
         singleRow.Elements.put(variableName, pathDirectory);
 
@@ -76,8 +76,8 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("GroupComponent"));
     }
-    public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<MetaSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
         String valueGroupComponent = queryData.GetWhereValue("GroupComponent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
         String dirPath = properties.get("Name");
@@ -94,7 +94,7 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
             }
             String fileName = aFile.getAbsoluteFile().toString();
 
-            MetaSelecter.Row singleRow = new MetaSelecter.Row();
+            GenericSelecter.Row singleRow = new GenericSelecter.Row();
 
             String valuePartComponent = ObjectPath.BuildPathWbem(
                     "CIM_DataFile", Map.of(
@@ -124,8 +124,8 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Antecedent"));
     }
-    public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<MetaSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
         String valueAntecedent = queryData.GetWhereValue("Antecedent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
         String filePath = properties.get("Name");
@@ -133,7 +133,7 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
 
         String variableName = queryData.ColumnToVariable("Dependent");
         for(String onePid : listPids) {
-            MetaSelecter.Row singleRow = new MetaSelecter.Row();
+            GenericSelecter.Row singleRow = new GenericSelecter.Row();
             String pathDependent = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", onePid));
             singleRow.Elements.put(variableName, pathDependent);
 
@@ -160,8 +160,8 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
     public boolean MatchQuery(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
     }
-    public ArrayList<MetaSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<MetaSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
         String valueDependent = queryData.GetWhereValue("Dependent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
         String pidStr = properties.get("Handle");
@@ -169,7 +169,7 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
 
         String variableName = queryData.ColumnToVariable("Antecedent");
         for(String oneFile : listModules) {
-            MetaSelecter.Row singleRow = new MetaSelecter.Row();
+            GenericSelecter.Row singleRow = new GenericSelecter.Row();
             String pathAntecedent = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", oneFile));
             singleRow.Elements.put(variableName, pathAntecedent);
 
@@ -191,7 +191,7 @@ abstract class ObjectGetter {
     public abstract boolean MatchGet(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
+    public abstract GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
 
     // TODO: Cost estimation.
 }
@@ -270,7 +270,7 @@ class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
             "Path", (String fileName) -> FileToPath(fileName)
             );
 
-    public static void FillRowFromQuery(MetaSelecter.Row singleRow, QueryData queryData, String fileName) {
+    public static void FillRowFromQuery(GenericSelecter.Row singleRow, QueryData queryData, String fileName) {
         for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
             Function<String, String> lambda = columnsMap.get(qCol.getKey());
             String variableValue = lambda.apply(fileName);
@@ -278,10 +278,10 @@ class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
         }
     }
 
-    public MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String fileName = properties.get("Name");
-        MetaSelecter.Row singleRow = new MetaSelecter.Row();
+        GenericSelecter.Row singleRow = new GenericSelecter.Row();
         FillRowFromQuery(singleRow, queryData, fileName);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
@@ -343,7 +343,7 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
         uint64   WriteTransferCount;
         */
 
-
+        /** This tells if this class can calculate the required columns. &*/
         public boolean MatchGet(QueryData queryData) {
             return queryData.ColumnsSubsetOf("Win32_Process", columnsMap.keySet());
         }
@@ -356,8 +356,9 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
                 Path p = Paths.get(executablePath);
                 String fileNameShort = p.getFileName().toString();
                 return fileNameShort;
-            }
+        }
 
+        /** Windows version and build number. */
         static String WindowsVersion(String processId) {
             Kernel32 kernel = Kernel32.INSTANCE;
             WinNT.OSVERSIONINFOEX vex = new WinNT.OSVERSIONINFOEX();
@@ -371,7 +372,7 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
             }
         }
 
-
+        /** This contains the columns that this class can calculate, plus the lambda available. */
         static Map<String, Function<String, String>> columnsMap = Map.of(
                 "Handle", (String processId) -> processId,
                 "Name", (String processId) -> ProcessToName(processId),
@@ -379,7 +380,7 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
                 "WindowsVersion", (String processId) -> WindowsVersion(processId)
         );
 
-        public static void FillRowFromQuery(MetaSelecter.Row singleRow, QueryData queryData, String fileName) throws Exception {
+        public static void FillRowFromQuery(GenericSelecter.Row singleRow, QueryData queryData, String fileName) throws Exception {
             for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
                 Function<String, String> lambda = columnsMap.get(qCol.getKey());
                 if(lambda == null) {
@@ -390,10 +391,10 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
             }
     }
 
-    public MetaSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String processId = properties.get("Handle");
-        MetaSelecter.Row singleRow = new MetaSelecter.Row();
+        GenericSelecter.Row singleRow = new GenericSelecter.Row();
         FillRowFromQuery(singleRow, queryData, processId);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
@@ -407,7 +408,7 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
 }
 
 
-public class MetaSelecter {
+public class GenericSelecter {
     /**
      * This is a row returned by a WMI select query.
      * For simplicity, each row contains all column names.
@@ -442,7 +443,7 @@ public class MetaSelecter {
         new Provider_CIM_ProcessExecutable_Antecedent()
     };
 
-    public MetaSelecter()
+    public GenericSelecter()
     {}
 
     public Provider FindCustomProvider(QueryData queryData) throws Exception {

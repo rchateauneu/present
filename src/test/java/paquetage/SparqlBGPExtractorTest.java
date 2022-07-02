@@ -294,7 +294,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
         CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
 
-        List<MetaSelecter.Row> rows = Arrays.asList(new MetaSelecter.Row(Map.of("dir_name", "C:")));
+        List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of("dir_name", "C:")));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 

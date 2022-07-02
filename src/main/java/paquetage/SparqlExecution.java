@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
  */
 public class SparqlExecution {
     DependenciesBuilder dependencies;
-    ArrayList<MetaSelecter.Row> current_rows;
-    MetaSelecter metaSelecter = new MetaSelecter();
+    ArrayList<GenericSelecter.Row> current_rows;
+    GenericSelecter genericSelecter = new GenericSelecter();
     Set<String> bindings;
 
     public SparqlExecution(SparqlBGPExtractor input_extractor) throws Exception {
@@ -31,7 +31,7 @@ public class SparqlExecution {
      */
     void CreateCurrentRow()
     {
-        MetaSelecter.Row new_row = new MetaSelecter.Row();
+        GenericSelecter.Row new_row = new GenericSelecter.Row();
         for(String binding : bindings)
         {
             new_row.Elements.put(binding, dependencies.variablesContext.get(binding));
@@ -57,7 +57,7 @@ public class SparqlExecution {
     void GenerateTriples()
     {}
 
-    void RowToContext(MetaSelecter.Row singleRow) throws Exception {
+    void RowToContext(GenericSelecter.Row singleRow) throws Exception {
         for(Map.Entry<String, String> entry : singleRow.Elements.entrySet()) {
             String variableName = entry.getKey();
             if(!dependencies.variablesContext.containsKey(variableName)){
@@ -84,7 +84,7 @@ public class SparqlExecution {
                 throw new Exception("Where clauses should be empty if the main variable is available");
             }
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable);
-            MetaSelecter.Row singleRow = metaSelecter.GetObjectFromPath(objectPath, queryData, true);
+            GenericSelecter.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
             queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
 
             RowToContext(singleRow);
@@ -108,7 +108,7 @@ public class SparqlExecution {
                 }
             }
 
-            ArrayList<MetaSelecter.Row> rows = metaSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
+            ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
             Set<String> columnsWhere = queryData.queryWheres.stream()
                     .map(entry -> entry.predicate)
@@ -116,7 +116,7 @@ public class SparqlExecution {
             queryData.statistics.FinishSample(queryData.className, columnsWhere);
 
             int numColumns = queryData.queryColumns.size();
-            for(MetaSelecter.Row row: rows) {
+            for(GenericSelecter.Row row: rows) {
                 // An extra column contains the path.
                 if(row.Elements.size() != numColumns + 1) {
                     /*
@@ -133,9 +133,9 @@ public class SparqlExecution {
         }
     }
 
-    public ArrayList<MetaSelecter.Row> ExecuteToRows() throws Exception
+    public ArrayList<GenericSelecter.Row> ExecuteToRows() throws Exception
     {
-        current_rows = new ArrayList<MetaSelecter.Row>();
+        current_rows = new ArrayList<GenericSelecter.Row>();
         for(QueryData queryData : dependencies.prepared_queries) {
             queryData.statistics.ResetAll();
         }
