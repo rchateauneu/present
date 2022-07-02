@@ -18,13 +18,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.eclipse.rdf4j.model.util.Values.iri;
-import static org.eclipse.rdf4j.model.util.Values.literal;
 
 public class WmiOntology {
+    /** This is a triplestore which conyains the WMI ontology. */
     Repository repository;
 
     public static String survol_url_prefix = "http://www.primhillcomputers.com/ontology/survol#";
 
+    /** This maps WMI types to standard RDF types. */
     static final Map<String , IRI> wmi_type_to_xsd = new HashMap<>() {
         {
             put("string", XSD.STRING);
