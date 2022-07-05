@@ -87,9 +87,16 @@ public class SparqlExecution {
             GenericSelecter.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
             queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
 
-            RowToContext(singleRow);
-            // New WQL query for this row only.
-            ExecuteOneLevel(index + 1);
+            if(singleRow == null)
+            {
+                // Object does not exist: Maybe a CIM_FataFile is protected, or a CIM_Process exited ?
+                System.out.println("Cannot get row for objectPath=" + objectPath);
+            }
+            else {
+                RowToContext(singleRow);
+                // New WQL query for this row only.
+                ExecuteOneLevel(index + 1);
+            }
         } else {
             ArrayList<QueryData.WhereEquality> substitutedWheres = new ArrayList<>();
             for(QueryData.WhereEquality kv : queryData.queryWheres) {

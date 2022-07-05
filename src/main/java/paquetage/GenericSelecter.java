@@ -446,12 +446,25 @@ public class GenericSelecter {
     public GenericSelecter()
     {}
 
+    // This avoids to display the same message again and again.
+    static Set<String> foundProviders = new HashSet<>();
+
     public Provider FindCustomProvider(QueryData queryData) throws Exception {
+        String strQueryData = queryData.toString();
         for(Provider provider: providers) {
             if (provider.MatchQuery(queryData)) {
-                System.out.println("Found provider for " + queryData.toString());
+                if(!foundProviders.contains(strQueryData)) {
+                    // So the message is displayed once only.
+                    foundProviders.add(strQueryData);
+                    System.out.println("Found provider for " + strQueryData);
+                }
                 return provider;
             }
+        }
+        if(!foundProviders.contains(strQueryData)) {
+            // So the message is displayed once only.
+            foundProviders.add(strQueryData);
+            System.out.println("No provider found for " + strQueryData);
         }
         return null;
     }
@@ -462,7 +475,6 @@ public class GenericSelecter {
             if(provider != null) {
                 return provider.EffectiveSelect(queryData);
             }
-            System.out.println("No provider found for " + queryData.toString());
         }
         return wmiSelecter.EffectiveSelect(queryData);
     }

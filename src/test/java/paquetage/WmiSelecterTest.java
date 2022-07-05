@@ -145,7 +145,7 @@ public class WmiSelecterTest {
      * and checks that some of its properties are defined.
      */
     @Test
-    public void TestGetObject_CIM_DataFile() {
+    public void TestGetObject_CIM_DataFile() throws Exception {
         // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"";
         String objectPath = PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"");
         WmiSelecter selecter = new WmiSelecter();
@@ -160,7 +160,7 @@ public class WmiSelecterTest {
     /** This creates an Win32_Process object based on its path only,
      * and checks that some of its properties are defined.
      */    @Test
-    public void TestGetObject_Win32_Process() {
+    public void TestGetObject_Win32_Process() throws Exception {
         long pid = ProcessHandle.current().pid();
         // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"" + pid + "\"";
         String objectPath = PresentUtils.PrefixPath("Win32_Process.Handle=\"" + pid + "\"");

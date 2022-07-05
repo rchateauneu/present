@@ -125,7 +125,8 @@ public interface Wbemcli {
 
         public HRESULT Get(WString wszName, int lFlags, VARIANT.ByReference pVal, IntByReference pType,
                            IntByReference plFlavor) {
-            // Get is 5th method of IWbemClassObjectVtbl in WbemCli.h
+            // Get is 5th method of IWbemClassObjectVtbl in WbemCli.h :
+            // See https://docs.microsoft.com/en-us/windows/win32/api/wbemcli/
             return (HRESULT) _invokeNativeObject(4,
                     new Object[] { getPointer(), wszName, lFlags, pVal, pType, plFlavor }, HRESULT.class);
         }
@@ -155,6 +156,88 @@ public interface Wbemcli {
             }
             return names;
         }
+
+        public HRESULT GetQualifierSet(PointerByReference ppQualSet) {
+            // Get is the fourth method of IWbemClassObjectVtbl in WbemCli.h :
+            return (HRESULT) _invokeNativeObject(3,
+                    new Object[] { getPointer(), ppQualSet }, HRESULT.class);
+        }
+
+        public IWbemQualifierSet GetQualifierSet() {
+            PointerByReference ppQualSet = new PointerByReference();
+            HRESULT hr = GetQualifierSet(ppQualSet);
+            COMUtils.checkRC(hr);
+            IWbemQualifierSet qualifier = new IWbemQualifierSet(ppQualSet.getValue());
+
+            return qualifier;
+        }
+
+        /*
+        // https://docs.microsoft.com/en-us/windows/win32/api/wbemcli/nf-wbemcli-iwbemclassobject-getpropertyqualifierset
+        HRESULT GetPropertyQualifierSet(
+            [in]  LPCWSTR           wszProperty,
+            [out] IWbemQualifierSet **ppQualSet
+            );
+         */
+        public HRESULT GetPropertyQualifierSet(WString wszProperty, PointerByReference ppQualSet) {
+            // Get is 9th method of IWbemClassObjectVtbl in WbemCli.h :
+            return (HRESULT) _invokeNativeObject(11,
+                    new Object[] { getPointer(), wszProperty, ppQualSet }, HRESULT.class);
+        }
+
+        public IWbemQualifierSet GetPropertyQualifierSet(String strProperty) {
+            WString wszProperty = new WString(strProperty);
+            PointerByReference ppQualSet = new PointerByReference();
+
+            COMUtils.checkRC(GetPropertyQualifierSet(wszProperty, ppQualSet));
+            IWbemQualifierSet qualifier  = new IWbemQualifierSet(ppQualSet.getValue());
+            return qualifier;
+        }
+    }
+
+    class IWbemQualifierSet extends Unknown {
+        public IWbemQualifierSet(Pointer pvInstance) {
+            super(pvInstance);
+        }
+
+        public HRESULT Get(WString wszName, long lFlags, VARIANT.ByReference pVal, IntByReference plFlavor) {
+            return (HRESULT) _invokeNativeObject(3,
+                    new Object[] { getPointer(), wszName, lFlags, pVal, plFlavor }, HRESULT.class);
+        }
+
+        public String Get(String wszName) {
+            int lFlags = 0;
+            IntByReference plFlavor = new IntByReference();
+            Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
+            // System.out.println("wszName=" + wszName);
+            HRESULT hres = Get(new WString(wszName), lFlags, pQualifierVal, plFlavor);
+            if(hres.intValue() == 0x80041002) {
+                return null;
+            }
+            COMUtils.checkRC(Get(new WString(wszName), lFlags, pQualifierVal, plFlavor));
+            if(pQualifierVal.getVarType().intValue() == Wbemcli.CIM_BOOLEAN)
+                return String.valueOf(pQualifierVal.booleanValue());
+            if(pQualifierVal.getVarType().intValue() == Wbemcli.CIM_STRING)
+                return pQualifierVal.stringValue();
+            return "Get " + wszName + " cannot convert type:" + String.valueOf(pQualifierVal.getVarType().intValue());
+        }
+
+        public HRESULT GetNames(long lFlags, PointerByReference pNames) {
+            return (HRESULT) _invokeNativeObject(6,
+                    new Object[] { getPointer(), lFlags, pNames }, HRESULT.class);
+        }
+
+        public String[] GetNames() {
+            long lFlags = 0;
+            PointerByReference pbr = new PointerByReference();
+            COMUtils.checkRC(GetNames(lFlags, pbr));
+            Object[] nameObjects = (Object[]) OaIdlUtil.toPrimitiveArray(new SAFEARRAY(pbr.getValue()), true);
+            String[] qualifierNames = new String[nameObjects.length];
+            for(int i = 0; i < nameObjects.length; i++) {
+                qualifierNames[i] = (String) nameObjects[i];
+            }
+            return qualifierNames;
+        }
     }
 
     /**
@@ -162,8 +245,8 @@ public interface Wbemcli {
      */
     class IEnumWbemClassObject extends Unknown {
 
-        public IEnumWbemClassObject() {
-        }
+        //public IEnumWbemClassObject() {
+        //}
 
         public IEnumWbemClassObject(Pointer pvInstance) {
             super(pvInstance);

@@ -55,23 +55,35 @@ public class WmiOntology {
         for(Map.Entry<String, WmiSelecter.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
             IRI classIri = iri(survol_url_prefix, className);
+            WmiSelecter.WmiClass wmiClass = entry_class.getValue();
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, factory.createLiteral(className));
-            for(Map.Entry<String, WmiSelecter.WmiProperty> entry_property : entry_class.getValue().Properties.entrySet()) {
+            connection.add(classIri, RDFS.COMMENT, factory.createLiteral(wmiClass.Description));
+            for(Map.Entry<String, WmiSelecter.WmiProperty> entry_property : wmiClass.Properties.entrySet()) {
                 String propertyName = entry_property.getKey();
                 IRI propertyIri = iri(survol_url_prefix, propertyName);
-                String strType = entry_property.getValue().Type;
+                WmiSelecter.WmiProperty wmiProperty = entry_property.getValue();
 
                 connection.add(propertyIri, RDF.TYPE, RDF.PROPERTY);
                 connection.add(propertyIri, RDFS.DOMAIN, classIri);
 
-                IRI iriType = wmi_type_to_xsd.get(strType);
-                if(iriType == null)
-                {
-                    iriType = XSD.STRING; // Default value.
+                if(wmiProperty.Type.startsWith("ref:")) {
+                    String domainName = wmiProperty.Type.substring(4);
+                    // This should be another class.
+                    IRI domainIri = iri(survol_url_prefix, domainName);
+                    connection.add(propertyIri, RDFS.RANGE, domainIri);
                 }
-                connection.add(propertyIri, RDFS.RANGE, iriType);
+                else
+                {
+                    IRI iriType = wmi_type_to_xsd.get(wmiProperty.Type);
+                    if(iriType == null)
+                    {
+                        iriType = XSD.STRING; // Default value.
+                    }
+                    connection.add(propertyIri, RDFS.RANGE, iriType);
+                }
                 connection.add(propertyIri, RDFS.LABEL, factory.createLiteral(propertyName));
+                connection.add(propertyIri, RDFS.COMMENT, factory.createLiteral(wmiProperty.Description));
 
                 /*
                 ?class_node cim:is_association ?obj .

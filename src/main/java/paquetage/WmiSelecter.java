@@ -133,12 +133,16 @@ public class WmiSelecter {
             Properties = new HashMap<String, WmiProperty>();
             Description = "No description available yet for class " + className;
         }
+
     }
 
+    /** This returns a map containing the WMI classes. */
     Map<String, WmiClass> Classes() {
         Map<String, WmiClass> resultClasses = new HashMap<String, WmiClass>();
-        Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery("WQL", "SELECT * FROM meta_class",
-                Wbemcli.WBEM_FLAG_FORWARD_ONLY, null);
+        Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery(
+                "WQL",
+                "SELECT * FROM meta_class",
+                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
 
         try {
             Wbemcli.IWbemClassObject[] result;
@@ -152,34 +156,103 @@ public class WmiSelecter {
                     break;
                 }
 
+                Wbemcli.IWbemClassObject classObject = result[0];
                 Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
-                // String[] names = result[0].GetNames(null, Wbemcli.WBEM_CONDITION_FLAG_TYPE.WBEM_FLAG_NONSYSTEM_ONLY, pQualifierVal);
-                //String[] names = result[0].GetNames(null, 0, pQualifierVal);
-                String[] names = result[0].GetNames(null, 0, pQualifierVal);
+                // String[] propertyNames = result[0].GetNames(null, Wbemcli.WBEM_CONDITION_FLAG_TYPE.WBEM_FLAG_NONSYSTEM_ONLY, pQualifierVal);
+                //String[] propertyNames = result[0].GetNames(null, 0, pQualifierVal);
+                String[] propertyNames = classObject.GetNames(null, 0, pQualifierVal);
 
-                COMUtils.checkRC(result[0].Get("__CLASS", 0, pVal, pType, plFlavor));
+                COMUtils.checkRC(classObject.Get("__CLASS", 0, pVal, pType, plFlavor));
                 WmiClass newClass = new WmiClass(pVal.stringValue());
                 OleAuto.INSTANCE.VariantClear(pVal);
 
-                COMUtils.checkRC(result[0].Get("__SUPERCLASS", 0, pVal, pType, plFlavor));
+                COMUtils.checkRC(classObject.Get("__SUPERCLASS", 0, pVal, pType, plFlavor));
                 Object baseClass = pVal.getValue();
                 if (baseClass != null) {
                     newClass.BaseName = baseClass.toString();
                 }
                 OleAuto.INSTANCE.VariantClear(pVal);
 
-                if (names != null) {
-                    for (String one_name : names) {
+                Wbemcli.IWbemQualifierSet classQualifiersSet = classObject.GetQualifierSet();
+
+
+                if(false) {
+                    String[] classQualifiersNames = classQualifiersSet.GetNames();
+                    System.out.println("class=" + newClass.Name + " classQualifiersNames=" + String.join("+", classQualifiersNames));
+                    for (String classQualifierName : classQualifiersNames) {
+                        String qualifierValue = classQualifiersSet.Get(classQualifierName);
+                        System.out.println("class=" + newClass.Name + " qualifierValue=" + qualifierValue);
+                    }
+                }
+                String classDescription = classQualifiersSet.Get("Description");
+                if(classDescription != null) {
+                    //System.out.println("classDescription=" + classDescription);
+                    newClass.Description = classDescription;
+                }
+                if(false) {
+                    String isAssociation = classQualifiersSet.Get("Association");
+                    //System.out.println("class=" + newClass.Name + " isAssociation=" + isAssociation);
+                }
+
+                if (propertyNames != null) {
+                    for (String propertyName : propertyNames) {
                         /* Filter properties such as __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH
                         __PROPERTY_COUNT, __DERIVATION, __SERVER, __NAMESPACE, __PATH */
-                        if (!one_name.startsWith("__")) {
-                            WmiProperty newProperty = new WmiProperty(one_name);
-                            newClass.Properties.put(one_name, newProperty);
+                        if (!propertyName.startsWith("__")) {
+                            WmiProperty newProperty = new WmiProperty(propertyName);
+
+                            Wbemcli.IWbemQualifierSet propertyQualifiersSet = classObject.GetPropertyQualifierSet(propertyName);
+
+                            // If the class is an association and the property is a key, we can assume it points to an object.
+                            if(false) {
+                                String isKey = classQualifiersSet.Get("key");
+                            }
+
+                            // The property is in the qualifier "CIMTYPE" and is a string starting with "ref:"
+                            String CIMTYPE = propertyQualifiersSet.Get("CIMTYPE");
+                            if(CIMTYPE != null)
+                            {
+                                newProperty.Type = CIMTYPE;
+                                /*
+                                if(CIMTYPE.startsWith("ref:")) {
+                                    System.out.println("CLASS CIMTYPE=" + CIMTYPE);
+                                    String domainName = CIMTYPE.substring(4);
+                                }
+                                else {
+                                    System.out.println("SIMPLE CIMTYPE=" + CIMTYPE);
+                                    newProperty.Type = CIMTYPE;
+                                }
+                                */
+                            }
+
+                            //if(newClass.Name.equals("CIM_ProcessExecutable")) {
+                            //    System.out.println("propertyName=" + propertyName);
+                            //    System.out.println("propertyQualifierNames=" + String.join("+", propertyQualifierNames));
+                            //}
+                            if(false) {
+                                String[] propertyQualifierNames = propertyQualifiersSet.GetNames();
+                                System.out.println("propertyQualifierNames=" + String.join("+", propertyQualifierNames));
+                                for (String propertyQualifierName : propertyQualifierNames) {
+                                    if (propertyQualifierName == "CIMTYPE") continue;
+                                    String propertyQualifierValue = propertyQualifiersSet.Get(propertyQualifierName);
+                                    System.out.println("propertyQualifierValue=" + propertyQualifierValue);
+                                }
+                            }
+                            String propertyDescription = propertyQualifiersSet.Get("Description");
+                            if(propertyDescription != null) {
+                                //System.out.println("property=" + propertyName + " propertyDescription=" + propertyDescription);
+                                newProperty.Description = propertyDescription;
+                            }
+                            newClass.Properties.put(propertyName, newProperty);
                         }
                     }
                 }
 
                 resultClasses.put(newClass.Name, newClass);
+
+                // o_class = conn_wmi.Get("Win32_Process", win32com.client.constants.wbemFlagUseAmendedQualifiers)
+                //print("o_class.Qualifiers_=", o_class.Qualifiers_("Description"))
+
                 OleAuto.INSTANCE.VariantClear(pVal);
                 result[0].Release();
             }
@@ -189,22 +262,36 @@ public class WmiSelecter {
         return resultClasses;
     }
 
-    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) {
-        return svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) throws Exception {
+        try {
+            Wbemcli.IWbemClassObject objectNode = svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+            return objectNode;
+        } catch (com.sun.jna.platform.win32.COM.COMException exc) {
+            // Error Code 80041002 – Object Not Found
+            // Possibly a file protection problem.
+            System.err.println("GetObjectNode objectPath=" + objectPath + " Caught=" + exc);
+            return null;
+        }
     }
 
     // TODO: This should be thread-safe.
     static HashMap<String, Wbemcli.IWbemClassObject> cacheWbemClassObject = new HashMap<>();
 
-    Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) {
-        Wbemcli.IWbemClassObject ret = cacheWbemClassObject.get(objectPath);
-        if (ret == null) {
-            ret = GetObjectNode(objectPath);
-            cacheWbemClassObject.put(objectPath, ret);
+    Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) throws Exception {
+        Wbemcli.IWbemClassObject objectNode = cacheWbemClassObject.get(objectPath);
+        if (objectNode == null) {
+            objectNode = GetObjectNode(objectPath);
+            cacheWbemClassObject.put(objectPath, objectNode);
         }
-        return ret;
+        return objectNode;
     }
 
+    /** This gets a WMI object and its properties mong the input list of properties.
+     * This should be faster than fetching all of them.
+     * @param objectPath
+     * @param properties
+     * @return
+     */
     Wbemcli.IWbemClassObject GetObjectNodePartial(String objectPath, Set<String> properties) {
         Wbemcli.IWbemContext pctxDrive = new Wbemcli.IWbemContext().create();
 
@@ -249,7 +336,7 @@ public class WmiSelecter {
         IntByReference pType = new IntByReference();
         try {
             COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, null));
-        } catch (COMException exc) {
+        } catch (Exception exc) {
             // So it is easier to debug.
             throw exc;
         }
@@ -284,20 +371,16 @@ public class WmiSelecter {
      */
     Wbemcli.IWbemClassObject PathToNode(String objectPath, Set<String> columns) throws Exception {
         Wbemcli.IWbemClassObject objectNode = null;
-        try {
+        if (false) {
+            objectNode = GetObjectNode(objectPath);
+        } else {
             if (false) {
-                objectNode = GetObjectNode(objectPath);
+                // This works but this is not faster.
+                objectNode = GetObjectNodePartial(objectPath, columns);
             } else {
-                if (false) {
-                    // This works but this is not faster.
-                    objectNode = GetObjectNodePartial(objectPath, columns);
-                } else {
-                    // Not faster if all objects have different path.
-                    objectNode = GetObjectNodeCached(objectPath);
-                }
+                // Not faster if all objects have different path.
+                objectNode = GetObjectNodeCached(objectPath);
             }
-        } catch (com.sun.jna.platform.win32.COM.COMException exc) {
-            System.out.println("objectPath=" + objectPath + " Caught=" + exc);
         }
         return objectNode;
     }
@@ -306,6 +389,11 @@ public class WmiSelecter {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
+        // Maybe the object does not exist.
+        if(objectNode == null) {
+            System.out.println("Cannot find object:" + objectPath);
+            return null;
+        }
 
         GenericSelecter.Row singleRow = new GenericSelecter.Row();
         for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {

@@ -14,8 +14,9 @@ import java.util.Formatter;
 import java.util.HashSet;
 
 public class WmiOntologyTest {
-    static WmiOntology ontology = null;
+    static WmiOntology ontology = new WmiOntology();
 
+    /*
     @Before
     public void setUp() throws Exception {
         ontology = new WmiOntology();
@@ -25,6 +26,7 @@ public class WmiOntologyTest {
     public void tearDown() throws Exception {
         ontology = null;
     }
+    */
 
     static String toSurvol(String term) {
         return WmiOntology.survol_url_prefix + term;
@@ -85,7 +87,8 @@ public class WmiOntologyTest {
     /** This selects all definitions of RDF properties and checks the presence of some properties. */
     @Test
     public void TestOntology_PropertiesFilter() {
-        HashSet<String> propertiesSet = selectColumn("SELECT ?y WHERE { ?y rdf:type rdf:Property }", "y");
+        HashSet<String> propertiesSet = selectColumn(
+                "SELECT ?y WHERE { ?y rdf:type rdf:Property }", "y");
         assertContainsSurvolItem(propertiesSet, "Handle");
         assertContainsSurvolItem(propertiesSet, "Dependent");
     }
@@ -98,6 +101,7 @@ public class WmiOntologyTest {
         assertContainsSurvolItem(domainsSet, "Handle");
     }
 
+    /** This checks the presence of class Wmi32_Process in one of the domains. */
     @Test
     public void TestOntology_Win32_Process_Handle_Domain_Filter() {
         String querystring = new Formatter().format(
@@ -106,17 +110,70 @@ public class WmiOntologyTest {
         assertContainsSurvolItem(domainsSet, "Win32_Process");
     }
 
+    /** This checks the presence of class string in one of the ranges. */
     @Test
-    public void TestOntology_Win32_Process_Handle_Range_Filter() {
+    public void TestOntology_Range_Filter() {
         // Predicates: [
         // http://www.w3.org/2000/01/rdf-schema#label,
         // http://www.w3.org/2000/01/rdf-schema#domain,
         // http://www.w3.org/1999/02/22-rdf-syntax-ns#type,
         // http://www.w3.org/2000/01/rdf-schema#range]
         String querystring = new Formatter().format(
-                "SELECT ?x WHERE { <%s> rdfs:range ?x }", WmiOntology.survol_url_prefix + "Handle").toString( );
+                "SELECT ?x WHERE { <%s> rdfs:range ?x }",
+                toSurvol("Handle")).toString( );
         HashSet<String> rangesSet = selectColumn(querystring, "x");
         Assert.assertTrue(rangesSet.contains("http://www.w3.org/2001/XMLSchema#string"));
+    }
+
+    /** This checks the presence Description for class Win32_Process. */
+    @Test
+    public void TestOntology_Win32_Process_Description() {
+        String querystring = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_class_description
+                    where {
+                        cim:Win32_Process rdfs:comment ?my_class_description .
+                    }
+                """;
+        HashSet<String> descriptionsSet = selectColumn(querystring, "my_class_description");
+        Assert.assertEquals(1, descriptionsSet.size());
+        String expectedDescription = "\"The Win32_Process class represents a sequence of events on a Win32 system. Any sequence consisting of the interaction of one or more processors or interpreters, some executable code, and a set of inputs, is a descendent (or member) of this class.  Example: A client application running on a Win32 system.\"";
+        String firstDescription = descriptionsSet.stream().findFirst().orElse("xyz");
+        System.out.println(expectedDescription);
+        System.out.println(firstDescription);
+        Assert.assertEquals(expectedDescription.substring(0,10), firstDescription.substring(0,10));
+    }
+
+    /** This checks the presence Description for property Handle. */
+    @Test
+    public void TestOntology_Handle_Description() {
+        String querystring = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_property_description
+                    where {
+                        cim:Handle rdfs:comment ?my_property_description .
+                        cim:Handle rdfs:domain cim:Win32_Process .
+                    }
+                """;
+        /*
+        TODO: Design problem here. Several WMI properties may have the same name.
+        But for convenience, we wish to keen the same name, such as cim:Handle.
+        The idea is to keep this ambiguity, which will be resolved by the WMI processing part.
+        The node "http:/...survol...#Handle" will be pointed to by several "properties" with names
+        like "...#CIM_Process.Handle" and these nodes will point to the domains, ranges, caption, comments.
+        TODO: This is not the perfect solution because metadata queries will not work.
+        TODO: ... or the query should use "several steps" and an intermediate node.
+        TODO: ... maybe a blank node.
+        ... like : SequencePath flavour of a SPARQL 1.1 property path
+        cim:Handle SOMETHING/rdfs:comment ?my_property_description .
+        ... like:
+        cim:Handle cim:CIM_Process.Handle/rdfs:comment ?my_property_description .
+         */
+        HashSet<String> descriptionsSet = selectColumn(querystring, "my_property_description");
+        Assert.assertEquals(1, descriptionsSet.size());
+        Assert.assertEquals("xyzxyz", descriptionsSet.stream().findFirst());
     }
 
     /** All class with the property "AppID". */
@@ -158,19 +215,63 @@ public class WmiOntologyTest {
         assertContainsSurvolItem(propertiesSet, "AppID");
     }
 
-    // @Test
-    public void TestOntology_Associators() {
+    @Test
+    public void TestOntology_Associators_Antecedent() {
         String querystring = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?y
+                    select ?my_domain
                     where {
-                        cim:Antecedent rdfs:range ?y .
+                        cim:Antecedent rdfs:range ?my_domain .
+                        cim:Antecedent rdfs:domain cim:CIM_ProcessExecutable .
                     }
-
                 """;
+        // Beware, there are several cim:Antecedent properties.
+        HashSet<String> domainsSet = selectColumn(querystring, "my_domain");
+        System.out.println("domainsSet=" + domainsSet.toString());
+        assertContainsSurvolItem(domainsSet, "CIM_DataFile");
+    }
 
-        // ?my_property_node rdfs:domain cim:CIM_ProcessExecutable
+        @Test
+        public void TestOntology_Associators_Dependent() {
+            String querystring = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_domain
+                    where {
+                        cim:Dependent rdfs:range ?my_domain .
+                        cim:Dependent rdfs:domain cim:CIM_ProcessExecutable .
+                    }
+                """;
+            // Beware, there are several cim:Dependent properties.
+            HashSet<String> domainsSet = selectColumn(querystring, "my_domain");
+            System.out.println("domainsSet=" + domainsSet.toString());
+            assertContainsSurvolItem(domainsSet, "Win32_Process");
+        }
+
+        @Test
+        public void TestOntology_Associators_To_Win32_Process() {
+            String querystring = """
+                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?my_associator ?my_description
+                        where {
+                            ?my_property rdfs:range cim:Win32_Process .
+                            ?my_property rdfs:domain ?my_associator .
+                            ?my_associator rdfs:comment ?my_description .
+                        }
+                    """;
+            HashSet<String> associatorsSet = selectColumn(querystring, "my_associator");
+            System.out.println("associatorsSet=" + associatorsSet.toString());
+            assertContainsSurvolItem(associatorsSet, "CIM_ProcessExecutable");
+
+            HashSet<String> descriptionsSet = selectColumn(querystring, "my_description");
+            for(String oneDescription : descriptionsSet) {
+                System.out.println("    " + oneDescription);
+            }
+        }
+
+    // ?my_property_node rdfs:domain cim:CIM_ProcessExecutable
         // my_property_node
         // propertiesSet=[http://www.primhillcomputers.com/ontology/survol#BaseAddress, http://www.primhillcomputers.com/ontology/survol#Antecedent,
         // http://www.primhillcomputers.com/ontology/survol#Dependent, http://www.primhillcomputers.com/ontology/survol#ModuleInstance,
@@ -237,10 +338,6 @@ public class WmiOntologyTest {
         // http://www.primhillcomputers.com/ontology/survol#Win32_PrinterDriverDll, http://www.primhillcomputers.com/ontology/survol#CIM_BootOSFromFS,
         // http://www.w3.org/2001/XMLSchema#string, http://www.primhillcomputers.com/ontology/survol#Win32_ControllerHasHub,
         // http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedSensor, http://www.primhillcomputers.com/ontology/survol#CIM_DeviceSAPImplementation]
-        HashSet<String> propertiesSet = selectColumn(querystring, "y");
-        System.out.println("propertiesSet=" + propertiesSet.toString());
-        assertContainsSurvolItem(propertiesSet, "CreationClassName");
-    }
 
 
     /* TODO:
