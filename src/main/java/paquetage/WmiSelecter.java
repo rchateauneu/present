@@ -213,16 +213,6 @@ public class WmiSelecter {
                             if(CIMTYPE != null)
                             {
                                 newProperty.Type = CIMTYPE;
-                                /*
-                                if(CIMTYPE.startsWith("ref:")) {
-                                    System.out.println("CLASS CIMTYPE=" + CIMTYPE);
-                                    String domainName = CIMTYPE.substring(4);
-                                }
-                                else {
-                                    System.out.println("SIMPLE CIMTYPE=" + CIMTYPE);
-                                    newProperty.Type = CIMTYPE;
-                                }
-                                */
                             }
 
                             //if(newClass.Name.equals("CIM_ProcessExecutable")) {
