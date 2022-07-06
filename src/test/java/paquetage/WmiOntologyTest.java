@@ -256,7 +256,7 @@ public class WmiOntologyTest {
         assertContainsSurvolItem(domainsSet, "CIM_Process");
     }
 
-
+    /** All unique properties which have the same name "Handle". */
     @Test
     public void TestOntology_Handle_Homonyms() {
         String querystring = """
@@ -323,6 +323,33 @@ public class WmiOntologyTest {
         Assert.assertTrue(labelsSet.contains("\"Member\""));
         Assert.assertTrue(labelsSet.contains("\"PartComponent\""));
     }
+
+    /** Labels of classes linked to a CIM_DataFile with an associator. */
+    @Test
+    public void TestOntology_Associated_Classes_To_CIM_DataFile() {
+        String querystring = """
+                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?my_label
+                        where {
+                            ?my_subproperty1 rdfs:range cim:CIM_DataFile .
+                            ?my_subproperty1 rdfs:domain ?my_associator .
+                            ?my_subproperty2 rdfs:range ?my_class .
+                            ?my_subproperty2 rdfs:domain ?my_associator .
+                            ?my_class rdfs:label ?my_label .
+                        }
+                    """;
+        HashSet<String> labelsSet = selectColumn(querystring, "my_label");
+        System.out.println("labelsSet=" + labelsSet.toString());
+        Assert.assertTrue(labelsSet.contains("\"CIM_Directory\""));
+        Assert.assertTrue(labelsSet.contains("\"Win32_PnPSignedDriver\""));
+        Assert.assertTrue(labelsSet.contains("\"Win32_DCOMApplication\""));
+        Assert.assertTrue(labelsSet.contains("\"CIM_DataFile\""));
+        Assert.assertTrue(labelsSet.contains("\"CIM_Process\""));
+        Assert.assertTrue(labelsSet.contains("\"Win32_Printer\""));
+        Assert.assertTrue(labelsSet.contains("\"Win32_LogicalProgramGroupItem\""));
+    }
+
 
 
     // ?my_property_node rdfs:domain cim:CIM_ProcessExecutable
