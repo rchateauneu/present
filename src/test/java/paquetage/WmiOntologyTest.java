@@ -302,9 +302,28 @@ public class WmiOntologyTest {
         }
     }
 
-    /** This selects the labels of the base properties of properties pointing to a Win32_Process in associators. */
+    /** All associators referring to a Win32_Process. */
     @Test
     public void TestOntology_Associators_To_Win32_Process() {
+        String querystring = """
+                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?my_associator
+                        where {
+                            ?my_subproperty rdfs:range cim:Win32_Process .
+                            ?my_subproperty rdfs:domain ?my_associator .
+                        }
+                    """;
+        HashSet<String> associatorsSet = selectColumn(querystring, "my_associator");
+        System.out.println("associatorsSet=" + associatorsSet.toString());
+        assertContainsSurvolItem(associatorsSet, "Win32_SessionProcess");
+        assertContainsSurvolItem(associatorsSet, "Win32_SystemProcesses");
+        assertContainsSurvolItem(associatorsSet, "Win32_NamedJobObjectProcess");
+    }
+
+    /** This selects the labels of the base properties of properties pointing to a Win32_Process in associators. */
+    @Test
+    public void TestOntology_Associators_Labels_To_Win32_Process() {
         String querystring = """
                         prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
