@@ -369,6 +369,29 @@ public class WmiOntologyTest {
         Assert.assertTrue(labelsSet.contains("\"Win32_LogicalProgramGroupItem\""));
     }
 
+    /** Labels of classes linked to a Win32_Process with an associator. */
+    @Test
+    public void TestOntology_Associated_Classes_To_Win32_Process() {
+        String querystring = """
+                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?my_label
+                        where {
+                            ?my_subproperty1 rdfs:range cim:Win32_Process .
+                            ?my_subproperty1 rdfs:domain ?my_associator .
+                            ?my_subproperty2 rdfs:range ?my_class .
+                            ?my_subproperty2 rdfs:domain ?my_associator .
+                            ?my_class rdfs:label ?my_label .
+                        }
+                    """;
+        HashSet<String> labelsSet = selectColumn(querystring, "my_label");
+        System.out.println("labelsSet=" + labelsSet.toString());
+        Assert.assertTrue(labelsSet.contains("\"Win32_LogonSession\""));
+        Assert.assertTrue(labelsSet.contains("\"Win32_ComputerSystem\""));
+        Assert.assertTrue(labelsSet.contains("\"Win32_NamedJobObject\""));
+        Assert.assertTrue(labelsSet.contains("\"Win32_Process\""));
+    }
+
 
 
     // ?my_property_node rdfs:domain cim:CIM_ProcessExecutable
