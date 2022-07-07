@@ -17,6 +17,7 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
@@ -95,15 +96,36 @@ public class WmiOntology {
         */
         HashMap<String, IRI> ambiguousProperties = new HashMap<>();
 
+        HashMap<String, IRI> classToNode = new HashMap<>();
+
+        Function<String, IRI> lambdaClassToNode = (String className) -> {
+            IRI classNode = classToNode.get(className);
+            if(classNode == null) {
+                classNode = iri(survol_url_prefix, className);
+                classToNode.put(className, classNode);
+            }
+            return classNode;
+        };
+
         WmiSelecter selecter = new WmiSelecter();
         Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
         for(Map.Entry<String, WmiSelecter.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
-            IRI classIri = iri(survol_url_prefix, className);
+
+            IRI classIri = lambdaClassToNode.apply(className);
+
             WmiSelecter.WmiClass wmiClass = entry_class.getValue();
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, factory.createLiteral(className));
             connection.add(classIri, RDFS.COMMENT, factory.createLiteral(wmiClass.Description));
+
+            if (wmiClass.BaseName != null) {
+                IRI baseClassIri = lambdaClassToNode.apply(wmiClass.BaseName);
+                if(baseClassIri != null) {
+                    connection.add(classIri, RDFS.SUBCLASSOF, baseClassIri);
+                }
+            }
+
             for(Map.Entry<String, WmiSelecter.WmiProperty> entry_property : wmiClass.Properties.entrySet()) {
                 String ambiguousPropertyName = entry_property.getKey();
                 String uniquePropertyName = className + "." + ambiguousPropertyName;

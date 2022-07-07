@@ -146,6 +146,22 @@ public class WmiOntologyTest {
         Assert.assertEquals(expectedDescription.substring(0,10), firstDescription.substring(0,10));
     }
 
+    @Test
+    public void TestOntology_Win32_Process_BaseClass() {
+        String querystring = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_base_class
+                    where {
+                        cim:Win32_Process rdfs:subClassOf ?my_base_class .
+                    }
+                """;
+        HashSet<String> baseClassesSet = selectColumn(querystring, "my_base_class");
+        Assert.assertEquals(1, baseClassesSet.size());
+        System.out.println(baseClassesSet);
+        assertContainsSurvolItem(baseClassesSet, "CIM_Process");
+    }
+
     /** This checks the presence Description for property Handle. */
     @Test
     public void TestOntology_Handle_Description() {
