@@ -7,6 +7,7 @@ import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
 import com.sun.jna.ptr.IntByReference;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -18,7 +19,8 @@ import static com.sun.jna.platform.win32.Variant.VT_BSTR;
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
  */
 public class WmiSelecter {
-    Wbemcli.IWbemServices svc = null;
+    final static private Logger logger = Logger.getLogger(WmiSelecter.class);
+    private Wbemcli.IWbemServices svc = null;
 
     public WmiSelecter() {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
@@ -34,7 +36,7 @@ public class WmiSelecter {
         ArrayList<GenericSelecter.Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
         // Temporary debugging purpose.
-        System.out.println("wqlQuery=" + wqlQuery);
+        logger.debug("wqlQuery=" + wqlQuery);
 
         if (queryData.isMainVariableAvailable) {
             throw new Exception("Main variable should not be available in a WQL query.");
@@ -133,12 +135,23 @@ public class WmiSelecter {
             Properties = new HashMap<String, WmiProperty>();
             Description = "No description available yet for class " + className;
         }
+    }
 
+    // This will never change when a machine is running, so storing it in a cache makes tests faster.
+    private static Map<String, WmiClass> cacheClasses = null;
+
+    public Map<String, WmiClass> Classes() {
+        if(cacheClasses == null) {
+            cacheClasses = ClassesCached();
+        }
+        return cacheClasses;
     }
 
     /** This returns a map containing the WMI classes. */
-    Map<String, WmiClass> Classes() {
-        Map<String, WmiClass> resultClasses = new HashMap<String, WmiClass>();
+    private Map<String, WmiClass> ClassesCached() {
+        logger.debug("Start");
+        // Classes are indexed with their names.
+        Map<String, WmiClass> resultClasses = new HashMap<>();
         Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery(
                 "WQL",
                 "SELECT * FROM meta_class",
@@ -163,6 +176,7 @@ public class WmiSelecter {
                 String[] propertyNames = classObject.GetNames(null, 0, pQualifierVal);
 
                 COMUtils.checkRC(classObject.Get("__CLASS", 0, pVal, pType, plFlavor));
+                //logger.debug("Class name=" + pVal.stringValue());
                 WmiClass newClass = new WmiClass(pVal.stringValue());
                 OleAuto.INSTANCE.VariantClear(pVal);
 
@@ -199,6 +213,7 @@ public class WmiSelecter {
                         /* Filter properties such as __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH
                         __PROPERTY_COUNT, __DERIVATION, __SERVER, __NAMESPACE, __PATH */
                         if (!propertyName.startsWith("__")) {
+                            // Different properties may have the same name but belong to different classes: Thus, they are different.
                             WmiProperty newProperty = new WmiProperty(propertyName);
 
                             Wbemcli.IWbemQualifierSet propertyQualifiersSet = classObject.GetPropertyQualifierSet(propertyName);
@@ -215,10 +230,6 @@ public class WmiSelecter {
                                 newProperty.Type = CIMTYPE;
                             }
 
-                            //if(newClass.Name.equals("CIM_ProcessExecutable")) {
-                            //    System.out.println("propertyName=" + propertyName);
-                            //    System.out.println("propertyQualifierNames=" + String.join("+", propertyQualifierNames));
-                            //}
                             if(false) {
                                 String[] propertyQualifierNames = propertyQualifiersSet.GetNames();
                                 System.out.println("propertyQualifierNames=" + String.join("+", propertyQualifierNames));
@@ -249,6 +260,7 @@ public class WmiSelecter {
         } finally {
             enumerator.Release();
         }
+        logger.debug("End");
         return resultClasses;
     }
 
@@ -381,7 +393,7 @@ public class WmiSelecter {
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
         // Maybe the object does not exist.
         if(objectNode == null) {
-            System.out.println("Cannot find object:" + objectPath);
+            logger.error("Cannot find object:" + objectPath);
             return null;
         }
 

@@ -2,6 +2,9 @@ package paquetage;
 
 import com.google.common.collect.Sets;
 import org.eclipse.rdf4j.model.Triple;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,6 +16,8 @@ import java.util.Map;
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 public class SparqlBGPExtractorTest {
+    ValueFactory factory = SimpleValueFactory.getInstance();
+
     static ObjectPattern FindObjectPattern(SparqlBGPExtractor extractor, String variable) {
         ObjectPattern pattern = extractor.patternsMap.get(variable);
         Assert.assertNotEquals(null, pattern);
@@ -52,7 +57,7 @@ public class SparqlBGPExtractorTest {
 
     @Test
     /***
-     * Checks patterns detection.
+     * Checks patterns detection with a constant value (the object).
      */
     public void Parse_Win32_Directory_NoVariable() throws Exception {
         String sparql_query = """
@@ -77,7 +82,7 @@ public class SparqlBGPExtractorTest {
 
     @Test
     /***
-     * Checks that a pattern with a value is detected.
+     * Checks that a pattern with a variable value (the object) is detected.
      */
     public void Parse_Win32_Directory_OneVariable() throws Exception {
         String sparql_query = """
@@ -270,9 +275,10 @@ public class SparqlBGPExtractorTest {
         CompareKeyValue(thirdPattern.Members.get(0), "http://schema.org/creator", true, "creator");
     }
 
+
     @Test
     /***
-     * Fills a repository of triples with BGPs and constant values.
+     * Create triples from BGPs and variable-value pairs.
      */
     public void TriplesGenerationFromBGPs_1() throws Exception {
         String sparql_query = """
@@ -289,12 +295,70 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 1);
 
+        // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
         Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
         CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
 
-        List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of("dir_name", "C:")));
+        // Now it generates triples from the patterns, forcing the values of the single variable.
+        String dirIri = toSurvol("any_iri_will_do");
+        List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of(
+                "my_dir", dirIri,
+                "dir_name", "C:")));
+
+        List<Triple> triples = extractor.GenerateTriples(rows);
+
+        // Now check the content of the generated triples.
+        Assert.assertEquals(2, triples.size());
+
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIri),
+                Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                Values.iri(toSurvol("Win32_Directory")))
+        ));
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIri),
+                Values.iri(toSurvol("Name")),
+                Values.literal("C:"))
+        ));
+    }
+
+    @Test
+    /***
+     * Create triples from BGPs and variable-value pairs.
+     */
+    public void TriplesGenerationFromBGPs_2() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?dir_name
+            where {
+                ?my_dir rdf:type cim:Win32_Directory .
+                ?my_dir cim:Name ?dir_name .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
+
+        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+
+        // Check the exact content of the BGP.
+        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
+        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
+        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+
+        // Now it generates triples from the patterns, forcing the values of the single variable.
+        String dirIriC = toSurvol("iriC");
+        String dirIriD = toSurvol("iriD");
+        List<GenericSelecter.Row> rows = Arrays.asList(
+                new GenericSelecter.Row(Map.of(
+                "my_dir", dirIriC,
+                "dir_name", "C:")),
+                new GenericSelecter.Row(Map.of(
+                        "my_dir", dirIriD,
+                        "dir_name", "D:")));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -302,26 +366,85 @@ public class SparqlBGPExtractorTest {
             System.out.println("T=" + triple);
         }
 
-        /*
-        RepositoryWrapper repositoryWrapper = new RepositoryWrapper();
-        List<Triple> triples =         RepositoryWrapper repositoryWrapper = new RepositoryWrapper();
+        // Now check the content of the generated triples.
+        Assert.assertEquals(4, triples.size());
 
-        repositoryWrapper.InsertTriples(triples);
-
-        // Now checks the triples inserted in the repository.
-        IRI alice = Values.iri("http://example.org/people/alice");
-        IRI bob = Values.iri("http://example.org/people/bob");
-        IRI name = Values.iri("http://example.org/ontology/name");
-        IRI person = Values.iri("http://example.org/ontology/Person");
-        Literal bobsName = Values.literal("Bob");
-        Literal alicesName = Values.literal("Alice");
-        */
-
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIriC),
+                Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                Values.iri(toSurvol("Win32_Directory")))
+        ));
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIriC),
+                Values.iri(toSurvol("Name")),
+                Values.literal("C:"))
+        ));
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIriD),
+                Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                Values.iri(toSurvol("Win32_Directory")))
+        ));
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIriD),
+                Values.iri(toSurvol("Name")),
+                Values.literal("D:"))
+        ));
     }
 
-    /*
-    Tests a faire apres: relancer la query sur le nouveau repository.
-     */
+    @Test
+    public void TriplesGenerationFromBGPs_3() throws Exception {
+        String sparql_query = """
+            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?dir_name ?dir_caption
+            where {
+                ?my_dir rdf:type cim:Win32_Directory .
+                ?my_dir cim:Name ?dir_name .
+                ?my_dir cim:Caption ?dir_caption .
+            }
+        """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_caption", "dir_name"));
+
+        Assert.assertEquals(extractor.patternsAsArray().size(), 1);
+
+        // Check the exact content of the BGP.
+        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
+        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.Members.size(), 2);
+        CompareKeyValue(patternWin32_Directory.Members.get(1), toSurvol("Caption"), true, "dir_caption");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+
+        // Now it generates triples from the patterns, forcing the values of the single variable.
+        String dirIri = toSurvol("arbitrary_iri");
+        List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of(
+                "my_dir", dirIri,
+                "dir_name", "C:",
+                "dir_caption", "This is a text")));
+
+        List<Triple> triples = extractor.GenerateTriples(rows);
+
+        for(Triple triple: triples) {
+            System.out.println("T=" + triple);
+        }
+        Assert.assertEquals(3, triples.size());
+
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIri),
+                Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                Values.iri(toSurvol("Win32_Directory")))
+        ));
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIri),
+                Values.iri(toSurvol("Name")),
+                Values.literal("C:"))
+        ));
+        Assert.assertTrue(triples.contains(factory.createTriple(
+                Values.iri(dirIri),
+                Values.iri(toSurvol("Caption")),
+                Values.literal("This is a text"))
+        ));
+    }
 
 }
 

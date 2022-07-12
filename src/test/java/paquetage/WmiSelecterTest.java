@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class WmiSelecterTest {
+    static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
     @Test
     public void TestBuildQuery() throws Exception {
     QueryData queryData = new QueryData(
@@ -29,12 +30,10 @@ public class WmiSelecterTest {
                 "any_variable",
                 Map.of("Handle", "var_handle"));
 
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
         boolean isIn = false;
         for(GenericSelecter.Row aRow : listResults)
         {
-            if(aRow.Elements.get("var_handle").equals(pidString))
+            if(aRow.Elements.get("var_handle").equals(currentPidStr))
             {
                 isIn = true;
                 break;
@@ -45,21 +44,18 @@ public class WmiSelecterTest {
 
     @Test
     public void TestCIM_ProcessCurrent() throws Exception {
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
-
         GenericSelecter selecter = new GenericSelecter();
         ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", pidString)));
+                Arrays.asList(new QueryData.WhereEquality("Handle", currentPidStr)));
         String stringsResults = (String)listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
 
         Assert.assertEquals(listResults.size(), 1);
-        Assert.assertEquals(listResults.get(0).Elements.get("var_handle"), pidString);
+        Assert.assertEquals(listResults.get(0).Elements.get("var_handle"), currentPidStr);
     }
 
     @Test

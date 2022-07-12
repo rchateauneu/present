@@ -2,6 +2,9 @@ package paquetage;
 
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
+import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -409,9 +412,15 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
 
 
 public class GenericSelecter {
+    final static private Logger logger = Logger.getLogger(GenericSelecter.class);
+
     /**
      * This is a row returned by a WMI select query.
      * For simplicity, each row contains all column names.
+     * This is equivalent to a RDF4J BindingSet : a set of named value bindings, used to represent a query solution.
+     * Values are indexed by name of the binding corresponding to the variables names in the projection of the query.
+     *
+     * TODO: When returning List<Row>, store the variable names once only, in a header. All rows have the same binding.
      */
     public static class Row {
         Map<String, String> Elements;
@@ -426,6 +435,14 @@ public class GenericSelecter {
          */
         public Row(Map<String, String> elements) {
             Elements = elements;
+        }
+
+        public Row(BindingSet bindingSet) {
+            Elements = new HashMap<String, String>();
+            for (Iterator<Binding> it = bindingSet.iterator(); it.hasNext(); ) {
+                Binding binding = it.next();
+                Elements.put(binding.getName(), binding.getValue().toString());
+            }
         }
 
         public String toString() {
@@ -456,7 +473,7 @@ public class GenericSelecter {
                 if(!foundProviders.contains(strQueryData)) {
                     // So the message is displayed once only.
                     foundProviders.add(strQueryData);
-                    System.out.println("Found provider for " + strQueryData);
+                    logger.debug("Found provider for " + strQueryData);
                 }
                 return provider;
             }
@@ -464,7 +481,7 @@ public class GenericSelecter {
         if(!foundProviders.contains(strQueryData)) {
             // So the message is displayed once only.
             foundProviders.add(strQueryData);
-            System.out.println("No provider found for " + strQueryData);
+            logger.debug("No provider found for " + strQueryData);
         }
         return null;
     }

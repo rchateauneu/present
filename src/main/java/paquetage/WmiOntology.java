@@ -1,5 +1,6 @@
 package paquetage;
 
+import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleStatement;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -13,7 +14,11 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,8 +27,13 @@ import java.util.function.Function;
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
 public class WmiOntology {
-    /** This is a triplestore which conyains the WMI ontology. */
-    Repository repository;
+    /** This is a triplestore which contains the WMI ontology. */
+    //Repository repository;
+
+    final static private Logger logger = Logger.getLogger(WmiOntology.class);
+
+    /** Consider using a Model to store the triples of the ontology. */
+    RepositoryConnection connection;
 
     public static String survol_url_prefix = "http://www.primhillcomputers.com/ontology/survol#";
 
@@ -72,10 +82,9 @@ public class WmiOntology {
      *         CIM_DataFile.Name rdfs:Range String
      * @param repository
      */
-    private void FillRepository(Repository repository){
+    private void FillRepository(RepositoryConnection connection){
+        logger.debug("Start");
         // We want to reuse this namespace when creating several building blocks.
-
-        RepositoryConnection connection = repository.getConnection();
 
         ValueFactory factory = SimpleValueFactory.getInstance();
 
@@ -111,6 +120,7 @@ public class WmiOntology {
         Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
         for(Map.Entry<String, WmiSelecter.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
+            //System.out.println("className=" + className);
 
             IRI classIri = lambdaClassToNode.apply(className);
 
@@ -169,10 +179,55 @@ public class WmiOntology {
                 connection.add(uniquePropertyIri, RDFS.SUBPROPERTYOF, ambiguousPropertyIri);
             }
         }
+        logger.debug("End");
     }
 
-    public WmiOntology() {
-        repository = new SailRepository(new MemoryStore());
-        FillRepository(repository);
+    public WmiOntology(boolean isCached) {
+        if(isCached)
+        {
+            try {
+                // Path ontologiesDir = Files.createTempDirectory("Ontologies");
+                // TEMP=C:\Users\rchat\AppData\Local\Temp
+                // TMP=C:\Users\rchat\AppData\Local\Temp
+
+                // Get the temporary directory and print it.
+                String tempDir = System.getProperty("java.io.tmpdir");
+
+                File dataDir = new File(tempDir + "\\" + "Ontologies");
+                logger.debug("dataDir=" + dataDir);
+                // Path ontologyFile = ontologiesDir.resolve( "wmi_ontology.rdf");
+                if (Files.exists(dataDir.toPath())) {
+                    logger.debug("Exists dataDir=" + dataDir);
+                    MemoryStore memStore = new MemoryStore(dataDir);
+                    memStore.setSyncDelay(1000L);
+                    Repository repo = new SailRepository(memStore);
+                    // Repository repo = new SailRepository(new NativeStore(ontologyFile.toFile()));
+                    connection = repo.getConnection();
+                    logger.debug("Cached statements=" + Long.toString(connection.size()));
+                    ;
+                } else {
+                    logger.debug("Does not exist dataDir=" + dataDir);
+                    MemoryStore memStore = new MemoryStore(dataDir);
+                    memStore.setSyncDelay(1000L);
+                    Repository repo = new SailRepository(memStore);
+                    connection = repo.getConnection();
+                    logger.debug("Caching new statements before=" + Long.toString(connection.size()));
+                    //connection.sta
+                    FillRepository(connection);
+                    connection.commit();
+                    memStore.sync();
+                    logger.debug("Caching new statements after=" + Long.toString(connection.size()));
+                }
+            } catch(Exception exc) {
+                logger.error("Caught:" + exc.toString());
+            }
+        }
+        else {
+            Repository repository = new SailRepository(new MemoryStore());
+            connection = repository.getConnection();
+            logger.debug("New statements before=" + Long.toString(connection.size()));
+            FillRepository(connection);
+            logger.debug("New statements after=" + Long.toString(connection.size()));
+        }
     }
 }

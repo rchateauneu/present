@@ -16,6 +16,8 @@ public class DependenciesBuilderTest {
         Assert.assertEquals(expected.className, actual.className);
         Assert.assertEquals(expected.mainVariable, actual.mainVariable);
         Assert.assertEquals(expected.isMainVariableAvailable, actual.isMainVariableAvailable);
+        System.out.println("expected.queryColumns=" + expected.queryColumns);
+        System.out.println("actual.queryColumns=" + actual.queryColumns);
         Assert.assertEquals(expected.queryColumns.size(), actual.queryColumns.size());
         for (String key : expected.queryColumns.keySet()) {
             Assert.assertEquals(expected.queryColumns.get(key), actual.queryColumns.get(key));
@@ -532,5 +534,42 @@ public class DependenciesBuilderTest {
         CompareQueryData(queryData1, preparedQueries.get(1));
         CompareQueryData(queryData2, preparedQueries.get(2));
     }
+
+    /** The class must be deduced, and there is a pattern which cannot be processed by WMI.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void MissingClass() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?label ?caption
+                    where {
+                        ?process cim:Win32_Process.Handle "12345" .
+                        ?process cim:Win32_Process.Caption ?caption .
+                        cim:Win32_Process.Handle rdfs:label ?label .
+                    }
+                """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
+
+        QueryData queryData0 = new QueryData(
+                "Win32_Process",
+                "process",
+                false,
+                Map.of("Caption", "caption"),
+                Arrays.asList(
+                        new QueryData.WhereEquality("Handle", "12345", false)
+                )
+        );
+
+        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        Assert.assertEquals(preparedQueries.size(), 1);
+        CompareQueryData(queryData0, preparedQueries.get(0));
+    }
+
+
+
 
 }

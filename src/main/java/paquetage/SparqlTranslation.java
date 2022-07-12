@@ -1,18 +1,21 @@
 package paquetage;
 
+import org.apache.log4j.Logger;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 
 /** This implements the nested execution of queries based on a list of BGP patterns.
  */
-public class SparqlExecution {
+public class SparqlTranslation {
+    final static private Logger logger = Logger.getLogger(SparqlTranslation.class);
     DependenciesBuilder dependencies;
     ArrayList<GenericSelecter.Row> current_rows;
     GenericSelecter genericSelecter = new GenericSelecter();
     Set<String> bindings;
 
-    public SparqlExecution(SparqlBGPExtractor input_extractor) throws Exception {
+    public SparqlTranslation(SparqlBGPExtractor input_extractor) throws Exception {
         // TODO: Optimize QueryData list here. Providers are necessary.
         List<ObjectPattern> patterns = input_extractor.patternsAsArray();
         bindings = input_extractor.bindings;
@@ -90,7 +93,7 @@ public class SparqlExecution {
             if(singleRow == null)
             {
                 // Object does not exist: Maybe a CIM_FataFile is protected, or a CIM_Process exited ?
-                System.out.println("Cannot get row for objectPath=" + objectPath);
+                logger.error("Cannot get row for objectPath=" + objectPath);
             }
             else {
                 RowToContext(singleRow);
@@ -107,7 +110,7 @@ public class SparqlExecution {
                     String variableValue = dependencies.variablesContext.get(kv.value);
                     if (variableValue == null) {
                         // This should not happen.
-                        System.out.println("Value of " + kv.predicate + " variable=" + kv.value + " is null");
+                        logger.error("Value of " + kv.predicate + " variable=" + kv.value + " is null");
                     }
                     substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, variableValue));
                 } else {
@@ -146,15 +149,22 @@ public class SparqlExecution {
         for(QueryData queryData : dependencies.prepared_queries) {
             queryData.statistics.ResetAll();
         }
-        ExecuteOneLevel(0);
-        System.out.println("Queries levels:" + dependencies.prepared_queries.size());
-        System.out.println("Statistics:");
+        if(!dependencies.prepared_queries.isEmpty()) {
+            ExecuteOneLevel(0);
+        }
+        logger.debug("Queries levels:" + dependencies.prepared_queries.size());
+        logger.debug("Statistics:");
         for(int indexQueryData = 0; indexQueryData < dependencies.prepared_queries.size(); ++indexQueryData) {
             QueryData queryData = dependencies.prepared_queries.get(indexQueryData);
-            System.out.println("Query " + indexQueryData);
+            logger.debug("Query " + indexQueryData);
             queryData.statistics.DisplayAll();
         }
-        return current_rows;
+        logger.debug("Rows generated:" + Long.toString(current_rows.size()));
+        if(current_rows.size() > 0)
+            logger.debug("Header:" + current_rows.get(0).Elements.keySet());
+        logger.debug("Context keys:" + dependencies.variablesContext.keySet());
+
+    return current_rows;
     }
 
     void DryRun() throws Exception {

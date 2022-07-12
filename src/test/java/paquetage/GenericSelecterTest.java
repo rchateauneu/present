@@ -6,6 +6,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class GenericSelecterTest {
+    static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
+
     static void CompareRows(GenericSelecter.Row row1, GenericSelecter.Row row2) {
         System.out.println("row1=" + row1.Elements.keySet());
         System.out.println("row2=" + row2.Elements.keySet());
@@ -149,7 +151,6 @@ public class GenericSelecterTest {
      */
     @Test
     public void CompareGetter_Win32_Process() throws Exception {
-        String pidString = String.valueOf(ProcessHandle.current().pid());
         QueryData queryData = new QueryData(
                 "Win32_Process",
                 "the_process",
@@ -159,13 +160,13 @@ public class GenericSelecterTest {
                         "Name", "var_name",
                         "ProcessId", "var_processid",
                         "WindowsVersion", "var_windowsversion"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", pidString)));
+                Arrays.asList(new QueryData.WhereEquality("Handle", currentPidStr)));
 
         GenericSelecter genericSelecter = new GenericSelecter();
         // This ensures that the custom function getter is found.
         Assert.assertTrue(genericSelecter.FindCustomGetter(queryData) != null);
 
-        String objectPath = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", pidString));
+        String objectPath = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", currentPidStr));
         GenericSelecter.Row rowGetterCustom = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
         GenericSelecter.Row rowGetterGeneric = genericSelecter.GetObjectFromPath(objectPath, queryData, false);
         CompareRows(rowGetterCustom, rowGetterGeneric);

@@ -14,45 +14,45 @@ import java.util.Formatter;
 import java.util.HashSet;
 
 public class WmiOntologyTest {
-    static WmiOntology ontology = new WmiOntology();
-
-    /*
-    @Before
-    public void setUp() throws Exception {
-        ontology = new WmiOntology();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        ontology = null;
-    }
-    */
+    static WmiOntology ontology = new WmiOntology(false);
 
     static String toSurvol(String term) {
         return WmiOntology.survol_url_prefix + term;
     }
 
-    /** This executes a Sparql query in the repository containing the WMI ontology. */
-    HashSet<String> selectColumn(String sparqlQuery, String columnName){
+    private static HashSet<String> selectColumnFromOntology(WmiOntology ontologyRef, String sparqlQuery, String columnName){
         HashSet<String> variablesSet = new HashSet<String>();
-        try (RepositoryConnection conn = ontology.repository.getConnection()) {
-            TupleQuery tupleQuery = conn.prepareTupleQuery(sparqlQuery);
-            try (TupleQueryResult result = tupleQuery.evaluate()) {
-                while (result.hasNext()) {  // iterate over the result
-                    BindingSet bindingSet = result.next();
-                    Value valueOfX = bindingSet.getValue(columnName);
-                    variablesSet.add(valueOfX.toString());
-                }
+        TupleQuery tupleQuery = ontologyRef.connection.prepareTupleQuery(sparqlQuery);
+        try (TupleQueryResult result = tupleQuery.evaluate()) {
+            while (result.hasNext()) {  // iterate over the result
+                BindingSet bindingSet = result.next();
+                Value valueOfX = bindingSet.getValue(columnName);
+                variablesSet.add(valueOfX.toString());
             }
-            return variablesSet;
         }
+        return variablesSet;
+    }
+
+    /** This executes a Sparql query in the repository containing the WMI ontology. */
+    private HashSet<String> selectColumn(String sparqlQuery, String columnName){
+        return selectColumnFromOntology(ontology, sparqlQuery, columnName);
     }
 
     static void assertContainsSurvolItem(HashSet<String> itemsSet, String shortItem) {
         Assert.assertTrue(itemsSet.contains(toSurvol(shortItem)));
     }
 
+    /** The content of the cached ontology and the fresh one should be the same.
+     * This compares the number of triples in both repositories, and this gives a good estimate. */
+    @Test
+    public void TestOntology_Cached() {
+        WmiOntology ontologyCached = new WmiOntology(true);
+        String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
+        HashSet<String> countFresh = selectColumnFromOntology(ontology, sparqlQuery, "count");
+        HashSet<String> countCache = selectColumnFromOntology(ontologyCached, sparqlQuery, "count");
+        Assert.assertEquals(countFresh, countCache);
 
+    }
     /** This selects all triples, and detects that some classes are present. */
     @Test
     public void TestOntology_ClassesAll() {
@@ -95,18 +95,18 @@ public class WmiOntologyTest {
 
     @Test
     public void TestOntology_Win32_Process_Handle_Domain_All() {
-        String querystring = new Formatter().format(
+        String queryString = new Formatter().format(
                 "SELECT ?y WHERE { ?y rdfs:domain ?z }").toString( );
-        HashSet<String> domainsSet = selectColumn(querystring, "y");
+        HashSet<String> domainsSet = selectColumn(queryString, "y");
         assertContainsSurvolItem(domainsSet, "CIM_Process.Handle");
     }
 
     /** This checks the presence of class Wmi32_Process in one of the domains. */
     @Test
     public void TestOntology_Win32_Process_Handle_Domain_Filter() {
-        String querystring = new Formatter().format(
+        String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:domain ?x }", toSurvol("Win32_Process.Handle")).toString( );
-        HashSet<String> domainsSet = selectColumn(querystring, "x");
+        HashSet<String> domainsSet = selectColumn(queryString, "x");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsSurvolItem(domainsSet, "Win32_Process");
     }
@@ -119,17 +119,17 @@ public class WmiOntologyTest {
         // http://www.w3.org/2000/01/rdf-schema#domain,
         // http://www.w3.org/1999/02/22-rdf-syntax-ns#type,
         // http://www.w3.org/2000/01/rdf-schema#range]
-        String querystring = new Formatter().format(
+        String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:range ?x }",
                 toSurvol("CIM_Process.Handle")).toString( );
-        HashSet<String> rangesSet = selectColumn(querystring, "x");
+        HashSet<String> rangesSet = selectColumn(queryString, "x");
         Assert.assertTrue(rangesSet.contains("http://www.w3.org/2001/XMLSchema#string"));
     }
 
     /** This checks the presence Description for class Win32_Process. */
     @Test
     public void TestOntology_Win32_Process_Description() {
-        String querystring = """
+        String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_description
@@ -137,7 +137,7 @@ public class WmiOntologyTest {
                         cim:Win32_Process rdfs:comment ?my_class_description .
                     }
                 """;
-        HashSet<String> descriptionsSet = selectColumn(querystring, "my_class_description");
+        HashSet<String> descriptionsSet = selectColumn(queryString, "my_class_description");
         Assert.assertEquals(1, descriptionsSet.size());
         String expectedDescription = "\"The Win32_Process class represents a sequence of events on a Win32 system. Any sequence consisting of the interaction of one or more processors or interpreters, some executable code, and a set of inputs, is a descendent (or member) of this class.  Example: A client application running on a Win32 system.\"";
         String firstDescription = descriptionsSet.stream().findFirst().orElse("xyz");
@@ -146,9 +146,10 @@ public class WmiOntologyTest {
         Assert.assertEquals(expectedDescription.substring(0,10), firstDescription.substring(0,10));
     }
 
+    /** This selects the base class of Win32_Process */
     @Test
     public void TestOntology_Win32_Process_BaseClass() {
-        String querystring = """
+        String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_base_class
@@ -156,16 +157,35 @@ public class WmiOntologyTest {
                         cim:Win32_Process rdfs:subClassOf ?my_base_class .
                     }
                 """;
-        HashSet<String> baseClassesSet = selectColumn(querystring, "my_base_class");
+        HashSet<String> baseClassesSet = selectColumn(queryString, "my_base_class");
         Assert.assertEquals(1, baseClassesSet.size());
         System.out.println(baseClassesSet);
         assertContainsSurvolItem(baseClassesSet, "CIM_Process");
     }
 
+    /** This select the labels of all CIM classes starting from the top. */
+    @Test
+    public void TestOntology_DerivedClasses() {
+        String queryString = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_caption
+                    where {
+                        ?my_derived_class rdfs:subClassOf+ cim:CIM_LogicalElement .
+                        ?my_derived_class rdfs:label ?my_caption .
+                    }
+                """;
+        HashSet<String> derivedClassNamesSet = selectColumn(queryString, "my_caption");
+        System.out.println(derivedClassNamesSet);
+        // Test the presence of some classes which derive of this one.
+        Assert.assertTrue(derivedClassNamesSet.contains("\"Win32_Directory\""));
+        Assert.assertTrue(derivedClassNamesSet.contains("\"Win32_BIOS\""));
+    }
+
     /** This checks the presence Description for property Handle. */
     @Test
     public void TestOntology_Handle_Description() {
-        String querystring = """
+        String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_description
@@ -174,7 +194,7 @@ public class WmiOntologyTest {
                         cim:Win32_Process.Handle rdfs:domain cim:Win32_Process .
                     }
                 """;
-        HashSet<String> descriptionsSet = selectColumn(querystring, "my_property_description");
+        HashSet<String> descriptionsSet = selectColumn(queryString, "my_property_description");
         System.out.println("descriptionsSet=" + descriptionsSet.toString());
         Assert.assertEquals(1, descriptionsSet.size());
         Assert.assertEquals(
@@ -184,7 +204,7 @@ public class WmiOntologyTest {
 
     @Test
     public void TestOntology_Win32_ClassInfoAction_AppID() {
-        String querystring = """
+        String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_node
@@ -192,7 +212,7 @@ public class WmiOntologyTest {
                         cim:Win32_ClassInfoAction.AppID rdfs:domain ?my_class_node .
                     }
                 """;
-        HashSet<String> domainsSet = selectColumn(querystring, "my_class_node");
+        HashSet<String> domainsSet = selectColumn(queryString, "my_class_node");
         Assert.assertEquals(1, domainsSet.size());
         assertContainsSurvolItem(domainsSet, "Win32_ClassInfoAction");
     }
@@ -200,7 +220,7 @@ public class WmiOntologyTest {
     /** All class with the property "AppID". */
     @Test
     public void TestOntology_Classes_AppID() {
-        String querystring = """
+        String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_node
@@ -209,7 +229,7 @@ public class WmiOntologyTest {
                         ?my_property_node rdfs:subPropertyOf cim:AppID .
                     }
                 """;
-        HashSet<String> domainsSet = selectColumn(querystring, "my_class_node");
+        HashSet<String> domainsSet = selectColumn(queryString, "my_class_node");
         assertContainsSurvolItem(domainsSet, "Win32_ClassInfoAction");
         assertContainsSurvolItem(domainsSet, "Win32_DCOMApplication");
         assertContainsSurvolItem(domainsSet, "Win32_ClassicCOMClassSetting");
@@ -219,7 +239,7 @@ public class WmiOntologyTest {
     /** Properties used by at least four tables. */
     @Test
     public void TestOntology_Classes_SharedProperty() {
-        String querystring = """
+        String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_node (COUNT(?my_property_node) AS ?total)
@@ -230,7 +250,7 @@ public class WmiOntologyTest {
                     group by ?my_property_node
                     having (?total > 3)
                 """;
-        HashSet<String> propertiesSet = selectColumn(querystring, "my_property_node");
+        HashSet<String> propertiesSet = selectColumn(queryString, "my_property_node");
         System.out.println("propertiesSet=" + propertiesSet.toString());
         assertContainsSurvolItem(propertiesSet, "CreationClassName");
         assertContainsSurvolItem(propertiesSet, "Name");
@@ -240,7 +260,7 @@ public class WmiOntologyTest {
 
     @Test
     public void TestOntology_Associators_Antecedent() {
-        String querystring = """
+        String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_domain
@@ -250,14 +270,14 @@ public class WmiOntologyTest {
                     }
                 """;
         // Beware, there are several cim:Antecedent properties.
-        HashSet<String> domainsSet = selectColumn(querystring, "my_domain");
+        HashSet<String> domainsSet = selectColumn(queryString, "my_domain");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsSurvolItem(domainsSet, "CIM_DataFile");
     }
 
     @Test
     public void TestOntology_Associators_Dependent() {
-        String querystring = """
+        String queryString = """
                 prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                 select ?my_domain
@@ -267,7 +287,7 @@ public class WmiOntologyTest {
                 }
             """;
         // Beware, there are several cim:Dependent properties.
-        HashSet<String> domainsSet = selectColumn(querystring, "my_domain");
+        HashSet<String> domainsSet = selectColumn(queryString, "my_domain");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsSurvolItem(domainsSet, "CIM_Process");
     }
@@ -275,7 +295,7 @@ public class WmiOntologyTest {
     /** All unique properties which have the same name "Handle". */
     @Test
     public void TestOntology_Handle_Homonyms() {
-        String querystring = """
+        String queryString = """
                         prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_sub_property
@@ -283,7 +303,7 @@ public class WmiOntologyTest {
                             ?my_sub_property rdfs:subPropertyOf cim:Handle .
                         }
                     """;
-        HashSet<String> subPropertiesSet = selectColumn(querystring, "my_sub_property");
+        HashSet<String> subPropertiesSet = selectColumn(queryString, "my_sub_property");
         System.out.println("subPropertiesSet=" + subPropertiesSet.toString());
         assertContainsSurvolItem(subPropertiesSet, "CIM_Process.Handle");
         assertContainsSurvolItem(subPropertiesSet, "CIM_Thread.Handle");
@@ -294,7 +314,7 @@ public class WmiOntologyTest {
     /** All associators referring to a CIM_Process. */
     @Test
     public void TestOntology_Associators_To_CIM_Process() {
-        String querystring = """
+        String queryString = """
                         prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_associator ?my_description
@@ -304,13 +324,13 @@ public class WmiOntologyTest {
                             ?my_associator rdfs:comment ?my_description .
                         }
                     """;
-        HashSet<String> associatorsSet = selectColumn(querystring, "my_associator");
+        HashSet<String> associatorsSet = selectColumn(queryString, "my_associator");
         System.out.println("associatorsSet=" + associatorsSet.toString());
         assertContainsSurvolItem(associatorsSet, "CIM_OSProcess");
         assertContainsSurvolItem(associatorsSet, "CIM_ProcessThread");
         assertContainsSurvolItem(associatorsSet, "CIM_ProcessExecutable");
 
-        HashSet<String> descriptionsSet = selectColumn(querystring, "my_description");
+        HashSet<String> descriptionsSet = selectColumn(queryString, "my_description");
         for(String oneDescription : descriptionsSet) {
             // For example: "A link between a process and the thread"
             System.out.println("    oneDescription=" + oneDescription);
@@ -321,7 +341,7 @@ public class WmiOntologyTest {
     /** All associators referring to a Win32_Process. */
     @Test
     public void TestOntology_Associators_To_Win32_Process() {
-        String querystring = """
+        String queryString = """
                         prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_associator
@@ -330,7 +350,7 @@ public class WmiOntologyTest {
                             ?my_subproperty rdfs:domain ?my_associator .
                         }
                     """;
-        HashSet<String> associatorsSet = selectColumn(querystring, "my_associator");
+        HashSet<String> associatorsSet = selectColumn(queryString, "my_associator");
         System.out.println("associatorsSet=" + associatorsSet.toString());
         assertContainsSurvolItem(associatorsSet, "Win32_SessionProcess");
         assertContainsSurvolItem(associatorsSet, "Win32_SystemProcesses");
@@ -340,7 +360,7 @@ public class WmiOntologyTest {
     /** This selects the labels of the base properties of properties pointing to a Win32_Process in associators. */
     @Test
     public void TestOntology_Associators_Labels_To_Win32_Process() {
-        String querystring = """
+        String queryString = """
                         prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
@@ -352,7 +372,7 @@ public class WmiOntologyTest {
                             ?my_associator rdfs:comment ?my_description .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumn(querystring, "my_label");
+        HashSet<String> labelsSet = selectColumn(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet.toString());
         Assert.assertTrue(labelsSet.contains("\"Dependent\""));
         Assert.assertTrue(labelsSet.contains("\"Member\""));
@@ -362,7 +382,7 @@ public class WmiOntologyTest {
     /** Labels of classes linked to a CIM_DataFile with an associator. */
     @Test
     public void TestOntology_Associated_Classes_To_CIM_DataFile() {
-        String querystring = """
+        String queryString = """
                         prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
@@ -374,7 +394,7 @@ public class WmiOntologyTest {
                             ?my_class rdfs:label ?my_label .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumn(querystring, "my_label");
+        HashSet<String> labelsSet = selectColumn(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet.toString());
         Assert.assertTrue(labelsSet.contains("\"CIM_Directory\""));
         Assert.assertTrue(labelsSet.contains("\"Win32_PnPSignedDriver\""));
@@ -388,7 +408,7 @@ public class WmiOntologyTest {
     /** Labels of classes linked to a Win32_Process with an associator. */
     @Test
     public void TestOntology_Associated_Classes_To_Win32_Process() {
-        String querystring = """
+        String queryString = """
                         prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
@@ -400,7 +420,7 @@ public class WmiOntologyTest {
                             ?my_class rdfs:label ?my_label .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumn(querystring, "my_label");
+        HashSet<String> labelsSet = selectColumn(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet.toString());
         Assert.assertTrue(labelsSet.contains("\"Win32_LogonSession\""));
         Assert.assertTrue(labelsSet.contains("\"Win32_ComputerSystem\""));

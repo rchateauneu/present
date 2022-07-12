@@ -3,11 +3,11 @@ package paquetage;
 import java.util.ArrayList;
 
 /**
- * This models an object and its properties extracted from a Sparql.
- * The work "object" is misleading : It does not mean the right side of a RDF triple.
- * An object is a subject variable of a triple which is given a rdf:type.
- * Its predicates and properties are all key-values (key s the predicate)
- * parsed from the query.
+ * This models an object and its properties extracted from a Sparql query.
+ * The work "object" is misleading : It does not mean the right side of an RDF triple.
+ * Rather, in this context, an object is a subject variable of a triple which is given a rdf:type.
+ * Its predicates and properties are all key-values (key is the predicate) parsed from the query.
+ * The term "Instance" might be more appropriate.
  */
 public class ObjectPattern {
     public String className;

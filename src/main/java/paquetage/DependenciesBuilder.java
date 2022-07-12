@@ -1,15 +1,15 @@
 package paquetage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.apache.log4j.Logger;
+
+import java.util.*;
 
 public class DependenciesBuilder {
+    final static private Logger logger = Logger.getLogger(DependenciesBuilder.class);
     /**
      * This never changes whatever the order of input BGPs is.
      */
-    HashMap<String, String> variablesContext;
+    public HashMap<String, String> variablesContext;
 
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.
@@ -28,10 +28,18 @@ public class DependenciesBuilder {
         prepared_queries = new ArrayList<QueryData>();
 
         // In this constructor, it is filled with all variables and null values.
-        // ON A BESOIN DE LE RECONSTRUIRE AU FIL DES DEPENDANCES.
-        // DONC ON NE PEUT PAS FAIRE CA EN DEUX ETAPES.
+        // It is built and also needed when building the dependencies, so this cannot be done in two separate steps.
         variablesContext = new HashMap<>();
+        String deducedClassName = null;
 
+        /*
+        This strips the class IRI of its prefix.
+        * It also does a consistency check of some predicates contain the class name as a prefix, for example
+        * "CIM_Process.Caption" or "CIM_DataFile.Name".
+        * These prefixes must be identical if they are present.
+        * If the class is not null, they must be equal.
+        * If the class is not given, it can implicitly be deduced from the predicates prefixes.
+        */
         for(ObjectPattern pattern: patterns)  {
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
@@ -48,6 +56,26 @@ public class DependenciesBuilder {
                 }
                 String shortPredicate = predicateName.split("#")[1];
 
+                // Maybe the predicate is prefixed with the class name, for example "CIM_Process.Handle".
+                // If so, the class name is deduced and will be compared.
+                String[] splitPredicate = shortPredicate.split("\\.");
+                if(splitPredicate.length > 1) {
+                    if (splitPredicate.length == 2) {
+                        // Without the prefix.
+                        shortPredicate = splitPredicate[1];
+                        String predicatePrefix = splitPredicate[0];
+                        if(deducedClassName == null)
+                            deducedClassName = predicatePrefix;
+                        else {
+                            if(!deducedClassName.equals(predicatePrefix)) {
+                                throw new Exception("Different predicates prefixes:" + shortPredicate + "/" + deducedClassName);
+                            }
+                        }
+                    } else {
+                        throw new Exception("Too many dots in invalid predicate:" + shortPredicate);
+                    }
+                }
+
                 QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(shortPredicate, valueContent, keyValue.isVariable());
 
                 if(keyValue.isVariable()) {
@@ -63,7 +91,7 @@ public class DependenciesBuilder {
                 }
             }
 
-            // The same variables might be added several times.
+            // The same variables might be added several times, and duplicates will be eliminated.
             for(String variable_name : selected_variables.values()) {
                 variablesContext.put(variable_name, null);
             }
@@ -75,17 +103,40 @@ public class DependenciesBuilder {
                 variablesContext.put(pattern.VariableName, null);
             }
 
-            if(! pattern.className.contains("#")) {
-                throw new Exception("Invalid class name:" + pattern.className);
+            String shortClassName = null;
+            if(pattern.className == null) {
+                // Maybe the class is not given.
+                if(deducedClassName == null) {
+                    logger.debug("Class name is null and cannot be deduced.");
+                    shortClassName = null;
+                } else {
+                    logger.debug("Short class name deduced to " + deducedClassName);
+                    shortClassName = deducedClassName;
+                }
+            }  else {
+                // If the class is explicitly given.
+                if (!pattern.className.contains("#")) {
+                    throw new Exception("Invalid class name:" + pattern.className);
+                }
+                shortClassName = pattern.className.split("#")[1];
+                if (deducedClassName != null) {
+                    // If the class is explicitly given, and also is the prefix of some attributes.
+                    if (!shortClassName.equals(deducedClassName)) {
+                        throw new Exception("Different short class=" + shortClassName + " and deduced=" + deducedClassName);
+                    }
+                }
             }
-            String shortClassName = pattern.className.split("#")[1];
 
-            QueryData queryData = new QueryData(shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
-            prepared_queries.add(queryData);
+            if(shortClassName != null) {
+                // A class name is need to run WQL queries.
+                QueryData queryData = new QueryData(shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
+                prepared_queries.add(queryData);
+            }
         }
-        if(prepared_queries.size() != patterns.size()) {
-            throw new Exception("Inconsistent QueryData creation");
-        }
+
+        //if(prepared_queries.size() != patterns.size()) {
+        //    throw new Exception("Inconsistent QueryData creation");
+        //}
     }
 
     /**

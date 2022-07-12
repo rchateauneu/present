@@ -1,33 +1,27 @@
 package paquetage;
 
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class SparqlFrontEnd {
     /**
      * - Receives a Sparql query.
-     * - Extracts BGPs.
-     * - Optimizes BGP order.
-     * - Fetches triples based on BGPs.
-     * - Insert the triples in the repository.
      * - Run the Sparql query.
+     * - Get the triples
      * - Return the triples.
      */
 
-
-    public void Execute(String sparqlQuery) throws Exception
-    {
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-
-        SparqlExecution toRows = new SparqlExecution(extractor);
-
-        ArrayList<GenericSelecter.Row> rows = toRows.ExecuteToRows();
-
-        List<Triple> triples = extractor.GenerateTriples(rows);
-
-        RepositoryWrapper repositoryWrapper = new RepositoryWrapper();
-        repositoryWrapper.InsertTriples(triples);
-    }
+    private RepositoryWrapper repositoryWrapper;
 }

@@ -1,5 +1,7 @@
 package paquetage;
 
+import org.apache.log4j.Logger;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -7,6 +9,7 @@ import java.util.stream.Collectors;
  * To be used when reconstructing a WQL query.
  */
 public class QueryData {
+    final static Logger logger = Logger.getLogger(QueryData.class);
     String className;
 
     // Name of the Sparql variable containing the object. Its rdf:type is a CIM class.
@@ -69,7 +72,7 @@ public class QueryData {
 
             if(value == null) {
                 // This should not happen.
-                System.out.println("Value of " + predicate + " is null");
+                logger.debug("Value of " + predicate + " is null");
             }
             String escapedValue = value.replace("\\", "\\\\").replace("\"", "\\\"");
             return "" + predicate + "" + " = \"" + escapedValue + "\"";
@@ -183,9 +186,9 @@ public class QueryData {
             for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
                 Sample currentValue = entry.getValue();
                 if((currentValue.elapsed >= maxElapsed) || (currentValue.count >= maxCount))
-                    System.out.println(entry.getKey() + " " + (currentValue.elapsed / 1000.0) + " secs " + currentValue.count + " calls");
+                    logger.debug(entry.getKey() + " " + (currentValue.elapsed / 1000.0) + " secs " + currentValue.count + " calls");
             }
-            System.out.println("TOTAL" + " " + (totalElapsed / 1000.0) + " secs " + totalCount + " calls " + statistics.size() + " lines");
+            logger.debug("TOTAL" + " " + (totalElapsed / 1000.0) + " secs " + totalCount + " calls " + statistics.size() + " lines");
         }
     }
 

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ProcessModulesTest {
-    String pidString = String.valueOf(ProcessHandle.current().pid());
+    String currentPidStr = String.valueOf(ProcessHandle.current().pid());
     String currExe = ProcessHandle.current().info().command().get();
 
     @Test
@@ -18,21 +18,21 @@ public class ProcessModulesTest {
 
         Map<String, ArrayList<String>> result = new ProcessModules().GetAll();
 
-        Assert.assertTrue(result.containsKey(pidString));
+        Assert.assertTrue(result.containsKey(currentPidStr));
         System.out.println("currExe=" + currExe);
-        System.out.println("result.get(pidString)=" + result.get(pidString));
-        Assert.assertEquals(currExe, result.get(pidString).get(0));
+        System.out.println("result.get(currentPidStr)=" + result.get(currentPidStr));
+        Assert.assertEquals(currExe, result.get(currentPidStr).get(0));
     }
 
     @Test
     public void GetFromModule_1() throws Exception {
         List<String> pidsList = new ProcessModules().GetFromModule(currExe);
-        Assert.assertTrue(pidsList.contains(pidString));
+        Assert.assertTrue(pidsList.contains(currentPidStr));
     }
 
     @Test
     public void GetFromPid_1() throws Exception {
-        List<String> modulesList = new ProcessModules().GetFromPid(pidString);
+        List<String> modulesList = new ProcessModules().GetFromPid(currentPidStr);
         Assert.assertEquals(modulesList.get(0), (currExe));
     }
 }

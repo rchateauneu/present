@@ -9,8 +9,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class SparqlExecutionTest {
-    String pidString = String.valueOf(ProcessHandle.current().pid());
+public class SparqlTranslationTest {
+    String currentPidStr = String.valueOf(ProcessHandle.current().pid());
 
     static Set<String> RowColumnAsSet(ArrayList<GenericSelecter.Row> rowsList, String columnName) {
         return rowsList
@@ -84,7 +84,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet(
                 "file_Caption", "file_FileSize", "file_Drive", "file_Path"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Assert.assertEquals(1, the_rows.size());
@@ -120,13 +120,12 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         boolean foundCurrentPid = false;
-        long pid = ProcessHandle.current().pid();
-        String pidString = String.valueOf(pid);
+
         for (GenericSelecter.Row row : the_rows) {
-            if (row.Elements.get("my_process_handle").equals(pidString)) {
+            if (row.Elements.get("my_process_handle").equals(currentPidStr)) {
                 foundCurrentPid = true;
                 break;
             }
@@ -149,11 +148,59 @@ public class SparqlExecutionTest {
                         ?my_process cim:Caption ?my_process_caption .
                         ?my_process cim:Handle "%s" .
                     }
-                """, pidString);
+                """, currentPidStr);
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        Assert.assertEquals(1, the_rows.size());
+        Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
+    }
+
+    /** Checks the caption of the current process selected with the current pid.
+     * This gets only the node.
+     * @throws Exception
+     */
+    @Test
+    public void Execution_Win32_Process_3() throws Exception {
+        String sparql_query = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_process
+                    where {
+                        ?my_process rdf:type cim:Win32_Process .
+                        ?my_process cim:Handle "%s" .
+                    }
+                """, currentPidStr);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process"));
+
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+        Assert.assertEquals(1, the_rows.size());
+        Assert.assertEquals(Set.of("my_process"), the_rows.get(0).Elements.keySet());
+    }
+
+    /** This deduces the type of the object because of the prefix predicate.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void Execution_Win32_Process_4() throws Exception {
+        String sparql_query = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_process_caption
+                    where {
+                        ?my_process cim:Win32_Process.Caption ?my_process_caption .
+                        ?my_process cim:Handle "%s" .
+                    }
+                """, currentPidStr);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
+
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(1, the_rows.size());
         Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
@@ -174,12 +221,12 @@ public class SparqlExecutionTest {
                         ?my2_file rdf:type cim:CIM_DataFile .
                         ?my2_file cim:Name ?my_file_name .
                     }
-                """, pidString);
+                """, currentPidStr);
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_file_name");
         // This tests the presence of some libraries which are used by the current Java process.
@@ -217,12 +264,12 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // The current pid must be there because it uses this library.
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_handle");
-        Assert.assertTrue(libsSet.contains(pidString));
+        Assert.assertTrue(libsSet.contains(currentPidStr));
     }
 
     /**
@@ -253,7 +300,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // The current caption must be there because it uses this library.
@@ -262,7 +309,7 @@ public class SparqlExecutionTest {
 
         // The current pid must be there because it uses this library.
         Set<String> libsSet = RowColumnAsSet(the_rows, "my_handle");
-        Assert.assertTrue(libsSet.contains(pidString));
+        Assert.assertTrue(libsSet.contains(currentPidStr));
     }
 
     @Test
@@ -288,7 +335,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Filename cases are not stable wrt Windows version.
@@ -319,7 +366,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // These files must be in this directory.
@@ -356,7 +403,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Case of filenames are not stable wrt Windows version.
@@ -390,7 +437,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // These files must be in this directory.
@@ -434,7 +481,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // It must fall back to the initial directory.
@@ -470,7 +517,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         System.out.println("Rows number=" + the_rows.size());
 
@@ -510,7 +557,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         System.out.println("Rows number=" + the_rows.size());
 
@@ -551,7 +598,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
@@ -582,7 +629,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
@@ -620,7 +667,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
@@ -654,7 +701,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_drive", "my1_dir"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         // Disk "C:" must be found.
@@ -687,7 +734,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_account_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> accountsSet = RowColumnAsSet(the_rows, "my_account_name");
@@ -709,7 +756,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_class_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> classesSet = RowColumnAsSet(the_rows, "my_class_name");
@@ -736,7 +783,34 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+
+        Set<String> threadsSet = RowColumnAsSet(the_rows, "my_thread_name");
+        for(String threadName: threadsSet) {
+            if((threadName != null) && ! threadName.equals(""))
+                System.out.println("Thread=" + threadName);
+        }
+        // Most threads have no name.
+        Assert.assertTrue(threadsSet.contains(null));
+    }
+
+    /** The type of the instances are deduced from the property names */
+    @Test
+    public void Execution_Forced_Win32_Thread_NoType() throws Exception {
+        String sparql_query = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_thread_name
+                    where {
+                        ?my_thread cim:Win32_Thread.Name ?my_thread_name .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
+
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> threadsSet = RowColumnAsSet(the_rows, "my_thread_name");
@@ -768,7 +842,7 @@ public class SparqlExecutionTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet(
                 "my_product_number", "my_product_name", "my_product_vendor", "my_product_caption", "my_product_version"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> productNamesSet = RowColumnAsSet(the_rows, "my_product_name");
@@ -794,7 +868,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> applicationsSet = RowColumnAsSet(the_rows, "my_application_name");
@@ -825,7 +899,7 @@ public class SparqlExecutionTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name", "my_local_service"));
 
-        SparqlExecution patternSparql = new SparqlExecution(extractor);
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> applicationsSet = RowColumnAsSet(the_rows, "my_application_name");
