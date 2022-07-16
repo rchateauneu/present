@@ -471,14 +471,6 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(1, setDevices.size());
         // For example: "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\"
         Assert.assertTrue(setDevices.stream().findFirst().orElse("xyz").startsWith("\"\\\\?\\Volume{"));
-
-
-        // cim:Win32_Directory.Drive = 'c:'
-        // cim:Win32_Volume.Name = 'C:\'
-        // cim:Win32_Volume.DriveLetter = 'C:'
-        // Il faut "C:\\" mais pas "C:"
-        // Assert.assertEquals(1, devicesSet.size());
-        // Assert.assertTrue(devicesSet.contains("C:"));
     }
 
     /***

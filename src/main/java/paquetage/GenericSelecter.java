@@ -476,6 +476,7 @@ public class GenericSelecter {
             if(str == null) {
                 logger.warn("PutString: Key=" + key + " null value");
             } else if(str.startsWith("\\\\")) {
+                // This is a hint which might not always work, but helps finding problems.
                 throw new RuntimeException("PutString: Key=" + key + " looks like a node:" + str);
             }
             Elements.put(key, new ValueTypePair(str, ValueType.STRING_TYPE));

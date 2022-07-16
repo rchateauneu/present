@@ -129,7 +129,8 @@ public class SparqlTranslation {
                     }
                     substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, variableValue));
                 } else {
-                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, kv.value));
+                    // No change because the "where" value is not a variable.
+                    substitutedWheres.add(kv);
                 }
             }
 
