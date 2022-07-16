@@ -1,10 +1,12 @@
 package paquetage;
 
+import com.google.common.collect.Sets;
 import junit.framework.TestCase;
 import org.apache.commons.text.CaseUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -437,4 +439,80 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertTrue(setGroups.contains("\"Users\""));
     }
 
+    /***
+     * Volume of a given directory.
+     */
+    @Test
+    public void testSelect_Win32_Volume() throws Exception {
+        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
+        Assert.assertTrue(repositoryWrapper.IsValid());
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?device_id
+                    where {
+                        ?my3_volume cim:DriveLetter ?my_drive .
+                        ?my3_volume cim:DeviceID ?device_id .
+                        ?my3_volume rdf:type cim:Win32_Volume .
+                        ?my0_dir rdf:type cim:Win32_Directory .
+                        ?my0_dir cim:Name "C:\\\\Program Files (x86)" .
+                        ?my0_dir cim:Drive ?my_drive .
+                    }
+                """;
+
+        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        GenericSelecter.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("device_id"), singleRow.KeySet());
+
+        Set<String> setDevices = listRows.stream().map(row -> row.GetStringValue("device_id")).collect(Collectors.toSet());
+        System.out.println("setDevices=" + setDevices);
+        Assert.assertEquals(1, setDevices.size());
+        // For example: "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\"
+        Assert.assertTrue(setDevices.stream().findFirst().orElse("xyz").startsWith("\"\\\\?\\Volume{"));
+
+
+        // cim:Win32_Directory.Drive = 'c:'
+        // cim:Win32_Volume.Name = 'C:\'
+        // cim:Win32_Volume.DriveLetter = 'C:'
+        // Il faut "C:\\" mais pas "C:"
+        // Assert.assertEquals(1, devicesSet.size());
+        // Assert.assertTrue(devicesSet.contains("C:"));
+    }
+
+    /***
+     * Mount point of a given directory.
+     * The types of each instance are implicitly given in properties. Once only is enough.
+     */
+    @Test
+    public void testSelect_Win32_MountPoint() throws Exception {
+        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
+        Assert.assertTrue(repositoryWrapper.IsValid());
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_dir_name
+                    where {
+                        ?my3_dir cim:Win32_Directory.Name ?my_dir_name .
+                        ?my2_assoc cim:Win32_MountPoint.Volume ?my1_volume .
+                        ?my2_assoc cim:Directory ?my3_dir .
+                        ?my1_volume cim:Win32_Volume.DriveLetter ?my_drive .
+                        ?my1_volume cim:DeviceID ?device_id .
+                        ?my0_dir cim:Name "C:\\\\Program Files (x86)" .
+                        ?my0_dir cim:Win32_Directory.Drive ?my_drive .
+                    }
+                """;
+
+        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        GenericSelecter.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("my_dir_name"), singleRow.KeySet());
+
+        Set<String> setDirs = listRows.stream().map(row -> row.GetStringValue("my_dir_name")).collect(Collectors.toSet());
+        System.out.println("setDirs=" + setDirs);
+        Assert.assertEquals(1, setDirs.size());
+        Assert.assertEquals("\"C:\\\"", setDirs.stream().findFirst().orElse("xyz"));
+    }
 }

@@ -66,7 +66,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Forced_CIM_DataFile() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_Caption ?file_Drive ?file_FileSize ?file_Path
@@ -80,7 +80,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet(
                 "file_Caption", "file_FileSize", "file_Drive", "file_Path"));
 
@@ -108,7 +108,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Win32_Process_1() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_handle
@@ -117,7 +117,7 @@ public class SparqlTranslationTest {
                         ?my_process cim:Handle ?my_process_handle .
                     }
                 """;
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -139,7 +139,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Win32_Process_2() throws Exception {
-        String sparql_query = String.format("""
+        String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_caption
@@ -149,7 +149,7 @@ public class SparqlTranslationTest {
                         ?my_process cim:Handle "%s" .
                     }
                 """, currentPidStr);
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -164,7 +164,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Win32_Process_3() throws Exception {
-        String sparql_query = String.format("""
+        String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process
@@ -173,7 +173,7 @@ public class SparqlTranslationTest {
                         ?my_process cim:Handle "%s" .
                     }
                 """, currentPidStr);
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -188,7 +188,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Win32_Process_4() throws Exception {
-        String sparql_query = String.format("""
+        String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_caption
@@ -197,7 +197,7 @@ public class SparqlTranslationTest {
                         ?my_process cim:Handle "%s" .
                     }
                 """, currentPidStr);
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -208,7 +208,7 @@ public class SparqlTranslationTest {
 
     @Test
     public void Execution_Forced_CIM_ProcessExecutable_1() throws Exception {
-        String sparql_query = String.format("""
+        String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
@@ -223,7 +223,7 @@ public class SparqlTranslationTest {
                     }
                 """, currentPidStr);
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -246,7 +246,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Forced_CIM_ProcessExecutable_2() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_handle
@@ -261,7 +261,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -281,7 +281,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Forced_CIM_ProcessExecutable_3() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_handle ?my_caption
@@ -297,7 +297,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -317,7 +317,7 @@ public class SparqlTranslationTest {
      * This gets the parent-directory of a file.
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_1() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
@@ -332,7 +332,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -348,7 +348,7 @@ public class SparqlTranslationTest {
      * Possibly because accessing CIM_DataFile is slow anyway.
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_2() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
@@ -363,7 +363,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -381,7 +381,7 @@ public class SparqlTranslationTest {
      * This gets the parent-parent-directory of a file.
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_1() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
@@ -400,7 +400,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -415,7 +415,7 @@ public class SparqlTranslationTest {
      * This gets sub-sub-files of a directory.
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
@@ -434,7 +434,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -451,7 +451,7 @@ public class SparqlTranslationTest {
      * This gets the grandparent of the sub-sub-files of a directory. It must be the same.
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_3() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
@@ -478,7 +478,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -496,7 +496,7 @@ public class SparqlTranslationTest {
      * The order of evaluation is forced with the alphabetical order of main variables.
      */
     public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_1() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_dir_name
@@ -514,7 +514,7 @@ public class SparqlTranslationTest {
             }
         """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -535,7 +535,7 @@ public class SparqlTranslationTest {
      * Names of processes which have an executable or a library in a given directory.
      */
     public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_process_name
@@ -554,7 +554,7 @@ public class SparqlTranslationTest {
             }
         """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -580,7 +580,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Forced_Win32_MountPoint_1() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?device_id
@@ -595,7 +595,7 @@ public class SparqlTranslationTest {
             }
         """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -614,7 +614,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Forced_Win32_MountPoint_2() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
             prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?dir_name
@@ -626,7 +626,7 @@ public class SparqlTranslationTest {
             }
         """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -641,51 +641,13 @@ public class SparqlTranslationTest {
         Assert.assertTrue(dirsSet.contains("C:\\"));
     }
 
-    /***
-     * Volume of a given directory.
-     */
-    @Test
-    public void Execution_Forced_Win32_MountPoint_3() throws Exception {
-        String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
-                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?device_id
-                    where {
-                        ?my3_volume cim:DeviceID ?device_id .
-                        ?my3_volume rdf:type cim:Win32_Volume .
-                        ?my2_assoc rdf:type cim:Win32_MountPoint .
-                        ?my2_assoc cim:Volume ?my3_volume .
-                        ?my2_assoc cim:Directory ?my1_dir .
-                        ?my1_dir rdf:type cim:Win32_Directory .
-                        ?my1_dir cim:Name ?my_drive .
-                        ?my0_dir rdf:type cim:Win32_Directory .
-                        ?my0_dir cim:Name "C:\\\\Program Files (x86)" .
-                        ?my0_dir cim:Drive ?my_drive .
-                    }
-                """;
-
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
-
-        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
-
-        // Disk "C:" must be found.
-        Set<String> devicesSet = RowColumnAsSet(the_rows, "device_id");
-        for(String drive: devicesSet) {
-            System.out.println("Drive=" + drive);
-        }
-        // Il faut "C:\\" mais pas "C:"
-        Assert.assertEquals(1, devicesSet.size());
-        Assert.assertTrue(devicesSet.contains("C:"));
-    }
 
     /***
      * Drive of a given directory.
      */
     @Test
     public void Execution_Forced_Win32_Directory_Drive_1() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_drive ?my1_dir
@@ -698,7 +660,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_drive", "my1_dir"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -721,7 +683,7 @@ public class SparqlTranslationTest {
 
     @Test
     public void Execution_Forced_Win32_Account() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_account_name
@@ -731,7 +693,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_account_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -743,7 +705,7 @@ public class SparqlTranslationTest {
 
     @Test
     public void Execution_Forced_Win32_COMClass() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_name
@@ -753,7 +715,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_class_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -770,7 +732,7 @@ public class SparqlTranslationTest {
 
     @Test
     public void Execution_Forced_Win32_Thread() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_thread_name
@@ -780,7 +742,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -798,7 +760,7 @@ public class SparqlTranslationTest {
     /** The type of the instances are deduced from the property names */
     @Test
     public void Execution_Forced_Win32_Thread_NoType() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_thread_name
@@ -807,7 +769,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -824,7 +786,7 @@ public class SparqlTranslationTest {
 
     @Test
     public void Execution_Forced_Win32_Product() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_product_number ?my_product_name ?my_product_vendor ?my_product_caption ?my_product_version
@@ -838,7 +800,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet(
                 "my_product_number", "my_product_name", "my_product_vendor", "my_product_caption", "my_product_version"));
 
@@ -855,7 +817,7 @@ public class SparqlTranslationTest {
 
     @Test
     public void Execution_Forced_Win32_DCOMApplication() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_application_name
@@ -865,7 +827,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -882,7 +844,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Forced_Win32_DCOMApplication_Win32_DCOMApplicationSetting() throws Exception {
-        String sparql_query = """
+        String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_application_name ?my_local_service
@@ -896,7 +858,7 @@ public class SparqlTranslationTest {
                     }
                 """;
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name", "my_local_service"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -917,7 +879,7 @@ public class SparqlTranslationTest {
      */
     @Test
     public void Execution_Forced_Win32_Process_CIM_ProcessExecutable_CIM_DataFile() throws Exception {
-        String sparql_query = String.format("""
+        String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_name
@@ -933,7 +895,7 @@ public class SparqlTranslationTest {
                    }
                 """, currentPidStr);
 
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);

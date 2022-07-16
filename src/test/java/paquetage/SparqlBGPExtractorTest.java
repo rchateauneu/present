@@ -8,10 +8,7 @@ import org.eclipse.rdf4j.model.util.Values;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
@@ -44,7 +41,7 @@ public class SparqlBGPExtractorTest {
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(Sets.newHashSet("obs", "time", "lat"), extractor.bindings);
+        Assert.assertEquals(Set.of("obs", "time", "lat"), extractor.bindings);
         Assert.assertEquals(1, extractor.patternsAsArray().size());
         Assert.assertNotEquals(null, FindObjectPattern(extractor, "obs"));
     }
@@ -70,7 +67,7 @@ public class SparqlBGPExtractorTest {
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_directory"));
+        Assert.assertEquals(Set.of("my_directory"), extractor.bindings);
 
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
@@ -95,7 +92,7 @@ public class SparqlBGPExtractorTest {
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_name"));
+        Assert.assertEquals(Set.of("my_name"), extractor.bindings);
 
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
@@ -133,7 +130,7 @@ public class SparqlBGPExtractorTest {
                 }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+        Assert.assertEquals(Set.of("my_file_name"), extractor.bindings);
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 3);
 
@@ -183,7 +180,7 @@ public class SparqlBGPExtractorTest {
                 }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("page", "type"));
+        Assert.assertEquals(Set.of("page", "type"), extractor.bindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         Assert.assertEquals(1, patterns.size());
         Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
@@ -213,7 +210,7 @@ public class SparqlBGPExtractorTest {
                 }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("subject_name"));
+        Assert.assertEquals(Set.of("subject_name"), extractor.bindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         Assert.assertEquals(2, patterns.size());
 
@@ -250,7 +247,7 @@ public class SparqlBGPExtractorTest {
                     }
             """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(Sets.newHashSet("creator_name", "author_name"), extractor.bindings);
+        Assert.assertEquals(Set.of("creator_name", "author_name"), extractor.bindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         Assert.assertEquals(3, patterns.size());
 
@@ -273,6 +270,66 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals("s", thirdPattern.VariableName);
         Assert.assertEquals(2, thirdPattern.Members.size());
         CompareKeyValue(thirdPattern.Members.get(0), "http://schema.org/creator", true, "creator");
+    }
+
+    @Test
+    public void Parse_SubQuery() throws Exception {
+        // Thanks to https://en.wikibooks.org/wiki/SPARQL/Subqueries and https://en.wikibooks.org/wiki/SPARQL/Prefixes
+        String sparql_query = """
+                       PREFIX wd: <http://www.wikidata.org/entity/>
+                       PREFIX wds: <http://www.wikidata.org/entity/statement/>
+                       PREFIX wdv: <http://www.wikidata.org/value/>
+                       PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                       PREFIX wikibase: <http://wikiba.se/ontology#>
+                       PREFIX p: <http://www.wikidata.org/prop/>
+                       PREFIX ps: <http://www.wikidata.org/prop/statement/>
+                       PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+                       PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                       PREFIX bd: <http://www.bigdata.com/rdf#>
+                       SELECT ?countryLabel ?population (round(?population/?worldpopulation*1000)/10 AS ?percentage)
+                       WHERE {
+                         ?country wdt:P31 wd:Q3624078;    # is a sovereign state
+                                  wdt:P1082 ?population.
+
+                         {
+                           # subquery to determine ?worldpopulation
+                           SELECT (sum(?population) AS ?worldpopulation)
+                           WHERE {
+                             ?country wdt:P31 wd:Q3624078;    # is a sovereign state
+                                      wdt:P1082 ?population.
+                           }
+                         }
+
+                         SERVICE wikibase:label {bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".}
+                       }
+                       ORDER BY desc(?population)
+                """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        System.out.println("extractor.bindings=" + extractor.bindings);
+        List<ObjectPattern> patterns = extractor.patternsAsArray();
+        Assert.assertEquals(1, patterns.size());
+
+        for(ObjectPattern pattern : patterns )
+        {
+            System.out.println("pattern.className"+pattern.className);
+            System.out.println("pattern.VariableName"+pattern.VariableName);
+            for(ObjectPattern.PredicateObjectPair pop:pattern.Members) {
+                System.out.println("    pattern.Predicate :" + pop.Predicate());
+                System.out.println("    pattern.Content   :" + pop.Content());
+                System.out.println("    pattern.isVariable:" + pop.isVariable());
+                System.out.println("");
+            }
+        }
+
+        Assert.assertNotEquals(FindObjectPattern(extractor, "country"), null);
+        ObjectPattern firstPattern = patterns.get(0);
+        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals("country", firstPattern.VariableName);
+        Assert.assertEquals(4, firstPattern.Members.size());
+        CompareKeyValue(firstPattern.Members.get(0), "http://www.wikidata.org/prop/direct/P31", false, "http://www.wikidata.org/entity/Q3624078");
+        CompareKeyValue(firstPattern.Members.get(1), "http://www.wikidata.org/prop/direct/P1082", true, "population");
+        CompareKeyValue(firstPattern.Members.get(2), "http://www.wikidata.org/prop/direct/P31", false, "http://www.wikidata.org/entity/Q3624078");
+        CompareKeyValue(firstPattern.Members.get(3), "http://www.wikidata.org/prop/direct/P1082", true, "population");
     }
 
 
