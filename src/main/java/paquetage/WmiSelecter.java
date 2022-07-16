@@ -3,7 +3,6 @@ package paquetage;
 import COM.Wbemcli;
 import COM.WbemcliUtil;
 import com.sun.jna.platform.win32.*;
-import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
 import com.sun.jna.ptr.IntByReference;
@@ -94,7 +93,19 @@ public class WmiSelecter {
                         The classname value describes the class type of the reference property.
                         There is apparently no way to get the object pointed to by the reference.
                          */
-                        oneRow.Elements.put(lambda_variable, pVal.stringValue());
+                        if(lambda_column.equals("__PATH")) {
+                            if(pType.getValue() == Wbemcli.CIM_REFERENCE) {
+                                throw new RuntimeException("Should be CIM_REFERENCE lambda_column=" + lambda_column + "lambda_variable=" + lambda_variable);
+                            }
+                            oneRow.PutNode(lambda_variable, pVal.stringValue());
+                        }
+                        else {
+                            if(pType.getValue() == Wbemcli.CIM_REFERENCE) {
+                                oneRow.PutNode(lambda_variable, pVal.stringValue());
+                            } else {
+                                oneRow.PutString(lambda_variable, pVal.stringValue());
+                            }
+                        }
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
 
@@ -333,7 +344,7 @@ public class WmiSelecter {
         return svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
-    String GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
+    GenericSelecter.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
         try {
@@ -344,14 +355,46 @@ public class WmiSelecter {
         }
         try {
             String value = null;
-            if(pType.getValue() == Wbemcli.CIM_UINT32) {
+            GenericSelecter.ValueType valueType = null;
+            /*
+            public static final int CIM_UINT32 = 19;
+            public static final int CIM_SINT64 = 20;
+            public static final int CIM_UINT64 = 21;
+            public static final int CIM_REAL32 = 4;
+            public static final int CIM_REAL64 = 5;
+            public static final int CIM_BOOLEAN = 11;
+            public static final int CIM_STRING = 8;
+            public static final int CIM_DATETIME = 101;
+            public static final int CIM_REFERENCE = 102;
+            */
+
+            int wbemValueType = pType.getValue();
+            if(propertyName.equals("__PATH")) {
+                /** Problem: How to detect in the general case, when this is a path, for example
+                 * CIM_Process.Executable.Antecedent or Win32_SubDirectory.GroupComponent ?
+                 */
+                if(wbemValueType != Wbemcli.CIM_STRING) {
+                    throw new RuntimeException("Not CIM_STRING: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
+                }
+                //logger.debug("value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
+                value = pVal.stringValue();
+                valueType = GenericSelecter.ValueType.NODE_TYPE;
+            } else if(wbemValueType == Wbemcli.CIM_UINT32) {
                 // Needed for example for Win32_Process.ProcessId.
                 value = Integer.toString(pVal.intValue());
+                valueType = GenericSelecter.ValueType.INT_TYPE;
+            } else if (wbemValueType == Wbemcli.CIM_REFERENCE) {
+                logger.error("Is CIM_REFERENCE: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
+                value = pVal.stringValue();
+                valueType = GenericSelecter.ValueType.NODE_TYPE;
+                throw new RuntimeException("When does it happen: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
             } else {
                 value = pVal.stringValue();
+                valueType = GenericSelecter.ValueType.STRING_TYPE;
             }
             OleAuto.INSTANCE.VariantClear(pVal);
-            return value;
+
+            return new GenericSelecter.Row.ValueTypePair(value, valueType);
         } catch (ClassCastException exc) {
             // So it is easier to debug.
             throw exc;
@@ -387,6 +430,13 @@ public class WmiSelecter {
         return objectNode;
     }
 
+    /** This returns in a Row the properties of a WMI instance specified in a WMI path.
+     * The derisred properties are given in the QueryData columns.
+     * @param objectPath
+     * @param queryData
+     * @return
+     * @throws Exception
+     */
     GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
 
         Set<String> columns = queryData.queryColumns.keySet();
@@ -403,13 +453,24 @@ public class WmiSelecter {
             if(variableName == null) {
                 throw new Exception("Null variable name for objectPath=" + objectPath);
             }
+            if(objectNode == null)
+                singleRow.PutString(variableName, "Object " + objectPath + " is null");
+            else
+                singleRow.PutValueType(variableName, GetObjectProperty(objectNode, entry.getKey()));
+            /*
             String objectProperty = objectNode == null
                     ? "Object " + objectPath + " is null"
                     : GetObjectProperty(objectNode, entry.getKey());
+            // PresentUtils.WbemPathToIri( ?? Et le type ??
             singleRow.Elements.put(variableName, objectProperty);
+            */
         }
-        // TODO: Is it necessary ?
-        singleRow.Elements.put(queryData.mainVariable, GetObjectProperty(objectNode, "__PATH"));
+        // We are sure this is a node.
+        GenericSelecter.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
+        if(wbemPath.Type() != GenericSelecter.ValueType.NODE_TYPE) {
+            throw new Exception("GetSingleObject objectPath should be a node:" + objectPath);
+        }
+        singleRow.PutValueType(queryData.mainVariable, wbemPath);
         return singleRow;
     }
 }

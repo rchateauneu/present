@@ -33,7 +33,7 @@ public class WmiSelecterTest {
         boolean isIn = false;
         for(GenericSelecter.Row aRow : listResults)
         {
-            if(aRow.Elements.get("var_handle").equals(currentPidStr))
+            if(aRow.GetStringValue("var_handle").equals(currentPidStr))
             {
                 isIn = true;
                 break;
@@ -55,7 +55,7 @@ public class WmiSelecterTest {
         System.out.println(stringsResults);
 
         Assert.assertEquals(listResults.size(), 1);
-        Assert.assertEquals(listResults.get(0).Elements.get("var_handle"), currentPidStr);
+        Assert.assertEquals(listResults.get(0).GetStringValue("var_handle"), currentPidStr);
     }
 
     @Test
@@ -116,9 +116,9 @@ public class WmiSelecterTest {
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
         for(GenericSelecter.Row row : listResults) {
-            Assert.assertEquals(row.Elements.size(), 2);
-            Assert.assertTrue(row.Elements.containsKey("any_variable"));
-            Assert.assertTrue(row.Elements.containsKey("var_dependent"));
+            Assert.assertEquals(row.ElementsSize(), 2);
+            Assert.assertTrue(row.ContainsKey("any_variable"));
+            Assert.assertTrue(row.ContainsKey("var_dependent"));
         }
     }
 
@@ -149,8 +149,8 @@ public class WmiSelecterTest {
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
         Assert.assertTrue(namesList.contains("Name"));
         Assert.assertTrue(namesList.contains("FileName"));
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption"), "C:\\WINDOWS\\System32\\clb.dll");
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "CreationClassName"), "CIM_LogicalFile");
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption").Value(), "C:\\WINDOWS\\System32\\clb.dll");
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "CreationClassName").Value(), "CIM_LogicalFile");
     }
 
     /** This creates an Win32_Process object based on its path only,
@@ -166,8 +166,8 @@ public class WmiSelecterTest {
         Assert.assertTrue(namesList.contains("Handle"));
         Assert.assertTrue(namesList.contains("Caption"));
         Assert.assertTrue(namesList.contains("Description"));
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "Handle"), Long.toString(pid));
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption"), "java.exe");
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "Handle").Value(), Long.toString(pid));
+        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption").Value(), "java.exe");
     }
     // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
     // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"

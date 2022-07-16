@@ -6,6 +6,7 @@ import org.eclipse.rdf4j.model.impl.SimpleStatement;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.impl.StatementImpl;
 import org.eclipse.rdf4j.model.impl.TreeModel;
+import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.FOAF;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -17,6 +18,8 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 
 import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -54,6 +57,16 @@ public class WmiOntology {
             put("real64", XSD.DOUBLE);
             put("real32", XSD.DOUBLE);
         }};
+
+    static Resource WbemPathToIri(String valueString) throws Exception {
+        String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
+        //logger.debug("encodedValueString=" + encodedValueString);
+        String iriValue = WmiOntology.survol_url_prefix + encodedValueString;
+        //logger.debug("iriValue=" + iriValue);
+        Resource resourceValue = Values.iri(iriValue);
+        return resourceValue;
+    }
+
 
     /**
      * Difficulty when mapping WMI properties to RDF because several properties may have the same name.
@@ -193,15 +206,14 @@ public class WmiOntology {
                 // Get the temporary directory and print it.
                 String tempDir = System.getProperty("java.io.tmpdir");
 
+                // To cleanup the ontology, this entire directory must be deleted, and not only its content.
                 File dataDir = new File(tempDir + "\\" + "Ontologies");
                 logger.debug("dataDir=" + dataDir);
-                // Path ontologyFile = ontologiesDir.resolve( "wmi_ontology.rdf");
                 if (Files.exists(dataDir.toPath())) {
                     logger.debug("Exists dataDir=" + dataDir);
                     MemoryStore memStore = new MemoryStore(dataDir);
                     memStore.setSyncDelay(1000L);
                     Repository repo = new SailRepository(memStore);
-                    // Repository repo = new SailRepository(new NativeStore(ontologyFile.toFile()));
                     connection = repo.getConnection();
                     logger.debug("Cached statements=" + Long.toString(connection.size()));
                     ;
@@ -212,7 +224,6 @@ public class WmiOntology {
                     Repository repo = new SailRepository(memStore);
                     connection = repo.getConnection();
                     logger.debug("Caching new statements before=" + Long.toString(connection.size()));
-                    //connection.sta
                     FillRepository(connection);
                     connection.commit();
                     memStore.sync();

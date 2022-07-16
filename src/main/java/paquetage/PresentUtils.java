@@ -19,13 +19,21 @@ public class PresentUtils {
             return "Unknown Computer";
     }
 
+    /** This can apply to Windows only: It prefixes a path and assumes that the namespace is ROOT/CIMv2.
+     *
+     * @param shortPath : A Wbem path without the hostname and the namespace.
+     * @return The complete path as usable by WMI.
+     */
     public static String PrefixPath(String shortPath) {
         return "\\\\" + getComputerName() + "\\ROOT\\CIMV2:" + shortPath;
     }
 
+    /** This is used in tests, to check that the current binary of the current process is detected.
+     *
+     * @return The path name of the current binary, which can only be Java.
+     */
     public static String CurrentJavaBinary() {
         String javaHome = System.getProperty("java.home");
         return javaHome + "\\bin\\java.exe";
-
     }
 }

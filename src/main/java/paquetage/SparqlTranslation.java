@@ -31,13 +31,17 @@ public class SparqlTranslation {
     /**
      * This is used only for testing because what is important is to created RDF triples which are inserted
      * in the target repository.
+     * It could use a different data type because "Row" is used for different purpose.
      */
     void CreateCurrentRow()
     {
         GenericSelecter.Row new_row = new GenericSelecter.Row();
-        for(String binding : bindings)
+        // It does not return only the variables in bindings, but all of them because they are
+        // needed for to generate the triples for further Sparql execution
+        for(Map.Entry<String, GenericSelecter.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
         {
-            new_row.Elements.put(binding, dependencies.variablesContext.get(binding));
+            // PresentUtils.WbemPathToIri( ? The type should not be lost, especially for IRIs
+            new_row.PutValueType(pairKeyValue.getKey(), pairKeyValue.getValue());
         }
         current_rows.add(new_row);
     }
@@ -61,13 +65,12 @@ public class SparqlTranslation {
     {}
 
     void RowToContext(GenericSelecter.Row singleRow) throws Exception {
-        for(Map.Entry<String, String> entry : singleRow.Elements.entrySet()) {
-            String variableName = entry.getKey();
+        for(String variableName : singleRow.KeySet()) {
             if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new Exception("Variable " + variableName + " from selection not in context");
             }
             // Or generates new triples for all BGP triples depending on this variable.
-            dependencies.variablesContext.put(variableName, entry.getValue());
+            dependencies.variablesContext.put(variableName, singleRow.GetValueType(variableName));
         }
     }
 
@@ -76,7 +79,11 @@ public class SparqlTranslation {
         if(index == dependencies.prepared_queries.size())
         {
             // The most nested WQL query is reached. Store data then return.
-            // THIS IS WRONG ! It should rather return RDF triples to be inserted in the target repository.
+            // It returns rows of key-value paris made with the variables and thei values.
+            // Later, these are used to generate triples, which are inserted in a repository,
+            // and the Sparql query is run again - and now, the needed triples are here, ready to be selected.
+            // In other words, they are virtually here.
+            // TODO: For performance, consider calculating triples right now.
             CreateCurrentRow();
             return;
         }
@@ -84,9 +91,17 @@ public class SparqlTranslation {
         queryData.statistics.StartSample();
         if(queryData.isMainVariableAvailable) {
             if(! queryData.queryWheres.isEmpty()) {
-                throw new Exception("Where clauses should be empty if the main variable is available");
+                // This error happens if this query aims at evaluating a variable whose value is already available,
+                // but the presence "Where" clauses implies that there is a constraint on this variable.
+                // This cannot work and indicates that the patterns are not executed in the right order.
+                logger.debug("Index=" + Integer.toString(index) + " QueryData=" + queryData.toString());
+                for(QueryData.WhereEquality oneWhere: queryData.queryWheres) {
+                    logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
+                }
+                throw new Exception("Where clauses must be empty if main variable is available:" + queryData.mainVariable);
             }
-            String objectPath = dependencies.variablesContext.get(queryData.mainVariable);
+            // Only the value representation is needed.
+            String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
             GenericSelecter.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
             queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
 
@@ -107,7 +122,8 @@ public class SparqlTranslation {
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
                 if(kv.isVariable) {
-                    String variableValue = dependencies.variablesContext.get(kv.value);
+                    // Only the value representation is needed.
+                    String variableValue = dependencies.variablesContext.get(kv.value).Value();
                     if (variableValue == null) {
                         // This should not happen.
                         logger.error("Value of " + kv.predicate + " variable=" + kv.value + " is null");
@@ -128,12 +144,12 @@ public class SparqlTranslation {
             int numColumns = queryData.queryColumns.size();
             for(GenericSelecter.Row row: rows) {
                 // An extra column contains the path.
-                if(row.Elements.size() != numColumns + 1) {
+                if(row.ElementsSize() != numColumns + 1) {
                     /*
                     This is a hint that the values of some required variables were not found.
                     TODO: Do this once only, the result set should separately contain the header.
                     */
-                    throw new Exception("Inconsistent size between returned results " + row.Elements.size()
+                    throw new Exception("Inconsistent size between returned results " + row.ElementsSize()
                             + " and columns:" + numColumns);
                 }
                 RowToContext(row);
@@ -161,7 +177,7 @@ public class SparqlTranslation {
         }
         logger.debug("Rows generated:" + Long.toString(current_rows.size()));
         if(current_rows.size() > 0)
-            logger.debug("Header:" + current_rows.get(0).Elements.keySet());
+            logger.debug("Header:" + current_rows.get(0).KeySet());
         logger.debug("Context keys:" + dependencies.variablesContext.keySet());
 
     return current_rows;

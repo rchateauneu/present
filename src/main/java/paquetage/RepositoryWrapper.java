@@ -62,7 +62,7 @@ public class RepositoryWrapper {
         }
     }
 
-    /** This transforms a Spqrql query into a stack of WQL-like queries,
+    /** This transforms a Sparql query into a stack of WQL-like queries,
      * which are executed and their results inserted in the repository.
      * @param sparqlQuery
      * @throws Exception

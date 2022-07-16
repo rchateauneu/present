@@ -15,13 +15,13 @@ public class SparqlTranslationTest {
     static Set<String> RowColumnAsSet(ArrayList<GenericSelecter.Row> rowsList, String columnName) {
         return rowsList
                 .stream()
-                .map(entry -> entry.Elements.get(columnName)).collect(Collectors.toSet());
+                .map(entry -> entry.GetStringValue(columnName)).collect(Collectors.toSet());
     }
 
     static Set<String> RowColumnAsSetUppercase(ArrayList<GenericSelecter.Row> rowsList, String columnName) {
         return rowsList
                 .stream()
-                .map(entry -> entry.Elements.get(columnName).toUpperCase()).collect(Collectors.toSet());
+                .map(entry -> entry.GetStringValue(columnName).toUpperCase()).collect(Collectors.toSet());
     }
 
     /** Loads a file with its name and checks the correctness of the attributes.
@@ -89,17 +89,17 @@ public class SparqlTranslationTest {
 
         Assert.assertEquals(1, the_rows.size());
 
-        Map<String, String> firstRow = the_rows.get(0).Elements;
+        GenericSelecter.Row firstRow = the_rows.get(0);
 
         // The current pid must be there because it uses this library.
         String fileName = "C:\\WINDOWS\\SYSTEM32\\ntdll.dll";
-        Assert.assertEquals(fileName, firstRow.get("file_Caption"));
-        Assert.assertEquals("c:", firstRow.get("file_Drive"));
+        Assert.assertEquals(fileName, firstRow.GetStringValue("file_Caption"));
+        Assert.assertEquals("c:", firstRow.GetStringValue("file_Drive"));
         File f = new File(fileName);
         long fileSize = f.length();
         String fileSizeStr = Long.toString(fileSize);
-        Assert.assertEquals(fileSizeStr, firstRow.get("file_FileSize"));
-        Assert.assertEquals("\\windows\\system32\\", firstRow.get("file_Path"));
+        Assert.assertEquals(fileSizeStr, firstRow.GetStringValue("file_FileSize"));
+        Assert.assertEquals("\\windows\\system32\\", firstRow.GetStringValue("file_Path"));
     }
 
     /** This runs a SPARQL query which returns pids of all processes and checks that the current pid is found.
@@ -125,7 +125,7 @@ public class SparqlTranslationTest {
         boolean foundCurrentPid = false;
 
         for (GenericSelecter.Row row : the_rows) {
-            if (row.Elements.get("my_process_handle").equals(currentPidStr)) {
+            if (row.GetStringValue("my_process_handle").equals(currentPidStr)) {
                 foundCurrentPid = true;
                 break;
             }
@@ -155,7 +155,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(1, the_rows.size());
-        Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
+        Assert.assertEquals("java.exe", the_rows.get(0).GetStringValue("my_process_caption"));
     }
 
     /** Checks the caption of the current process selected with the current pid.
@@ -179,7 +179,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(1, the_rows.size());
-        Assert.assertEquals(Set.of("my_process"), the_rows.get(0).Elements.keySet());
+        Assert.assertEquals(Set.of("my_process"), the_rows.get(0).KeySet());
     }
 
     /** This deduces the type of the object because of the prefix predicate.
@@ -203,7 +203,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(1, the_rows.size());
-        Assert.assertEquals("java.exe", the_rows.get(0).Elements.get("my_process_caption"));
+        Assert.assertEquals("java.exe", the_rows.get(0).GetStringValue("my_process_caption"));
     }
 
     @Test
@@ -339,7 +339,7 @@ public class SparqlTranslationTest {
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Filename cases are not stable wrt Windows version.
-        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS\\SYSTEM32");
+        Assert.assertEquals(the_rows.get(0).GetStringValue("my_dir_name").toUpperCase(), "C:\\WINDOWS\\SYSTEM32");
     }
 
     @Test
@@ -407,7 +407,7 @@ public class SparqlTranslationTest {
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
         Assert.assertEquals(the_rows.size(), 1);
         // Case of filenames are not stable wrt Windows version.
-        Assert.assertEquals(the_rows.get(0).Elements.get("my_dir_name").toUpperCase(), "C:\\WINDOWS");
+        Assert.assertEquals(the_rows.get(0).GetStringValue("my_dir_name").toUpperCase(), "C:\\WINDOWS");
     }
 
     @Test
@@ -909,6 +909,39 @@ public class SparqlTranslationTest {
         Set<String> servicesSet = RowColumnAsSet(the_rows, "my_local_service");
         Assert.assertTrue(servicesSet.contains("wlansvc"));
         Assert.assertTrue(servicesSet.contains("upnphost"));
+    }
+
+    /** The order of execution is forced to be sure of the result at this stage.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void Execution_Forced_Win32_Process_CIM_ProcessExecutable_CIM_DataFile() throws Exception {
+        String sparql_query = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?file_name
+                    where {
+                        ?_1_process rdf:type cim:Win32_Process .
+                        ?_1_process cim:Handle "%s" .
+                        ?_1_process cim:Win32_Process.Caption ?caption .
+                        ?_2_assoc rdf:type cim:CIM_ProcessExecutable .
+                        ?_2_assoc cim:Dependent ?_1_process .
+                        ?_2_assoc cim:Antecedent ?_3_file .
+                        ?_3_file rdf:type cim:CIM_DataFile .
+                        ?_3_file cim:Name ?file_name .
+                   }
+                """, currentPidStr);
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("file_name"));
+
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
+        ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
+
+        Set<String> applicationsSet = RowColumnAsSet(the_rows, "file_name");
+        System.out.println("applicationsSet=" + applicationsSet);
+        Assert.assertTrue(applicationsSet.contains(PresentUtils.CurrentJavaBinary()));
     }
 
     /*

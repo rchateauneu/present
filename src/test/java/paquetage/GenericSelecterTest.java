@@ -9,13 +9,13 @@ public class GenericSelecterTest {
     static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
 
     static void CompareRows(GenericSelecter.Row row1, GenericSelecter.Row row2) {
-        System.out.println("row1=" + row1.Elements.keySet());
-        System.out.println("row2=" + row2.Elements.keySet());
-        Assert.assertEquals(row1.Elements.size(), row2.Elements.size());
-        Assert.assertEquals(row1.Elements.keySet(), row2.Elements.keySet());
-        for(String oneKey:  row1.Elements.keySet()) {
+        System.out.println("row1=" + row1.KeySet());
+        System.out.println("row2=" + row2.KeySet());
+        Assert.assertEquals(row1.ElementsSize(), row2.ElementsSize());
+        Assert.assertEquals(row1.KeySet(), row2.KeySet());
+        for(String oneKey:  row1.KeySet()) {
             System.out.println("oneKey=" + oneKey);
-            Assert.assertEquals(row1.Elements.get(oneKey), row2.Elements.get(oneKey));
+            Assert.assertEquals(row1.GetStringValue(oneKey), row2.GetStringValue(oneKey));
         }
     }
 

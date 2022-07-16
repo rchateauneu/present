@@ -302,10 +302,11 @@ public class SparqlBGPExtractorTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
-        String dirIri = toSurvol("any_iri_will_do");
+        String dirIri = "any_iri_will_do";
         List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of(
-                "my_dir", dirIri,
-                "dir_name", "C:")));
+        "my_dir", new GenericSelecter.Row.ValueTypePair(dirIri, GenericSelecter.ValueType.NODE_TYPE),
+        "dir_name", new GenericSelecter.Row.ValueTypePair("C:", GenericSelecter.ValueType.STRING_TYPE)))
+        );
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -313,12 +314,12 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(2, triples.size());
 
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIri),
+                WmiOntology.WbemPathToIri(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 Values.iri(toSurvol("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIri),
+                WmiOntology.WbemPathToIri(dirIri),
                 Values.iri(toSurvol("Name")),
                 Values.literal("C:"))
         ));
@@ -350,15 +351,15 @@ public class SparqlBGPExtractorTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
-        String dirIriC = toSurvol("iriC");
-        String dirIriD = toSurvol("iriD");
+        String dirIriC = "iriC";
+        String dirIriD = "iriD";
         List<GenericSelecter.Row> rows = Arrays.asList(
                 new GenericSelecter.Row(Map.of(
-                "my_dir", dirIriC,
-                "dir_name", "C:")),
+                        "my_dir", new GenericSelecter.Row.ValueTypePair(dirIriC, GenericSelecter.ValueType.NODE_TYPE),
+                        "dir_name", new GenericSelecter.Row.ValueTypePair("C:", GenericSelecter.ValueType.STRING_TYPE))),
                 new GenericSelecter.Row(Map.of(
-                        "my_dir", dirIriD,
-                        "dir_name", "D:")));
+                        "my_dir", new GenericSelecter.Row.ValueTypePair(dirIriD, GenericSelecter.ValueType.NODE_TYPE),
+                        "dir_name", new GenericSelecter.Row.ValueTypePair("D:", GenericSelecter.ValueType.STRING_TYPE))));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -370,22 +371,22 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(4, triples.size());
 
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIriC),
+                WmiOntology.WbemPathToIri(dirIriC),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 Values.iri(toSurvol("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIriC),
+                WmiOntology.WbemPathToIri(dirIriC),
                 Values.iri(toSurvol("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIriD),
+                WmiOntology.WbemPathToIri(dirIriD),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 Values.iri(toSurvol("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIriD),
+                WmiOntology.WbemPathToIri(dirIriD),
                 Values.iri(toSurvol("Name")),
                 Values.literal("D:"))
         ));
@@ -416,11 +417,11 @@ public class SparqlBGPExtractorTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
-        String dirIri = toSurvol("arbitrary_iri");
+        String dirIri = "arbitrary_iri";
         List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of(
-                "my_dir", dirIri,
-                "dir_name", "C:",
-                "dir_caption", "This is a text")));
+                "my_dir", new GenericSelecter.Row.ValueTypePair(dirIri, GenericSelecter.ValueType.NODE_TYPE),
+                "dir_name", new GenericSelecter.Row.ValueTypePair("C:", GenericSelecter.ValueType.STRING_TYPE),
+                "dir_caption", new GenericSelecter.Row.ValueTypePair("This is a text", GenericSelecter.ValueType.STRING_TYPE))));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -430,17 +431,17 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(3, triples.size());
 
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIri),
+                WmiOntology.WbemPathToIri(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 Values.iri(toSurvol("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIri),
+                WmiOntology.WbemPathToIri(dirIri),
                 Values.iri(toSurvol("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
-                Values.iri(dirIri),
+                WmiOntology.WbemPathToIri(dirIri),
                 Values.iri(toSurvol("Caption")),
                 Values.literal("This is a text"))
         ));

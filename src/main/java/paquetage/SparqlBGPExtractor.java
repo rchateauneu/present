@@ -3,8 +3,9 @@ package paquetage;
 // See "query explain"
 // https://rdf4j.org/documentation/programming/repository/
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.*;
@@ -31,10 +32,12 @@ public class SparqlBGPExtractor {
     // This should be private except for tests.
     public Map<String, ObjectPattern> patternsMap;
 
-    // These are the raw patterns extracted from the query.
-    List<StatementPattern> visitorPatterns;
+    // These are the raw patterns extracted from the query. They may contain variables which are not defined
+    // in the WMI evaluation. In this case, they are copied as is.
+    // They might contain one variable defined by WMI, and another one, defined by the second Sparql evaluation.
+    // In this case, they are replicated for each value found by WMI.
+    private List<StatementPattern> visitorPatternsRaw;
 
-    //List<ObjectPattern> patternsArray;
 
     public SparqlBGPExtractor(String input_query) throws Exception {
         patternsMap = null;
@@ -63,9 +66,9 @@ public class SparqlBGPExtractor {
         bindings = tupleExpr.getBindingNames();
         PatternsVisitor myVisitor = new PatternsVisitor();
         tupleExpr.visit(myVisitor);
-        visitorPatterns = myVisitor.patterns();
+        visitorPatternsRaw = myVisitor.patterns();
         patternsMap = new HashMap<>();
-        for(StatementPattern myPattern : visitorPatterns)
+        for(StatementPattern myPattern : visitorPatternsRaw)
         {
             Var subject = myPattern.getSubjectVar();
             String subjectName = subject.getName();
@@ -118,11 +121,52 @@ public class SparqlBGPExtractor {
     }
 
     private static String GetVarValue(Var var, GenericSelecter.Row row) throws Exception {
-        String value = row.Elements.get(var.getName());
-        if(value == null) {
-            throw new Exception("Unknown variable " + var.getName() + ". Vars=" + row.Elements.keySet().toString());
+        GenericSelecter.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+        String value = pairValueType.Value();
+        if(pairValueType.Type() == GenericSelecter.ValueType.NODE_TYPE) {
+            logger.debug("This is a NODE:" + var.getName() + "=" + value);
         }
         return value;
+    }
+
+    /**
+     * IRIS must look like this:
+     * objectString=http://www.primhillcomputers.com/ontology/survol#Win32_Process isIRI=true
+     *
+     * But Wbem path are like that:
+     * subjectString=\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="31640"
+     *
+     * So, Wbem path must be URL-encoded and prefixed.
+     *
+     * @param var
+     * @param row
+     * @return
+     * @throws Exception
+     */
+    private static Resource AsIRI(Var var, GenericSelecter.Row row) throws Exception {
+        GenericSelecter.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+        //String valueTypePair = pairValueType.Value();
+        if(pairValueType.Type() != GenericSelecter.ValueType.NODE_TYPE) {
+            throw new Exception("This should be a NODE:" + var.getName() + "=" + pairValueType);
+        }
+        String valueString = pairValueType.Value();
+        //logger.debug("valueTypePair=" + valueTypePair);
+        if(pairValueType.Type() != GenericSelecter.ValueType.NODE_TYPE) {
+            throw new Exception("Value " + var.getName() + "=" + valueString + " is not a node");
+        }
+        // Consistency check, for debugging.
+        if(valueString.startsWith(WmiOntology.survol_url_prefix)) {
+            throw new Exception("Double transformation in IRI:" + valueString);
+        }
+        Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
+        /*
+        String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
+        //logger.debug("encodedValueString=" + encodedValueString);
+        String iriValue = WmiOntology.survol_url_prefix + encodedValueString;
+        //logger.debug("iriValue=" + iriValue);
+        Resource resourceValue = Values.iri(iriValue);
+        */
+        return resourceValue;
     }
 
     /** This generates the triples from substituting the variables of the patterns by their values.
@@ -136,9 +180,9 @@ public class SparqlBGPExtractor {
 
         ValueFactory factory = SimpleValueFactory.getInstance();
 
-        logger.debug("Visitor patterns number:" + Long.toString(visitorPatterns.size()));
+        logger.debug("Visitor patterns number:" + Long.toString(visitorPatternsRaw.size()));
         logger.debug("Rows number:" + Long.toString(rows.size()));
-        for(StatementPattern myPattern : visitorPatterns) {
+        for(StatementPattern myPattern : visitorPatternsRaw) {
             Var subject = myPattern.getSubjectVar();
             Var predicate = myPattern.getPredicateVar();
             if(!predicate.isConstant()) {
@@ -163,11 +207,16 @@ public class SparqlBGPExtractor {
                 } else {
                     // Only the object changes for each row.
                     for (GenericSelecter.Row row : rows) {
-                        String objectString = GetVarValue(object, row);
+                        GenericSelecter.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
+                        if(pairValueType == null) {
+                            // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
+                            logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
+                            continue;
+                        }
+                        String objectString = pairValueType.Value();
                         Value resourceObject = patternsMap.containsKey(object.getName())
                                 ? Values.iri(objectString)
                                 : Values.literal(objectString);
-
                         generatedTriples.add(factory.createTriple(
                                 resourceSubject,
                                 predicateIri,
@@ -179,14 +228,24 @@ public class SparqlBGPExtractor {
                     // Only the subject changes for each row.
                     String objectString = object.getValue().stringValue();
                     logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
-                    // Maybe this is an IRI ?
+                    // TODO: Maybe this is an IRI ? So, do not transform it again !
                     Value resourceObject = object.getValue().isIRI()
                         ? Values.iri(objectString)
                         : Values.literal(objectString);
 
                     for (GenericSelecter.Row row : rows) {
-                        String subjectString = GetVarValue(subject, row);
+                        // Consistency check.
+                        // TODO: Maybe this is an IRI ? So, do not transform it again !
+                        Resource resourceSubject = AsIRI(subject, row);
+                        /*
+                        String subjectString = row.GetStringValue(subject.getName());
+                        if(!subjectString.startsWith("http")) {
+                            throw new Exception("Should start with http:" + subjectString);
+                        }
                         Resource resourceSubject = Values.iri(subjectString);
+                        */
+
+                        //logger.debug("resourceSubject=" + resourceSubject);
 
                         generatedTriples.add(factory.createTriple(
                                 resourceSubject,
@@ -196,12 +255,23 @@ public class SparqlBGPExtractor {
                 } else {
                     // The subject and the object change for each row.
                     for (GenericSelecter.Row row : rows) {
-                        String subjectString = GetVarValue(subject, row);
+                        logger.debug("subject=" + subject + ".");
+
+                        Resource resourceSubject = AsIRI(subject, row);
+                        /*
+                        String subjectString = row.GetStringValue(subject.getName());
+                        if(!subjectString.startsWith("http")) {
+                            throw new Exception("Should start with http:" + subjectString);
+                        }
                         Resource resourceSubject = Values.iri(subjectString);
+                        */
 
                         String objectString = GetVarValue(object, row);
+                        // logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
+                        logger.debug("object.getName()=" + object.getName() + ".");
+                        //logger.debug("objectString=" + objectString + " object.getValue()=" + object.getValue());
                         Value resourceObject = patternsMap.containsKey(object.getName())
-                                ? Values.iri(objectString)
+                                ? AsIRI(object, row) // Values.iri(objectString)
                                 : Values.literal(objectString);
 
                         generatedTriples.add(factory.createTriple(

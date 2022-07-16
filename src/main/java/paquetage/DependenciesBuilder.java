@@ -9,7 +9,7 @@ public class DependenciesBuilder {
     /**
      * This never changes whatever the order of input BGPs is.
      */
-    public HashMap<String, String> variablesContext;
+    public HashMap<String, GenericSelecter.Row.ValueTypePair> variablesContext;
 
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.
@@ -30,7 +30,6 @@ public class DependenciesBuilder {
         // In this constructor, it is filled with all variables and null values.
         // It is built and also needed when building the dependencies, so this cannot be done in two separate steps.
         variablesContext = new HashMap<>();
-        String deducedClassName = null;
 
         /*
         This strips the class IRI of its prefix.
@@ -43,6 +42,10 @@ public class DependenciesBuilder {
         for(ObjectPattern pattern: patterns)  {
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
+
+            // This will always be null if the properties are not prefixed with the class name.
+            // This is OK of the type is given with a triple with rdf:type as predicate.
+            String deducedClassName = null;
 
             // Now, split the variables of this object, between:
             // - the variables known at this stage from the previous queries, which can be used in the "WHERE" clause,
@@ -133,10 +136,6 @@ public class DependenciesBuilder {
                 prepared_queries.add(queryData);
             }
         }
-
-        //if(prepared_queries.size() != patterns.size()) {
-        //    throw new Exception("Inconsistent QueryData creation");
-        //}
     }
 
     /**
