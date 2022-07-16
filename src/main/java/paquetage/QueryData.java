@@ -23,12 +23,20 @@ public class QueryData {
     // This sorted container guarantees the order to help comparison in tests.
     SortedMap<String, String> queryColumns;
 
-    // To be appended in the WHERE clause of a WMI query.
-    List<WhereEquality> queryWheres;
+    // Patterns of the WHERE clause of a WMI query. The values are variables.
+    List<WhereEquality> whereVariable;
+    // To be appended in the WHERE clause of a WMI query. The values are constant.
+    //List<WhereEquality> whereConstants;
+
+    // Provider class used to execute a query similar to WQL. Used to evaluate performance.
+    Class classProvider = null;
+
+    // Getter class used for a query similar to GetOebject. Used to evaluate performance.
+    Class classGetter = null;
 
     public String toString() {
         String cols = String.join("+", queryColumns.keySet());
-        String wheres =  (String)queryWheres.stream()
+        String wheres =  (String) whereVariable.stream()
                 .map(w -> w.predicate)
                 .collect(Collectors.joining("/"));
         return "C=" + className + " V=" + mainVariable + " Cols=" + cols + " W=" + wheres;
@@ -84,7 +92,7 @@ public class QueryData {
         if(! className.equals(whereClassName)) {
             return false;
         }
-        Set<String> queryWhereColumns = queryWheres.stream().map(x -> x.predicate).collect(Collectors.toSet());
+        Set<String> queryWhereColumns = whereVariable.stream().map(x -> x.predicate).collect(Collectors.toSet());
 
         if(! queryWhereColumns.equals(whereColumns)) {
             return false;
@@ -109,7 +117,7 @@ public class QueryData {
      * @return
      */
     public String GetWhereValue(String columnName) {
-        for(WhereEquality whereElement : queryWheres) {
+        for(WhereEquality whereElement : whereVariable) {
             if(whereElement.predicate.equals(columnName)) {
                 return whereElement.value;
             }
@@ -137,7 +145,7 @@ public class QueryData {
             }
         };
         HashMap<String, Sample> statistics;
-        long startTime;
+        long startTime = -1;
 
         Statistics() {
             ResetAll();
@@ -152,6 +160,9 @@ public class QueryData {
         }
 
         void FinishSample(String objectPath, Set<String> columns) {
+            if(startTime == -1) {
+                throw new RuntimeException("Sampling not started");
+            }
             String key = objectPath + ":" + String.join(",", columns);
             Sample sample = statistics.get(key);
             if(sample != null) {
@@ -173,6 +184,7 @@ public class QueryData {
             long maxElapsed = 0;
             int maxCount = 2; // One occurrence is not interesting.
 
+            // Find the most expensive calls or the one mostly called.
             for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
                 Sample currentValue = entry.getValue();
                 totalElapsed += currentValue.elapsed;
@@ -192,7 +204,7 @@ public class QueryData {
         }
     }
 
-    public Statistics statistics = new Statistics();
+    private Statistics statistics = new Statistics();
 
     QueryData(
             String wmiClassName,
@@ -213,11 +225,11 @@ public class QueryData {
             queryColumns = new TreeMap<>(columns);
         // Uniform representation of an empty where clause.
         if(wheres == null)
-            queryWheres = new ArrayList<>();
+            whereVariable = new ArrayList<>();
         else
             // This sorts the where tests so the order is always the same and helps comparisons.
             // This is not a problem performance-wise because there is only one such element per WQL query.
-            queryWheres = wheres.stream().sorted(Comparator.comparing(x -> x.predicate)).collect(Collectors.toList());
+            whereVariable = wheres.stream().sorted(Comparator.comparing(x -> x.predicate)).collect(Collectors.toList());
     }
 
     public String BuildWqlQuery() {
@@ -232,14 +244,53 @@ public class QueryData {
             columns += ", __PATH";
         String wqlQuery = "Select " + columns + " from " + className;
 
-        if( (queryWheres != null) && (! queryWheres.isEmpty())) {
+        if( (whereVariable != null) && (! whereVariable.isEmpty())) {
             wqlQuery += " where ";
-            String whereClause = (String)queryWheres.stream()
+            String whereClause = (String) whereVariable.stream()
                     .map(QueryData.WhereEquality::ToEqualComparison)
                     .collect(Collectors.joining(" and "));
             wqlQuery += whereClause;
         }
         return wqlQuery;
+    }
+
+    public void StartSampling() {
+        statistics.StartSample();
+    }
+
+    public void FinishSampling() {
+        // This adds some extra information about the execution.
+        Set<String> columnsWhere = whereVariable.stream()
+                .map(entry -> entry.predicate)
+                .collect(Collectors.toSet());
+        statistics.FinishSample(className, columnsWhere);
+    }
+
+    public void FinishSampling(String objectPath) {
+        statistics.FinishSample(objectPath, queryColumns.keySet());
+    }
+
+    public void DisplayStatistics() {
+        /*
+        DO NOT CARE FOR THE MOMENT
+        if(classGetter != null) {
+            if(classProvider != null) {
+                throw new RuntimeException("QueryData is both a Provider and a Getter");
+            }
+            logger.debug("Getter:" + classGetter.getName());
+        }
+        else if(classProvider != null) {
+            logger.debug("Provider:" + classGetter.getName());
+        }
+        else {
+            throw new RuntimeException("QueryData is not a Provider nor a Getter");
+        }
+        */
+        statistics.DisplayAll();
+    }
+
+    public void ResetStatistics() {
+        statistics.ResetAll();
     }
 }
 

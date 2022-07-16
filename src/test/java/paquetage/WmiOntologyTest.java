@@ -43,7 +43,9 @@ public class WmiOntologyTest {
     }
 
     /** The content of the cached ontology and the fresh one should be the same.
-     * This compares the number of triples in both repositories, and this gives a good estimate. */
+     * This compares the number of triples in both repositories, and this gives a good estimate.
+     * TODO: Why does the ontology changes so often ?
+     */
     @Test
     public void TestOntology_Cached() {
         WmiOntology ontologyCached = new WmiOntology(true);
@@ -93,19 +95,26 @@ public class WmiOntologyTest {
         assertContainsSurvolItem(propertiesSet, "Dependent");
     }
 
+    /** This checks that the domains of some properties are loaded in the ontology.
+     *
+     */
     @Test
-    public void TestOntology_Win32_Process_Handle_Domain_All() {
+    public void TestOntology_Handle_Domain_All() {
         String queryString = new Formatter().format(
-                "SELECT ?y WHERE { ?y rdfs:domain ?z }").toString( );
+                "SELECT ?y WHERE { ?y rdfs:domain ?z }").toString();
         HashSet<String> domainsSet = selectColumn(queryString, "y");
         assertContainsSurvolItem(domainsSet, "CIM_Process.Handle");
+        assertContainsSurvolItem(domainsSet, "Win32_UserAccount.Name");
+        assertContainsSurvolItem(domainsSet, "Win32_Process.Handle");
     }
 
-    /** This checks the presence of class Wmi32_Process in one of the domains. */
+    /** This checks the presence of class Wmi32_Process in the domain of Win32_Process.Handle.
+     * The node of Win32_Process.Handle is explicitly given.
+     */
     @Test
     public void TestOntology_Win32_Process_Handle_Domain_Filter() {
         String queryString = new Formatter().format(
-                "SELECT ?x WHERE { <%s> rdfs:domain ?x }", toSurvol("Win32_Process.Handle")).toString( );
+                "SELECT ?x WHERE { <%s> rdfs:domain ?x }", toSurvol("Win32_Process.Handle")).toString();
         HashSet<String> domainsSet = selectColumn(queryString, "x");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsSurvolItem(domainsSet, "Win32_Process");
@@ -182,9 +191,9 @@ public class WmiOntologyTest {
         Assert.assertTrue(derivedClassNamesSet.contains("\"Win32_BIOS\""));
     }
 
-    /** This checks the presence Description for property Handle. */
+    /** This checks the presence of Description for property Win32_Process.Handle. */
     @Test
-    public void TestOntology_Handle_Description() {
+    public void TestOntology_Win32_Process_Handle_Description() {
         String queryString = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -200,6 +209,25 @@ public class WmiOntologyTest {
         Assert.assertEquals(
                 "\"A string used to identify the process. A process ID is a kind of process handle.\"",
                 descriptionsSet.stream().findFirst().orElse("xyz"));
+    }
+
+    /** This checks the presence of Description for property Win32_Process.Handle. */
+    @Test
+    public void TestOntology_Win32_UserAccount_Name_Description() {
+        String queryString = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_property_description
+                    where {
+                        cim:Win32_UserAccount.Name rdfs:comment ?my_property_description .
+                        cim:Win32_UserAccount.Name rdfs:domain cim:Win32_UserAccount .
+                    }
+                """;
+        HashSet<String> descriptionsSet = selectColumn(queryString, "my_property_description");
+        System.out.println("descriptionsSet=" + descriptionsSet.toString());
+        Assert.assertEquals(1, descriptionsSet.size());
+        Assert.assertTrue(
+                descriptionsSet.stream().findFirst().orElse("xyz").startsWith("\"The Name property"));
     }
 
     @Test
@@ -307,8 +335,8 @@ public class WmiOntologyTest {
         System.out.println("subPropertiesSet=" + subPropertiesSet.toString());
         assertContainsSurvolItem(subPropertiesSet, "CIM_Process.Handle");
         assertContainsSurvolItem(subPropertiesSet, "CIM_Thread.Handle");
-        assertContainsSurvolItem(subPropertiesSet, "Win32_Process.Handle");
         assertContainsSurvolItem(subPropertiesSet, "Win32_Thread.Handle");
+        assertContainsSurvolItem(subPropertiesSet, "Win32_Process.Handle");
     }
 
     /** All associators referring to a CIM_Process. */

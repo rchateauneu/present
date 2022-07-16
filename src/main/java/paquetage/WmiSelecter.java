@@ -84,7 +84,8 @@ public class WmiSelecter {
 
                     // This lambda extracts the value of a single column.
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
-                        COMUtils.checkRC(wqlResult.Get(lambda_column, 0, pVal, pType, plFlavor));
+                        WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, plFlavor);
+                        COMUtils.checkRC(hr);
                         // TODO: If the value is a reference, get the object !
                         /*
                         if(pType.getValue() == Wbemcli.CIM_REFERENCE) ...
@@ -102,7 +103,13 @@ public class WmiSelecter {
                         else {
                             if(pType.getValue() == Wbemcli.CIM_REFERENCE) {
                                 oneRow.PutNode(lambda_variable, pVal.stringValue());
+                            } else if(pType.getValue() == Wbemcli.CIM_STRING) {
+                                oneRow.PutNode(lambda_variable, pVal.stringValue());
+                            } else if(pType.getValue() == Wbemcli.CIM_UINT32) {
+                                // Mandatory conversion for Win32_Process.ProcessId
+                                oneRow.PutNode(lambda_variable, Long.toString(pVal.longValue()));
                             } else {
+                                // Unknown type.
                                 oneRow.PutString(lambda_variable, pVal.stringValue());
                             }
                         }

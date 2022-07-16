@@ -269,7 +269,10 @@ public class SparqlBGPExtractor {
                         String objectString = GetVarValue(object, row);
                         // logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
                         logger.debug("object.getName()=" + object.getName() + ".");
-                        //logger.debug("objectString=" + objectString + " object.getValue()=" + object.getValue());
+                        logger.debug("objectString=" + objectString + " object.getValue()=" + object.getValue());
+                        if(objectString == null) {
+                            objectString = "";
+                        }
                         Value resourceObject = patternsMap.containsKey(object.getName())
                                 ? AsIRI(object, row) // Values.iri(objectString)
                                 : Values.literal(objectString);

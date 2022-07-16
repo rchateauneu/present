@@ -22,13 +22,13 @@ public class DependenciesBuilderTest {
         for (String key : expected.queryColumns.keySet()) {
             Assert.assertEquals(expected.queryColumns.get(key), actual.queryColumns.get(key));
         }
-        if ((expected.queryWheres == null) || (actual.queryWheres == null)) {
-            Assert.assertEquals(null, actual.queryWheres);
+        if ((expected.whereVariable == null) || (actual.whereVariable == null)) {
+            Assert.assertEquals(null, actual.whereVariable);
         } else {
-            Assert.assertEquals(expected.queryWheres.size(), actual.queryWheres.size());
-            for (int index = 0; index < expected.queryWheres.size(); ++index) {
-                QueryData.WhereEquality kv_expected = expected.queryWheres.get(index);
-                QueryData.WhereEquality kv_actual = actual.queryWheres.get(index);
+            Assert.assertEquals(expected.whereVariable.size(), actual.whereVariable.size());
+            for (int index = 0; index < expected.whereVariable.size(); ++index) {
+                QueryData.WhereEquality kv_expected = expected.whereVariable.get(index);
+                QueryData.WhereEquality kv_actual = actual.whereVariable.get(index);
                 Assert.assertEquals(kv_expected.predicate, kv_actual.predicate);
                 Assert.assertEquals(kv_expected.value, kv_actual.value);
             }

@@ -71,9 +71,9 @@ public class RepositoryWrapper {
     {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
 
-        SparqlTranslation toRows = new SparqlTranslation(extractor);
+        SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
 
-        ArrayList<GenericSelecter.Row> rows = toRows.ExecuteToRows();
+        ArrayList<GenericSelecter.Row> rows = sparqlTranslator.ExecuteToRows();
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 

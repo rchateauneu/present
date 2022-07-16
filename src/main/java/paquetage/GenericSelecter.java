@@ -579,9 +579,11 @@ public class GenericSelecter {
         if(withCustom) {
             Provider provider = FindCustomProvider(queryData);
             if(provider != null) {
+                queryData.classProvider = provider.getClass();
                 return provider.EffectiveSelect(queryData);
             }
         }
+        queryData.classProvider = wmiSelecter.getClass();
         return wmiSelecter.EffectiveSelect(queryData);
     }
 
@@ -601,7 +603,6 @@ public class GenericSelecter {
     public ObjectGetter FindCustomGetter(QueryData queryData) throws Exception {
         for(ObjectGetter getter: objectGetters) {
             if (getter.MatchGet(queryData)) {
-                //System.out.println("Found getter for " + queryData.toString());
                 return getter;
             }
         }
@@ -612,11 +613,12 @@ public class GenericSelecter {
         if(withCustom) {
             ObjectGetter objectGetter = FindCustomGetter(queryData);
             if(objectGetter != null) {
+                queryData.classGetter = objectGetter.getClass();
                 return objectGetter.GetSingleObject(objectPath, queryData);
             }
-            //System.out.println("No getter found for " + queryData.toString());
         }
 
+        queryData.classGetter = wmiSelecter.getClass();
         return wmiSelecter.GetSingleObject(objectPath, queryData);
     }
 }

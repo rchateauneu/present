@@ -3,7 +3,6 @@ package paquetage;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 /** This implements the nested execution of queries based on a list of BGP patterns.
@@ -88,14 +87,14 @@ public class SparqlTranslation {
             return;
         }
         QueryData queryData = dependencies.prepared_queries.get(index);
-        queryData.statistics.StartSample();
+        queryData.StartSampling();
         if(queryData.isMainVariableAvailable) {
-            if(! queryData.queryWheres.isEmpty()) {
+            if(! queryData.whereVariable.isEmpty()) {
                 // This error happens if this query aims at evaluating a variable whose value is already available,
                 // but the presence "Where" clauses implies that there is a constraint on this variable.
                 // This cannot work and indicates that the patterns are not executed in the right order.
                 logger.debug("Index=" + Integer.toString(index) + " QueryData=" + queryData.toString());
-                for(QueryData.WhereEquality oneWhere: queryData.queryWheres) {
+                for(QueryData.WhereEquality oneWhere: queryData.whereVariable) {
                     logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
                 }
                 throw new Exception("Where clauses must be empty if main variable is available:" + queryData.mainVariable);
@@ -103,7 +102,7 @@ public class SparqlTranslation {
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
             GenericSelecter.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
-            queryData.statistics.FinishSample(objectPath, queryData.queryColumns.keySet());
+            queryData.FinishSampling(objectPath);
 
             if(singleRow == null)
             {
@@ -117,7 +116,7 @@ public class SparqlTranslation {
             }
         } else {
             ArrayList<QueryData.WhereEquality> substitutedWheres = new ArrayList<>();
-            for(QueryData.WhereEquality kv : queryData.queryWheres) {
+            for(QueryData.WhereEquality kv : queryData.whereVariable) {
                 // This is not strictly the same type because the value of KeyValue is:
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
@@ -136,10 +135,7 @@ public class SparqlTranslation {
 
             ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
-            Set<String> columnsWhere = queryData.queryWheres.stream()
-                    .map(entry -> entry.predicate)
-                    .collect(Collectors.toSet());
-            queryData.statistics.FinishSample(queryData.className, columnsWhere);
+            queryData.FinishSampling();
 
             int numColumns = queryData.queryColumns.size();
             for(GenericSelecter.Row row: rows) {
@@ -163,7 +159,7 @@ public class SparqlTranslation {
     {
         current_rows = new ArrayList<GenericSelecter.Row>();
         for(QueryData queryData : dependencies.prepared_queries) {
-            queryData.statistics.ResetAll();
+            queryData.ResetStatistics();
         }
         if(!dependencies.prepared_queries.isEmpty()) {
             ExecuteOneLevel(0);
@@ -173,7 +169,7 @@ public class SparqlTranslation {
         for(int indexQueryData = 0; indexQueryData < dependencies.prepared_queries.size(); ++indexQueryData) {
             QueryData queryData = dependencies.prepared_queries.get(indexQueryData);
             logger.debug("Query " + indexQueryData);
-            queryData.statistics.DisplayAll();
+            queryData.DisplayStatistics();
         }
         logger.debug("Rows generated:" + Long.toString(current_rows.size()));
         if(current_rows.size() > 0)

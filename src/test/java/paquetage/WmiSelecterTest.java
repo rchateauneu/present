@@ -58,9 +58,12 @@ public class WmiSelecterTest {
         Assert.assertEquals(listResults.get(0).GetStringValue("var_handle"), currentPidStr);
     }
 
+    /** This selects, from the associator CIM_ProcessExecutable, all columns "Dependent" which are stored in
+     * the variable "var_dependent". It also stores the node of each association in the variable "any_variable".
+     * @throws Exception
+     */
     @Test
     public void TestCIM_ProcessExecutable() throws Exception{
-        long pid = ProcessHandle.current().pid();
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
@@ -69,14 +72,21 @@ public class WmiSelecterTest {
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
-        String stringsResults = (String)listResults.stream().map(Object::toString)
-                .collect(Collectors.joining(", "));
-        System.out.println(stringsResults);
-        System.out.println(listResults.size());
-        // Many elements.
         Assert.assertTrue(listResults.size() > 10);
+        for(GenericSelecter.Row row : listResults) {
+            Assert.assertEquals(2, row.ElementsSize());
+            // For example: \\LAPTOP-R89KG6V1\ROOT\CIMV2:CIM_ProcessExecutable.Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\fwpuclnt.dll\"",Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"3156\""
+            Assert.assertTrue(row.TryValueType("any_variable") != null);
+            // For example: \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="3156"
+            Assert.assertTrue(row.TryValueType("var_dependent") != null);
+        }
     }
 
+    /** This selects, for the associator CIM_ProcessExecutable, all columns "Antecedent" whose "Dependent"
+     * points to the current process. In other words, it selects the executable and all libraries used
+     * by the current process.
+     * @throws Exception
+     */
     @Test
     public void TestCIM_ProcessExecutableDependent() throws Exception {
         long pid = ProcessHandle.current().pid();
@@ -90,14 +100,19 @@ public class WmiSelecterTest {
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
                 Arrays.asList(new QueryData.WhereEquality("Dependent", dependentString)));
-        String stringsResults = (String)listResults.stream().map(Object::toString)
-                .collect(Collectors.joining(", "));
-        System.out.println(stringsResults);
-        System.out.println(listResults.size());
-        // Many elements.
+        // Many libraries.
         Assert.assertTrue(listResults.size() > 5);
+        for(GenericSelecter.Row row : listResults) {
+            Assert.assertEquals(2, row.ElementsSize());
+            Assert.assertTrue(row.TryValueType("any_variable") != null);
+            Assert.assertTrue(row.TryValueType("var_antecedent") != null);
+        }
     }
 
+    /** This selects, for the associator CIM_ProcessExecutable, all columns "Dependent" whose "Antecedent"
+     * points to the file \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll" .
+     * @throws Exception
+     */
     //  \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"
     @Test
     public void TestCIM_ProcessExecutableAntecedent() throws Exception {
@@ -126,15 +141,28 @@ public class WmiSelecterTest {
      *
      */
     @Test
-    public void TestClassesList() {
+    public void TestClassesList_Win32_Process() {
         WmiSelecter selecter = new WmiSelecter();
         Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
         Assert.assertTrue(classes.containsKey("Win32_Process"));
         System.out.println("BaseName=" + classes.get("Win32_Process").BaseName);
         Map<String, WmiSelecter.WmiProperty> properties = classes.get("Win32_Process").Properties;
-        System.out.println("Properties=" + properties);
-        Assert.assertEquals(classes.get("Win32_Process").BaseName, "CIM_Process");
+        System.out.println("Properties=" + properties.keySet());
         Assert.assertTrue(properties.containsKey("Handle"));
+        Assert.assertEquals(classes.get("Win32_Process").BaseName, "CIM_Process");
+    }
+
+    /** This loads all WMI classes and checks the presence of some classes and their properties, arbitrarily chosen.
+     *
+     */
+    @Test
+    public void TestClassesList_CIM_DataFile() {
+        WmiSelecter selecter = new WmiSelecter();
+        Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
+        Assert.assertTrue(classes.containsKey("CIM_DataFile"));
+        Map<String, WmiSelecter.WmiProperty> properties = classes.get("CIM_DataFile").Properties;
+        System.out.println("Properties=" + properties.keySet());
+        Assert.assertTrue(properties.containsKey("Name"));
     }
 
     /** This creates an CIM_DataFile object based on its path only,
