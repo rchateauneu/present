@@ -172,13 +172,13 @@ public class WmiSelecterTest {
     public void TestGetObject_CIM_DataFile() throws Exception {
         // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"";
         String objectPath = PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"");
-        WmiSelecter selecter = new WmiSelecter();
-        Wbemcli.IWbemClassObject obj = selecter.GetObjectNode(objectPath);
+        WmiGetter wmiGetter = new WmiGetter();
+        Wbemcli.IWbemClassObject obj = wmiGetter.GetObjectNode(objectPath);
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
         Assert.assertTrue(namesList.contains("Name"));
         Assert.assertTrue(namesList.contains("FileName"));
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption").Value(), "C:\\WINDOWS\\System32\\clb.dll");
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "CreationClassName").Value(), "CIM_LogicalFile");
+        Assert.assertEquals(wmiGetter.GetObjectProperty(obj, "Caption").Value(), "C:\\WINDOWS\\System32\\clb.dll");
+        Assert.assertEquals(wmiGetter.GetObjectProperty(obj, "CreationClassName").Value(), "CIM_LogicalFile");
     }
 
     /** This creates an Win32_Process object based on its path only,
@@ -188,14 +188,14 @@ public class WmiSelecterTest {
         long pid = ProcessHandle.current().pid();
         // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"" + pid + "\"";
         String objectPath = PresentUtils.PrefixPath("Win32_Process.Handle=\"" + pid + "\"");
-        WmiSelecter selecter = new WmiSelecter();
-        Wbemcli.IWbemClassObject obj = selecter.GetObjectNode(objectPath);
+        WmiGetter wmiGetter = new WmiGetter();
+        Wbemcli.IWbemClassObject obj = wmiGetter.GetObjectNode(objectPath);
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
         Assert.assertTrue(namesList.contains("Handle"));
         Assert.assertTrue(namesList.contains("Caption"));
         Assert.assertTrue(namesList.contains("Description"));
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "Handle").Value(), Long.toString(pid));
-        Assert.assertEquals(selecter.GetObjectProperty(obj, "Caption").Value(), "java.exe");
+        Assert.assertEquals(wmiGetter.GetObjectProperty(obj, "Handle").Value(), Long.toString(pid));
+        Assert.assertEquals(wmiGetter.GetObjectProperty(obj, "Caption").Value(), "java.exe");
     }
     // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
     // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"

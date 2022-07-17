@@ -561,7 +561,7 @@ public class RepositoryWrapperTest extends TestCase {
 
     // NOT YET.
     ////////////
-    @Test
+    ///////////////// @Test
     public void testSelect_CIM_DataFile_SizeSum() throws Exception {
         RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
         Assert.assertTrue(repositoryWrapper.IsValid());

@@ -27,10 +27,10 @@ public class QueryData {
     List<WhereEquality> whereTests;
 
     // Provider class used to execute a query similar to WQL. Used to evaluate performance.
-    Class classProvider = null;
+    Provider classProvider = null;
 
     // Getter class used for a query similar to GetOebject. Used to evaluate performance.
-    Class classGetter = null;
+    ObjectGetter classGetter = null;
 
     public String toString() {
         String cols = String.join("+", queryColumns.keySet());
@@ -224,6 +224,11 @@ public class QueryData {
         else
             queryColumns = new TreeMap<>(columns);
         SwapWheres(wheres);
+
+        if(isMainVariableAvailable)
+            classGetter = GenericSelecter.FindGetter(this);
+        else
+            classProvider = GenericSelecter.FindProvider(this);
     }
 
     List<QueryData.WhereEquality> SwapWheres(List<QueryData.WhereEquality> wheres) {
@@ -277,14 +282,21 @@ public class QueryData {
     }
 
     public void DisplayStatistics() {
+        // Consistency check, then display the selecter of getter of data.
         if(classGetter != null) {
             if(classProvider != null) {
                 throw new RuntimeException("QueryData is both a Provider and a Getter");
             }
-            logger.debug("Getter:" + classGetter.getName());
+            if(!isMainVariableAvailable) {
+                throw new RuntimeException("QueryData should be a Getter");
+            }
+            logger.debug("Getter:" + classGetter.getClass().getName());
         }
         else if(classProvider != null) {
-            logger.debug("Provider:" + classProvider.getName());
+            if(isMainVariableAvailable) {
+                throw new RuntimeException("QueryData should be a Provider");
+            }
+            logger.debug("Provider:" + classProvider.getClass().getName());
         }
         else {
             logger.debug("No Provider nor Getter set");

@@ -539,9 +539,9 @@ public class GenericSelecter {
         }
     }
 
-    WmiSelecter wmiSelecter = new WmiSelecter();
+    static private WmiSelecter wmiSelecter = new WmiSelecter();
 
-    Provider[] providers = {
+    static private Provider[] providers = {
         new Provider_CIM_DataFile_Name(),
         new Provider_CIM_DirectoryContainsFile_PartComponent(),
         new Provider_CIM_DirectoryContainsFile_GroupComponent(),
@@ -553,9 +553,9 @@ public class GenericSelecter {
     {}
 
     // This avoids to display the same message again and again.
-    static Set<String> foundProviders = new HashSet<>();
+    static private Set<String> foundProviders = new HashSet<>();
 
-    public Provider FindCustomProvider(QueryData queryData) throws Exception {
+    public static Provider FindCustomProvider(QueryData queryData) throws Exception {
         String strQueryData = queryData.toString();
         for(Provider provider: providers) {
             if (provider.MatchProvider(queryData)) {
@@ -575,16 +575,22 @@ public class GenericSelecter {
         return null;
     }
 
+    static public Provider FindProvider(QueryData queryData) throws Exception {
+        Provider provider = FindCustomProvider(queryData);
+        return  (provider == null) ? wmiProvider : provider;
+    }
+
+    static private WmiProvider wmiProvider = new WmiProvider();
+
     public ArrayList<Row> SelectVariablesFromWhere(QueryData queryData, boolean withCustom) throws Exception {
-        if(withCustom) {
-            Provider provider = FindCustomProvider(queryData);
-            if(provider != null) {
-                queryData.classProvider = provider.getClass();
-                return provider.EffectiveSelect(queryData);
-            }
+        if(queryData.classProvider == null) {
+            throw new RuntimeException("Provider is not set");
         }
-        queryData.classProvider = wmiSelecter.getClass();
-        return wmiSelecter.EffectiveSelect(queryData);
+        if(withCustom) {
+            return queryData.classProvider.EffectiveSelect(queryData);
+        } else {
+            return wmiProvider.EffectiveSelect(queryData);
+        }
     }
 
     public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
@@ -595,12 +601,14 @@ public class GenericSelecter {
         return SelectVariablesFromWhere(className, variable, columns, null);
     }
 
-    ObjectGetter[] objectGetters = {
+    static private ObjectGetter[] objectGetters = {
         new ObjectGetter_CIM_DataFile_Name(),
         new ObjectGetter_Win32_Process_Handle()
     };
 
-    public ObjectGetter FindCustomGetter(QueryData queryData) throws Exception {
+    static private WmiGetter wmiGetter = new WmiGetter();
+
+    static public ObjectGetter FindCustomGetter(QueryData queryData) throws Exception {
         logger.debug("Finding getter for:" + queryData.toString());
         for(ObjectGetter getter: objectGetters) {
             if (getter.MatchGetter(queryData)) {
@@ -609,6 +617,11 @@ public class GenericSelecter {
             }
         }
         return null;
+    }
+
+    static public ObjectGetter FindGetter(QueryData queryData) throws Exception {
+        ObjectGetter getter = FindCustomGetter(queryData);
+        return  (getter == null) ? wmiGetter : getter;
     }
 
 
@@ -624,16 +637,14 @@ public class GenericSelecter {
      * @throws Exception
      */
     Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom) throws Exception {
-        if(withCustom) {
-            ObjectGetter objectGetter = FindCustomGetter(queryData);
-            if(objectGetter != null) {
-                queryData.classGetter = objectGetter.getClass();
-                return objectGetter.GetSingleObject(objectPath, queryData);
-            }
+        if(queryData.classGetter == null) {
+            throw new RuntimeException("Getter is not set");
         }
-
-        queryData.classGetter = wmiSelecter.getClass();
-        return wmiSelecter.GetSingleObject(objectPath, queryData);
+        if(withCustom) {
+            return queryData.classGetter.GetSingleObject(objectPath, queryData);
+        } else {
+            return wmiGetter.GetSingleObject(objectPath, queryData);
+        }
     }
 }
 
