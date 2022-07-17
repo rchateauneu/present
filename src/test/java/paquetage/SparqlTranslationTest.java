@@ -722,9 +722,7 @@ public class SparqlTranslationTest {
         ArrayList<GenericSelecter.Row> the_rows = patternSparql.ExecuteToRows();
 
         Set<String> classesSet = RowColumnAsSet(the_rows, "my_class_name");
-        for(String className: classesSet) {
-            System.out.println("Class=" + className);
-        }
+        System.out.println("classesSet=" + classesSet);
         // Some randomly-chosen classes.
         Assert.assertTrue(classesSet.contains("Memory Allocator"));
         Assert.assertTrue(classesSet.contains("System.Exception"));
