@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.function.Function;
 
 abstract class Provider {
-    public abstract boolean MatchQuery(QueryData queryData);
+    public abstract boolean MatchProvider(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
     public abstract ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception;
@@ -26,7 +26,7 @@ abstract class Provider {
 // TODO: Test separately these providers.
 
 class Provider_CIM_DataFile_Name extends Provider {
-    public boolean MatchQuery(QueryData queryData)
+    public boolean MatchProvider(QueryData queryData)
     {
         return queryData.CompatibleQuery("CIM_DataFile", Set.of("Name"));
     }
@@ -37,7 +37,7 @@ class Provider_CIM_DataFile_Name extends Provider {
         String pathFile = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", fileName));
         GenericSelecter.Row singleRow = new GenericSelecter.Row();
 
-        ObjectGetter_Cim_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData, fileName);
+        ObjectGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData, fileName);
 
         // Add the main variable anyway.
         singleRow.PutNode(queryData.mainVariable, pathFile);
@@ -48,7 +48,7 @@ class Provider_CIM_DataFile_Name extends Provider {
 }
 
 class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
-    public boolean MatchQuery(QueryData queryData) {
+    public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("PartComponent"));
     }
     public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
@@ -77,7 +77,7 @@ class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
 }
 
 class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
-    public boolean MatchQuery(QueryData queryData) {
+    public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("GroupComponent"));
     }
     public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
@@ -111,10 +111,8 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
                             "PartComponent", valuePartComponent,
                             "GroupComponent", pathGroupComponent));
             singleRow.PutNode(queryData.mainVariable, pathAssoc);
-
             result.add(singleRow);
         }
-
         return result;
     }
 }
@@ -125,7 +123,7 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
 class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
     static ProcessModules processModules = new ProcessModules();
 
-    public boolean MatchQuery(QueryData queryData) {
+    public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Antecedent"));
     }
     public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
@@ -161,7 +159,7 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
 class Provider_CIM_ProcessExecutable_Dependent extends Provider {
     static ProcessModules processModules = new ProcessModules();
 
-    public boolean MatchQuery(QueryData queryData) {
+    public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
     }
     public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
@@ -192,7 +190,7 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
 }
 
 abstract class ObjectGetter {
-    public abstract boolean MatchGet(QueryData queryData);
+    public abstract boolean MatchGetter(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
     public abstract GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
@@ -200,7 +198,7 @@ abstract class ObjectGetter {
     // TODO: Cost estimation.
 }
 
-class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
+class ObjectGetter_CIM_DataFile_Name extends ObjectGetter {
         /* Possibly required fields:
             Caption;
             Description;
@@ -238,7 +236,7 @@ class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
          */
 
     // Get-WmiObject -Query 'select Drive from CIM_DataFile where Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"'
-    public boolean MatchGet(QueryData queryData) {
+    public boolean MatchGetter(QueryData queryData) {
         return queryData.ColumnsSubsetOf("CIM_DataFile", columnsMap.keySet());
     }
 
@@ -270,8 +268,9 @@ class ObjectGetter_Cim_DataFile_Name extends ObjectGetter {
             "Drive", (String fileName) -> FileToDrive(fileName),
             "FileName", (String fileName) -> FileToName(fileName),
             "FileSize", (String fileName) -> FileToSize(fileName),
-            // "FileType", (String fileName) -> "Application Extension",
+            "Name", (String fileName) -> fileName,
             "Path", (String fileName) -> FileToPath(fileName)
+            // "FileType", (String fileName) -> "Application Extension",
             );
 
     public static void FillRowFromQueryAndFilename(GenericSelecter.Row singleRow, QueryData queryData, String fileName) {
@@ -348,7 +347,7 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
         */
 
         /** This tells if this class can calculate the required columns. &*/
-        public boolean MatchGet(QueryData queryData) {
+        public boolean MatchGetter(QueryData queryData) {
             return queryData.ColumnsSubsetOf("Win32_Process", columnsMap.keySet());
         }
 
@@ -559,7 +558,7 @@ public class GenericSelecter {
     public Provider FindCustomProvider(QueryData queryData) throws Exception {
         String strQueryData = queryData.toString();
         for(Provider provider: providers) {
-            if (provider.MatchQuery(queryData)) {
+            if (provider.MatchProvider(queryData)) {
                 if(!foundProviders.contains(strQueryData)) {
                     // So the message is displayed once only.
                     foundProviders.add(strQueryData);
@@ -597,19 +596,32 @@ public class GenericSelecter {
     }
 
     ObjectGetter[] objectGetters = {
-        new ObjectGetter_Cim_DataFile_Name(),
+        new ObjectGetter_CIM_DataFile_Name(),
         new ObjectGetter_Win32_Process_Handle()
     };
 
     public ObjectGetter FindCustomGetter(QueryData queryData) throws Exception {
+        logger.debug("Finding getter from:" + queryData.toString());
         for(ObjectGetter getter: objectGetters) {
-            if (getter.MatchGet(queryData)) {
+            if (getter.MatchGetter(queryData)) {
                 return getter;
             }
         }
         return null;
     }
 
+
+    /** DEUX PROBLEMES MAJEURS:
+     * IL CHERCHE LE GETTER A CHAQUE BOUCLE ... alors que des qu'on a le queryData initial ca ne devrait plus
+     * bouger. Et donc il suffit de reutiliser le provider et meme le mettre a l'intialisation.
+     * IL NE TROUVE PAS CIM_DataFile et Name.
+     *
+     * @param objectPath
+     * @param queryData
+     * @param withCustom
+     * @return
+     * @throws Exception
+     */
     Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom) throws Exception {
         if(withCustom) {
             ObjectGetter objectGetter = FindCustomGetter(queryData);

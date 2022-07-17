@@ -89,12 +89,12 @@ public class SparqlTranslation {
         QueryData queryData = dependencies.prepared_queries.get(index);
         queryData.StartSampling();
         if(queryData.isMainVariableAvailable) {
-            if(! queryData.whereVariable.isEmpty()) {
+            if(! queryData.whereTests.isEmpty()) {
                 // This error happens if this query aims at evaluating a variable whose value is already available,
                 // but the presence "Where" clauses implies that there is a constraint on this variable.
                 // This cannot work and indicates that the patterns are not executed in the right order.
                 logger.debug("Index=" + Integer.toString(index) + " QueryData=" + queryData.toString());
-                for(QueryData.WhereEquality oneWhere: queryData.whereVariable) {
+                for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
                     logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
                 }
                 throw new Exception("Where clauses must be empty if main variable is available:" + queryData.mainVariable);
@@ -116,7 +116,7 @@ public class SparqlTranslation {
             }
         } else {
             ArrayList<QueryData.WhereEquality> substitutedWheres = new ArrayList<>();
-            for(QueryData.WhereEquality kv : queryData.whereVariable) {
+            for(QueryData.WhereEquality kv : queryData.whereTests) {
                 // This is not strictly the same type because the value of KeyValue is:
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
@@ -134,7 +134,11 @@ public class SparqlTranslation {
                 }
             }
 
-            ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
+            List<QueryData.WhereEquality> oldWheres = queryData.SwapWheres(substitutedWheres);
+            // ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
+            ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
+            // restore to patterns wheres clauses (that is, with variable values).
+            queryData.SwapWheres(oldWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
             queryData.FinishSampling();
 

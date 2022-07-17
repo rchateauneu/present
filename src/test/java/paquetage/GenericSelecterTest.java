@@ -28,7 +28,7 @@ public class GenericSelecterTest {
      * @throws Exception
      */
     @Test
-    public void CompareProvider_Provider_CIM_DataFile_Name() throws Exception {
+    public void CompareProvider_Provider_CIM_DataFile_Name_1() throws Exception {
         QueryData queryData = new QueryData(
                 "CIM_DataFile",
                 "the_file",
@@ -42,7 +42,32 @@ public class GenericSelecterTest {
 
         GenericSelecter genericSelecter = new GenericSelecter();
         // Checks that the custom provider can be found.
-        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
+        Assert.assertEquals("paquetage.Provider_CIM_DataFile_Name", genericSelecter.FindCustomProvider(queryData).getClass().getCanonicalName());
+
+        ArrayList<GenericSelecter.Row> rowsProviderCustom = genericSelecter.SelectVariablesFromWhere(queryData, true);
+        ArrayList<GenericSelecter.Row> rowsProviderGeneric = genericSelecter.SelectVariablesFromWhere(queryData, false);
+
+        Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
+        for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
+            CompareRows(rowsProviderGeneric.get(index), rowsProviderCustom.get(index));
+        }
+    }
+
+    /** Corner case if only the property "Name" is also selected.
+     *
+     */
+    public void CompareProvider_Provider_CIM_DataFile_Name_2() throws Exception {
+        QueryData queryData = new QueryData(
+                "CIM_DataFile",
+                "the_file",
+                false,
+                Map.of(
+                        "Name", "var_name"),
+                Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
+
+        GenericSelecter genericSelecter = new GenericSelecter();
+        // Checks that the custom provider can be found.
+        Assert.assertEquals("GenericSelecter.ObjectGetter_CIM_DataFile_Name", genericSelecter.FindCustomProvider(queryData).getClass().getCanonicalName());
 
         ArrayList<GenericSelecter.Row> rowsProviderCustom = genericSelecter.SelectVariablesFromWhere(queryData, true);
         ArrayList<GenericSelecter.Row> rowsProviderGeneric = genericSelecter.SelectVariablesFromWhere(queryData, false);
@@ -67,7 +92,8 @@ public class GenericSelecterTest {
                 Arrays.asList(new QueryData.WhereEquality("PartComponent", "abc")));
 
         GenericSelecter genericSelecter = new GenericSelecter();
-        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
+        // Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
+        Assert.assertEquals("paquetage.Provider_CIM_DirectoryContainsFile_PartComponent", genericSelecter.FindCustomProvider(queryData).getClass().getCanonicalName());
     }
 
     /** This checks the presence of a custom provider emulating a WMI query similar to:

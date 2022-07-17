@@ -72,7 +72,7 @@ public class SparqlBGPExtractor {
         {
             Var subject = myPattern.getSubjectVar();
             String subjectName = subject.getName();
-            logger.debug("subjectName=" + subjectName);
+            //logger.debug("subjectName=" + subjectName);
             if(subject.isConstant() || subject.isAnonymous()) {
                 logger.warn("Anonymous or constant subject:" + subjectName);
                 continue;
@@ -123,9 +123,9 @@ public class SparqlBGPExtractor {
     private static String GetVarValue(Var var, GenericSelecter.Row row) throws Exception {
         GenericSelecter.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
         String value = pairValueType.Value();
-        if(pairValueType.Type() == GenericSelecter.ValueType.NODE_TYPE) {
-            logger.debug("This is a NODE:" + var.getName() + "=" + value);
-        }
+        //if(pairValueType.Type() == GenericSelecter.ValueType.NODE_TYPE) {
+        //    logger.debug("This is a NODE:" + var.getName() + "=" + value);
+        //}
         return value;
     }
 
@@ -145,7 +145,6 @@ public class SparqlBGPExtractor {
      */
     private static Resource AsIRI(Var var, GenericSelecter.Row row) throws Exception {
         GenericSelecter.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
-        //String valueTypePair = pairValueType.Value();
         if(pairValueType.Type() != GenericSelecter.ValueType.NODE_TYPE) {
             throw new Exception("This should be a NODE:" + var.getName() + "=" + pairValueType);
         }
@@ -237,13 +236,6 @@ public class SparqlBGPExtractor {
                         // Consistency check.
                         // TODO: Maybe this is an IRI ? So, do not transform it again !
                         Resource resourceSubject = AsIRI(subject, row);
-                        /*
-                        String subjectString = row.GetStringValue(subject.getName());
-                        if(!subjectString.startsWith("http")) {
-                            throw new Exception("Should start with http:" + subjectString);
-                        }
-                        Resource resourceSubject = Values.iri(subjectString);
-                        */
 
                         //logger.debug("resourceSubject=" + resourceSubject);
 
@@ -255,21 +247,14 @@ public class SparqlBGPExtractor {
                 } else {
                     // The subject and the object change for each row.
                     for (GenericSelecter.Row row : rows) {
-                        logger.debug("subject=" + subject + ".");
+                        //logger.debug("subject=" + subject + ".");
 
                         Resource resourceSubject = AsIRI(subject, row);
-                        /*
-                        String subjectString = row.GetStringValue(subject.getName());
-                        if(!subjectString.startsWith("http")) {
-                            throw new Exception("Should start with http:" + subjectString);
-                        }
-                        Resource resourceSubject = Values.iri(subjectString);
-                        */
 
                         String objectString = GetVarValue(object, row);
                         // logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
-                        logger.debug("object.getName()=" + object.getName() + ".");
-                        logger.debug("objectString=" + objectString + " object.getValue()=" + object.getValue());
+                        //logger.debug("object.getName()=" + object.getName() + ".");
+                        //logger.debug("objectString=" + objectString + " object.getValue()=" + object.getValue());
                         if(objectString == null) {
                             objectString = "";
                         }
