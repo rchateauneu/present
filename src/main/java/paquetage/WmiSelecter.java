@@ -31,6 +31,16 @@ public class WmiSelecter {
         Ole32.INSTANCE.CoUninitialize();
     }
 
+    /** This runs a WQL query whose parameters are in a QueryData.
+     * TODO: For some classes which do not change, when a query was run and does not return too many elements,
+     * TODO: store the result in a cache. It needs to know if results might change between two runs,
+     * TODO: between two machine startup (could be stored in a file cache) etc...
+     * TODO: Also, results of a query could be stored, and its cache could be used for another query,
+     * TODO: similar but with extra "where" parameters.
+     * @param queryData
+     * @return
+     * @throws Exception
+     */
     ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<GenericSelecter.Row> resultRows = new ArrayList<>();
         String wqlQuery = queryData.BuildWqlQuery();
