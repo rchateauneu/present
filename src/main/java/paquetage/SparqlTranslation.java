@@ -122,7 +122,11 @@ public class SparqlTranslation {
                 // - or the context value of this variable, theoretically of any type.
                 if(kv.isVariable) {
                     // Only the value representation is needed.
-                    String variableValue = dependencies.variablesContext.get(kv.value).Value();
+                    GenericSelecter.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.value);
+                    if(pairValue == null) {
+                        throw new RuntimeException("Null value for:" + kv.value);
+                    }
+                    String variableValue = pairValue.Value();
                     if (variableValue == null) {
                         // This should not happen.
                         logger.error("Value of " + kv.predicate + " variable=" + kv.value + " is null");

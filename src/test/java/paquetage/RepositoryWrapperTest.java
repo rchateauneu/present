@@ -6,10 +6,8 @@ import org.apache.commons.text.CaseUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.File;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection. */
@@ -507,4 +505,94 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(1, setDirs.size());
         Assert.assertEquals("\"C:\\\"", setDirs.stream().findFirst().orElse("xyz"));
     }
+
+    /** Number of files in a directory.
+     * Note: This is not needed to explicitly specify cim:CIM_DataFile in a Sparql statement like:
+     *     ?my2_file rdf:type cim:CIM_DataFile .
+     * This is because CIM_DirectoryContainsFile.PartComponent point to CIM_DataFile only.
+     *
+     * @throws Exception
+    ?my2_file rdf:type cim:CIM_DataFile .
+     */
+    @Test
+    public void testSelect_CIM_DataFile_Count() throws Exception {
+        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
+        Assert.assertTrue(repositoryWrapper.IsValid());
+        String directoryName = "C:\\Program Files (x86)";
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select (COUNT(?my2_file) as ?count_files)
+                    where {
+                        ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
+                        ?my1_assoc cim:GroupComponent ?my0_dir .
+                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Windows" .
+                    } group by ?my0_dir
+                """;
+
+        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        GenericSelecter.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("count_files"), singleRow.KeySet());
+
+        // Check that no file is missing.
+        File f = new File("C:\\Windows");
+        Set<String> filesSetExpected = Arrays
+                .stream(f.listFiles())
+                .filter(subf -> subf.isFile())
+                .map(subf -> subf.toPath().toString())
+                .collect(Collectors.toSet());
+        int countFilesExpected = filesSetExpected.size();
+
+        // Something like '"36"^^<http://www.w3.org/2001/XMLSchema#integer>'
+        String countStr = "\"" + Integer.toString(countFilesExpected) + "\"^^<http://www.w3.org/2001/XMLSchema#integer>";
+        System.out.println("countFilesExpected=" + Integer.toString(countFilesExpected));
+
+        String countActual = singleRow.GetStringValue("count_files");
+        System.out.println("count_files=" + singleRow.GetStringValue("count_files"));
+        Assert.assertEquals(countStr, countActual);
+    }
+
+    /** Sum of file of sizes in a directory.
+     * The internal results must be of integer type.
+     * @throws Exception
+     */
+
+    // NOT YET.
+    ////////////
+    @Test
+    public void testSelect_CIM_DataFile_SizeSum() throws Exception {
+        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
+        Assert.assertTrue(repositoryWrapper.IsValid());
+        String directoryName = "C:\\Program Files (x86)";
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select (SUM(?file_size) as ?size_sum)
+                    where {
+                        ?my2_file cim:CIM_DataFile.FileSize ?file_size .
+                        ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
+                        ?my1_assoc cim:GroupComponent ?my0_dir .
+                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Program Files (x86)" .
+                    } group by ?my0_dir
+                """;
+
+        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        System.out.println("listRows=" + listRows);
+        Assert.assertTrue(listRows.size() > 0);
+        GenericSelecter.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("size_sum"), singleRow.KeySet());
+
+        System.out.println("size_sum=" + singleRow.GetStringValue("size_sum"));
+        Assert.assertTrue(true);
+    }
+
+    /*
+    TODO: Recursive search of files and sub-directories.
+    TODO: Size of the dlls of the current process.
+    TODO: Sum of the CPU of processes running a specific program.
+    TODO: Sum of the CPU of processes using a specific DLL.
+     */
 }

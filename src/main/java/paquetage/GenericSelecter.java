@@ -562,7 +562,7 @@ public class GenericSelecter {
                 if(!foundProviders.contains(strQueryData)) {
                     // So the message is displayed once only.
                     foundProviders.add(strQueryData);
-                    logger.debug("Found provider for " + strQueryData);
+                    logger.debug("Found provider " + provider.getClass().getName() + "for " + strQueryData);
                 }
                 return provider;
             }
@@ -601,9 +601,10 @@ public class GenericSelecter {
     };
 
     public ObjectGetter FindCustomGetter(QueryData queryData) throws Exception {
-        logger.debug("Finding getter from:" + queryData.toString());
+        logger.debug("Finding getter for:" + queryData.toString());
         for(ObjectGetter getter: objectGetters) {
             if (getter.MatchGetter(queryData)) {
+                logger.debug("Found provider" + getter.getClass().getName() + " for " + queryData.toString());
                 return getter;
             }
         }

@@ -110,6 +110,7 @@ public class DependenciesBuilder {
             if(pattern.className == null) {
                 // Maybe the class is not given.
                 if(deducedClassName == null) {
+                    // This is acceptable because it might work in a further Sparql execution.
                     logger.debug("Class name is null and cannot be deduced.");
                     shortClassName = null;
                 } else {
