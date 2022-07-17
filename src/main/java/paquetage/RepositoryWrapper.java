@@ -2,7 +2,6 @@ package paquetage;
 
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
-import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
@@ -67,13 +66,13 @@ public class RepositoryWrapper {
      * @param sparqlQuery
      * @throws Exception
      */
-    public List<GenericSelecter.Row> ExecuteQuery(String sparqlQuery) throws Exception
+    public List<GenericProvider.Row> ExecuteQuery(String sparqlQuery) throws Exception
     {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
 
         SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
 
-        ArrayList<GenericSelecter.Row> rows = sparqlTranslator.ExecuteToRows();
+        ArrayList<GenericProvider.Row> rows = sparqlTranslator.ExecuteToRows();
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -81,12 +80,12 @@ public class RepositoryWrapper {
 
         // Now, execute the sparql query in the repository which contains the ontology
         // and the result of the WQL executions.
-        List<GenericSelecter.Row> listRows = new ArrayList<>();
+        List<GenericProvider.Row> listRows = new ArrayList<>();
         TupleQuery tupleQuery = reco.prepareTupleQuery(sparqlQuery);
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result
                 BindingSet bindingSet = result.next();
-                GenericSelecter.Row newRow = new GenericSelecter.Row(bindingSet);
+                GenericProvider.Row newRow = new GenericProvider.Row(bindingSet);
                 listRows.add(newRow);
             }
         }

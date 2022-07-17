@@ -9,7 +9,7 @@ public class DependenciesBuilder {
     /**
      * This never changes whatever the order of input BGPs is.
      */
-    public HashMap<String, GenericSelecter.Row.ValueTypePair> variablesContext;
+    public HashMap<String, GenericProvider.Row.ValueTypePair> variablesContext;
 
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.

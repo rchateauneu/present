@@ -409,9 +409,9 @@ public class SparqlBGPExtractorTest {
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "any_iri_will_do";
-        List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of(
-        "my_dir", new GenericSelecter.Row.ValueTypePair(dirIri, GenericSelecter.ValueType.NODE_TYPE),
-        "dir_name", new GenericSelecter.Row.ValueTypePair("C:", GenericSelecter.ValueType.STRING_TYPE)))
+        List<GenericProvider.Row> rows = Arrays.asList(new GenericProvider.Row(Map.of(
+        "my_dir", new GenericProvider.Row.ValueTypePair(dirIri, GenericProvider.ValueType.NODE_TYPE),
+        "dir_name", new GenericProvider.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE)))
         );
 
         List<Triple> triples = extractor.GenerateTriples(rows);
@@ -459,13 +459,13 @@ public class SparqlBGPExtractorTest {
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIriC = "iriC";
         String dirIriD = "iriD";
-        List<GenericSelecter.Row> rows = Arrays.asList(
-                new GenericSelecter.Row(Map.of(
-                        "my_dir", new GenericSelecter.Row.ValueTypePair(dirIriC, GenericSelecter.ValueType.NODE_TYPE),
-                        "dir_name", new GenericSelecter.Row.ValueTypePair("C:", GenericSelecter.ValueType.STRING_TYPE))),
-                new GenericSelecter.Row(Map.of(
-                        "my_dir", new GenericSelecter.Row.ValueTypePair(dirIriD, GenericSelecter.ValueType.NODE_TYPE),
-                        "dir_name", new GenericSelecter.Row.ValueTypePair("D:", GenericSelecter.ValueType.STRING_TYPE))));
+        List<GenericProvider.Row> rows = Arrays.asList(
+                new GenericProvider.Row(Map.of(
+                        "my_dir", new GenericProvider.Row.ValueTypePair(dirIriC, GenericProvider.ValueType.NODE_TYPE),
+                        "dir_name", new GenericProvider.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE))),
+                new GenericProvider.Row(Map.of(
+                        "my_dir", new GenericProvider.Row.ValueTypePair(dirIriD, GenericProvider.ValueType.NODE_TYPE),
+                        "dir_name", new GenericProvider.Row.ValueTypePair("D:", GenericProvider.ValueType.STRING_TYPE))));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -524,10 +524,10 @@ public class SparqlBGPExtractorTest {
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "arbitrary_iri";
-        List<GenericSelecter.Row> rows = Arrays.asList(new GenericSelecter.Row(Map.of(
-                "my_dir", new GenericSelecter.Row.ValueTypePair(dirIri, GenericSelecter.ValueType.NODE_TYPE),
-                "dir_name", new GenericSelecter.Row.ValueTypePair("C:", GenericSelecter.ValueType.STRING_TYPE),
-                "dir_caption", new GenericSelecter.Row.ValueTypePair("This is a text", GenericSelecter.ValueType.STRING_TYPE))));
+        List<GenericProvider.Row> rows = Arrays.asList(new GenericProvider.Row(Map.of(
+                "my_dir", new GenericProvider.Row.ValueTypePair(dirIri, GenericProvider.ValueType.NODE_TYPE),
+                "dir_name", new GenericProvider.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE),
+                "dir_caption", new GenericProvider.Row.ValueTypePair("This is a text", GenericProvider.ValueType.STRING_TYPE))));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 

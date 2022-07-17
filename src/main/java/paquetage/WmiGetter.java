@@ -16,9 +16,9 @@ import java.util.Set;
 import static com.sun.jna.platform.win32.Variant.VT_ARRAY;
 import static com.sun.jna.platform.win32.Variant.VT_BSTR;
 
-public class WmiGetter extends ObjectGetter {
+public class WmiGetter extends BaseGetter {
     // TODO: Try a singleton.
-    WmiSelecter wmiselecter = new WmiSelecter();
+    WmiProvider wmiselecter = new WmiProvider();
 
     final static private Logger logger = Logger.getLogger(WmiGetter.class);
 
@@ -95,7 +95,7 @@ public class WmiGetter extends ObjectGetter {
         return wmiselecter.svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
-    GenericSelecter.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
+    GenericProvider.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
         try {
@@ -106,7 +106,7 @@ public class WmiGetter extends ObjectGetter {
         }
         try {
             String value = null;
-            GenericSelecter.ValueType valueType = null;
+            GenericProvider.ValueType valueType = null;
             /*
             public static final int CIM_UINT32 = 19;
             public static final int CIM_SINT64 = 20;
@@ -129,23 +129,23 @@ public class WmiGetter extends ObjectGetter {
                 }
                 //logger.debug("value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
                 value = pVal.stringValue();
-                valueType = GenericSelecter.ValueType.NODE_TYPE;
+                valueType = GenericProvider.ValueType.NODE_TYPE;
             } else if(wbemValueType == Wbemcli.CIM_UINT32) {
                 // Needed for example for Win32_Process.ProcessId.
                 value = Integer.toString(pVal.intValue());
-                valueType = GenericSelecter.ValueType.INT_TYPE;
+                valueType = GenericProvider.ValueType.INT_TYPE;
             } else if (wbemValueType == Wbemcli.CIM_REFERENCE) {
                 logger.error("Is CIM_REFERENCE: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
                 value = pVal.stringValue();
-                valueType = GenericSelecter.ValueType.NODE_TYPE;
+                valueType = GenericProvider.ValueType.NODE_TYPE;
                 throw new RuntimeException("When does it happen: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
             } else {
                 value = pVal.stringValue();
-                valueType = GenericSelecter.ValueType.STRING_TYPE;
+                valueType = GenericProvider.ValueType.STRING_TYPE;
             }
             OleAuto.INSTANCE.VariantClear(pVal);
 
-            return new GenericSelecter.Row.ValueTypePair(value, valueType);
+            return new GenericProvider.Row.ValueTypePair(value, valueType);
         } catch (ClassCastException exc) {
             // So it is easier to debug.
             throw exc;
@@ -187,7 +187,7 @@ public class WmiGetter extends ObjectGetter {
      * @return
      * @throws Exception
      */
-    public GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public GenericProvider.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
@@ -197,7 +197,7 @@ public class WmiGetter extends ObjectGetter {
             return null;
         }
 
-        GenericSelecter.Row singleRow = new GenericSelecter.Row();
+        GenericProvider.Row singleRow = new GenericProvider.Row();
         for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
             String variableName = entry.getValue();
             if(variableName == null) {
@@ -216,8 +216,8 @@ public class WmiGetter extends ObjectGetter {
             */
         }
         // We are sure this is a node.
-        GenericSelecter.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
-        if(wbemPath.Type() != GenericSelecter.ValueType.NODE_TYPE) {
+        GenericProvider.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
+        if(wbemPath.Type() != GenericProvider.ValueType.NODE_TYPE) {
             throw new Exception("GetSingleObject objectPath should be a node:" + objectPath);
         }
         singleRow.PutValueType(queryData.mainVariable, wbemPath);

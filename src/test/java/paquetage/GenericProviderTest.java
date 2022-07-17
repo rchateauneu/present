@@ -5,10 +5,10 @@ import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class GenericSelecterTest {
+public class GenericProviderTest {
     static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
 
-    static void CompareRows(GenericSelecter.Row row1, GenericSelecter.Row row2) {
+    static void CompareRows(GenericProvider.Row row1, GenericProvider.Row row2) {
         System.out.println("row1=" + row1.KeySet());
         System.out.println("row2=" + row2.KeySet());
         Assert.assertEquals(row1.ElementsSize(), row2.ElementsSize());
@@ -40,12 +40,12 @@ public class GenericSelecterTest {
                         "Path", "var_path"),
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
+        GenericProvider genericProvider = new GenericProvider();
         // Checks that the custom provider can be found.
-        Assert.assertEquals("paquetage.Provider_CIM_DataFile_Name", genericSelecter.FindCustomProvider(queryData).getClass().getCanonicalName());
+        Assert.assertEquals("paquetage.BaseSelecter_CIM_DataFile_Name", genericProvider.FindCustomSelecter(queryData).getClass().getCanonicalName());
 
-        ArrayList<GenericSelecter.Row> rowsProviderCustom = genericSelecter.SelectVariablesFromWhere(queryData, true);
-        ArrayList<GenericSelecter.Row> rowsProviderGeneric = genericSelecter.SelectVariablesFromWhere(queryData, false);
+        ArrayList<GenericProvider.Row> rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
+        ArrayList<GenericProvider.Row> rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
 
         Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
         for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
@@ -56,6 +56,7 @@ public class GenericSelecterTest {
     /** Corner case if only the property "Name" is also selected.
      *
      */
+    @Test
     public void CompareProvider_Provider_CIM_DataFile_Name_2() throws Exception {
         QueryData queryData = new QueryData(
                 "CIM_DataFile",
@@ -65,12 +66,12 @@ public class GenericSelecterTest {
                         "Name", "var_name"),
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
+        GenericProvider genericProvider = new GenericProvider();
         // Checks that the custom provider can be found.
-        Assert.assertEquals("GenericSelecter.ObjectGetter_CIM_DataFile_Name", genericSelecter.FindCustomProvider(queryData).getClass().getCanonicalName());
+        Assert.assertEquals("paquetage.BaseSelecter_CIM_DataFile_Name", genericProvider.FindCustomSelecter(queryData).getClass().getCanonicalName());
 
-        ArrayList<GenericSelecter.Row> rowsProviderCustom = genericSelecter.SelectVariablesFromWhere(queryData, true);
-        ArrayList<GenericSelecter.Row> rowsProviderGeneric = genericSelecter.SelectVariablesFromWhere(queryData, false);
+        ArrayList<GenericProvider.Row> rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
+        ArrayList<GenericProvider.Row> rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
 
         Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
         for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
@@ -91,9 +92,8 @@ public class GenericSelecterTest {
                 Map.of("GroupComponent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("PartComponent", "abc")));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
-        // Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
-        Assert.assertEquals("paquetage.Provider_CIM_DirectoryContainsFile_PartComponent", genericSelecter.FindCustomProvider(queryData).getClass().getCanonicalName());
+        GenericProvider genericProvider = new GenericProvider();
+        Assert.assertEquals("paquetage.BaseSelecter_CIM_DirectoryContainsFile_PartComponent", genericProvider.FindCustomSelecter(queryData).getClass().getCanonicalName());
     }
 
     /** This checks the presence of a custom provider emulating a WMI query similar to:
@@ -110,8 +110,8 @@ public class GenericSelecterTest {
                 Map.of("PartComponent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("GroupComponent", "abc")));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
-        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
+        GenericProvider genericProvider = new GenericProvider();
+        Assert.assertTrue(genericProvider.FindCustomSelecter(queryData) != null);
     }
 
     @Test
@@ -123,8 +123,8 @@ public class GenericSelecterTest {
                 Map.of("Antecedent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("Dependent", "abc")));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
-        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
+        GenericProvider genericProvider = new GenericProvider();
+        Assert.assertTrue(genericProvider.FindCustomSelecter(queryData) != null);
     }
 
     @Test
@@ -136,8 +136,8 @@ public class GenericSelecterTest {
                 Map.of("Dependent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("Antecedent", "abc")));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
-        Assert.assertTrue(genericSelecter.FindCustomProvider(queryData) != null);
+        GenericProvider genericProvider = new GenericProvider();
+        Assert.assertTrue(genericProvider.FindCustomSelecter(queryData) != null);
     }
 
     /** This instantiates object associated to a file, by two ways:
@@ -160,12 +160,12 @@ public class GenericSelecterTest {
                         "Path", "var_path"),
                 Arrays.asList(new QueryData.WhereEquality("Name", filePath)));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
-        Assert.assertTrue(genericSelecter.FindCustomGetter(queryData) != null);
+        GenericProvider genericProvider = new GenericProvider();
+        Assert.assertTrue(genericProvider.FindCustomGetter(queryData) != null);
 
         String objectPath = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", filePath));
-        GenericSelecter.Row rowGetterCustom = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
-        GenericSelecter.Row rowGetterGeneric = genericSelecter.GetObjectFromPath(objectPath, queryData, false);
+        GenericProvider.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
+        GenericProvider.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 
@@ -188,13 +188,13 @@ public class GenericSelecterTest {
                         "WindowsVersion", "var_windowsversion"),
                 Arrays.asList(new QueryData.WhereEquality("Handle", currentPidStr)));
 
-        GenericSelecter genericSelecter = new GenericSelecter();
+        GenericProvider genericProvider = new GenericProvider();
         // This ensures that the custom function getter is found.
-        Assert.assertTrue(genericSelecter.FindCustomGetter(queryData) != null);
+        Assert.assertTrue(genericProvider.FindCustomGetter(queryData) != null);
 
         String objectPath = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", currentPidStr));
-        GenericSelecter.Row rowGetterCustom = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
-        GenericSelecter.Row rowGetterGeneric = genericSelecter.GetObjectFromPath(objectPath, queryData, false);
+        GenericProvider.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
+        GenericProvider.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 }

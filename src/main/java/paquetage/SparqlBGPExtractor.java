@@ -3,8 +3,6 @@ package paquetage;
 // See "query explain"
 // https://rdf4j.org/documentation/programming/repository/
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -120,8 +118,8 @@ public class SparqlBGPExtractor {
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
 
-    private static String GetVarValue(Var var, GenericSelecter.Row row) throws Exception {
-        GenericSelecter.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+    private static String GetVarValue(Var var, GenericProvider.Row row) throws Exception {
+        GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
         String value = pairValueType.Value();
         //if(pairValueType.Type() == GenericSelecter.ValueType.NODE_TYPE) {
         //    logger.debug("This is a NODE:" + var.getName() + "=" + value);
@@ -143,14 +141,14 @@ public class SparqlBGPExtractor {
      * @return
      * @throws Exception
      */
-    private static Resource AsIRI(Var var, GenericSelecter.Row row) throws Exception {
-        GenericSelecter.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
-        if(pairValueType.Type() != GenericSelecter.ValueType.NODE_TYPE) {
+    private static Resource AsIRI(Var var, GenericProvider.Row row) throws Exception {
+        GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+        if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
             throw new Exception("This should be a NODE:" + var.getName() + "=" + pairValueType);
         }
         String valueString = pairValueType.Value();
         //logger.debug("valueTypePair=" + valueTypePair);
-        if(pairValueType.Type() != GenericSelecter.ValueType.NODE_TYPE) {
+        if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
             throw new Exception("Value " + var.getName() + "=" + valueString + " is not a node");
         }
         // Consistency check, for debugging.
@@ -174,7 +172,7 @@ public class SparqlBGPExtractor {
      * @return Triples ready to be inserted in a repository.
      * @throws Exception
      */
-    List<Triple> GenerateTriples(List<GenericSelecter.Row> rows) throws Exception {
+    List<Triple> GenerateTriples(List<GenericProvider.Row> rows) throws Exception {
         List<Triple> generatedTriples = new ArrayList<>();
 
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -205,8 +203,8 @@ public class SparqlBGPExtractor {
                             resourceObject));
                 } else {
                     // Only the object changes for each row.
-                    for (GenericSelecter.Row row : rows) {
-                        GenericSelecter.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
+                    for (GenericProvider.Row row : rows) {
+                        GenericProvider.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
                         if(pairValueType == null) {
                             // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
                             logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
@@ -232,7 +230,7 @@ public class SparqlBGPExtractor {
                         ? Values.iri(objectString)
                         : Values.literal(objectString);
 
-                    for (GenericSelecter.Row row : rows) {
+                    for (GenericProvider.Row row : rows) {
                         // Consistency check.
                         // TODO: Maybe this is an IRI ? So, do not transform it again !
                         Resource resourceSubject = AsIRI(subject, row);
@@ -246,7 +244,7 @@ public class SparqlBGPExtractor {
                     }
                 } else {
                     // The subject and the object change for each row.
-                    for (GenericSelecter.Row row : rows) {
+                    for (GenericProvider.Row row : rows) {
                         //logger.debug("subject=" + subject + ".");
 
                         Resource resourceSubject = AsIRI(subject, row);

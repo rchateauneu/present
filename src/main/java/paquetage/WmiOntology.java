@@ -2,12 +2,8 @@ package paquetage;
 
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.*;
-import org.eclipse.rdf4j.model.impl.SimpleStatement;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.impl.StatementImpl;
-import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.util.Values;
-import org.eclipse.rdf4j.model.vocabulary.FOAF;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
@@ -15,15 +11,12 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -129,15 +122,15 @@ public class WmiOntology {
             return classNode;
         };
 
-        WmiSelecter selecter = new WmiSelecter();
-        Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
-        for(Map.Entry<String, WmiSelecter.WmiClass> entry_class : classes.entrySet()) {
+        WmiProvider selecter = new WmiProvider();
+        Map<String, WmiProvider.WmiClass> classes = selecter.Classes();
+        for(Map.Entry<String, WmiProvider.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
             //System.out.println("className=" + className);
 
             IRI classIri = lambdaClassToNode.apply(className);
 
-            WmiSelecter.WmiClass wmiClass = entry_class.getValue();
+            WmiProvider.WmiClass wmiClass = entry_class.getValue();
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, factory.createLiteral(className));
             connection.add(classIri, RDFS.COMMENT, factory.createLiteral(wmiClass.Description));
@@ -149,12 +142,12 @@ public class WmiOntology {
                 }
             }
 
-            for(Map.Entry<String, WmiSelecter.WmiProperty> entry_property : wmiClass.Properties.entrySet()) {
+            for(Map.Entry<String, WmiProvider.WmiProperty> entry_property : wmiClass.Properties.entrySet()) {
                 String ambiguousPropertyName = entry_property.getKey();
                 String uniquePropertyName = className + "." + ambiguousPropertyName;
 
                 IRI uniquePropertyIri = iri(survol_url_prefix, uniquePropertyName);
-                WmiSelecter.WmiProperty wmiProperty = entry_property.getValue();
+                WmiProvider.WmiProperty wmiProperty = entry_property.getValue();
 
                 connection.add(uniquePropertyIri, RDF.TYPE, RDF.PROPERTY);
                 connection.add(uniquePropertyIri, RDFS.LABEL, factory.createLiteral(uniquePropertyName));

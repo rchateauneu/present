@@ -10,8 +10,8 @@ import java.util.*;
 public class SparqlTranslation {
     final static private Logger logger = Logger.getLogger(SparqlTranslation.class);
     DependenciesBuilder dependencies;
-    ArrayList<GenericSelecter.Row> current_rows;
-    GenericSelecter genericSelecter = new GenericSelecter();
+    ArrayList<GenericProvider.Row> current_rows;
+    GenericProvider genericSelecter = new GenericProvider();
     Set<String> bindings;
 
     public SparqlTranslation(SparqlBGPExtractor input_extractor) throws Exception {
@@ -34,10 +34,10 @@ public class SparqlTranslation {
      */
     void CreateCurrentRow()
     {
-        GenericSelecter.Row new_row = new GenericSelecter.Row();
+        GenericProvider.Row new_row = new GenericProvider.Row();
         // It does not return only the variables in bindings, but all of them because they are
         // needed for to generate the triples for further Sparql execution
-        for(Map.Entry<String, GenericSelecter.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
+        for(Map.Entry<String, GenericProvider.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
         {
             // PresentUtils.WbemPathToIri( ? The type should not be lost, especially for IRIs
             new_row.PutValueType(pairKeyValue.getKey(), pairKeyValue.getValue());
@@ -63,7 +63,7 @@ public class SparqlTranslation {
     void GenerateTriples()
     {}
 
-    void RowToContext(GenericSelecter.Row singleRow) throws Exception {
+    void RowToContext(GenericProvider.Row singleRow) throws Exception {
         for(String variableName : singleRow.KeySet()) {
             if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new Exception("Variable " + variableName + " from selection not in context");
@@ -101,7 +101,7 @@ public class SparqlTranslation {
             }
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
-            GenericSelecter.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
+            GenericProvider.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
             queryData.FinishSampling(objectPath);
 
             if(singleRow == null)
@@ -122,7 +122,7 @@ public class SparqlTranslation {
                 // - or the context value of this variable, theoretically of any type.
                 if(kv.isVariable) {
                     // Only the value representation is needed.
-                    GenericSelecter.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.value);
+                    GenericProvider.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.value);
                     if(pairValue == null) {
                         throw new RuntimeException("Null value for:" + kv.value);
                     }
@@ -140,14 +140,14 @@ public class SparqlTranslation {
 
             List<QueryData.WhereEquality> oldWheres = queryData.SwapWheres(substitutedWheres);
             // ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
-            ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
+            ArrayList<GenericProvider.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
             // restore to patterns wheres clauses (that is, with variable values).
             queryData.SwapWheres(oldWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
             queryData.FinishSampling();
 
             int numColumns = queryData.queryColumns.size();
-            for(GenericSelecter.Row row: rows) {
+            for(GenericProvider.Row row: rows) {
                 // An extra column contains the path.
                 if(row.ElementsSize() != numColumns + 1) {
                     /*
@@ -164,9 +164,9 @@ public class SparqlTranslation {
         }
     }
 
-    public ArrayList<GenericSelecter.Row> ExecuteToRows() throws Exception
+    public ArrayList<GenericProvider.Row> ExecuteToRows() throws Exception
     {
-        current_rows = new ArrayList<GenericSelecter.Row>();
+        current_rows = new ArrayList<GenericProvider.Row>();
         for(QueryData queryData : dependencies.prepared_queries) {
             queryData.ResetStatistics();
         }

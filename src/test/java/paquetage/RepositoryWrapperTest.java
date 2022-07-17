@@ -1,6 +1,5 @@
 package paquetage;
 
-import com.google.common.collect.Sets;
 import junit.framework.TestCase;
 import org.apache.commons.text.CaseUtils;
 import org.junit.Assert;
@@ -26,10 +25,10 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertTrue(repositoryWrapper.IsValid());
 
         String sparqlQuery = "SELECT ?x WHERE { ?x ?y ?z } limit 10";
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(10, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("x"), singleRow.KeySet());
     }
 
@@ -47,10 +46,10 @@ public class RepositoryWrapperTest extends TestCase {
                         cim:Win32_Process.Handle rdfs:label ?label .
                     }
                 """;
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("label"), singleRow.KeySet());
     }
 
@@ -69,10 +68,10 @@ public class RepositoryWrapperTest extends TestCase {
                         ?process cim:Win32_Process.Caption ?caption .
                     }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "process"), singleRow.KeySet());
     }
 
@@ -92,10 +91,10 @@ public class RepositoryWrapperTest extends TestCase {
                         cim:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
     }
 
@@ -118,10 +117,10 @@ public class RepositoryWrapperTest extends TestCase {
                         ?process cim:Win32_Process.ProcessId ?pid .
                     }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("process", "pid"), singleRow.KeySet());
         Assert.assertEquals("\"" + currentPidStr + "\"", singleRow.GetStringValue("pid"));
     }
@@ -187,14 +186,14 @@ public class RepositoryWrapperTest extends TestCase {
                         ?process cim:Win32_Process.WorkingSetSize ?workingsetsize . 
                    }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // Only one row because pids are unique.
         Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
-        WmiSelecter.WmiClass cl = new WmiSelecter().Classes().get("Win32_Process");
+        WmiProvider.WmiClass cl = new WmiProvider().Classes().get("Win32_Process");
         Set<String> allProperties = cl.Properties.keySet();
         Set<String> propertiesCamelCase = allProperties.stream()
                 .map(property -> CaseUtils.toCamelCase(property, false))
@@ -228,7 +227,7 @@ public class RepositoryWrapperTest extends TestCase {
                         ?property rdfs:label ?property_label .
                     }
                 """;
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Set<String> setLabels = listRows.stream().map(row->row.GetStringValue("property_label")).collect(Collectors.toSet());
         // Checks the presence of an arbitrary property.
         System.out.println("setLabels=" + setLabels);
@@ -240,7 +239,7 @@ public class RepositoryWrapperTest extends TestCase {
                 .collect(Collectors.toSet());
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
-        WmiSelecter.WmiClass cl = new WmiSelecter().Classes().get("Win32_Process");
+        WmiProvider.WmiClass cl = new WmiProvider().Classes().get("Win32_Process");
         Set<String> allProperties = cl.Properties.keySet();
         Assert.assertEquals(shortLabels, allProperties);
     }
@@ -260,10 +259,10 @@ public class RepositoryWrapperTest extends TestCase {
                         cim:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
     }
 
@@ -294,10 +293,10 @@ public class RepositoryWrapperTest extends TestCase {
                         ?_3_file cim:Name ?file_name .
                    }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         //Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetStringValue("file_name"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
@@ -332,10 +331,10 @@ public class RepositoryWrapperTest extends TestCase {
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetStringValue("file_name"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
@@ -364,11 +363,11 @@ public class RepositoryWrapperTest extends TestCase {
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         //Assert.assertEquals(1, listRows.size());
         Assert.assertTrue(listRows.size() > 0);
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("_3_file"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetStringValue("_3_file"));
     }
@@ -391,10 +390,10 @@ public class RepositoryWrapperTest extends TestCase {
                         ?user cim:Domain ?domain .
                    }
                 """;
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("name", "domain"), singleRow.KeySet());
 
         Set<String> setNames = listRows.stream().map(row -> row.GetStringValue("name")).collect(Collectors.toSet());
@@ -425,11 +424,11 @@ public class RepositoryWrapperTest extends TestCase {
                         ?_3_group cim:Win32_Group.Name ?group_name .
                    }
                 """, currentUser);
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // The current user is at least in one group.
         Assert.assertTrue(listRows.size() > 0);
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("group_name"), singleRow.KeySet());
 
         Set<String> setGroups = listRows.stream().map(row -> row.GetStringValue("group_name")).collect(Collectors.toSet());
@@ -458,10 +457,10 @@ public class RepositoryWrapperTest extends TestCase {
                     }
                 """;
 
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("device_id"), singleRow.KeySet());
 
         Set<String> setDevices = listRows.stream().map(row -> row.GetStringValue("device_id")).collect(Collectors.toSet());
@@ -494,10 +493,10 @@ public class RepositoryWrapperTest extends TestCase {
                     }
                 """;
 
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("my_dir_name"), singleRow.KeySet());
 
         Set<String> setDirs = listRows.stream().map(row -> row.GetStringValue("my_dir_name")).collect(Collectors.toSet());
@@ -530,10 +529,10 @@ public class RepositoryWrapperTest extends TestCase {
                     } group by ?my0_dir
                 """;
 
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("count_files"), singleRow.KeySet());
 
         // Check that no file is missing.
@@ -578,11 +577,11 @@ public class RepositoryWrapperTest extends TestCase {
                     } group by ?my0_dir
                 """;
 
-        List<GenericSelecter.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         System.out.println("listRows=" + listRows);
         Assert.assertTrue(listRows.size() > 0);
-        GenericSelecter.Row singleRow = listRows.get(0);
+        GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("size_sum"), singleRow.KeySet());
 
         System.out.println("size_sum=" + singleRow.GetStringValue("size_sum"));

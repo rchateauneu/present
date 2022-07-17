@@ -8,7 +8,7 @@ import COM.Wbemcli;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class WmiSelecterTest {
+public class WmiProviderTest {
     static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
     @Test
     public void TestBuildQuery() throws Exception {
@@ -24,14 +24,14 @@ public class WmiSelecterTest {
 
     @Test
     public void TestCIM_Process() throws Exception {
-        GenericSelecter selecter = new GenericSelecter();
-        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider selecter = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"));
 
         boolean isIn = false;
-        for(GenericSelecter.Row aRow : listResults)
+        for(GenericProvider.Row aRow : listResults)
         {
             if(aRow.GetStringValue("var_handle").equals(currentPidStr))
             {
@@ -44,8 +44,8 @@ public class WmiSelecterTest {
 
     @Test
     public void TestCIM_ProcessCurrent() throws Exception {
-        GenericSelecter selecter = new GenericSelecter();
-        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider selecter = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
@@ -67,13 +67,13 @@ public class WmiSelecterTest {
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
-        GenericSelecter selecter = new GenericSelecter();
-        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider selecter = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
         Assert.assertTrue(listResults.size() > 10);
-        for(GenericSelecter.Row row : listResults) {
+        for(GenericProvider.Row row : listResults) {
             Assert.assertEquals(2, row.ElementsSize());
             // For example: \\LAPTOP-R89KG6V1\ROOT\CIMV2:CIM_ProcessExecutable.Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\fwpuclnt.dll\"",Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"3156\""
             Assert.assertTrue(row.TryValueType("any_variable") != null);
@@ -94,15 +94,15 @@ public class WmiSelecterTest {
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
-        GenericSelecter selecter = new GenericSelecter();
-        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider selecter = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
                 Arrays.asList(new QueryData.WhereEquality("Dependent", dependentString)));
         // Many libraries.
         Assert.assertTrue(listResults.size() > 5);
-        for(GenericSelecter.Row row : listResults) {
+        for(GenericProvider.Row row : listResults) {
             Assert.assertEquals(2, row.ElementsSize());
             Assert.assertTrue(row.TryValueType("any_variable") != null);
             Assert.assertTrue(row.TryValueType("var_antecedent") != null);
@@ -118,8 +118,8 @@ public class WmiSelecterTest {
     public void TestCIM_ProcessExecutableAntecedent() throws Exception {
         String antecedentString = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"";
 
-        GenericSelecter selecter = new GenericSelecter();
-        ArrayList<GenericSelecter.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider selecter = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"),
@@ -130,7 +130,7 @@ public class WmiSelecterTest {
         System.out.println(listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
-        for(GenericSelecter.Row row : listResults) {
+        for(GenericProvider.Row row : listResults) {
             Assert.assertEquals(row.ElementsSize(), 2);
             Assert.assertTrue(row.ContainsKey("any_variable"));
             Assert.assertTrue(row.ContainsKey("var_dependent"));
@@ -142,11 +142,11 @@ public class WmiSelecterTest {
      */
     @Test
     public void TestClassesList_Win32_Process() {
-        WmiSelecter selecter = new WmiSelecter();
-        Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
+        WmiProvider selecter = new WmiProvider();
+        Map<String, WmiProvider.WmiClass> classes = selecter.Classes();
         Assert.assertTrue(classes.containsKey("Win32_Process"));
         System.out.println("BaseName=" + classes.get("Win32_Process").BaseName);
-        Map<String, WmiSelecter.WmiProperty> properties = classes.get("Win32_Process").Properties;
+        Map<String, WmiProvider.WmiProperty> properties = classes.get("Win32_Process").Properties;
         System.out.println("Properties=" + properties.keySet());
         Assert.assertTrue(properties.containsKey("Handle"));
         Assert.assertEquals(classes.get("Win32_Process").BaseName, "CIM_Process");
@@ -157,10 +157,10 @@ public class WmiSelecterTest {
      */
     @Test
     public void TestClassesList_CIM_DataFile() {
-        WmiSelecter selecter = new WmiSelecter();
-        Map<String, WmiSelecter.WmiClass> classes = selecter.Classes();
+        WmiProvider selecter = new WmiProvider();
+        Map<String, WmiProvider.WmiClass> classes = selecter.Classes();
         Assert.assertTrue(classes.containsKey("CIM_DataFile"));
-        Map<String, WmiSelecter.WmiProperty> properties = classes.get("CIM_DataFile").Properties;
+        Map<String, WmiProvider.WmiProperty> properties = classes.get("CIM_DataFile").Properties;
         System.out.println("Properties=" + properties.keySet());
         Assert.assertTrue(properties.containsKey("Name"));
     }

@@ -14,30 +14,30 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
 
-abstract class Provider {
+abstract class BaseSelecter {
     public abstract boolean MatchProvider(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception;
+    public abstract ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception;
 
     // TODO: Estimate cost.
 }
 
 // TODO: Test separately these providers.
 
-class Provider_CIM_DataFile_Name extends Provider {
+class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
     {
         return queryData.CompatibleQuery("CIM_DataFile", Set.of("Name"));
     }
 
-    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericProvider.Row> result = new ArrayList<>();
         String fileName = queryData.GetWhereValue("Name");
         String pathFile = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", fileName));
-        GenericSelecter.Row singleRow = new GenericSelecter.Row();
+        GenericProvider.Row singleRow = new GenericProvider.Row();
 
-        ObjectGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData, fileName);
+        BaseGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData, fileName);
 
         // Add the main variable anyway.
         singleRow.PutNode(queryData.mainVariable, pathFile);
@@ -47,12 +47,12 @@ class Provider_CIM_DataFile_Name extends Provider {
     }
 }
 
-class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
+class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("PartComponent"));
     }
-    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericProvider.Row> result = new ArrayList<>();
         String valuePartComponent = queryData.GetWhereValue("PartComponent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valuePartComponent);
         String filePath = properties.get("Name");
@@ -60,7 +60,7 @@ class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
         String parentPath = file.getAbsoluteFile().getParent();
         String pathDirectory = ObjectPath.BuildPathWbem("Win32_Directory", Map.of("Name", parentPath));
 
-        GenericSelecter.Row singleRow = new GenericSelecter.Row();
+        GenericProvider.Row singleRow = new GenericProvider.Row();
         String variableName = queryData.ColumnToVariable("GroupComponent");
         singleRow.PutNode(variableName, pathDirectory);
 
@@ -76,12 +76,12 @@ class Provider_CIM_DirectoryContainsFile_PartComponent extends Provider {
     }
 }
 
-class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
+class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("GroupComponent"));
     }
-    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericProvider.Row> result = new ArrayList<>();
         String valueGroupComponent = queryData.GetWhereValue("GroupComponent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
         String dirPath = properties.get("Name");
@@ -98,7 +98,7 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
             }
             String fileName = aFile.getAbsoluteFile().toString();
 
-            GenericSelecter.Row singleRow = new GenericSelecter.Row();
+            GenericProvider.Row singleRow = new GenericProvider.Row();
 
             String valuePartComponent = ObjectPath.BuildPathWbem(
                     "CIM_DataFile", Map.of(
@@ -120,14 +120,14 @@ class Provider_CIM_DirectoryContainsFile_GroupComponent extends Provider {
 /** The input is a module, a filename. It returns processes using it.
  *
  */
-class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
+class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
     static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Antecedent"));
     }
-    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericProvider.Row> result = new ArrayList<>();
         String valueAntecedent = queryData.GetWhereValue("Antecedent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
         String filePath = properties.get("Name");
@@ -135,7 +135,7 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
 
         String variableName = queryData.ColumnToVariable("Dependent");
         for(String onePid : listPids) {
-            GenericSelecter.Row singleRow = new GenericSelecter.Row();
+            GenericProvider.Row singleRow = new GenericProvider.Row();
             String pathDependent = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", onePid));
             singleRow.PutNode(variableName, pathDependent);
 
@@ -156,14 +156,14 @@ class Provider_CIM_ProcessExecutable_Antecedent extends Provider {
 /** The input is a process and it returns its executable and libraries.
  *
  */
-class Provider_CIM_ProcessExecutable_Dependent extends Provider {
+class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
     static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
     }
-    public ArrayList<GenericSelecter.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<GenericSelecter.Row> result = new ArrayList<>();
+    public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
+        ArrayList<GenericProvider.Row> result = new ArrayList<>();
         String valueDependent = queryData.GetWhereValue("Dependent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
         String pidStr = properties.get("Handle");
@@ -171,7 +171,7 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
 
         String variableName = queryData.ColumnToVariable("Antecedent");
         for(String oneFile : listModules) {
-            GenericSelecter.Row singleRow = new GenericSelecter.Row();
+            GenericProvider.Row singleRow = new GenericProvider.Row();
             String pathAntecedent = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", oneFile));
             singleRow.PutNode(variableName, pathAntecedent);
 
@@ -189,16 +189,16 @@ class Provider_CIM_ProcessExecutable_Dependent extends Provider {
     }
 }
 
-abstract class ObjectGetter {
+abstract class BaseGetter {
     public abstract boolean MatchGetter(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
+    public abstract GenericProvider.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
 
     // TODO: Cost estimation.
 }
 
-class ObjectGetter_CIM_DataFile_Name extends ObjectGetter {
+class BaseGetter_CIM_DataFile_Name extends BaseGetter {
         /* Possibly required fields:
             Caption;
             Description;
@@ -273,7 +273,7 @@ class ObjectGetter_CIM_DataFile_Name extends ObjectGetter {
             // "FileType", (String fileName) -> "Application Extension",
             );
 
-    public static void FillRowFromQueryAndFilename(GenericSelecter.Row singleRow, QueryData queryData, String fileName) {
+    public static void FillRowFromQueryAndFilename(GenericProvider.Row singleRow, QueryData queryData, String fileName) {
         for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
             Function<String, String> lambda = columnsMap.get(qCol.getKey());
             String variableValue = lambda.apply(fileName); // columnsMap.get)
@@ -282,10 +282,10 @@ class ObjectGetter_CIM_DataFile_Name extends ObjectGetter {
         }
     }
 
-    public GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public GenericProvider.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String fileName = properties.get("Name");
-        GenericSelecter.Row singleRow = new GenericSelecter.Row();
+        GenericProvider.Row singleRow = new GenericProvider.Row();
         FillRowFromQueryAndFilename(singleRow, queryData, fileName);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
@@ -297,7 +297,7 @@ class ObjectGetter_CIM_DataFile_Name extends ObjectGetter {
     }
 }
 
-class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
+class BaseGetter_Win32_Process_Handle extends BaseGetter {
         /*
         string   CreationClassName;
         string   Caption;
@@ -383,7 +383,7 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
                 "WindowsVersion", (String processId) -> WindowsVersion(processId)
         );
 
-        public static void FillRowFromQueryAndPid(GenericSelecter.Row singleRow, QueryData queryData, String processId) throws Exception {
+        public static void FillRowFromQueryAndPid(GenericProvider.Row singleRow, QueryData queryData, String processId) throws Exception {
             for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
                 Function<String, String> lambda = columnsMap.get(qCol.getKey());
                 if(lambda == null) {
@@ -395,10 +395,10 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
             }
     }
 
-    public GenericSelecter.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public GenericProvider.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String processId = properties.get("Handle");
-        GenericSelecter.Row singleRow = new GenericSelecter.Row();
+        GenericProvider.Row singleRow = new GenericProvider.Row();
         FillRowFromQueryAndPid(singleRow, queryData, processId);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
@@ -411,10 +411,10 @@ class ObjectGetter_Win32_Process_Handle extends ObjectGetter {
 }
 
 
-public class GenericSelecter {
-    final static private Logger logger = Logger.getLogger(GenericSelecter.class);
+public class GenericProvider {
+    final static private Logger logger = Logger.getLogger(GenericProvider.class);
 
-    /** This is a special value type for Survol, to bridge values between WMI/WBEM and RDF.
+    /** This is a special value type for Survol, to bridge data types between WMI/WBEM and RDF.
      * The most important feature is NODE_TYPE which models a WBEM path and an IRI.
      */
     public enum ValueType {
@@ -539,57 +539,57 @@ public class GenericSelecter {
         }
     }
 
-    static private WmiSelecter wmiSelecter = new WmiSelecter();
+    static private WmiProvider WmiProvider = new WmiProvider();
 
-    static private Provider[] providers = {
-        new Provider_CIM_DataFile_Name(),
-        new Provider_CIM_DirectoryContainsFile_PartComponent(),
-        new Provider_CIM_DirectoryContainsFile_GroupComponent(),
-        new Provider_CIM_ProcessExecutable_Dependent(),
-        new Provider_CIM_ProcessExecutable_Antecedent()
+    static private BaseSelecter[] baseSelecters = {
+        new BaseSelecter_CIM_DataFile_Name(),
+        new BaseSelecter_CIM_DirectoryContainsFile_PartComponent(),
+        new BaseSelecter_CIM_DirectoryContainsFile_GroupComponent(),
+        new BaseSelecter_CIM_ProcessExecutable_Dependent(),
+        new BaseSelecter_CIM_ProcessExecutable_Antecedent()
     };
 
-    public GenericSelecter()
+    public GenericProvider()
     {}
 
     // This avoids to display the same message again and again.
-    static private Set<String> foundProviders = new HashSet<>();
+    static private Set<String> foundSelecters = new HashSet<>();
 
-    public static Provider FindCustomProvider(QueryData queryData) throws Exception {
+    public static BaseSelecter FindCustomSelecter(QueryData queryData) {
         String strQueryData = queryData.toString();
-        for(Provider provider: providers) {
-            if (provider.MatchProvider(queryData)) {
-                if(!foundProviders.contains(strQueryData)) {
+        for(BaseSelecter baseSelecter : baseSelecters) {
+            if (baseSelecter.MatchProvider(queryData)) {
+                if(!foundSelecters.contains(strQueryData)) {
                     // So the message is displayed once only.
-                    foundProviders.add(strQueryData);
-                    logger.debug("Found provider " + provider.getClass().getName() + "for " + strQueryData);
+                    foundSelecters.add(strQueryData);
+                    logger.debug("Found provider " + baseSelecter.getClass().getName() + "for " + strQueryData);
                 }
-                return provider;
+                return baseSelecter;
             }
         }
-        if(!foundProviders.contains(strQueryData)) {
+        if(!foundSelecters.contains(strQueryData)) {
             // So the message is displayed once only.
-            foundProviders.add(strQueryData);
+            foundSelecters.add(strQueryData);
             logger.debug("No provider found for " + strQueryData);
         }
         return null;
     }
 
-    static public Provider FindProvider(QueryData queryData) throws Exception {
-        Provider provider = FindCustomProvider(queryData);
-        return  (provider == null) ? wmiProvider : provider;
+    static public BaseSelecter FindSelecter(QueryData queryData) throws Exception {
+        BaseSelecter baseSelecter = FindCustomSelecter(queryData);
+        return  (baseSelecter == null) ? wmiSelecter : baseSelecter;
     }
 
-    static private WmiProvider wmiProvider = new WmiProvider();
+    static private WmiSelecter wmiSelecter = new WmiSelecter();
 
     public ArrayList<Row> SelectVariablesFromWhere(QueryData queryData, boolean withCustom) throws Exception {
-        if(queryData.classProvider == null) {
+        if(queryData.classBaseSelecter == null) {
             throw new RuntimeException("Provider is not set");
         }
         if(withCustom) {
-            return queryData.classProvider.EffectiveSelect(queryData);
+            return queryData.classBaseSelecter.EffectiveSelect(queryData);
         } else {
-            return wmiProvider.EffectiveSelect(queryData);
+            return wmiSelecter.EffectiveSelect(queryData);
         }
     }
 
@@ -601,35 +601,31 @@ public class GenericSelecter {
         return SelectVariablesFromWhere(className, variable, columns, null);
     }
 
-    static private ObjectGetter[] objectGetters = {
-        new ObjectGetter_CIM_DataFile_Name(),
-        new ObjectGetter_Win32_Process_Handle()
+    static private BaseGetter[] baseGetters = {
+        new BaseGetter_CIM_DataFile_Name(),
+        new BaseGetter_Win32_Process_Handle()
     };
 
     static private WmiGetter wmiGetter = new WmiGetter();
 
-    static public ObjectGetter FindCustomGetter(QueryData queryData) throws Exception {
+    static public BaseGetter FindCustomGetter(QueryData queryData) {
         logger.debug("Finding getter for:" + queryData.toString());
-        for(ObjectGetter getter: objectGetters) {
+        for(BaseGetter getter: baseGetters) {
             if (getter.MatchGetter(queryData)) {
-                logger.debug("Found provider" + getter.getClass().getName() + " for " + queryData.toString());
+                logger.debug("Found provider" + getter.getClass().getName() + " for " + queryData);
                 return getter;
             }
         }
         return null;
     }
 
-    static public ObjectGetter FindGetter(QueryData queryData) throws Exception {
-        ObjectGetter getter = FindCustomGetter(queryData);
+    static public BaseGetter FindGetter(QueryData queryData) {
+        BaseGetter getter = FindCustomGetter(queryData);
         return  (getter == null) ? wmiGetter : getter;
     }
 
 
-    /** DEUX PROBLEMES MAJEURS:
-     * IL CHERCHE LE GETTER A CHAQUE BOUCLE ... alors que des qu'on a le queryData initial ca ne devrait plus
-     * bouger. Et donc il suffit de reutiliser le provider et meme le mettre a l'intialisation.
-     * IL NE TROUVE PAS CIM_DataFile et Name.
-     *
+    /**
      * @param objectPath
      * @param queryData
      * @param withCustom
