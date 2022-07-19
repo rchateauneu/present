@@ -61,11 +61,11 @@ public class ProcessModules {
 
     Kernel32 kernel32 = (Kernel32) Native.loadLibrary(Kernel32.class, W32APIOptions.DEFAULT_OPTIONS);
 
-    /** This returns all pids anf for each pid, the modules it is linked to.
+    /** This returns all pids and for each pid, the modules it is linked to.
      * The first module of each array is the executable.
      * @return
      */
-    public Map<String, ArrayList<String>> GetAll() {
+    public Map<String, ArrayList<String>> GetAllProcessesModules() {
         HashMap<String, ArrayList<String>> result = new HashMap<>();
 
         Tlhelp32.PROCESSENTRY32.ByReference processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();

@@ -36,4 +36,7 @@ public class PresentUtils {
         String javaHome = System.getProperty("java.home");
         return javaHome + "\\bin\\java.exe";
     }
+    static public String ToXml(long longNumber) {
+        return "\"" + longNumber + "\"^^<http://www.w3.org/2001/XMLSchema#long>";
+    }
 }

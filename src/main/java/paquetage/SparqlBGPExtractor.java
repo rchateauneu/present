@@ -118,13 +118,18 @@ public class SparqlBGPExtractor {
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
 
-    private static String GetVarValue(Var var, GenericProvider.Row row) throws Exception {
+    private static String GetVarString(Var var, GenericProvider.Row row) throws Exception {
         GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
         String value = pairValueType.Value();
         //if(pairValueType.Type() == GenericSelecter.ValueType.NODE_TYPE) {
         //    logger.debug("This is a NODE:" + var.getName() + "=" + value);
         //}
         return value;
+    }
+
+    private static GenericProvider.Row.ValueTypePair GetVarValue(Var var, GenericProvider.Row row) throws Exception {
+        GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+        return pairValueType;
     }
 
     /**
@@ -156,14 +161,26 @@ public class SparqlBGPExtractor {
             throw new Exception("Double transformation in IRI:" + valueString);
         }
         Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
-        /*
-        String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
-        //logger.debug("encodedValueString=" + encodedValueString);
-        String iriValue = WmiOntology.survol_url_prefix + encodedValueString;
-        //logger.debug("iriValue=" + iriValue);
-        Resource resourceValue = Values.iri(iriValue);
-        */
         return resourceValue;
+    }
+
+    private static Value ValueTypeToLiteral(GenericProvider.Row.ValueTypePair pairValueType) {
+        if(pairValueType.Value() == null) {
+            logger.warn("Invalid null literal value. Type=" + pairValueType.Type());
+            Object nullObject = new Object();
+            return Values.literal(nullObject);
+        }
+        GenericProvider.ValueType valueType = pairValueType.Type();
+        if(valueType == GenericProvider.ValueType.INT_TYPE) {
+            return Values.literal(Long.parseLong(pairValueType.Value()));
+        }
+        if(valueType == GenericProvider.ValueType.FLOAT_TYPE) {
+            return Values.literal(Double.parseDouble(pairValueType.Value()));
+        }
+        if(valueType == GenericProvider.ValueType.STRING_TYPE || valueType == GenericProvider.ValueType.NODE_TYPE) {
+            return Values.literal(pairValueType.Value());
+        }
+        throw new RuntimeException("Data type not handled:" + pairValueType.Type());
     }
 
     /** This generates the triples from substituting the variables of the patterns by their values.
@@ -213,7 +230,7 @@ public class SparqlBGPExtractor {
                         String objectString = pairValueType.Value();
                         Value resourceObject = patternsMap.containsKey(object.getName())
                                 ? Values.iri(objectString)
-                                : Values.literal(objectString);
+                                : ValueTypeToLiteral(pairValueType);
                         generatedTriples.add(factory.createTriple(
                                 resourceSubject,
                                 predicateIri,
@@ -225,10 +242,10 @@ public class SparqlBGPExtractor {
                     // Only the subject changes for each row.
                     String objectString = object.getValue().stringValue();
                     logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
-                    // TODO: Maybe this is an IRI ? So, do not transform it again !
+                    // TODO: Maybe this is already an IRI ? So, should not transform it again !
                     Value resourceObject = object.getValue().isIRI()
                         ? Values.iri(objectString)
-                        : Values.literal(objectString);
+                        : object.getValue(); // Keep the original type of the constant.
 
                     for (GenericProvider.Row row : rows) {
                         // Consistency check.
@@ -249,16 +266,11 @@ public class SparqlBGPExtractor {
 
                         Resource resourceSubject = AsIRI(subject, row);
 
-                        String objectString = GetVarValue(object, row);
-                        // logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
-                        //logger.debug("object.getName()=" + object.getName() + ".");
-                        //logger.debug("objectString=" + objectString + " object.getValue()=" + object.getValue());
-                        if(objectString == null) {
-                            objectString = "";
-                        }
+                        GenericProvider.Row.ValueTypePair objectValue = GetVarValue(object, row);
+                        //String objectString = objectValue.Value();
                         Value resourceObject = patternsMap.containsKey(object.getName())
                                 ? AsIRI(object, row) // Values.iri(objectString)
-                                : Values.literal(objectString);
+                                : ValueTypeToLiteral(objectValue);
 
                         generatedTriples.add(factory.createTriple(
                                 resourceSubject,

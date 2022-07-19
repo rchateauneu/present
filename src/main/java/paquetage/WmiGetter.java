@@ -33,7 +33,7 @@ public class WmiGetter extends BaseGetter {
         } catch (com.sun.jna.platform.win32.COM.COMException exc) {
             // Error Code 80041002 – Object Not Found
             // Possibly a file protection problem.
-            System.err.println("GetObjectNode objectPath=" + objectPath + " Caught=" + exc);
+            logger.error("GetObjectNode objectPath=" + objectPath + " Caught=" + exc);
             return null;
         }
     }
@@ -145,6 +145,9 @@ public class WmiGetter extends BaseGetter {
             }
             OleAuto.INSTANCE.VariantClear(pVal);
 
+            if(value == null) {
+                logger.error("Cannot convert propertyName=" + propertyName + " type=" + wbemValueType);
+            }
             return new GenericProvider.Row.ValueTypePair(value, valueType);
         } catch (ClassCastException exc) {
             // So it is easier to debug.

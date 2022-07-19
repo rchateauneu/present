@@ -11,12 +11,16 @@ public class ProcessModulesTest {
     String currentPidStr = String.valueOf(ProcessHandle.current().pid());
     String currExe = ProcessHandle.current().info().command().get();
 
+    /** This checks that the current process is in the map of processes to moodules.
+     *
+     * @throws Exception
+     */
     @Test
-    public void GetAll_1() throws Exception {
+    public void GetAllProcessModules_1() throws Exception {
         String path = System.getProperty("java.home");
         String boot = System.getProperty("sun.boot.library.path");
 
-        Map<String, ArrayList<String>> result = new ProcessModules().GetAll();
+        Map<String, ArrayList<String>> result = new ProcessModules().GetAllProcessesModules();
 
         Assert.assertTrue(result.containsKey(currentPidStr));
         System.out.println("currExe=" + currExe);

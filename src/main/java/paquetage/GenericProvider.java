@@ -235,50 +235,52 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
             Version;
          */
 
+    final static private Logger logger = Logger.getLogger(BaseGetter_CIM_DataFile_Name.class);
+
     // Get-WmiObject -Query 'select Drive from CIM_DataFile where Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"'
     public boolean MatchGetter(QueryData queryData) {
         return queryData.ColumnsSubsetOf("CIM_DataFile", columnsMap.keySet());
     }
 
-    static String FileToDrive(String fileName) {
+    static GenericProvider.Row.ValueTypePair FileToDrive(String fileName) {
         Path p = Paths.get(fileName);
         String driveStrRaw = p.getRoot().toString();
-        return driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1);
+        return GenericProvider.Row.ValueTypePair.Factory(driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1));
     }
 
-    static String FileToName(String fileName) {
+    static GenericProvider.Row.ValueTypePair FileToName(String fileName) {
         Path p = Paths.get(fileName);
         String fileNameShort = p.getFileName().toString();
-        return fileNameShort.substring(0, fileNameShort.lastIndexOf("."));
+        return GenericProvider.Row.ValueTypePair.Factory(fileNameShort.substring(0, fileNameShort.lastIndexOf(".")));
     }
 
-    static String FileToSize(String fileName) {
+    static GenericProvider.Row.ValueTypePair FileToSize(String fileName) {
         File f = new File(fileName);
         long fileSize = f.length();
-        return Long.toString(fileSize);
+        logger.debug("fileName=" + fileName + " size=" + fileSize);
+        return GenericProvider.Row.ValueTypePair.Factory(fileSize);
     }
 
-    static String FileToPath(String fileName) {
+    static GenericProvider.Row.ValueTypePair FileToPath(String fileName) {
         Path p = Paths.get(fileName);
-        return p.getParent().toString().toLowerCase().substring(2) + "\\";
+        return GenericProvider.Row.ValueTypePair.Factory(p.getParent().toString().toLowerCase().substring(2) + "\\");
     }
 
-    static Map<String, Function<String, String>> columnsMap = Map.of(
-            "Caption", (String fileName) -> fileName,
+    static Map<String, Function<String, GenericProvider.Row.ValueTypePair>> columnsMap = Map.of(
+            "Caption", (String fileName) -> GenericProvider.Row.ValueTypePair.Factory(fileName),
             "Drive", (String fileName) -> FileToDrive(fileName),
             "FileName", (String fileName) -> FileToName(fileName),
             "FileSize", (String fileName) -> FileToSize(fileName),
-            "Name", (String fileName) -> fileName,
+            "Name", (String fileName) -> GenericProvider.Row.ValueTypePair.Factory(fileName),
             "Path", (String fileName) -> FileToPath(fileName)
             // "FileType", (String fileName) -> "Application Extension",
             );
 
     public static void FillRowFromQueryAndFilename(GenericProvider.Row singleRow, QueryData queryData, String fileName) {
         for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
-            Function<String, String> lambda = columnsMap.get(qCol.getKey());
-            String variableValue = lambda.apply(fileName); // columnsMap.get)
-            // These columns do not return a path, so a string is OK.
-            singleRow.PutString(qCol.getValue(), variableValue);
+            Function<String, GenericProvider.Row.ValueTypePair> lambda = columnsMap.get(qCol.getKey());
+            GenericProvider.Row.ValueTypePair variableValue = lambda.apply(fileName); // columnsMap.get)
+            singleRow.PutValueType(qCol.getValue(), variableValue);
         }
     }
 
@@ -353,45 +355,47 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
 
         static ProcessModules processModules = new ProcessModules();
 
-        static String ProcessToName(String processId) {
+        static GenericProvider.Row.ValueTypePair ProcessToName(String processId) {
                 List<String> listModules = processModules.GetFromPid(processId);
                 String executablePath = listModules.get(0);
                 Path p = Paths.get(executablePath);
                 String fileNameShort = p.getFileName().toString();
-                return fileNameShort;
+                return GenericProvider.Row.ValueTypePair.Factory(fileNameShort);
         }
 
         /** Windows version and build number. */
-        static String WindowsVersion(String processId) {
+        static GenericProvider.Row.ValueTypePair WindowsVersion(String processId) {
             Kernel32 kernel = Kernel32.INSTANCE;
             WinNT.OSVERSIONINFOEX vex = new WinNT.OSVERSIONINFOEX();
+            String result;
             if (kernel.GetVersionEx(vex)) {
-                return MessageFormat.format("{0}.{1}.{2}",
+                result = MessageFormat.format("{0}.{1}.{2}",
                         vex.dwMajorVersion.toString(),
                         vex.dwMinorVersion.toString(),
                         vex.dwBuildNumber.toString());
             } else {
-                return "Cannot get  Windows version";
+                result = "Cannot get  Windows version";
             }
+            return GenericProvider.Row.ValueTypePair.Factory(result);
         }
 
         /** This contains the columns that this class can calculate, plus the lambda available. */
-        static Map<String, Function<String, String>> columnsMap = Map.of(
-                "Handle", (String processId) -> processId,
+        static Map<String, Function<String, GenericProvider.Row.ValueTypePair>> columnsMap = Map.of(
+                "Handle", (String processId) -> GenericProvider.Row.ValueTypePair.Factory(processId),
                 "Name", (String processId) -> ProcessToName(processId),
-                "ProcessId", (String processId) -> processId,
+                "ProcessId", (String processId) -> GenericProvider.Row.ValueTypePair.Factory(processId),
                 "WindowsVersion", (String processId) -> WindowsVersion(processId)
         );
 
         public static void FillRowFromQueryAndPid(GenericProvider.Row singleRow, QueryData queryData, String processId) throws Exception {
             for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
-                Function<String, String> lambda = columnsMap.get(qCol.getKey());
+                Function<String, GenericProvider.Row.ValueTypePair> lambda = columnsMap.get(qCol.getKey());
                 if(lambda == null) {
                     throw new Exception("Cannot find lambda for " + qCol.getKey());
                 }
-                String variableValue = lambda.apply(processId);
+                GenericProvider.Row.ValueTypePair variableValue = lambda.apply(processId);
                 // These columns do not return a path, so a string is OK.
-                singleRow.PutString(qCol.getValue(), variableValue);
+                singleRow.PutValueType(qCol.getValue(), variableValue);
             }
     }
 
@@ -419,6 +423,7 @@ public class GenericProvider {
      */
     public enum ValueType {
         STRING_TYPE,
+        DATE_TYPE,
         INT_TYPE,
         FLOAT_TYPE,
         NODE_TYPE
@@ -443,7 +448,15 @@ public class GenericProvider {
          * @param Value
          * @param Type
          */
-        public record ValueTypePair (String Value, ValueType Type) {};
+        public record ValueTypePair (String Value, ValueType Type) {
+            public static ValueTypePair Factory(String value) {
+                return new ValueTypePair(value, ValueType.STRING_TYPE);
+            }
+
+            public static ValueTypePair Factory(long value) {
+                return new ValueTypePair(Long.toString(value), ValueType.INT_TYPE);
+            }
+        };
 
         private Map<String, ValueTypePair> Elements;
 
@@ -482,6 +495,15 @@ public class GenericProvider {
         }
         public void PutNode(String key, String str) {
             Elements.put(key, new ValueTypePair(str, ValueType.NODE_TYPE));
+        }
+        public void PutLong(String key, String str) {
+            Elements.put(key, new ValueTypePair(str, ValueType.INT_TYPE));
+        }
+        public void PutDate(String key, String str) {
+            Elements.put(key, new ValueTypePair(str, ValueType.DATE_TYPE));
+        }
+        public void PutFloat(String key, String str) {
+            Elements.put(key, new ValueTypePair(str, ValueType.FLOAT_TYPE));
         }
 
         public void PutValueType(String key, ValueTypePair pairValueType) {
@@ -529,8 +551,10 @@ public class GenericProvider {
             for (Iterator<Binding> it = bindingSet.iterator(); it.hasNext(); ) {
                 Binding binding = it.next();
                 Value bindingValue = binding.getValue();
+                // TODO: If the value is a literal, it is formatted as in XML,
+                // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>"
                 ValueType valueType = bindingValue.isIRI() ? ValueType.NODE_TYPE : ValueType.STRING_TYPE;
-                PutValueType(binding.getName(), new ValueTypePair(binding.getValue().toString(), valueType));
+                PutValueType(binding.getName(), new ValueTypePair(bindingValue.toString(), valueType));
             }
         }
 

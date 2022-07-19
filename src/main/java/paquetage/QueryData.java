@@ -197,8 +197,11 @@ public class QueryData {
             // Only display the most expensive fetches.
             for(HashMap.Entry<String, Sample> entry: statistics.entrySet()) {
                 Sample currentValue = entry.getValue();
-                if((currentValue.elapsed >= maxElapsed) || (currentValue.count >= maxCount))
+                if((currentValue.elapsed >= maxElapsed) || (currentValue.count >= maxCount)) {
                     logger.debug("Most expensive call:" + entry.getKey() + " " + (currentValue.elapsed / 1000.0) + " secs " + currentValue.count + " calls");
+                    // Writing one extreme performance issue is enough.
+                    break;
+                }
             }
             logger.debug("TOTAL" + " " + (totalElapsed / 1000.0) + " secs " + totalCount + " calls " + statistics.size() + " lines");
         }

@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection. */
 public class RepositoryWrapperTest extends TestCase {
-    static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
+    static long currentPid = ProcessHandle.current().pid();
+    static String currentPidStr = String.valueOf(currentPid);
     @Test
     public static void testFromMemory() throws Exception {
         RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
@@ -122,7 +123,8 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(1, listRows.size());
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("process", "pid"), singleRow.KeySet());
-        Assert.assertEquals("\"" + currentPidStr + "\"", singleRow.GetStringValue("pid"));
+        // "18936"^^<http://www.w3.org/2001/XMLSchema#long>
+        Assert.assertEquals(PresentUtils.ToXml(currentPid), singleRow.GetStringValue("pid"));
     }
 
     /** Selects all properties of a process.
@@ -206,7 +208,7 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(propertiesCamelCase, singleRow.KeySet());
 
         // Check the value of a property whose result is known.
-        Assert.assertEquals("\"" + currentPidStr + "\"", singleRow.GetStringValue("processid"));
+        Assert.assertEquals(PresentUtils.ToXml(currentPid), singleRow.GetStringValue("processid"));
     }
 
     /** Get all attributes of Win32_Process.
@@ -545,7 +547,7 @@ public class RepositoryWrapperTest extends TestCase {
         int countFilesExpected = filesSetExpected.size();
 
         // Something like '"36"^^<http://www.w3.org/2001/XMLSchema#integer>'
-        String countStr = "\"" + Integer.toString(countFilesExpected) + "\"^^<http://www.w3.org/2001/XMLSchema#integer>";
+        String countStr = "\"" + countFilesExpected + "\"^^<http://www.w3.org/2001/XMLSchema#integer>";
         System.out.println("countFilesExpected=" + Integer.toString(countFilesExpected));
 
         String countActual = singleRow.GetStringValue("count_files");
@@ -553,27 +555,27 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(countStr, countActual);
     }
 
-    /** Sum of file of sizes in a directory.
-     * The internal results must be of integer type.
+
+    /** Minimum, maximum and file sizes in a directory.
+     * The internal results must be of long type.
+     * TODO: Beware that SUM() function returns a xsd:int : Therefore it is converted to xsd:long.
+     * TODO: Beware that it might not work with files bigger that 2^32, but it is because of Sparql.
      * @throws Exception
      */
 
-    // NOT YET.
-    ////////////
-    ///////////////// @Test
-    public void testSelect_CIM_DataFile_SizeSum() throws Exception {
+    @Test
+    public void testSelect_CIM_DataFile_SizeMinMaxSum() throws Exception {
         RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
         Assert.assertTrue(repositoryWrapper.IsValid());
-        String directoryName = "C:\\Program Files (x86)";
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select (SUM(?file_size) as ?size_sum)
+                    select (MIN(?file_size) as ?size_min) (MAX(?file_size) as ?size_max) (xsd:long(SUM(?file_size)) as ?size_sum)
                     where {
                         ?my2_file cim:CIM_DataFile.FileSize ?file_size .
                         ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
                         ?my1_assoc cim:GroupComponent ?my0_dir .
-                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Program Files (x86)" .
+                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Windows" .
                     } group by ?my0_dir
                 """;
 
@@ -582,11 +584,41 @@ public class RepositoryWrapperTest extends TestCase {
         System.out.println("listRows=" + listRows);
         Assert.assertTrue(listRows.size() > 0);
         GenericProvider.Row singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("size_sum"), singleRow.KeySet());
 
-        System.out.println("size_sum=" + singleRow.GetStringValue("size_sum"));
-        Assert.assertTrue(true);
+        // Calculate "by hand" what the result should be.
+        long expectedFileMin = Long.MAX_VALUE;
+        long expectedFileMax = 0;
+        long expectedFileSum = 0;
+
+        File dirFile = new File("C:\\Windows");
+        Set<String> filesSetExpected = Arrays
+                .stream(dirFile.listFiles())
+                .filter(subf -> subf.isFile())
+                .map(subf -> subf.toPath().toString())
+                .collect(Collectors.toSet());
+
+        // Check that the sizes are correct.
+        for(String fileName : filesSetExpected) {
+            File oneFile = new File(fileName);
+            long fileSize = oneFile.length();
+            if(expectedFileMin > fileSize)
+                expectedFileMin = fileSize;
+            else if(expectedFileMax < fileSize)
+                expectedFileMax = fileSize;
+            expectedFileSum += fileSize;
+        }
+
+        System.out.println("expectedFileMin=" + expectedFileMin);
+        System.out.println("expectedFileMax=" + expectedFileMax);
+        System.out.println("expectedFileSum=" + expectedFileSum);
+
+        Assert.assertEquals(Set.of("size_min", "size_max", "size_sum"), singleRow.KeySet());
+        Assert.assertEquals(PresentUtils.ToXml(expectedFileMin), singleRow.GetStringValue("size_min"));
+        Assert.assertEquals(PresentUtils.ToXml(expectedFileMax), singleRow.GetStringValue("size_max"));
+        Assert.assertEquals(PresentUtils.ToXml(expectedFileSum), singleRow.GetStringValue("size_sum"));
     }
+
+
 
     /*
     TODO: Recursive search of files and sub-directories.

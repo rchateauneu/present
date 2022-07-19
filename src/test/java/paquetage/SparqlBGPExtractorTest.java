@@ -236,7 +236,7 @@ public class SparqlBGPExtractorTest {
     /***
      * Checks the BGPs extracted from an arbitrary query with a group statement.
      */
-    public void Parse_Group() throws Exception {
+    public void Parse_GroupSum() throws Exception {
         String sparqlQuery = """
                 prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -277,6 +277,26 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertEquals(1, thirdPattern.Members.size());
         CompareKeyValue(secondPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/survol#CIM_DirectoryContainsFile.PartComponent", true, "my2_file");
+    }
+
+    @Test
+    /***
+     * Checks the bindings extracted from an arbitrary query with a group statement.
+     */
+    public void Parse_GroupMinMaxSum() throws Exception {
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select (MIN(?file_size) as ?size_min) (MAX(?file_size) as ?size_max) (SUM(?file_size) as ?size_sum)
+                    where {
+                        ?my2_file cim:CIM_DataFile.FileSize ?file_size .
+                        ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
+                        ?my1_assoc cim:GroupComponent ?my0_dir .
+                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Program Files (x86)" .
+                    } group by ?my2_file
+            """;
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
+        Assert.assertEquals(Set.of("size_min", "size_max", "size_sum"), extractor.bindings);
     }
 
     @Test

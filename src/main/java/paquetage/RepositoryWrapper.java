@@ -1,5 +1,6 @@
 package paquetage;
 
+import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -15,12 +16,14 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 /** This wraps a repository connection, the logic of transforming a Sparql query in several WQL queries from WMI,
  * and the adding of the WMI ontology.
  */
 public class RepositoryWrapper {
+    final static private Logger logger = Logger.getLogger(RepositoryWrapper.class);
     private RepositoryConnection reco;
 
     private static WmiOntology ontology = new WmiOntology(true);
@@ -69,12 +72,17 @@ public class RepositoryWrapper {
     public List<GenericProvider.Row> ExecuteQuery(String sparqlQuery) throws Exception
     {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
+        logger.debug("bindings=" + extractor.bindings);
 
         SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
 
-        ArrayList<GenericProvider.Row> rows = sparqlTranslator.ExecuteToRows();
+        ArrayList<GenericProvider.Row> translatedRows = sparqlTranslator.ExecuteToRows();
+        logger.debug("Translated rows:" + translatedRows.size());
+        for(GenericProvider.Row oneRow : translatedRows) {
+            logger.debug("Translated row:" + oneRow);
+        }
 
-        List<Triple> triples = extractor.GenerateTriples(rows);
+        List<Triple> triples = extractor.GenerateTriples(translatedRows);
 
         InsertTriples(triples);
 
@@ -82,37 +90,26 @@ public class RepositoryWrapper {
         // and the result of the WQL executions.
         List<GenericProvider.Row> listRows = new ArrayList<>();
         TupleQuery tupleQuery = reco.prepareTupleQuery(sparqlQuery);
+        boolean checkedBindingsExecution = false;
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result
                 BindingSet bindingSet = result.next();
+                bindingSet.getBindingNames();
                 GenericProvider.Row newRow = new GenericProvider.Row(bindingSet);
+                if(!checkedBindingsExecution) {
+                    logger.debug("Selected row:" + newRow);
+                    Set<String> bindingNames = bindingSet.getBindingNames();
+                    if(!extractor.bindings.equals(bindingNames)) {
+                        throw new RuntimeException("Different bindings:" + extractor.bindings + " vs " + bindingNames);
+                    }
+                    if(!extractor.bindings.equals(newRow.KeySet())) {
+                        throw new RuntimeException("Bindings different of row keys:" + extractor.bindings + " vs " + newRow.KeySet());
+                    }
+                    checkedBindingsExecution = true;
+                }
                 listRows.add(newRow);
             }
         }
         return listRows;
     }
-
-    public List<Triple> GetTriples() {
-        ArrayList<Triple> triples = new ArrayList<Triple>();
-/*
-        IRI bob = Values.iri("http://example.org/people/bob");
-        IRI name = Values.iri("http://example.org/ontology/name");
-        IRI person = Values.iri("http://example.org/ontology/Person");
-        Literal bobsName = Values.literal("Bob");
-        conn.add(bob, RDF.TYPE, person);
-        conn.add(bob, name, bobsName);
- */
-        try (RepositoryResult<Statement> statements = reco.getStatements(null, null, null, true)) {
-            ValueFactory factory = SimpleValueFactory.getInstance();
-            for (Statement st: statements) {
-                Triple triple = factory.createTriple(
-                        st.getSubject(),
-                        st.getPredicate(),
-                        st.getObject());
-                triples.add(triple);
-            }
-        }
-        return triples;
-    }
-
 }

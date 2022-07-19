@@ -4,11 +4,13 @@ import COM.Wbemcli;
 import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.platform.win32.OleAuto;
 import com.sun.jna.platform.win32.Variant;
+import com.sun.jna.platform.win32.WTypes;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.function.BiConsumer;
 
 public class WmiSelecter extends BaseSelecter {
@@ -94,22 +96,60 @@ public class WmiSelecter extends BaseSelecter {
                         The classname value describes the class type of the reference property.
                         There is apparently no way to get the object pointed to by the reference.
                          */
+                        WTypes.VARTYPE wtypesValueType = pVal.getVarType();
+                        int valueType = wtypesValueType.intValue();
+
+                        Object valObject = pVal.getValue();
+                        if(valObject == null) {
+                            logger.debug("Value is null. lambda_column=" + lambda_column
+                                    + " lambda_variable=" + lambda_variable + " type=" + valueType);
+                        }
+
                         if(lambda_column.equals("__PATH")) {
-                            if(pType.getValue() == Wbemcli.CIM_REFERENCE) {
-                                throw new RuntimeException("Should be CIM_REFERENCE lambda_column=" + lambda_column + "lambda_variable=" + lambda_variable);
+                            //logger.debug("__PATH type is " + valueType);
+                            // Not consistent for Win32_Product.
+                            if(valueType != Wbemcli.CIM_REFERENCE && valueType != Wbemcli.CIM_STRING && valueType != 1) {
+                            //if(valueType != Wbemcli.CIM_STRING) {
+                                // Theoretically, it should be CIM_REFERENCE.
+                                throw new RuntimeException(
+                                        "Should be CIM_STRING lambda_column=" + lambda_column
+                                                + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
                             }
                             oneRow.PutNode(lambda_variable, pVal.stringValue());
                         }
                         else {
-                            if(pType.getValue() == Wbemcli.CIM_REFERENCE) {
+                            if(valueType == Wbemcli.CIM_REFERENCE) {
                                 oneRow.PutNode(lambda_variable, pVal.stringValue());
-                            } else if(pType.getValue() == Wbemcli.CIM_STRING) {
+                            } else if(valueType == Wbemcli.CIM_STRING) {
                                 oneRow.PutNode(lambda_variable, pVal.stringValue());
-                            } else if(pType.getValue() == Wbemcli.CIM_UINT32) {
-                                // Mandatory conversion for Win32_Process.ProcessId
-                                oneRow.PutNode(lambda_variable, Long.toString(pVal.longValue()));
+                            } else if( valueType == Wbemcli.CIM_SINT8
+                                    || valueType == Wbemcli.CIM_UINT8
+                                    || valueType == Wbemcli.CIM_SINT16
+                                    || valueType == Wbemcli.CIM_UINT16
+                                    || valueType == Wbemcli.CIM_UINT32
+                                    || valueType == Wbemcli.CIM_SINT32
+                                    || valueType == Wbemcli.CIM_UINT64
+                                    || valueType == Wbemcli.CIM_SINT64) {
+                                // Mandatory conversion for Win32_Process.ProcessId, for example.
+                                // "Win32_Process.ExecutionState" might be null.
+                                // This is temporarily indicated with a special string.
+                                String longValue = valObject == null ? lambda_column + "_IS_NULL" : Long.toString(pVal.longValue());
+                                oneRow.PutLong(lambda_variable, longValue);
+                            } else if( valueType == Wbemcli.CIM_REAL32
+                                    || valueType == Wbemcli.CIM_REAL64) {
+                                oneRow.PutFloat(lambda_variable, Double.toString(pVal.doubleValue()));
+                            } else if( valueType == Wbemcli.CIM_DATETIME) {
+                                WTypes.VARTYPE wtypesTypes = pVal.getVarType();
+                                Date dateValueDate = pVal.dateValue();
+                                String dateValue = dateValueDate.toString();
+                                oneRow.PutDate(lambda_variable, dateValue);
                             } else {
                                 // Unknown type.
+                                String valStringValue = pVal.stringValue();
+                                if(valStringValue == null) {
+                                    logger.error("Null when converting lambda_column=" + lambda_column
+                                            + " lambda_variable=" + lambda_variable + " type=" + valueType);
+                                }
                                 oneRow.PutString(lambda_variable, pVal.stringValue());
                             }
                         }
