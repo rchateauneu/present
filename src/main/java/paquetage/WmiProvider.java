@@ -72,6 +72,7 @@ public class WmiProvider {
                 "WQL",
                 "SELECT * FROM meta_class",
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+        logger.debug("After query");
 
         try {
             Wbemcli.IWbemClassObject[] result;
@@ -87,8 +88,6 @@ public class WmiProvider {
 
                 Wbemcli.IWbemClassObject classObject = result[0];
                 Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
-                // String[] propertyNames = result[0].GetNames(null, Wbemcli.WBEM_CONDITION_FLAG_TYPE.WBEM_FLAG_NONSYSTEM_ONLY, pQualifierVal);
-                //String[] propertyNames = result[0].GetNames(null, 0, pQualifierVal);
                 String[] propertyNames = classObject.GetNames(null, 0, pQualifierVal);
 
                 COMUtils.checkRC(classObject.Get("__CLASS", 0, pVal, pType, plFlavor));
@@ -116,12 +115,10 @@ public class WmiProvider {
                 }
                 String classDescription = classQualifiersSet.Get("Description");
                 if(classDescription != null) {
-                    //System.out.println("classDescription=" + classDescription);
                     newClass.Description = classDescription;
                 }
                 if(false) {
                     String isAssociation = classQualifiersSet.Get("Association");
-                    //System.out.println("class=" + newClass.Name + " isAssociation=" + isAssociation);
                 }
 
                 if (propertyNames != null) {
@@ -157,7 +154,6 @@ public class WmiProvider {
                             }
                             String propertyDescription = propertyQualifiersSet.Get("Description");
                             if(propertyDescription != null) {
-                                //System.out.println("property=" + propertyName + " propertyDescription=" + propertyDescription);
                                 newProperty.Description = propertyDescription;
                             }
                             newClass.Properties.put(propertyName, newProperty);

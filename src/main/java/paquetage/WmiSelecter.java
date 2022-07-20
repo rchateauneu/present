@@ -30,7 +30,7 @@ public class WmiSelecter extends BaseSelecter {
      * TODO: Also, results of a query could be stored, and its cache could be used for another query,
      * TODO: similar but with extra "where" parameters.
      * @param queryData
-     * @return
+     * @return A list of rows containing the values of the variables as taken from the query results.
      * @throws Exception
      */
     public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
@@ -43,11 +43,13 @@ public class WmiSelecter extends BaseSelecter {
             throw new Exception("Main variable should not be available in a WQL query.");
         }
 
+        // The results are batched in a big number, so it is faster.
         int countRows = 100;
 
         // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
         Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.svc.ExecQuery("WQL", wqlQuery,
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+        logger.debug("wqlQuery finished");
         try {
             Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
             IntByReference pType = new IntByReference();
@@ -106,11 +108,9 @@ public class WmiSelecter extends BaseSelecter {
                         }
 
                         if(lambda_column.equals("__PATH")) {
-                            //logger.debug("__PATH type is " + valueType);
                             // Not consistent for Win32_Product.
                             if(valueType != Wbemcli.CIM_REFERENCE && valueType != Wbemcli.CIM_STRING && valueType != 1) {
-                            //if(valueType != Wbemcli.CIM_STRING) {
-                                // Theoretically, it should be CIM_REFERENCE.
+                                // FIXME: Theoretically, it should only be CIM_REFERENCE ...
                                 throw new RuntimeException(
                                         "Should be CIM_STRING lambda_column=" + lambda_column
                                                 + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
@@ -118,40 +118,43 @@ public class WmiSelecter extends BaseSelecter {
                             oneRow.PutNode(lambda_variable, pVal.stringValue());
                         }
                         else {
-                            if(valueType == Wbemcli.CIM_REFERENCE) {
-                                oneRow.PutNode(lambda_variable, pVal.stringValue());
-                            } else if(valueType == Wbemcli.CIM_STRING) {
-                                oneRow.PutNode(lambda_variable, pVal.stringValue());
-                            } else if( valueType == Wbemcli.CIM_SINT8
-                                    || valueType == Wbemcli.CIM_UINT8
-                                    || valueType == Wbemcli.CIM_SINT16
-                                    || valueType == Wbemcli.CIM_UINT16
-                                    || valueType == Wbemcli.CIM_UINT32
-                                    || valueType == Wbemcli.CIM_SINT32
-                                    || valueType == Wbemcli.CIM_UINT64
-                                    || valueType == Wbemcli.CIM_SINT64) {
-                                // Mandatory conversion for Win32_Process.ProcessId, for example.
-                                // "Win32_Process.ExecutionState" might be null.
-                                // This is temporarily indicated with a special string.
-                                String longValue = valObject == null ? lambda_column + "_IS_NULL" : Long.toString(pVal.longValue());
-                                oneRow.PutLong(lambda_variable, longValue);
-                            } else if( valueType == Wbemcli.CIM_REAL32
-                                    || valueType == Wbemcli.CIM_REAL64) {
-                                oneRow.PutFloat(lambda_variable, Double.toString(pVal.doubleValue()));
-                            } else if( valueType == Wbemcli.CIM_DATETIME) {
-                                WTypes.VARTYPE wtypesTypes = pVal.getVarType();
-                                Date dateValueDate = pVal.dateValue();
-                                String dateValue = dateValueDate.toString();
-                                oneRow.PutDate(lambda_variable, dateValue);
-                            } else {
-                                // Unknown type.
-                                String valStringValue = pVal.stringValue();
-                                if(valStringValue == null) {
-                                    logger.error("Null when converting lambda_column=" + lambda_column
-                                            + " lambda_variable=" + lambda_variable + " type=" + valueType);
-                                }
-                                oneRow.PutString(lambda_variable, pVal.stringValue());
-                            }
+                            switch(valueType) {
+                                case Wbemcli.CIM_REFERENCE:
+                                case Wbemcli.CIM_STRING:
+                                    oneRow.PutNode(lambda_variable, pVal.stringValue());
+                                    break;
+                                case Wbemcli.CIM_SINT8:
+                                case Wbemcli.CIM_UINT8:
+                                case Wbemcli.CIM_SINT16:
+                                case Wbemcli.CIM_UINT16:
+                                case Wbemcli.CIM_UINT32:
+                                case Wbemcli.CIM_SINT32:
+                                case Wbemcli.CIM_UINT64:
+                                case Wbemcli.CIM_SINT64:
+                                    // Mandatory conversion for Win32_Process.ProcessId, for example.
+                                    // "Win32_Process.ExecutionState" might be null.
+                                    // This is temporarily indicated with a special string.
+                                    String longValue = valObject == null ? lambda_column + "_IS_NULL" : Long.toString(pVal.longValue());
+                                    oneRow.PutLong(lambda_variable, longValue);
+                                    break;
+                                case Wbemcli.CIM_REAL32:
+                                case Wbemcli.CIM_REAL64:
+                                    oneRow.PutFloat(lambda_variable, Double.toString(pVal.doubleValue()));
+                                    break;
+                                case Wbemcli.CIM_DATETIME:
+                                    Date dateValueDate = pVal.dateValue();
+                                    String dateValue = dateValueDate.toString();
+                                    oneRow.PutDate(lambda_variable, dateValue);
+                                    break;
+                                default:
+                                    String valStringValue = pVal.stringValue();
+                                    if (valStringValue == null) {
+                                        logger.error("Null when converting lambda_column=" + lambda_column
+                                                + " lambda_variable=" + lambda_variable + " type=" + valueType);
+                                    }
+                                    oneRow.PutString(lambda_variable, valStringValue);
+                                    break;
+                            } // switch
                         }
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
@@ -166,7 +169,7 @@ public class WmiSelecter extends BaseSelecter {
         } finally {
             enumerator.Release();
         }
-
+        logger.debug("Leaving. Rows=" + resultRows.size());
         return resultRows;
     }
 }

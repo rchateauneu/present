@@ -586,7 +586,7 @@ public class GenericProvider {
                 if(!foundSelecters.contains(strQueryData)) {
                     // So the message is displayed once only.
                     foundSelecters.add(strQueryData);
-                    logger.debug("Found provider " + baseSelecter.getClass().getName() + "for " + strQueryData);
+                    logger.debug("Found provider " + baseSelecter.getClass().getName() + " for " + strQueryData);
                 }
                 return baseSelecter;
             }
