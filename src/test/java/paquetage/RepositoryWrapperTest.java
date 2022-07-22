@@ -5,26 +5,36 @@ import org.apache.commons.text.CaseUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.File;
+import java.time.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection. */
 public class RepositoryWrapperTest extends TestCase {
     static long currentPid = ProcessHandle.current().pid();
     static String currentPidStr = String.valueOf(currentPid);
-    @Test
-    public static void testFromMemory() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
+
+    private RepositoryWrapper repositoryWrapper = null;
+
+    protected void setUp() throws Exception {
+        repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
         Assert.assertTrue(repositoryWrapper.IsValid());
+    }
+
+
+    @Override
+    protected void tearDown() throws Exception {
+        repositoryWrapper = null;
     }
 
     /** This tests that at least some triples are there, coming from the ontology. */
     @Test
-    public static void testSelectAnyTriples() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelectAnyTriples() throws Exception {
         String sparqlQuery = "SELECT ?x WHERE { ?x ?y ?z } limit 10";
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
@@ -35,10 +45,7 @@ public class RepositoryWrapperTest extends TestCase {
 
     /** This tests the presence of element from the ontology. */
     @Test
-    public static void testSelectFromOntology() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelectFromOntology() throws Exception {
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -55,10 +62,7 @@ public class RepositoryWrapperTest extends TestCase {
     }
 
     @Test
-    public static void testSelect_Win32_Process_WithClass_WithoutOntology() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_Win32_Process_WithClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -77,10 +81,7 @@ public class RepositoryWrapperTest extends TestCase {
     }
 
     @Test
-    public static void testSelect_Win32_Process_WithClass_WithOntology() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_Win32_Process_WithClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -104,10 +105,7 @@ public class RepositoryWrapperTest extends TestCase {
      * @throws Exception
      */
     @Test
-    public static void testSelect_Win32_Process_WithoutClass_WithoutOntology() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_Win32_Process_WithoutClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -132,10 +130,7 @@ public class RepositoryWrapperTest extends TestCase {
      * @throws Exception
      */
     @Test
-    public static void testSelect_Win32_Process_AllProperties() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_Win32_Process_AllProperties() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -216,10 +211,7 @@ public class RepositoryWrapperTest extends TestCase {
      * @throws Exception
      */
     @Test
-    public static void testSelect_Win32_Process_AllAttributesOntology() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_Win32_Process_AllAttributesOntology() throws Exception {
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -247,10 +239,7 @@ public class RepositoryWrapperTest extends TestCase {
     }
 
     @Test
-    public static void testSelect_Win32_Process_WithoutClass_WithOntology() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_Win32_Process_WithoutClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -276,10 +265,7 @@ public class RepositoryWrapperTest extends TestCase {
      * @throws Exception
      */
     @Test
-    public static void testSelect_CIM_ProcessExecutable_NoFilter() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_CIM_ProcessExecutable_NoFilter() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -313,10 +299,7 @@ public class RepositoryWrapperTest extends TestCase {
      * @throws Exception
      */
     @Test
-    public static void testSelect_CIM_ProcessExecutable_Filter() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_CIM_ProcessExecutable_Filter() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -348,10 +331,7 @@ public class RepositoryWrapperTest extends TestCase {
      * @throws Exception
      */
     @Test
-    public static void testSelect_CIM_ProcessExecutable_Assoc() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_CIM_ProcessExecutable_Assoc() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -378,10 +358,7 @@ public class RepositoryWrapperTest extends TestCase {
      *
      */
     @Test
-    public static void testSelect_Win32_UserAccount() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-
+    public void testSelect_Win32_UserAccount() throws Exception {
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -443,8 +420,6 @@ public class RepositoryWrapperTest extends TestCase {
      */
     @Test
     public void testSelect_Win32_Volume() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -478,8 +453,6 @@ public class RepositoryWrapperTest extends TestCase {
      */
     @Test
     public void testSelect_Win32_MountPoint() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -517,9 +490,6 @@ public class RepositoryWrapperTest extends TestCase {
      */
     @Test
     public void testSelect_CIM_DataFile_Count() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
-        String directoryName = "C:\\Program Files (x86)";
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -565,8 +535,6 @@ public class RepositoryWrapperTest extends TestCase {
 
     @Test
     public void testSelect_CIM_DataFile_SizeMinMaxSum() throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
         String sparqlQuery = """
                     prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -618,6 +586,133 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(PresentUtils.ToXml(expectedFileSum), singleRow.GetStringValue("size_sum"));
     }
 
+    XMLGregorianCalendar ToXMLGregorianCalendar(String theDate) throws Exception {
+        // https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
+        // yyyymmddHHMMSS.mmmmmmsUUU
+        // "20220720101048.502446+060"
+
+        // '"2022-07-20"^^<http://www.w3.org/2001/XMLSchema#date>'
+        DatatypeFactory dataTypeFactory = DatatypeFactory.newInstance();
+
+        String regex = "\"(.*)\".*";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(theDate);
+        matcher.find();
+        String dateOnly = matcher.group(1);
+
+        //System.out.println("dateOnly=" + dateOnly);
+
+        XMLGregorianCalendar xmlDate = dataTypeFactory.newXMLGregorianCalendar(dateOnly);
+        System.out.println("xmlDate=" + xmlDate);
+        return xmlDate;
+    }
+
+    /** Startup time of current process.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Process_CurrentCreationDate() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?creation_date
+                    where {
+                        ?my_process cim:Win32_Process.CreationDate ?creation_date .
+                        ?my_process cim:Win32_Process.Handle "%s" .
+                    }
+                """, currentPidStr);
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() == 1);
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
+
+        String minCreationDate = singleRow.GetStringValue("creation_date");
+        System.out.println("minCreationDate=" + singleRow.GetStringValue("creation_date"));
+
+        XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(minCreationDate);
+        ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
+        LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
+        Instant asInstantActual = zonedDateTimeActual.toInstant();
+
+        Instant startExpected = ProcessHandle.current().info().startInstant().orElse(null);
+
+        LocalDateTime dateExpected = LocalDateTime.ofInstant(startExpected, ZoneId.systemDefault());
+        System.out.println("Expect:" + dateExpected);
+        System.out.println("Actual:" + localDateTimeActual);
+        Assert.assertEquals(dateExpected, localDateTimeActual);
+        Assert.assertEquals(asInstantActual.toEpochMilli() / 10000, startExpected.toEpochMilli() / 10000);
+
+    }
+
+
+    /** Oldest running process.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Process_Oldest() throws Exception {
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select (MIN(?creation_date) as ?min_creation_date)
+                    where {
+                        ?my_process cim:Win32_Process.CreationDate ?creation_date .
+                    } group by ?my_process
+                """;
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("min_creation_date"), singleRow.KeySet());
+
+        String minCreationDate = singleRow.GetStringValue("min_creation_date");
+        System.out.println("minCreationDate=" + singleRow.GetStringValue("min_creation_date"));
+
+        XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(minCreationDate);
+        ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
+        //zonedDateTimeActual.withZoneSameLocal(ZoneId.systemDefault());
+        LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
+        Instant asInstantActual = zonedDateTimeActual.toInstant();
+        // LocalDateTime asDate = LocalDateTime.ofInstant(zonedDateTime.toInstant(), ZoneId.systemDefault());
+
+        // Now calculate the same time.
+        List<Instant> instantsList = ProcessHandle.allProcesses().map(ph -> ph.info().startInstant().orElse(null)).toList();
+        Instant minStartExpected = null;
+        System.out.println("Instants:" + instantsList.size());
+        //LocalDateTime minStartExpected = null;
+        for(Instant instant: instantsList) {
+            if(instant != null) {
+                // LocalDateTime fromInstant = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+                System.out.println("BEFORE:" + LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
+                if (minStartExpected == null || minStartExpected.isAfter(instant)) {
+                    if(minStartExpected!= null) {
+                        System.out.println("AFTER :" + LocalDateTime.ofInstant(minStartExpected, ZoneId.systemDefault()));
+                    }  else {
+                        System.out.println("INITTO:" + LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
+                    }
+                    minStartExpected = instant;
+                }
+            }
+        }
+
+        LocalDateTime minStartDate = LocalDateTime.ofInstant(minStartExpected, ZoneId.systemDefault());
+        System.out.println("Expect:" + minStartDate);
+        System.out.println("Actuel:" + localDateTimeActual);
+        //System.out.println("Actuel:" + LocalDateTime.ofInstant(asInstant, ZoneId.systemDefault()));
+
+        /** Apparently, the hand-made loop misses some processes, so we do a rounding to 10 seconds.
+         * Expected :2022-07-20T08:56:40.199Z
+         * Actual   :2022-07-20T08:56:41.672Z
+         */
+        Assert.assertEquals(asInstantActual.toEpochMilli() / 10000, minStartExpected.toEpochMilli() / 10000);
+
+        // Assert.assertEquals(asInstantActual, minStartExpected);
+        Assert.assertTrue(asInstantActual.isBefore(minStartExpected));
+    }
 
 
     /*

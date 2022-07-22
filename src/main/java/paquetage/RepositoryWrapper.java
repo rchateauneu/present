@@ -78,9 +78,6 @@ public class RepositoryWrapper {
 
         ArrayList<GenericProvider.Row> translatedRows = sparqlTranslator.ExecuteToRows();
         logger.debug("Translated rows:" + translatedRows.size());
-        for(GenericProvider.Row oneRow : translatedRows) {
-            logger.debug("Translated row:" + oneRow);
-        }
 
         List<Triple> triples = extractor.GenerateTriples(translatedRows);
 
