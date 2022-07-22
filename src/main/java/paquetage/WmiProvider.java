@@ -176,6 +176,148 @@ public class WmiProvider {
         return resultClasses;
     }
 
+    static GenericProvider.Row.ValueTypePair VariantToValueTypePair(
+            String lambda_column,
+            String lambda_variable,
+            IntByReference pType,
+            Variant.VARIANT.ByReference pVal) {
+        // TODO: If the value is a reference, get the object !
+                        /*
+                        if(pType.getValue() == Wbemcli.CIM_REFERENCE) ...
+                        Reference properties, which have the type CIM_REFERENCE,
+                        that contains the "REF:classname" value.
+                        The classname value describes the class type of the reference property.
+                        There is apparently no way to get the object pointed to by the reference.
+                         */
+        WTypes.VARTYPE wtypesValueType = pVal.getVarType();
+        // The value is sometimes different. Take the supposedly good one.
+        int valueTypeUnknown = wtypesValueType.intValue();
+        int valueType = pType.getValue();
+        if(valueType != valueTypeUnknown) {
+            logger.warn("Different types:" + valueType + " != " + valueTypeUnknown + "=" + pType.toString());
+        }
+
+        Object valObject = pVal.getValue();
+        if(valObject == null) {
+            logger.debug("Value is null. lambda_column=" + lambda_column
+                    + " lambda_variable=" + lambda_variable + " type=" + valueType);
+        }
+
+        String rowValue;
+        GenericProvider.ValueType rowType;
+        if(lambda_column.equals("__PATH")) {
+            // Not consistent for Win32_Product.
+            if(valueType != Wbemcli.CIM_STRING) {
+                // FIXME: Theoretically, it should only be CIM_REFERENCE ...
+                throw new RuntimeException(
+                        "Should be CIM_STRING lambda_column=" + lambda_column
+                                + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
+            }
+            //oneRow.PutNode(lambda_variable, pVal.stringValue());
+            rowValue = pVal.stringValue();
+            rowType = GenericProvider.ValueType.NODE_TYPE;
+        }
+        else {
+            switch(valueType) {
+                case Wbemcli.CIM_REFERENCE:
+                case Wbemcli.CIM_STRING:
+                    //oneRow.PutNode(lambda_variable, pVal.stringValue());
+                    rowValue = pVal.stringValue();
+                    rowType = GenericProvider.ValueType.NODE_TYPE;
+                    logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType.toString());
+                    break;
+                case Wbemcli.CIM_SINT8:
+                case Wbemcli.CIM_UINT8:
+                case Wbemcli.CIM_SINT16:
+                case Wbemcli.CIM_UINT16:
+                case Wbemcli.CIM_UINT32:
+                case Wbemcli.CIM_SINT32:
+                case Wbemcli.CIM_UINT64:
+                case Wbemcli.CIM_SINT64:
+                    // Mandatory conversion for Win32_Process.ProcessId, for example.
+                    String longValue;
+                    if(valObject == null) {
+                        // "Win32_Process.ExecutionState" might be null.
+                        // This is temporarily indicated with a special string for later debugging.
+                        longValue = lambda_column + "_IS_NULL";
+                        //oneRow.PutString(lambda_variable, longValue);
+                        rowType = GenericProvider.ValueType.STRING_TYPE;
+                    } else {
+                        rowType = GenericProvider.ValueType.INT_TYPE;
+                        if(valueType == valueTypeUnknown) {
+                            // This should work because no contradiction.
+                            longValue = Long.toString(pVal.longValue());
+                        } else {
+                            // Some corner cases do not work, i.e. Win32_Process.InstallDate
+                            logger.warn("Different types:" + valueType
+                                    + " != " + valueTypeUnknown
+                                    + "=" + pType.toString() );
+
+                            // FIXME: Obscure behaviour in some corner cases ??
+                            switch(valueTypeUnknown) {
+                                case Wbemcli.CIM_REFERENCE:
+                                case Wbemcli.CIM_STRING:
+                                    longValue = pVal.stringValue();
+                                    break;
+                                case Wbemcli.CIM_SINT8:
+                                case Wbemcli.CIM_UINT8:
+                                case Wbemcli.CIM_SINT16:
+                                case Wbemcli.CIM_UINT16:
+                                case Wbemcli.CIM_UINT32:
+                                case Wbemcli.CIM_SINT32:
+                                case Wbemcli.CIM_UINT64:
+                                case Wbemcli.CIM_SINT64:
+                                    longValue = Long.toString(pVal.longValue());
+                                    rowValue = longValue;
+                                    break;
+                                case Wbemcli.CIM_REAL32:
+                                case Wbemcli.CIM_REAL64:
+                                case Wbemcli.CIM_DATETIME:
+                                default:
+                                    longValue = pVal.toString();
+                                    break;
+                            } // switch
+                        }
+                        //oneRow.PutLong(lambda_variable, longValue);
+                    }
+                    rowValue = longValue;
+                    break;
+                case Wbemcli.CIM_REAL32:
+                case Wbemcli.CIM_REAL64:
+                    //oneRow.PutFloat(lambda_variable, Double.toString(pVal.doubleValue()));
+                    rowValue = Double.toString(pVal.doubleValue());
+                    rowType = GenericProvider.ValueType.FLOAT_TYPE;
+                    break;
+                case Wbemcli.CIM_DATETIME:
+                    if(false) {
+                        // FIXME : This crashes:
+                        // java.lang.ClassCastException: class com.sun.jna.platform.win32.WTypes$BSTR
+                        // cannot be cast to class com.sun.jna.platform.win32.OaIdl$DATE
+                        // (com.sun.jna.platform.win32.WTypes$BSTR and
+                        // com.sun.jna.platform.win32.OaIdl$DATE are in unnamed module of loader 'app')
+                        Date dateValueDate = pVal.dateValue();
+                    }
+                    String dateValue = pVal.stringValue();
+                    logger.debug("dateValue=" + dateValue);
+                    //oneRow.PutDate(lambda_variable, dateValue);
+                    rowValue = dateValue;
+                    rowType = GenericProvider.ValueType.DATE_TYPE;
+                    break;
+                default:
+                    String valStringValue = pVal.stringValue();
+                    if (valStringValue == null) {
+                        logger.error("Null when converting lambda_column=" + lambda_column
+                                + " lambda_variable=" + lambda_variable + " type=" + valueType);
+                    }
+                    //oneRow.PutString(lambda_variable, valStringValue);
+                    rowValue = valStringValue;
+                    rowType = GenericProvider.ValueType.STRING_TYPE;
+                    break;
+            } // switch
+        }
+        GenericProvider.Row.ValueTypePair rowValueType = new GenericProvider.Row.ValueTypePair(rowValue, rowType);
+        return rowValueType;
+    }
 
 }
 

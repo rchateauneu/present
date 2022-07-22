@@ -630,7 +630,7 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
 
         String minCreationDate = singleRow.GetStringValue("creation_date");
-        System.out.println("minCreationDate=" + singleRow.GetStringValue("creation_date"));
+        System.out.println("minCreationDate=" + minCreationDate);
 
         XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(minCreationDate);
         ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
@@ -644,7 +644,6 @@ public class RepositoryWrapperTest extends TestCase {
         System.out.println("Actual:" + localDateTimeActual);
         Assert.assertEquals(dateExpected, localDateTimeActual);
         Assert.assertEquals(asInstantActual.toEpochMilli() / 10000, startExpected.toEpochMilli() / 10000);
-
     }
 
 
@@ -670,30 +669,20 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(Set.of("min_creation_date"), singleRow.KeySet());
 
         String minCreationDate = singleRow.GetStringValue("min_creation_date");
-        System.out.println("minCreationDate=" + singleRow.GetStringValue("min_creation_date"));
+        System.out.println("minCreationDate=" + minCreationDate);
 
         XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(minCreationDate);
         ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
-        //zonedDateTimeActual.withZoneSameLocal(ZoneId.systemDefault());
         LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
         Instant asInstantActual = zonedDateTimeActual.toInstant();
-        // LocalDateTime asDate = LocalDateTime.ofInstant(zonedDateTime.toInstant(), ZoneId.systemDefault());
 
         // Now calculate the same time.
         List<Instant> instantsList = ProcessHandle.allProcesses().map(ph -> ph.info().startInstant().orElse(null)).toList();
         Instant minStartExpected = null;
         System.out.println("Instants:" + instantsList.size());
-        //LocalDateTime minStartExpected = null;
         for(Instant instant: instantsList) {
             if(instant != null) {
-                // LocalDateTime fromInstant = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-                System.out.println("BEFORE:" + LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
                 if (minStartExpected == null || minStartExpected.isAfter(instant)) {
-                    if(minStartExpected!= null) {
-                        System.out.println("AFTER :" + LocalDateTime.ofInstant(minStartExpected, ZoneId.systemDefault()));
-                    }  else {
-                        System.out.println("INITTO:" + LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
-                    }
                     minStartExpected = instant;
                 }
             }
@@ -702,7 +691,6 @@ public class RepositoryWrapperTest extends TestCase {
         LocalDateTime minStartDate = LocalDateTime.ofInstant(minStartExpected, ZoneId.systemDefault());
         System.out.println("Expect:" + minStartDate);
         System.out.println("Actuel:" + localDateTimeActual);
-        //System.out.println("Actuel:" + LocalDateTime.ofInstant(asInstant, ZoneId.systemDefault()));
 
         /** Apparently, the hand-made loop misses some processes, so we do a rounding to 10 seconds.
          * Expected :2022-07-20T08:56:40.199Z
@@ -715,10 +703,50 @@ public class RepositoryWrapperTest extends TestCase {
     }
 
 
+    /** Most used modules of the current process.
+     * This takes the list of all modules used by the current process and find the one which is the most shared
+     * by other processes.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_MostUsedModule() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select (MAX(?my_inusecount) as ?max_inusecount)
+                    where {
+                        ?my1_process cim:Win32_Process.Handle "%s" .
+                        ?my2_assoc cim:CIM_ProcessExecutable.Dependent ?my1_process .
+                        ?my2_assoc cim:CIM_ProcessExecutable.Antecedent ?my3_file .
+                        ?my3_file  cim:CIM_DataFile.Name ?my_filename .
+                        ?my3_file  cim:CIM_DataFile.InUseCount ?my_inusecount .
+                    } group by ?my2_assoc
+                """, currentPidStr);
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("max_inusecount"), singleRow.KeySet());
+
+        String maxInUseCount = singleRow.GetStringValue("max_inusecount");
+        System.out.println("maxInUseCount=" + maxInUseCount);
+
+        Assert.assertTrue(false);
+    }
+
+
+
+    // InUseCount
+
+
+
     /*
     TODO: Recursive search of files and sub-directories.
     TODO: Size of the dlls of the current process.
     TODO: Sum of the CPU of processes running a specific program.
     TODO: Sum of the CPU of processes using a specific DLL.
+    TODO: Replace "cim:" with "wmi:"
      */
 }
