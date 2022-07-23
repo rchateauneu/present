@@ -8,6 +8,9 @@ import org.junit.Test;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.time.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -25,7 +28,6 @@ public class RepositoryWrapperTest extends TestCase {
         repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
         Assert.assertTrue(repositoryWrapper.IsValid());
     }
-
 
     @Override
     protected void tearDown() throws Exception {
@@ -690,7 +692,7 @@ public class RepositoryWrapperTest extends TestCase {
 
         LocalDateTime minStartDate = LocalDateTime.ofInstant(minStartExpected, ZoneId.systemDefault());
         System.out.println("Expect:" + minStartDate);
-        System.out.println("Actuel:" + localDateTimeActual);
+        System.out.println("Actual:" + localDateTimeActual);
 
         /** Apparently, the hand-made loop misses some processes, so we do a rounding to 10 seconds.
          * Expected :2022-07-20T08:56:40.199Z
@@ -700,6 +702,43 @@ public class RepositoryWrapperTest extends TestCase {
 
         // Assert.assertEquals(asInstantActual, minStartExpected);
         Assert.assertTrue(asInstantActual.isBefore(minStartExpected));
+    }
+
+
+    /** Creation date of a file. Here, the java executable.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_CIM_DataFile_CreationDate() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?creation_date
+                    where {
+                        ?my_file cim:CIM_DataFile.CreationDate ?creation_date .
+                        ?my_file cim:Name ?"%s" .
+                    }
+                """, PresentUtils.CurrentJavaBinary().replace("\\", "\\\\"));
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertEquals(1, listRows.size());
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
+
+        String actualCreationDate = singleRow.GetStringValue("creation_date");
+        System.out.println("actualCreationDate=" + actualCreationDate);
+
+        XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(actualCreationDate);
+        ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
+        //LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
+        //Instant asInstantActual = zonedDateTimeActual.toInstant();
+
+        FileTime expectedCreationTimeXml = (FileTime) Files.getAttribute( Path.of(PresentUtils.CurrentJavaBinary()), "creationTime");
+        System.out.println("expectedCreationTimeXml=" + expectedCreationTimeXml);
+
+        Assert.assertEquals(actualCreationDate, expectedCreationTimeXml.toString());
     }
 
 

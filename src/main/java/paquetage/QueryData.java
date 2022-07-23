@@ -85,17 +85,19 @@ public class QueryData {
         }
     };
 
-    public boolean CompatibleQuery(String whereClassName, Set<String> whereColumns)
+    /** Checks if a selecter or a getter can be used for a QueryData. */
+    public boolean CompatibleQuery(String whereClassName, Set<String> whereColumns, Set<String> availableColumns)
     {
-        if(! className.equals(whereClassName)) {
+        // It must be for the goo=d class, and be able to return the needed columns.
+        if(! ColumnsSubsetOf(whereClassName, availableColumns)) {
             return false;
         }
-        Set<String> queryWhereColumns = whereTests.stream().map(x -> x.predicate).collect(Collectors.toSet());
 
+        // The lookup is based on properties given in a "where" test. So this column must be given.
+        Set<String> queryWhereColumns = whereTests.stream().map(x -> x.predicate).collect(Collectors.toSet());
         if(! queryWhereColumns.equals(whereColumns)) {
             return false;
         }
-
         return true;
     }
 
