@@ -189,6 +189,7 @@ public class WmiOntology {
     }
 
     public WmiOntology(boolean isCached) {
+        logger.debug("isCached=" + isCached);
         if(isCached)
         {
             try {
@@ -201,7 +202,7 @@ public class WmiOntology {
 
                 // To cleanup the ontology, this entire directory must be deleted, and not only its content.
                 File dataDir = new File(tempDir + "\\" + "Ontologies");
-                logger.debug("dataDir=" + dataDir);
+                logger.debug("dataDir=" + dataDir);long ontologySize;
                 if (Files.exists(dataDir.toPath())) {
                     logger.debug("Exists dataDir=" + dataDir);
                     MemoryStore memStore = new MemoryStore(dataDir);
@@ -224,6 +225,9 @@ public class WmiOntology {
                 }
             } catch(Exception exc) {
                 logger.error("Caught:" + exc.toString());
+            }
+            if(connection.size() == 0) {
+                throw new RuntimeException("Ontology is empty");
             }
         }
         else {

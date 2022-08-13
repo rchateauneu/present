@@ -28,12 +28,6 @@ public class RepositoryWrapper {
 
     private static WmiOntology ontology = new WmiOntology(true);
 
-    /*
-    RepositoryWrapper() {
-        reco = null;
-    }
-    */
-
     RepositoryWrapper(RepositoryConnection repositoryConnection)
     {
         reco = repositoryConnection;
@@ -50,12 +44,16 @@ public class RepositoryWrapper {
         return new RepositoryWrapper(repositoryConnect);
     }
 
-    void InsertOntology(){
+    void InsertOntology() {
+        logger.debug("Inserting ontology");
+        int count = 0;
         RepositoryResult<Statement> result = ontology.connection.getStatements(null, null, null, true);
         while(result.hasNext()) {
+            count += 1;
             Statement statement = result.next();
             reco.add(statement.getSubject(), statement.getPredicate(), statement.getObject());
         }
+        logger.debug("Inserted " + count + " triples");
     }
 
     void InsertTriples(List<Triple> triples) {
