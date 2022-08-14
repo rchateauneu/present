@@ -146,7 +146,7 @@ public class GenericProviderTest extends TestCase {
                         "Name", "var_name"),
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
-        // Checks that there are no custom providers.
+        // Checks that there is a custom provider for the attribute "CreationDate".
         CheckProvider(queryData, null, null);
     }
 
