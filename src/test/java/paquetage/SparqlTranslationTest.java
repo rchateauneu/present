@@ -10,15 +10,15 @@ import java.util.stream.Collectors;
 
 
 public class SparqlTranslationTest {
-    String currentPidStr = String.valueOf(ProcessHandle.current().pid());
+    static private String currentPidStr = String.valueOf(ProcessHandle.current().pid());
 
-    static Set<String> RowColumnAsSet(ArrayList<GenericProvider.Row> rowsList, String columnName) {
+    static private Set<String> RowColumnAsSet(ArrayList<GenericProvider.Row> rowsList, String columnName) {
         return rowsList
                 .stream()
                 .map(entry -> entry.GetStringValue(columnName)).collect(Collectors.toSet());
     }
 
-    static Set<String> RowColumnAsSetUppercase(ArrayList<GenericProvider.Row> rowsList, String columnName) {
+    static private Set<String> RowColumnAsSetUppercase(ArrayList<GenericProvider.Row> rowsList, String columnName) {
         return rowsList
                 .stream()
                 .map(entry -> entry.GetStringValue(columnName).toUpperCase()).collect(Collectors.toSet());
