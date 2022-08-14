@@ -175,6 +175,7 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
  *
  */
 class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
+    final static private Logger logger = Logger.getLogger(BaseSelecter_CIM_ProcessExecutable_Dependent.class);
     static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchProvider(QueryData queryData) {
