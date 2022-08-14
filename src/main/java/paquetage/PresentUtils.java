@@ -1,6 +1,9 @@
 package paquetage;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PresentUtils {
 
@@ -39,4 +42,15 @@ public class PresentUtils {
     static public String ToXml(long longNumber) {
         return "\"" + longNumber + "\"^^<http://www.w3.org/2001/XMLSchema#long>";
     }
+
+    /** This is used for testing.
+     *
+     * @param listRows
+     * @param variable_name
+     * @return
+     */
+    static Set<String> StringValuesSet(List<GenericProvider.Row> listRows, String variable_name) {
+        return listRows.stream().map(row->row.GetStringValue(variable_name)).collect(Collectors.toSet());
+    }
+
 }
