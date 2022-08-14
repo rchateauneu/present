@@ -2,8 +2,7 @@ package paquetage;
 
 import junit.framework.TestCase;
 import org.apache.commons.text.CaseUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -17,20 +16,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection. */
-public class RepositoryWrapperTest extends TestCase {
+/** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
+ * The class does not extend TestCase because it is based on JUnit 4.
+ * */
+public class RepositoryWrapperTest /* extends TestCase */ {
     static long currentPid = ProcessHandle.current().pid();
     static String currentPidStr = String.valueOf(currentPid);
 
     private RepositoryWrapper repositoryWrapper = null;
 
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
         Assert.assertTrue(repositoryWrapper.IsValid());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    //@Override
+    @After
+    public void tearDown() throws Exception {
         repositoryWrapper = null;
     }
 
@@ -63,6 +66,7 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(Set.of("label"), singleRow.KeySet());
     }
 
+    /** This selects the caption of the current process and does not use the ontology. */
     @Test
     public void testSelect_Win32_Process_WithClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
@@ -82,6 +86,7 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(Set.of("caption", "process"), singleRow.KeySet());
     }
 
+    /** This selects the caption of the current process and the label of its class. */
     @Test
     public void testSelect_Win32_Process_WithClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""
@@ -100,6 +105,47 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(1, listRows.size());
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
+    }
+
+    /** This selects all processes which runs the same executable as the current process.
+     * It does a subquery.
+     */
+    @Test
+    public void testSelect_Win32_Process_SameExecutable_SubQuery() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?handle ?executablepath
+                    where {
+                        ?process2 cim:Win32_Process.Handle ?handle .
+                        ?process2 cim:Win32_Process.ExecutablePath ?executablepath .
+                        {
+                            select ?executablepath
+                            where {
+                                ?process cim:Handle "%s" .
+                                ?process cim:Win32_Process.ExecutablePath ?executablepath .
+                            }
+                        }
+                    }
+                """, currentPidStr);
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        // The current process must be here.
+        Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+        System.out.println("currentPidStr=" + currentPidStr);
+        System.out.println("setHandles=" + setHandles);
+        Assert.assertTrue(setHandles.contains("\"" + currentPidStr + "\""));
+
+        // Executables are all identical.
+        Set<String> setExecutables = PresentUtils.StringValuesSet(listRows,"executablepath");
+        Assert.assertEquals(1, setExecutables.size());
+
+        // ... and have the correct value.
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("handle", "executablepath"), singleRow.KeySet());
+        System.out.println("Exec=" + singleRow.GetStringValue("executablepath"));
+        String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
+        Assert.assertEquals(expectedBin, singleRow.GetStringValue("executablepath"));
     }
 
     /** Also select the attribute ProcessId which is an integer.
@@ -224,7 +270,7 @@ public class RepositoryWrapperTest extends TestCase {
                     }
                 """;
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setLabels = listRows.stream().map(row->row.GetStringValue("property_label")).collect(Collectors.toSet());
+        Set<String> setLabels = PresentUtils.StringValuesSet(listRows,"property_label");
         // Checks the presence of an arbitrary property.
         System.out.println("setLabels=" + setLabels);
         Assert.assertTrue(setLabels.contains("\"Win32_Process.VirtualSize\""));
@@ -239,6 +285,7 @@ public class RepositoryWrapperTest extends TestCase {
         Set<String> allProperties = cl.Properties.keySet();
         Assert.assertEquals(shortLabels, allProperties);
     }
+
 
     @Test
     public void testSelect_Win32_Process_WithoutClass_WithOntology() throws Exception {
@@ -259,7 +306,218 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
     }
 
-    /** Patterns order, therefore the order of queries, is forced with alphabetical order and no optimisation.
+    /** Get all processes with the same ParentProcessId.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Process_ParentProcessId() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?handle
+                    where {
+                        ?process1 cim:Win32_Process.Handle "%s" .
+                        ?process1 cim:Win32_Process.ParentProcessId ?parent_process_id .
+                        ?process2 cim:Win32_Process.Handle ?handle .
+                        ?process2 cim:Win32_Process.ParentProcessId ?parent_process_id .
+                    }
+                """, currentPidStr);
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+
+        System.out.println("currentPidStr=" + currentPidStr);
+        System.out.println("setHandles=" + setHandles);
+        // The current process must be here.
+        Assert.assertTrue(setHandles.contains("\"" + currentPidStr + "\""));
+    }
+
+    /** This gets the caption of the process running the service "Windows Search".
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Service_Caption() throws Exception {
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?caption1 ?caption2
+                    where {
+                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cim:Win32_Service.Caption ?caption1 .
+                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
+                        ?_2_process cim:Win32_Process.Caption ?caption2 .
+                    }
+                """;
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        // One service only with this name.
+        Assert.assertEquals(1, listRows.size());
+
+        // Win32_Service.Caption = "Windows Search"
+        // Win32_Process.Caption = "SearchIndexer.exe"
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals("\"Windows Search\"",singleRow.GetStringValue("caption1"));
+        Assert.assertEquals("\"SearchIndexer.exe\"",singleRow.GetStringValue("caption2"));
+    }
+
+    /** This gets the antecedents of the process running the service "Windows Search".
+     * FIXME: "TypeOfDependency" is apparently always null. See this query:
+     * Get-WmiObject -Query 'select TypeOfDependency from Win32_DependentService where TypeOfDependency != null '
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Service_Antecedent() throws Exception {
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?display_name ?dependency_type
+                    where {
+                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
+                        ?_2_assoc cim:Win32_DependentService.Dependent ?_1_service .
+                        ?_2_assoc cim:Win32_DependentService.Antecedent ?_3_service .
+                        ?_2_assoc cim:Win32_DependentService.TypeOfDependency ?dependency_type .
+                        ?_3_service cim:Win32_Service.DisplayName ?display_name .
+                    }
+                """;
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        // One service only with this name.
+        Assert.assertTrue(listRows.size() > 0);
+        for(GenericProvider.Row singleRow : listRows) {
+            System.out.println("Antecedent service:" + singleRow);
+        }
+        Set<String> setAntecedents = PresentUtils.StringValuesSet(listRows,"display_name");
+        // THese are the input dependencies of this service.
+        Assert.assertEquals(
+                Set.of("\"Remote Procedure Call (RPC)\"", "\"Background Tasks Infrastructure Service\""),
+                setAntecedents);
+    }
+
+    /** Logon type of the current user.
+     * Logon type values:
+     *    System account (0)
+     *    Interactive (2)
+     *    Network (3)
+     *    Batch (4)
+     *    Service (5)
+     *    Proxy (6)
+     *    Unlock (7)
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_LogonSession() throws Exception {
+        String currentUser = System.getProperty("user.name");
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?logon_type ?logon_id ?logon_name
+                    where {
+                        ?_1_user cim:Win32_UserAccount.Name "%s" .
+                        ?_2_assoc cim:Win32_LoggedOnUser.Antecedent ?_1_user .
+                        ?_2_assoc cim:Win32_LoggedOnUser.Dependent ?_3_logon_session .
+                        ?_3_logon_session cim:Win32_LogonSession.LogonType ?logon_type .
+                        ?_3_logon_session cim:Win32_LogonSession.LogonId ?logon_id .
+                        ?_3_logon_session cim:Win32_LogonSession.Name ?logon_name .
+                   }
+                """, currentUser);
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        System.out.println("listRows=" + listRows);
+
+        // It might contain several sessions.
+        Set<String> setLogonTypes = PresentUtils.StringValuesSet(listRows, "logon_type");
+        System.out.println("setLogonTypes=" + setLogonTypes);
+        // Interactive (2)
+        Assert.assertEquals(Set.of(PresentUtils.ToXml(2)), setLogonTypes);
+    }
+
+    /** Executables of the process running the service "Windows Search".
+     * FIXME: This does not work because the service forbid to access its executable and libraries.
+     *
+     * @throws Exception
+     */
+    @Ignore("The service forbid to access its executable and libraries") @Test
+    public void testSelect_Win32_Service_Executable() throws Exception {
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?executable_name
+                    where {
+                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
+                        ?_3_assoc cim:CIM_ProcessExecutable.Dependent ?_2_process .
+                        ?_3_assoc cim:CIM_ProcessExecutable.Antecedent ?_4_file .
+                        ?_4_file cim:CIM_DataFile.Name ?executable_name .
+                    }
+                """;
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Set<String> listExecutables = PresentUtils.StringValuesSet(listRows, "executable_name");
+        System.out.println("listExecutables=" + listExecutables);
+        Assert.assertTrue(listExecutables.contains("\"SearchIndexer.exe\""));
+    }
+
+    /** Logon type of the process running the service "Windows Search".
+     *
+     * @throws Exception
+     */
+    @Ignore("The service forbid to access its logon session") @Test
+    public void testSelect_Win32_Service_Win32_LogonSession() throws Exception {
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?logon_type
+                    where {
+                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
+                        ?_3_assoc cim:Win32_SessionProcess.Dependent ?_2_process .
+                        ?_3_assoc cim:Win32_SessionProcess.Antecedent ?_4_logon_session .
+                        ?_4_logon_session cim:Win32_LogonSession.LogonType ?logon_type .
+                    }
+                """;
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Assert.assertEquals(1, listRows.size());
+        GenericProvider.Row singleRow = listRows.get(0);
+        // Service (5)
+        Assert.assertEquals(Set.of(PresentUtils.ToXml(5)), singleRow.GetStringValue("logon_type"));
+    }
+
+    /** Parent of the process running the service "Windows Search".
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Service_ParentProcessId() throws Exception {
+        String sparqlQuery = """
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?parent_caption
+                    where {
+                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
+                        ?_2_process cim:Win32_Process.ParentProcessId ?parent_process_id .
+                        ?_3_process cim:Win32_Process.ProcessId ?parent_process_id .
+                        ?_3_process cim:Win32_Process.Caption ?parent_caption .
+                    }
+                """;
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Assert.assertEquals(1, listRows.size());
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals("\"services.exe\"", singleRow.GetStringValue("parent_caption"));
+    }
+
+    /** This selects the executable and libraries of the current process.
+     * Patterns order, therefore the order of queries, is forced with alphabetical order and no optimisation.
      * Optimising the object patterns implies changing their order with some constraints due
      * to variable dependencies.
      * With this, the test can focus on the results of the evaluation : This is simpler to test.
@@ -377,7 +635,7 @@ public class RepositoryWrapperTest extends TestCase {
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("name", "domain"), singleRow.KeySet());
 
-        Set<String> setNames = listRows.stream().map(row -> row.GetStringValue("name")).collect(Collectors.toSet());
+        Set<String> setNames = PresentUtils.StringValuesSet(listRows,"name");
         String currentUser = System.getProperty("user.name");
         System.out.println("setNames=" + setNames);
         Assert.assertTrue(setNames.contains("\"Administrator\""));
@@ -389,7 +647,7 @@ public class RepositoryWrapperTest extends TestCase {
      *
      */
     @Test
-    public static void testSelect_Win32_GroupUser () throws Exception {
+    public void testSelect_Win32_GroupUser () throws Exception {
         RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
         Assert.assertTrue(repositoryWrapper.IsValid());
         String currentUser = System.getProperty("user.name");
@@ -412,7 +670,7 @@ public class RepositoryWrapperTest extends TestCase {
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("group_name"), singleRow.KeySet());
 
-        Set<String> setGroups = listRows.stream().map(row -> row.GetStringValue("group_name")).collect(Collectors.toSet());
+        Set<String> setGroups = PresentUtils.StringValuesSet(listRows,"group_name");
         // A user is always in this group.
         Assert.assertTrue(setGroups.contains("\"Users\""));
     }
@@ -442,7 +700,7 @@ public class RepositoryWrapperTest extends TestCase {
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("device_id"), singleRow.KeySet());
 
-        Set<String> setDevices = listRows.stream().map(row -> row.GetStringValue("device_id")).collect(Collectors.toSet());
+        Set<String> setDevices = PresentUtils.StringValuesSet(listRows,"device_id");
         System.out.println("setDevices=" + setDevices);
         Assert.assertEquals(1, setDevices.size());
         // For example: "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\"
@@ -476,7 +734,7 @@ public class RepositoryWrapperTest extends TestCase {
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("my_dir_name"), singleRow.KeySet());
 
-        Set<String> setDirs = listRows.stream().map(row -> row.GetStringValue("my_dir_name")).collect(Collectors.toSet());
+        Set<String> setDirs = PresentUtils.StringValuesSet(listRows,"my_dir_name");
         System.out.println("setDirs=" + setDirs);
         Assert.assertEquals(1, setDirs.size());
         Assert.assertEquals("\"C:\\\"", setDirs.stream().findFirst().orElse("xyz"));
@@ -588,6 +846,13 @@ public class RepositoryWrapperTest extends TestCase {
         Assert.assertEquals(PresentUtils.ToXml(expectedFileSum), singleRow.GetStringValue("size_sum"));
     }
 
+    /** Transforms a RDF date to a string.
+     *
+     * @param theDate Example: '"2022-02-11T00:44:44.730519"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
+     * @return Example: '2022-02-11T00:44:44.730519'
+     * @throws Exception
+     */
+    static private
     XMLGregorianCalendar ToXMLGregorianCalendar(String theDate) throws Exception {
         // https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
         // yyyymmddHHMMSS.mmmmmmsUUU
@@ -605,7 +870,6 @@ public class RepositoryWrapperTest extends TestCase {
         //System.out.println("dateOnly=" + dateOnly);
 
         XMLGregorianCalendar xmlDate = dataTypeFactory.newXMLGregorianCalendar(dateOnly);
-        System.out.println("xmlDate=" + xmlDate);
         return xmlDate;
     }
 
@@ -693,12 +957,14 @@ public class RepositoryWrapperTest extends TestCase {
         LocalDateTime minStartDate = LocalDateTime.ofInstant(minStartExpected, ZoneId.systemDefault());
         System.out.println("Expect:" + minStartDate);
         System.out.println("Actual:" + localDateTimeActual);
+        System.out.println("Expect (Milli):" + minStartExpected.toEpochMilli());
+        System.out.println("Actual (Milli):" + asInstantActual.toEpochMilli());
 
         /** Apparently, the hand-made loop misses some processes, so we do a rounding to 10 seconds.
          * Expected :2022-07-20T08:56:40.199Z
          * Actual   :2022-07-20T08:56:41.672Z
          */
-        Assert.assertEquals(asInstantActual.toEpochMilli() / 10000, minStartExpected.toEpochMilli() / 10000);
+        Assert.assertEquals(minStartExpected.toEpochMilli() / 10000, asInstantActual.toEpochMilli() / 10000);
 
         // Assert.assertEquals(asInstantActual, minStartExpected);
         Assert.assertTrue(asInstantActual.isBefore(minStartExpected));
@@ -731,14 +997,18 @@ public class RepositoryWrapperTest extends TestCase {
         System.out.println("actualCreationDate=" + actualCreationDate);
 
         XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(actualCreationDate);
-        ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
+        System.out.println("xmlDate=" + xmlDate);
+        //ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
         //LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
         //Instant asInstantActual = zonedDateTimeActual.toInstant();
 
         FileTime expectedCreationTimeXml = (FileTime) Files.getAttribute( Path.of(PresentUtils.CurrentJavaBinary()), "creationTime");
         System.out.println("expectedCreationTimeXml=" + expectedCreationTimeXml);
 
-        Assert.assertEquals(actualCreationDate, expectedCreationTimeXml.toString());
+        // Expected :2022-02-11T00:44:44.7305199Z
+        // Actual   :2022-02-11T00:44:44.730519
+        // Truncate the expected date because of different format.
+        Assert.assertEquals(expectedCreationTimeXml.toString().substring(0, 26), xmlDate.toString());
     }
 
 
@@ -769,6 +1039,7 @@ public class RepositoryWrapperTest extends TestCase {
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("max_inusecount"), singleRow.KeySet());
 
+        // FIXME: This value is always null. Why ?
         String maxInUseCount = singleRow.GetStringValue("max_inusecount");
         System.out.println("maxInUseCount=" + maxInUseCount);
 
