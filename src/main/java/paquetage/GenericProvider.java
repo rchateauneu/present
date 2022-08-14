@@ -511,6 +511,14 @@ public class GenericProvider {
             return GetValueType(key).Value;
         }
 
+        public double GetDoubleValue(String key) {
+            return Double.parseDouble(GetValueType(key).Value);
+        }
+
+        public long GetLongValue(String key) {
+            return Long.parseLong(GetValueType(key).Value);
+        }
+
         public void PutString(String key, String str) {
             if(str == null) {
                 logger.warn("PutString: Key=" + key + " null value");

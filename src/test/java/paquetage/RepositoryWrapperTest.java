@@ -1,10 +1,8 @@
 package paquetage;
 
-import junit.framework.TestCase;
 import org.apache.commons.text.CaseUtils;
 import org.junit.*;
 
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.File;
 import java.nio.file.Files;
@@ -12,8 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
@@ -170,7 +166,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         GenericProvider.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("process", "pid"), singleRow.KeySet());
         // "18936"^^<http://www.w3.org/2001/XMLSchema#long>
-        Assert.assertEquals(PresentUtils.ToXml(currentPid), singleRow.GetStringValue("pid"));
+        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetStringValue("pid"));
     }
 
     /** Selects all properties of a process.
@@ -251,7 +247,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         Assert.assertEquals(propertiesCamelCase, singleRow.KeySet());
 
         // Check the value of a property whose result is known.
-        Assert.assertEquals(PresentUtils.ToXml(currentPid), singleRow.GetStringValue("processid"));
+        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetStringValue("processid"));
     }
 
     /** Get all attributes of Win32_Process.
@@ -433,7 +429,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         Set<String> setLogonTypes = PresentUtils.StringValuesSet(listRows, "logon_type");
         System.out.println("setLogonTypes=" + setLogonTypes);
         // Interactive (2)
-        Assert.assertEquals(Set.of(PresentUtils.ToXml(2)), setLogonTypes);
+        Assert.assertEquals(Set.of(PresentUtils.LongToXml(2)), setLogonTypes);
     }
 
     /** Executables of the process running the service "Windows Search".
@@ -487,7 +483,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         Assert.assertEquals(1, listRows.size());
         GenericProvider.Row singleRow = listRows.get(0);
         // Service (5)
-        Assert.assertEquals(Set.of(PresentUtils.ToXml(5)), singleRow.GetStringValue("logon_type"));
+        Assert.assertEquals(Set.of(PresentUtils.LongToXml(5)), singleRow.GetStringValue("logon_type"));
     }
 
     /** Parent of the process running the service "Windows Search".
@@ -777,7 +773,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         int countFilesExpected = filesSetExpected.size();
 
         // Something like '"36"^^<http://www.w3.org/2001/XMLSchema#integer>'
-        String countStr = "\"" + countFilesExpected + "\"^^<http://www.w3.org/2001/XMLSchema#integer>";
+        String countStr = PresentUtils.IntToXml(countFilesExpected);
         System.out.println("countFilesExpected=" + Integer.toString(countFilesExpected));
 
         String countActual = singleRow.GetStringValue("count_files");
@@ -841,36 +837,9 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         System.out.println("expectedFileSum=" + expectedFileSum);
 
         Assert.assertEquals(Set.of("size_min", "size_max", "size_sum"), singleRow.KeySet());
-        Assert.assertEquals(PresentUtils.ToXml(expectedFileMin), singleRow.GetStringValue("size_min"));
-        Assert.assertEquals(PresentUtils.ToXml(expectedFileMax), singleRow.GetStringValue("size_max"));
-        Assert.assertEquals(PresentUtils.ToXml(expectedFileSum), singleRow.GetStringValue("size_sum"));
-    }
-
-    /** Transforms a RDF date to a string.
-     *
-     * @param theDate Example: '"2022-02-11T00:44:44.730519"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
-     * @return Example: '2022-02-11T00:44:44.730519'
-     * @throws Exception
-     */
-    static private
-    XMLGregorianCalendar ToXMLGregorianCalendar(String theDate) throws Exception {
-        // https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
-        // yyyymmddHHMMSS.mmmmmmsUUU
-        // "20220720101048.502446+060"
-
-        // '"2022-07-20"^^<http://www.w3.org/2001/XMLSchema#date>'
-        DatatypeFactory dataTypeFactory = DatatypeFactory.newInstance();
-
-        String regex = "\"(.*)\".*";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(theDate);
-        matcher.find();
-        String dateOnly = matcher.group(1);
-
-        //System.out.println("dateOnly=" + dateOnly);
-
-        XMLGregorianCalendar xmlDate = dataTypeFactory.newXMLGregorianCalendar(dateOnly);
-        return xmlDate;
+        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMin), singleRow.GetStringValue("size_min"));
+        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMax), singleRow.GetStringValue("size_max"));
+        Assert.assertEquals(PresentUtils.LongToXml(expectedFileSum), singleRow.GetStringValue("size_sum"));
     }
 
     /** Startup time of current process.
@@ -898,7 +867,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         String minCreationDate = singleRow.GetStringValue("creation_date");
         System.out.println("minCreationDate=" + minCreationDate);
 
-        XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(minCreationDate);
+        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minCreationDate);
         ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
         LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
         Instant asInstantActual = zonedDateTimeActual.toInstant();
@@ -937,7 +906,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         String minCreationDate = singleRow.GetStringValue("min_creation_date");
         System.out.println("minCreationDate=" + minCreationDate);
 
-        XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(minCreationDate);
+        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minCreationDate);
         ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
         LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
         Instant asInstantActual = zonedDateTimeActual.toInstant();
@@ -996,7 +965,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         String actualCreationDate = singleRow.GetStringValue("creation_date");
         System.out.println("actualCreationDate=" + actualCreationDate);
 
-        XMLGregorianCalendar xmlDate = ToXMLGregorianCalendar(actualCreationDate);
+        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(actualCreationDate);
         System.out.println("xmlDate=" + xmlDate);
         //ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
         //LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
@@ -1014,7 +983,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
 
     /** Most used modules of the current process.
      * This takes the list of all modules used by the current process and find the one which is the most shared
-     * by other processes.
+     * by other processes. It uses a subquery.
      *
      * @throws Exception
      */
@@ -1046,9 +1015,68 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         Assert.assertTrue(false);
     }
 
+    /** Average number of threads in the current process.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_CountThreadsCurrentProcess() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select (COUNT(?my2_thread) as ?count_threads)
+                    where {
+                        ?my1_process cim:Win32_Process.Handle "%s" .
+                        ?my2_thread cim:Win32_Thread.ProcessHandle "%s" .
+                    } group by ?process_handle
+                """, currentPidStr, currentPidStr);
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertEquals(1, listRows.size());
+        GenericProvider.Row singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("count_threads"), singleRow.KeySet());
+
+        // For example: count_threads = ""41"^^<http://www.w3.org/2001/XMLSchema#integer>"
+        Long countThreads = PresentUtils.XmlToLong(singleRow.GetStringValue("count_threads"));
+        System.out.println("countThreads=" + countThreads);
+
+        // At least one thread in this process.
+        Assert.assertTrue(countThreads >= 1);
+    }
 
 
-    // InUseCount
+    /** Average number of threads in the current process.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_AverageThreadsPerProcess() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select (AVG(?count_threads) as ?average_count_threads)
+                    where {
+                        select (COUNT(?_1_thread) as ?count_threads)
+                        where {
+                            ?_1_thread cim:Win32_Thread.ProcessHandle ?process_handle .
+                        } group by ?process_handle
+                    }
+                """, currentPidStr);
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertEquals(1, listRows.size());
+        GenericProvider.Row singleRow = listRows.get(0);
+        // Typical value: "14.870860927152317880794702"^^<http://www.w3.org/2001/XMLSchema#decimal>
+        Assert.assertEquals(Set.of("average_count_threads"), singleRow.KeySet());
+
+        double average_count_threads = PresentUtils.XmlToDouble(singleRow.GetStringValue("average_count_threads"));
+        System.out.println("average_count_threads=" + average_count_threads);
+
+        // At least one thread per process on the average.
+        Assert.assertTrue(average_count_threads >= 1.0);
+    }
 
 
 

@@ -935,10 +935,9 @@ public class SparqlTranslationTest {
         for(GenericProvider.Row row : listRows) {
             String fileName = row.GetStringValue("file_name");
             filesSetActual.add(fileName);
-            String fileSizeActual = row.GetStringValue("file_size");
+            long fileSizeActual = row.GetLongValue("file_size");
             File f = new File(fileName);
-            long fileSize = f.length();
-            String fileSizeExpected = Long.toString(fileSize);
+            long fileSizeExpected = f.length();
             System.out.println("fileName=" + fileName);
             Assert.assertEquals(fileSizeExpected, fileSizeActual);
         }
