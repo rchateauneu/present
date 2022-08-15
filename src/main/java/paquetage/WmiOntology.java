@@ -9,13 +9,20 @@ import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,7 +36,7 @@ public class WmiOntology {
     final static private Logger logger = Logger.getLogger(WmiOntology.class);
 
     /** Consider using a Model to store the triples of the ontology. */
-    RepositoryConnection connection;
+    RepositoryConnection repositoryConnection;
 
     public static String survol_url_prefix = "http://www.primhillcomputers.com/ontology/survol#";
 
@@ -88,7 +95,7 @@ public class WmiOntology {
      *         CIM_DataFile.Name rdfs:Range String
      * @param repository
      */
-    private void FillRepository(RepositoryConnection connection){
+    private void InsertOntologyInRepository(RepositoryConnection connection){
         logger.debug("Start");
         // We want to reuse this namespace when creating several building blocks.
 
@@ -122,8 +129,8 @@ public class WmiOntology {
             return classNode;
         };
 
-        WmiProvider selecter = new WmiProvider();
-        Map<String, WmiProvider.WmiClass> classes = selecter.Classes();
+        WmiProvider wmiProvider = new WmiProvider();
+        Map<String, WmiProvider.WmiClass> classes = wmiProvider.ClassesCIMV2();
         for(Map.Entry<String, WmiProvider.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
             //System.out.println("className=" + className);
@@ -188,54 +195,71 @@ public class WmiOntology {
         logger.debug("End");
     }
 
+    private void WriteRepository(String rdfFileName) throws Exception {
+        FileOutputStream out = new FileOutputStream(rdfFileName);
+        RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, out);
+        writer.startRDF();
+        RepositoryResult<Statement> rr = repositoryConnection.getStatements(null, null, null);
+
+        for (Statement st: rr) {
+            writer.handleStatement(st);
+        }
+        writer.endRDF();
+    }
+
+
     public WmiOntology(boolean isCached) {
         logger.debug("isCached=" + isCached);
         if(isCached)
         {
             try {
-                // Path ontologiesDir = Files.createTempDirectory("Ontologies");
-                // TEMP=C:\Users\rchat\AppData\Local\Temp
-                // TMP=C:\Users\rchat\AppData\Local\Temp
 
-                // Get the temporary directory and print it.
+                // Get the temporary directory and print it. Similar to:
+                // TEMP=C:\Users\user\AppData\Local\Temp
+                // TMP=C:\Users\user\AppData\Local\Temp
                 String tempDir = System.getProperty("java.io.tmpdir");
 
                 // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-                File dataDir = new File(tempDir + "\\" + "Ontologies");
-                logger.debug("dataDir=" + dataDir);long ontologySize;
-                if (Files.exists(dataDir.toPath())) {
-                    logger.debug("Exists dataDir=" + dataDir);
-                    MemoryStore memStore = new MemoryStore(dataDir);
+                String namespace = "CIMV2";
+                Path pathCache = Paths.get(tempDir + "\\" + "Ontologies");
+                Files.createDirectories(pathCache);
+                File dirSaildump = new File(pathCache + "\\" + namespace + ".SailDir");
+                logger.debug("dirSaildump=" + dirSaildump);
+                if (Files.exists(dirSaildump.toPath())) {
+                    logger.debug("Exists dirSaildump=" + dirSaildump);
+                    MemoryStore memStore = new MemoryStore(dirSaildump);
                     memStore.setSyncDelay(1000L);
                     Repository repo = new SailRepository(memStore);
-                    connection = repo.getConnection();
-                    logger.debug("Cached statements=" + Long.toString(connection.size()));
+                    repositoryConnection = repo.getConnection();
+                    logger.debug("Cached statements=" + repositoryConnection.size());
                     ;
                 } else {
-                    logger.debug("Does not exist dataDir=" + dataDir);
-                    MemoryStore memStore = new MemoryStore(dataDir);
+                    logger.debug("Does not exist dirSaildump=" + dirSaildump);
+                    MemoryStore memStore = new MemoryStore(dirSaildump);
                     memStore.setSyncDelay(1000L);
                     Repository repo = new SailRepository(memStore);
-                    connection = repo.getConnection();
-                    logger.debug("Caching new statements before=" + Long.toString(connection.size()));
-                    FillRepository(connection);
-                    connection.commit();
+                    repositoryConnection = repo.getConnection();
+                    logger.debug("Caching new statements before=" + repositoryConnection.size());
+                    InsertOntologyInRepository(repositoryConnection);
+                    repositoryConnection.commit();
                     memStore.sync();
-                    logger.debug("Caching new statements after=" + Long.toString(connection.size()));
+                    logger.debug("Caching new statements after=" + repositoryConnection.size());
+
+                    WriteRepository(pathCache + "\\" + namespace + ".rdf");
                 }
             } catch(Exception exc) {
-                logger.error("Caught:" + exc.toString());
+                logger.error("Caught:" + exc);
             }
-            if(connection.size() == 0) {
+            if(repositoryConnection.size() == 0) {
                 throw new RuntimeException("Ontology is empty");
             }
         }
         else {
             Repository repository = new SailRepository(new MemoryStore());
-            connection = repository.getConnection();
-            logger.debug("New statements before=" + Long.toString(connection.size()));
-            FillRepository(connection);
-            logger.debug("New statements after=" + Long.toString(connection.size()));
+            repositoryConnection = repository.getConnection();
+            logger.debug("New statements before=" + repositoryConnection.size());
+            InsertOntologyInRepository(repositoryConnection);
+            logger.debug("New statements after=" + repositoryConnection.size());
         }
     }
 }

@@ -3,8 +3,6 @@ package paquetage;
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
@@ -47,7 +45,7 @@ public class RepositoryWrapper {
     void InsertOntology() {
         logger.debug("Inserting ontology");
         int count = 0;
-        RepositoryResult<Statement> result = ontology.connection.getStatements(null, null, null, true);
+        RepositoryResult<Statement> result = ontology.repositoryConnection.getStatements(null, null, null, true);
         while(result.hasNext()) {
             count += 1;
             Statement statement = result.next();

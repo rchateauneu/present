@@ -234,7 +234,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         GenericProvider.Row singleRow = listRows.get(0);
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
-        WmiProvider.WmiClass cl = new WmiProvider().Classes().get("Win32_Process");
+        WmiProvider.WmiClass cl = new WmiProvider().ClassesCIMV2().get("Win32_Process");
         Set<String> allProperties = cl.Properties.keySet();
         Set<String> propertiesCamelCase = allProperties.stream()
                 .map(property -> CaseUtils.toCamelCase(property, false))
@@ -277,7 +277,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
                 .collect(Collectors.toSet());
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
-        WmiProvider.WmiClass cl = new WmiProvider().Classes().get("Win32_Process");
+        WmiProvider.WmiClass cl = new WmiProvider().ClassesCIMV2().get("Win32_Process");
         Set<String> allProperties = cl.Properties.keySet();
         Assert.assertEquals(shortLabels, allProperties);
     }

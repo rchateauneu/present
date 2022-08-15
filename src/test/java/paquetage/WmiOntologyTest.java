@@ -4,10 +4,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Formatter;
@@ -22,7 +19,7 @@ public class WmiOntologyTest {
 
     private static HashSet<String> selectColumnFromOntology(WmiOntology ontologyRef, String sparqlQuery, String columnName){
         HashSet<String> variablesSet = new HashSet<String>();
-        TupleQuery tupleQuery = ontologyRef.connection.prepareTupleQuery(sparqlQuery);
+        TupleQuery tupleQuery = ontologyRef.repositoryConnection.prepareTupleQuery(sparqlQuery);
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result
                 BindingSet bindingSet = result.next();

@@ -28,7 +28,7 @@ public class WmiGetter extends BaseGetter {
 
     public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) throws Exception {
         try {
-            Wbemcli.IWbemClassObject objectNode = wmiselecter.svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+            Wbemcli.IWbemClassObject objectNode = wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
             return objectNode;
         } catch (com.sun.jna.platform.win32.COM.COMException exc) {
             // Error Code 80041002 – Object Not Found
@@ -92,14 +92,15 @@ public class WmiGetter extends BaseGetter {
         pctxDrive.SetValue("__GET_EXT_PROPERTIES", 0, vPropertyList);
         psaProperties.destroy();
 
-        return wmiselecter.svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
+        return wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
     GenericProvider.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
+        IntByReference plFlavor = new IntByReference(); //  Maybe this is not needed.
         try {
-            COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, null));
+            COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, plFlavor));
         } catch (Exception exc) {
             // So it is easier to debug.
             throw exc;

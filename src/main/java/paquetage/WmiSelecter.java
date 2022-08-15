@@ -45,7 +45,7 @@ public class WmiSelecter extends BaseSelecter {
         int countRows = 100;
 
         // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
-        Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.svc.ExecQuery("WQL", wqlQuery,
+        Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.wbemServiceRootCimv2.ExecQuery("WQL", wqlQuery,
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
         logger.debug("wqlQuery finished");
         try {
@@ -70,19 +70,6 @@ public class WmiSelecter extends BaseSelecter {
                     // All values are NULL except, typically:
                     //     __CLASS=Win32_Process
                     //     __RELPATH=Win32_Process.Handle="4"
-                    if (false) {
-                        String[] names = wqlResult.GetNames(null, 0, null);
-                        System.out.println("names=" + String.join("+", names));
-
-                        for (String col : names) {
-                            COMUtils.checkRC(wqlResult.Get(col, 0, pVal, pType, plFlavor));
-                            if (pVal.getValue() == null)
-                                System.out.println(col + "=" + "NULL");
-                            else
-                                System.out.println(col + "=" + pVal.getValue().toString());
-                            OleAuto.INSTANCE.VariantClear(pVal);
-                        }
-                    }
 
                     // This lambda extracts the value of a single column.
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {

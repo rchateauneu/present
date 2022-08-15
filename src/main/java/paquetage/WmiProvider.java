@@ -15,15 +15,28 @@ import java.util.*;
  */
 public class WmiProvider {
     final static private Logger logger = Logger.getLogger(WmiProvider.class);
-    public Wbemcli.IWbemServices svc = null;
+
+    private Map<String, Wbemcli.IWbemServices> wbemServices = new HashMap<>();
+    // These two variables are temporary.
+    private Wbemcli.IWbemServices wbemServiceRoot = null;
+    public Wbemcli.IWbemServices wbemServiceRootCimv2 = null;
 
     public WmiProvider() {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-        svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
+
+        // FIXME: TODO: Loop on all namespaces.
+        wbemServiceRoot = WbemcliUtil.connectServer("ROOT");
+        wbemServiceRootCimv2 = WbemcliUtil.connectServer("ROOT\\CIMV2");
+
+        wbemServices.put("", wbemServiceRoot);
+        wbemServices.put("CIMV2", wbemServiceRootCimv2);
     }
 
     protected void finalize() throws Throwable {
-        svc.Release();
+        for(Map.Entry<String, Wbemcli.IWbemServices> entry : wbemServices.entrySet()) {
+            logger.debug("Releasing WBEM service to namespace:" + entry.getKey());
+            entry.getValue().Release();
+        }
         Ole32.INSTANCE.CoUninitialize();
     }
 
@@ -56,19 +69,53 @@ public class WmiProvider {
     // This will never change when a machine is running, so storing it in a cache makes tests faster.
     private static Map<String, WmiClass> cacheClasses = null;
 
-    public Map<String, WmiClass> Classes() {
+    public Set<String> Namespaces() {
+        Wbemcli.IEnumWbemClassObject enumerator = wbemServiceRoot.ExecQuery(
+        "WQL",
+                "SELECT Name FROM __NAMESPACE",
+                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+
+        Set<String> namespaces = new HashSet<>();
+        try {
+            Wbemcli.IWbemClassObject[] result;
+            Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
+            IntByReference pType = new IntByReference();
+            IntByReference plFlavor = new IntByReference();
+
+            while (true) {
+                result = enumerator.Next(0, 1);
+                if (result.length == 0) {
+                    break;
+                }
+
+                Wbemcli.IWbemClassObject classObject = result[0];
+                WinNT.HRESULT hr = classObject.Get("Name", 0, pVal, pType, plFlavor);
+                COMUtils.checkRC(hr);
+                String namespace = pVal.stringValue();
+                namespaces.add(namespace);
+
+                classObject.Release();
+            }
+            OleAuto.INSTANCE.VariantClear(pVal);
+        } finally {
+            enumerator.Release();
+        }
+        return namespaces;
+    }
+
+    public Map<String, WmiClass> ClassesCIMV2() {
         if(cacheClasses == null) {
-            cacheClasses = ClassesCached();
+            cacheClasses = ClassesCached(wbemServiceRootCimv2);
         }
         return cacheClasses;
     }
 
     /** This returns a map containing the WMI classes. */
-    private Map<String, WmiClass> ClassesCached() {
+    private Map<String, WmiClass> ClassesCached(Wbemcli.IWbemServices wbemService) {
         logger.debug("Start");
         // Classes are indexed with their names.
         Map<String, WmiClass> resultClasses = new HashMap<>();
-        Wbemcli.IEnumWbemClassObject enumerator = svc.ExecQuery(
+        Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL",
                 "SELECT * FROM meta_class",
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
@@ -91,7 +138,6 @@ public class WmiProvider {
                 String[] propertyNames = classObject.GetNames(null, 0, pQualifierVal);
 
                 COMUtils.checkRC(classObject.Get("__CLASS", 0, pVal, pType, plFlavor));
-                //logger.debug("Class name=" + pVal.stringValue());
                 WmiClass newClass = new WmiClass(pVal.stringValue());
                 OleAuto.INSTANCE.VariantClear(pVal);
 
@@ -133,6 +179,7 @@ public class WmiProvider {
 
                             // If the class is an association and the property is a key, we can assume it points to an object.
                             if(false) {
+                                // Debugging purpose.
                                 String isKey = classQualifiersSet.Get("key");
                             }
 
@@ -144,6 +191,7 @@ public class WmiProvider {
                             }
 
                             if(false) {
+                                // Debugging purpose.
                                 String[] propertyQualifierNames = propertyQualifiersSet.GetNames();
                                 System.out.println("propertyQualifierNames=" + String.join("+", propertyQualifierNames));
                                 for (String propertyQualifierName : propertyQualifierNames) {
@@ -162,12 +210,7 @@ public class WmiProvider {
                 }
 
                 resultClasses.put(newClass.Name, newClass);
-
-                // o_class = conn_wmi.Get("Win32_Process", win32com.client.constants.wbemFlagUseAmendedQualifiers)
-                //print("o_class.Qualifiers_=", o_class.Qualifiers_("Description"))
-
-                OleAuto.INSTANCE.VariantClear(pVal);
-                result[0].Release();
+                classObject.Release();
             }
         } finally {
             enumerator.Release();
@@ -213,7 +256,6 @@ public class WmiProvider {
                         "Should be CIM_STRING lambda_column=" + lambda_column
                                 + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
             }
-            //oneRow.PutNode(lambda_variable, pVal.stringValue());
             rowValue = pVal.stringValue();
             rowType = GenericProvider.ValueType.NODE_TYPE;
         }

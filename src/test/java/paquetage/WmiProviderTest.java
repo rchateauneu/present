@@ -10,6 +10,8 @@ import org.junit.Test;
 
 public class WmiProviderTest {
     static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
+
+    /** This checks that a simple query is properly built. */
     @Test
     public void TestBuildQuery() throws Exception {
     QueryData queryData = new QueryData(
@@ -22,10 +24,26 @@ public class WmiProviderTest {
         Assert.assertEquals("Select Handle, __PATH from CIM_Process where Handle = \"123\"", wqlQuery);
     }
 
+    /** Get the list of namespaces. */
+    @Test
+    public void TestNamespaces() {
+        WmiProvider wmiProvider = new WmiProvider();
+        Set<String> namespaces = wmiProvider.Namespaces();
+        System.out.println("namespaces=" + namespaces);
+        /* Typical content: [Cli, RSOP, subscription, StandardCimv2, directory, aspnet, CIMV2, PEH, WMI,
+        Interop, ServiceModel, msdtc, SECURITY, Hardware, Microsoft, SecurityCenter2, DEFAULT, SecurityCenter]
+         */
+
+        Assert.assertTrue(namespaces.contains("CIMV2"));
+        Assert.assertTrue(namespaces.contains("Microsoft"));
+        Assert.assertTrue(namespaces.contains("Interop"));
+    }
+
+    /** This checks the retrieval of the handle of the current process. */
     @Test
     public void TestCIM_Process() throws Exception {
-        GenericProvider selecter = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider genericProvider = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"));
@@ -44,8 +62,8 @@ public class WmiProviderTest {
 
     @Test
     public void TestCIM_ProcessCurrent() throws Exception {
-        GenericProvider selecter = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider genericProvider = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
@@ -64,11 +82,10 @@ public class WmiProviderTest {
      */
     @Test
     public void TestCIM_ProcessExecutable() throws Exception{
-
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
-        GenericProvider selecter = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider genericProvider = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
@@ -94,8 +111,8 @@ public class WmiProviderTest {
 
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
-        GenericProvider selecter = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider genericProvider = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
@@ -118,8 +135,8 @@ public class WmiProviderTest {
     public void TestCIM_ProcessExecutableAntecedent() throws Exception {
         String antecedentString = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"";
 
-        GenericProvider selecter = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = selecter.SelectVariablesFromWhere(
+        GenericProvider genericProvider = new GenericProvider();
+        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"),
@@ -142,8 +159,8 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesList_Win32_Process() {
-        WmiProvider selecter = new WmiProvider();
-        Map<String, WmiProvider.WmiClass> classes = selecter.Classes();
+        WmiProvider wmiProvider = new WmiProvider();
+        Map<String, WmiProvider.WmiClass> classes = wmiProvider.ClassesCIMV2();
         Assert.assertTrue(classes.containsKey("Win32_Process"));
         System.out.println("BaseName=" + classes.get("Win32_Process").BaseName);
         Map<String, WmiProvider.WmiProperty> properties = classes.get("Win32_Process").Properties;
@@ -157,8 +174,8 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesList_CIM_DataFile() {
-        WmiProvider selecter = new WmiProvider();
-        Map<String, WmiProvider.WmiClass> classes = selecter.Classes();
+        WmiProvider wmiProvider = new WmiProvider();
+        Map<String, WmiProvider.WmiClass> classes = wmiProvider.ClassesCIMV2();
         Assert.assertTrue(classes.containsKey("CIM_DataFile"));
         Map<String, WmiProvider.WmiProperty> properties = classes.get("CIM_DataFile").Properties;
         System.out.println("Properties=" + properties.keySet());
