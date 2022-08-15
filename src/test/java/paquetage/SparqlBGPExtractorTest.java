@@ -22,10 +22,6 @@ public class SparqlBGPExtractorTest {
         return pattern;
     }
 
-    static String toSurvol(String term) {
-        return WmiOntology.survol_url_prefix + term;
-    }
-
     @Test
     public void ParsePlainQuery() throws Exception {
         String sparqlQuery = """
@@ -72,9 +68,9 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(toSurvol("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.className);
         Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), false, "C:");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), false, "C:");
     }
 
     @Test
@@ -97,9 +93,9 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(toSurvol("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.className);
         Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "my_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "my_name");
     }
 
     static void FindAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObjectPair> members, String predicate, boolean is_variable, String content) {
@@ -135,20 +131,20 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(extractor.patternsAsArray().size(), 3);
 
         ObjectPattern patternCIM_ProcessExecutable = FindObjectPattern(extractor, "my_assoc");
-        Assert.assertEquals(patternCIM_ProcessExecutable.className, toSurvol("CIM_ProcessExecutable"));
+        Assert.assertEquals(patternCIM_ProcessExecutable.className, PresentUtils.toCIMV2("CIM_ProcessExecutable"));
         Assert.assertEquals(patternCIM_ProcessExecutable.Members.size(), 2);
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, toSurvol("Dependent"), true, "my_process");
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, toSurvol("Antecedent"), true, "my_file");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, PresentUtils.toCIMV2("Dependent"), true, "my_process");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, PresentUtils.toCIMV2("Antecedent"), true, "my_file");
 
         ObjectPattern patternWin32_Process = FindObjectPattern(extractor, "my_process");
-        Assert.assertEquals(patternWin32_Process.className, toSurvol("Win32_Process"));
+        Assert.assertEquals(patternWin32_Process.className, PresentUtils.toCIMV2("Win32_Process"));
         Assert.assertEquals(patternWin32_Process.Members.size(), 1);
-        FindAndCompareKeyValue(patternWin32_Process.Members, toSurvol("Handle"), true, "my_process_handle");
+        FindAndCompareKeyValue(patternWin32_Process.Members, PresentUtils.toCIMV2("Handle"), true, "my_process_handle");
 
         ObjectPattern patternCIM_DataFile = FindObjectPattern(extractor, "my_file");
-        Assert.assertEquals(patternCIM_DataFile.className, toSurvol("CIM_DataFile"));
+        Assert.assertEquals(patternCIM_DataFile.className, PresentUtils.toCIMV2("CIM_DataFile"));
         Assert.assertEquals(patternCIM_DataFile.Members.size(), 1);
-        FindAndCompareKeyValue(patternCIM_DataFile.Members, toSurvol("Name"), false, "C:\\WINDOWS\\System32\\kernel32.dll");
+        FindAndCompareKeyValue(patternCIM_DataFile.Members, PresentUtils.toCIMV2("Name"), false, "C:\\WINDOWS\\System32\\kernel32.dll");
     }
 
     @Test
@@ -423,9 +419,9 @@ public class SparqlBGPExtractorTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "any_iri_will_do";
@@ -442,11 +438,11 @@ public class SparqlBGPExtractorTest {
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
     }
@@ -472,9 +468,9 @@ public class SparqlBGPExtractorTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIriC = "iriC";
@@ -499,21 +495,21 @@ public class SparqlBGPExtractorTest {
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriC),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriC),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriD),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriD),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("D:"))
         ));
     }
@@ -537,10 +533,10 @@ public class SparqlBGPExtractorTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 2);
-        CompareKeyValue(patternWin32_Directory.Members.get(1), toSurvol("Caption"), true, "dir_caption");
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(1), PresentUtils.toCIMV2("Caption"), true, "dir_caption");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "arbitrary_iri";
@@ -559,16 +555,16 @@ public class SparqlBGPExtractorTest {
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(toSurvol("Caption")),
+                Values.iri(PresentUtils.toCIMV2("Caption")),
                 Values.literal("This is a text"))
         ));
     }

@@ -13,10 +13,6 @@ import java.util.HashSet;
 public class WmiOntologyTest {
     static WmiOntology ontology = new WmiOntology(false);
 
-    static String toSurvol(String term) {
-        return WmiOntology.survol_url_prefix + term;
-    }
-
     private static HashSet<String> selectColumnFromOntology(WmiOntology ontologyRef, String sparqlQuery, String columnName){
         HashSet<String> variablesSet = new HashSet<String>();
         TupleQuery tupleQuery = ontologyRef.repositoryConnection.prepareTupleQuery(sparqlQuery);
@@ -36,7 +32,7 @@ public class WmiOntologyTest {
     }
 
     static void assertContainsSurvolItem(HashSet<String> itemsSet, String shortItem) {
-        Assert.assertTrue(itemsSet.contains(toSurvol(shortItem)));
+        Assert.assertTrue(itemsSet.contains(PresentUtils.toCIMV2(shortItem)));
     }
 
     /** The content of the cached ontology and the fresh one should be the same.
@@ -111,7 +107,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_Process_Handle_Domain_Filter() {
         String queryString = new Formatter().format(
-                "SELECT ?x WHERE { <%s> rdfs:domain ?x }", toSurvol("Win32_Process.Handle")).toString();
+                "SELECT ?x WHERE { <%s> rdfs:domain ?x }", PresentUtils.toCIMV2("Win32_Process.Handle")).toString();
         HashSet<String> domainsSet = selectColumn(queryString, "x");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsSurvolItem(domainsSet, "Win32_Process");
@@ -127,7 +123,7 @@ public class WmiOntologyTest {
         // http://www.w3.org/2000/01/rdf-schema#range]
         String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:range ?x }",
-                toSurvol("CIM_Process.Handle")).toString( );
+                PresentUtils.toCIMV2("CIM_Process.Handle")).toString( );
         HashSet<String> rangesSet = selectColumn(queryString, "x");
         Assert.assertTrue(rangesSet.contains("http://www.w3.org/2001/XMLSchema#string"));
     }

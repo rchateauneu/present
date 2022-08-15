@@ -107,4 +107,7 @@ public class PresentUtils {
         return listRows.stream().map(row->row.GetStringValue(variable_name)).collect(Collectors.toSet());
     }
 
+    static String toCIMV2(String term) {
+        return WmiOntology.survol_url_prefix + term;
+    }
 }
