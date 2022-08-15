@@ -112,7 +112,7 @@ public class DependenciesBuilderTest {
      */
     public void Plan1Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_directory
                     where {
@@ -141,7 +141,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan1_1Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_name ?my_process_handle
                     where {
@@ -171,7 +171,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan1_2Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_name ?my_process_handle
                     where {
@@ -203,7 +203,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan2_1Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file
                     where {
@@ -255,7 +255,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan2_2Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file
                     where {
@@ -304,7 +304,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_1Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
@@ -364,7 +364,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_2Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
@@ -419,7 +419,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_3Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
@@ -477,7 +477,7 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_4Test() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_caption
                     where {
@@ -538,7 +538,7 @@ public class DependenciesBuilderTest {
     @Test
     public void MissingClass() throws Exception {
         String sparql_query = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label ?caption
                     where {

@@ -108,6 +108,6 @@ public class PresentUtils {
     }
 
     static String toCIMV2(String term) {
-        return WmiOntology.survol_url_prefix + term;
+        return WmiOntology.cimv2_url_prefix + term;
     }
 }

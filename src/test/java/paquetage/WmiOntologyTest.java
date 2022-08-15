@@ -132,7 +132,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_Process_Description() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_description
                     where {
@@ -152,7 +152,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_Process_BaseClass() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_base_class
                     where {
@@ -169,7 +169,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_DerivedClasses() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_caption
                     where {
@@ -188,7 +188,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_Process_Handle_Description() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_description
                     where {
@@ -208,7 +208,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_UserAccount_Name_Description() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_description
                     where {
@@ -226,7 +226,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_ClassInfoAction_AppID() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_node
                     where {
@@ -242,7 +242,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Classes_AppID() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_node
                     where {
@@ -261,7 +261,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Classes_SharedProperty() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_node (COUNT(?my_property_node) AS ?total)
                     where {
@@ -282,7 +282,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_Antecedent() {
         String queryString = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_domain
                     where {
@@ -299,7 +299,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_Dependent() {
         String queryString = """
-                prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                 select ?my_domain
                 where {
@@ -317,7 +317,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Handle_Homonyms() {
         String queryString = """
-                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_sub_property
                         where {
@@ -336,7 +336,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_To_CIM_Process() {
         String queryString = """
-                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_associator ?my_description
                         where {
@@ -363,7 +363,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_To_Win32_Process() {
         String queryString = """
-                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_associator
                         where {
@@ -382,7 +382,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_Labels_To_Win32_Process() {
         String queryString = """
-                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
                         where {
@@ -404,7 +404,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associated_Classes_To_CIM_DataFile() {
         String queryString = """
-                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
                         where {
@@ -430,7 +430,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associated_Classes_To_Win32_Process() {
         String queryString = """
-                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
                         where {
@@ -453,9 +453,9 @@ public class WmiOntologyTest {
 
     // ?my_property_node rdfs:domain cimv2:CIM_ProcessExecutable
         // my_property_node
-        // propertiesSet=[http://www.primhillcomputers.com/ontology/survol#BaseAddress, http://www.primhillcomputers.com/ontology/survol#Antecedent,
-        // http://www.primhillcomputers.com/ontology/survol#Dependent, http://www.primhillcomputers.com/ontology/survol#ModuleInstance,
-        // http://www.primhillcomputers.com/ontology/survol#ProcessCount, http://www.primhillcomputers.com/ontology/survol#GlobalProcessCount]
+        // propertiesSet=[http://www.primhillcomputers.com/ontology/CIMV2#BaseAddress, http://www.primhillcomputers.com/ontology/CIMV2#Antecedent,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Dependent, http://www.primhillcomputers.com/ontology/CIMV2#ModuleInstance,
+        // http://www.primhillcomputers.com/ontology/CIMV2#ProcessCount, http://www.primhillcomputers.com/ontology/CIMV2#GlobalProcessCount]
         //
         // cimv2:Antecedent rdfs:range ?y
         // x
@@ -466,58 +466,58 @@ public class WmiOntologyTest {
         // [http://www.w3.org/2000/01/rdf-schema#label, http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2000/01/rdf-schema#range]
         //
         // y
-        // propertiesSet=[http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedSupplyVoltageSensor, http://www.primhillcomputers.com/ontology/survol#CIM_SoftwareFeatureServiceImplementation,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_1394ControllerDevice, http://www.primhillcomputers.com/ontology/survol#Win32_DeviceBus,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_BootServiceAccessBySAP, http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedBattery,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_PrinterController, http://www.primhillcomputers.com/ontology/survol#Win32_PrinterShare,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_DiskDriveToDiskPartition, http://www.primhillcomputers.com/ontology/survol#Win32_SCSIControllerDevice,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_LogicalDiskBasedOnPartition, http://www.primhillcomputers.com/ontology/survol#CIM_Mount,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_SlotInSlot, "Antecedent", http://www.primhillcomputers.com/ontology/survol#Win32_AssociatedProcessorMemory,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_Dependency, http://www.primhillcomputers.com/ontology/survol#CIM_AllocatedResource,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_DriverForDevice, http://www.primhillcomputers.com/ontology/survol#CIM_SoftwareFeatureSAPImplementation,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_ResidesOnExtent, http://www.primhillcomputers.com/ontology/survol#CIM_HostedJobDestination,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_ShadowBy, http://www.primhillcomputers.com/ontology/survol#Win32_PNPAllocatedResource,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_ServiceSAPDependency, http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedSupplyCurrentSensor,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_ProcessExecutable, http://www.primhillcomputers.com/ontology/survol#CIM_PackageCooling,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_SubSession, http://www.primhillcomputers.com/ontology/survol#Win32_DependentService,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_ElementsLinked, http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedProcessorMemory,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_ShadowVolumeSupport, http://www.primhillcomputers.com/ontology/survol#Win32_MemoryArrayLocation,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_ShadowDiffVolumeSupport, http://www.primhillcomputers.com/ontology/survol#Win32_DfsNodeTarget,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_MemoryWithMedia, http://www.primhillcomputers.com/ontology/survol#CIM_RealizesAggregatePExtent,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_ShadowFor, http://www.primhillcomputers.com/ontology/survol#CIM_CardInSlot
-        // , http://www.primhillcomputers.com/ontology/survol#Win32_LogicalDiskToPartition, http://www.primhillcomputers.com/ontology/survol#Win32_PnPSignedDriverCIMDataFile
-        // , http://www.primhillcomputers.com/ontology/survol#Win32_LoadOrderGroupServiceDependencies, http://www.primhillcomputers.com/ontology/survol#Win32_LogonSessionMappedDisk,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_AllocatedResource, http://www.primhillcomputers.com/ontology/survol#CIM_MediaPresent,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_SerialInterface, http://www.primhillcomputers.com/ontology/survol#Win32_LoggedOnUser,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_HostedBootSAP, http://www.primhillcomputers.com/ontology/survol#CIM_PackageTempSensor,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_LogicalProgramGroupItemDataFile, http://www.primhillcomputers.com/ontology/survol#CIM_ControlledBy,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_PackageInSlot, http://www.primhillcomputers.com/ontology/survol#Win32_ConnectionShare,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_HostedAccessPoint, http://www.primhillcomputers.com/ontology/survol#Win32_SoftwareFeatureParent,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_JobDestinationJobs, http://www.primhillcomputers.com/ontology/survol#CIM_DeviceAccessedByFile,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_IDEControllerDevice, http://www.primhillcomputers.com/ontology/survol#CIM_ConnectedTo,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedCooling, http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedAlarm,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_RealizesPExtent, http://www.primhillcomputers.com/ontology/survol#Win32_CIMLogicalDeviceCIMDataFile,
-        // http://www.w3.org/1999/02/22-rdf-syntax-ns#Property, http://www.primhillcomputers.com/ontology/survol#CIM_HostedService,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_ComputerSystemPackage, http://www.primhillcomputers.com/ontology/survol#CIM_PackageAlarm,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_ShadowOn, http://www.primhillcomputers.com/ontology/survol#CIM_PSExtentBasedOnPExtent,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_ApplicationCommandLine, http://www.primhillcomputers.com/ontology/survol#Win32_ProtocolBinding,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_HostedBootService, http://www.primhillcomputers.com/ontology/survol#CIM_DeviceServiceImplementation,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_OperatingSystemQFE, http://www.primhillcomputers.com/ontology/survol#CIM_SAPSAPDependency,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_DiskDrivePhysicalMedia, http://www.primhillcomputers.com/ontology/survol#CIM_DeviceConnection,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_ServiceServiceDependency, http://www.primhillcomputers.com/ontology/survol#CIM_BIOSLoadedInNV,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_POTSModemToSerialPort, http://www.primhillcomputers.com/ontology/survol#Win32_MemoryDeviceLocation,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_ServiceAccessBySAP, http://www.primhillcomputers.com/ontology/survol#Win32_USBControllerDevice,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_SystemDriverPNPEntity, http://www.primhillcomputers.com/ontology/survol#CIM_DeviceSoftware,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_RunningOS, http://www.primhillcomputers.com/ontology/survol#CIM_BasedOn,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_SessionConnection, http://www.primhillcomputers.com/ontology/survol#CIM_ClusterServiceAccessBySAP,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_SCSIInterface, http://www.primhillcomputers.com/ontology/survol#Win32_LogicalProgramGroupDirectory,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_SessionResource, http://www.primhillcomputers.com/ontology/survol#CIM_Realizes,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_SessionProcess, http://www.primhillcomputers.com/ontology/survol#CIM_LogicalDiskBasedOnVolumeSet,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_RealizesDiskPartition, http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedMemory,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_USBControllerHasHub, http://www.primhillcomputers.com/ontology/survol#CIM_Docked,
-        // http://www.primhillcomputers.com/ontology/survol#Win32_PrinterDriverDll, http://www.primhillcomputers.com/ontology/survol#CIM_BootOSFromFS,
-        // http://www.w3.org/2001/XMLSchema#string, http://www.primhillcomputers.com/ontology/survol#Win32_ControllerHasHub,
-        // http://www.primhillcomputers.com/ontology/survol#CIM_AssociatedSensor, http://www.primhillcomputers.com/ontology/survol#CIM_DeviceSAPImplementation]
+        // propertiesSet=[http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedSupplyVoltageSensor, http://www.primhillcomputers.com/ontology/CIMV2#CIM_SoftwareFeatureServiceImplementation,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_1394ControllerDevice, http://www.primhillcomputers.com/ontology/CIMV2#Win32_DeviceBus,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_BootServiceAccessBySAP, http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedBattery,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_PrinterController, http://www.primhillcomputers.com/ontology/CIMV2#Win32_PrinterShare,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_DiskDriveToDiskPartition, http://www.primhillcomputers.com/ontology/CIMV2#Win32_SCSIControllerDevice,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_LogicalDiskBasedOnPartition, http://www.primhillcomputers.com/ontology/CIMV2#CIM_Mount,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_SlotInSlot, "Antecedent", http://www.primhillcomputers.com/ontology/CIMV2#Win32_AssociatedProcessorMemory,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_Dependency, http://www.primhillcomputers.com/ontology/CIMV2#CIM_AllocatedResource,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_DriverForDevice, http://www.primhillcomputers.com/ontology/CIMV2#CIM_SoftwareFeatureSAPImplementation,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_ResidesOnExtent, http://www.primhillcomputers.com/ontology/CIMV2#CIM_HostedJobDestination,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_ShadowBy, http://www.primhillcomputers.com/ontology/CIMV2#Win32_PNPAllocatedResource,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_ServiceSAPDependency, http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedSupplyCurrentSensor,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_ProcessExecutable, http://www.primhillcomputers.com/ontology/CIMV2#CIM_PackageCooling,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_SubSession, http://www.primhillcomputers.com/ontology/CIMV2#Win32_DependentService,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_ElementsLinked, http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedProcessorMemory,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_ShadowVolumeSupport, http://www.primhillcomputers.com/ontology/CIMV2#Win32_MemoryArrayLocation,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_ShadowDiffVolumeSupport, http://www.primhillcomputers.com/ontology/CIMV2#Win32_DfsNodeTarget,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_MemoryWithMedia, http://www.primhillcomputers.com/ontology/CIMV2#CIM_RealizesAggregatePExtent,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_ShadowFor, http://www.primhillcomputers.com/ontology/CIMV2#CIM_CardInSlot
+        // , http://www.primhillcomputers.com/ontology/CIMV2#Win32_LogicalDiskToPartition, http://www.primhillcomputers.com/ontology/CIMV2#Win32_PnPSignedDriverCIMDataFile
+        // , http://www.primhillcomputers.com/ontology/CIMV2#Win32_LoadOrderGroupServiceDependencies, http://www.primhillcomputers.com/ontology/CIMV2#Win32_LogonSessionMappedDisk,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_AllocatedResource, http://www.primhillcomputers.com/ontology/CIMV2#CIM_MediaPresent,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_SerialInterface, http://www.primhillcomputers.com/ontology/CIMV2#Win32_LoggedOnUser,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_HostedBootSAP, http://www.primhillcomputers.com/ontology/CIMV2#CIM_PackageTempSensor,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_LogicalProgramGroupItemDataFile, http://www.primhillcomputers.com/ontology/CIMV2#CIM_ControlledBy,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_PackageInSlot, http://www.primhillcomputers.com/ontology/CIMV2#Win32_ConnectionShare,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_HostedAccessPoint, http://www.primhillcomputers.com/ontology/CIMV2#Win32_SoftwareFeatureParent,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_JobDestinationJobs, http://www.primhillcomputers.com/ontology/CIMV2#CIM_DeviceAccessedByFile,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_IDEControllerDevice, http://www.primhillcomputers.com/ontology/CIMV2#CIM_ConnectedTo,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedCooling, http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedAlarm,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_RealizesPExtent, http://www.primhillcomputers.com/ontology/CIMV2#Win32_CIMLogicalDeviceCIMDataFile,
+        // http://www.w3.org/1999/02/22-rdf-syntax-ns#Property, http://www.primhillcomputers.com/ontology/CIMV2#CIM_HostedService,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_ComputerSystemPackage, http://www.primhillcomputers.com/ontology/CIMV2#CIM_PackageAlarm,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_ShadowOn, http://www.primhillcomputers.com/ontology/CIMV2#CIM_PSExtentBasedOnPExtent,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_ApplicationCommandLine, http://www.primhillcomputers.com/ontology/CIMV2#Win32_ProtocolBinding,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_HostedBootService, http://www.primhillcomputers.com/ontology/CIMV2#CIM_DeviceServiceImplementation,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_OperatingSystemQFE, http://www.primhillcomputers.com/ontology/CIMV2#CIM_SAPSAPDependency,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_DiskDrivePhysicalMedia, http://www.primhillcomputers.com/ontology/CIMV2#CIM_DeviceConnection,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_ServiceServiceDependency, http://www.primhillcomputers.com/ontology/CIMV2#CIM_BIOSLoadedInNV,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_POTSModemToSerialPort, http://www.primhillcomputers.com/ontology/CIMV2#Win32_MemoryDeviceLocation,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_ServiceAccessBySAP, http://www.primhillcomputers.com/ontology/CIMV2#Win32_USBControllerDevice,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_SystemDriverPNPEntity, http://www.primhillcomputers.com/ontology/CIMV2#CIM_DeviceSoftware,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_RunningOS, http://www.primhillcomputers.com/ontology/CIMV2#CIM_BasedOn,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_SessionConnection, http://www.primhillcomputers.com/ontology/CIMV2#CIM_ClusterServiceAccessBySAP,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_SCSIInterface, http://www.primhillcomputers.com/ontology/CIMV2#Win32_LogicalProgramGroupDirectory,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_SessionResource, http://www.primhillcomputers.com/ontology/CIMV2#CIM_Realizes,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_SessionProcess, http://www.primhillcomputers.com/ontology/CIMV2#CIM_LogicalDiskBasedOnVolumeSet,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_RealizesDiskPartition, http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedMemory,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_USBControllerHasHub, http://www.primhillcomputers.com/ontology/CIMV2#CIM_Docked,
+        // http://www.primhillcomputers.com/ontology/CIMV2#Win32_PrinterDriverDll, http://www.primhillcomputers.com/ontology/CIMV2#CIM_BootOSFromFS,
+        // http://www.w3.org/2001/XMLSchema#string, http://www.primhillcomputers.com/ontology/CIMV2#Win32_ControllerHasHub,
+        // http://www.primhillcomputers.com/ontology/CIMV2#CIM_AssociatedSensor, http://www.primhillcomputers.com/ontology/CIMV2#CIM_DeviceSAPImplementation]
 
 
     /* TODO:

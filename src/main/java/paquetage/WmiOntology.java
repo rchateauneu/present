@@ -38,7 +38,7 @@ public class WmiOntology {
     /** Consider using a Model to store the triples of the ontology. */
     RepositoryConnection repositoryConnection;
 
-    public static String survol_url_prefix = "http://www.primhillcomputers.com/ontology/survol#";
+    public static String cimv2_url_prefix = "http://www.primhillcomputers.com/ontology/CIMV2#";
 
     /** This maps WMI types to standard RDF types. */
     static final Map<String , IRI> wmi_type_to_xsd = new HashMap<>() {
@@ -61,7 +61,7 @@ public class WmiOntology {
     static Resource WbemPathToIri(String valueString) throws Exception {
         String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
         //logger.debug("encodedValueString=" + encodedValueString);
-        String iriValue = WmiOntology.survol_url_prefix + encodedValueString;
+        String iriValue = WmiOntology.cimv2_url_prefix + encodedValueString;
         //logger.debug("iriValue=" + iriValue);
         Resource resourceValue = Values.iri(iriValue);
         return resourceValue;
@@ -123,7 +123,7 @@ public class WmiOntology {
         Function<String, IRI> lambdaClassToNode = (String className) -> {
             IRI classNode = classToNode.get(className);
             if(classNode == null) {
-                classNode = iri(survol_url_prefix, className);
+                classNode = iri(cimv2_url_prefix, className);
                 classToNode.put(className, classNode);
             }
             return classNode;
@@ -153,7 +153,7 @@ public class WmiOntology {
                 String ambiguousPropertyName = entry_property.getKey();
                 String uniquePropertyName = className + "." + ambiguousPropertyName;
 
-                IRI uniquePropertyIri = iri(survol_url_prefix, uniquePropertyName);
+                IRI uniquePropertyIri = iri(cimv2_url_prefix, uniquePropertyName);
                 WmiProvider.WmiProperty wmiProperty = entry_property.getValue();
 
                 connection.add(uniquePropertyIri, RDF.TYPE, RDF.PROPERTY);
@@ -164,7 +164,7 @@ public class WmiOntology {
                 if(wmiProperty.Type.startsWith("ref:")) {
                     String domainName = wmiProperty.Type.substring(4);
                     // This should be another class.
-                    IRI domainIri = iri(survol_url_prefix, domainName);
+                    IRI domainIri = iri(cimv2_url_prefix, domainName);
                     connection.add(uniquePropertyIri, RDFS.RANGE, domainIri);
                 }
                 else
@@ -180,7 +180,7 @@ public class WmiOntology {
                 // Now link this unique property with ambiguous one.
                 IRI ambiguousPropertyIri = ambiguousProperties.get(ambiguousPropertyName);
                 if(ambiguousPropertyIri == null) {
-                    ambiguousPropertyIri = iri(survol_url_prefix, ambiguousPropertyName);
+                    ambiguousPropertyIri = iri(cimv2_url_prefix, ambiguousPropertyName);
                     ambiguousProperties.put(ambiguousPropertyName, ambiguousPropertyIri);
                     connection.add(ambiguousPropertyIri, RDF.TYPE, RDF.PROPERTY);
                     connection.add(ambiguousPropertyIri, RDFS.LABEL, factory.createLiteral(ambiguousPropertyName));
