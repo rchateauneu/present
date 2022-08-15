@@ -116,12 +116,12 @@ public class DependenciesBuilderTest {
      */
     public void Plan1Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_directory
                     where {
-                        ?my_directory rdf:type cim:Win32_Directory .
-                        ?my_directory cim:Name "C:" .
+                        ?my_directory rdf:type cimv2:Win32_Directory .
+                        ?my_directory cimv2:Name "C:" .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -145,13 +145,13 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan1_1Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_name ?my_process_handle
                     where {
-                        ?my_process rdf:type cim:CIM_Process .
-                        ?my_process cim:Handle ?my_process_handle .
-                        ?my_process cim:Name ?my_process_name .
+                        ?my_process rdf:type cimv2:CIM_Process .
+                        ?my_process cimv2:Handle ?my_process_handle .
+                        ?my_process cimv2:Name ?my_process_name .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -175,13 +175,13 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan1_2Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_name ?my_process_handle
                     where {
-                        ?my_process rdf:type cim:CIM_Process .
-                        ?my_process cim:Handle "12345" .
-                        ?my_process cim:Name ?my_process_name .
+                        ?my_process rdf:type cimv2:CIM_Process .
+                        ?my_process cimv2:Handle "12345" .
+                        ?my_process cimv2:Name ?my_process_name .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -207,15 +207,15 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan2_1Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file
                     where {
-                        ?my2_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?my2_assoc cim:Dependent ?my1_process .
-                        ?my2_assoc cim:Antecedent ?my_file .
-                        ?my1_process rdf:type cim:Win32_Process .
-                        ?my1_process cim:Handle "123" .
+                        ?my2_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?my2_assoc cimv2:Dependent ?my1_process .
+                        ?my2_assoc cimv2:Antecedent ?my_file .
+                        ?my1_process rdf:type cimv2:Win32_Process .
+                        ?my1_process cimv2:Handle "123" .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -259,14 +259,14 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan2_2Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file
                     where {
-                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?my1_assoc cim:Dependent ?my0_process .
-                        ?my1_assoc cim:Antecedent ?my_file .
-                        ?my0_process rdf:type cim:Win32_Process .
+                        ?my1_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?my1_assoc cimv2:Dependent ?my0_process .
+                        ?my1_assoc cimv2:Antecedent ?my_file .
+                        ?my0_process rdf:type cimv2:Win32_Process .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -308,17 +308,17 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_1Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
-                        ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?my0_assoc cim:Dependent ?my2_process .
-                        ?my0_assoc cim:Antecedent ?my1_file .
-                        ?my2_process rdf:type cim:Win32_Process .
-                        ?my2_process cim:Handle "123" .
-                        ?my1_file rdf:type cim:CIM_DataFile .
-                        ?my1_file cim:Name ?my_file_name .
+                        ?my0_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?my0_assoc cimv2:Dependent ?my2_process .
+                        ?my0_assoc cimv2:Antecedent ?my1_file .
+                        ?my2_process rdf:type cimv2:Win32_Process .
+                        ?my2_process cimv2:Handle "123" .
+                        ?my1_file rdf:type cimv2:CIM_DataFile .
+                        ?my1_file cimv2:Name ?my_file_name .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -368,17 +368,17 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_2Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
-                        ?my0_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?my0_assoc cim:Dependent ?my1_process .
-                        ?my0_assoc cim:Antecedent ?my2_file .
-                        ?my1_process rdf:type cim:Win32_Process .
-                        ?my1_process cim:Handle "123" .
-                        ?my2_file rdf:type cim:CIM_DataFile .
-                        ?my2_file cim:Name ?my_file_name .
+                        ?my0_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?my0_assoc cimv2:Dependent ?my1_process .
+                        ?my0_assoc cimv2:Antecedent ?my2_file .
+                        ?my1_process rdf:type cimv2:Win32_Process .
+                        ?my1_process cimv2:Handle "123" .
+                        ?my2_file rdf:type cimv2:CIM_DataFile .
+                        ?my2_file cimv2:Name ?my_file_name .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -423,17 +423,17 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_3Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
-                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?my1_assoc cim:Dependent ?my0_process .
-                        ?my1_assoc cim:Antecedent ?my2_file .
-                        ?my0_process rdf:type cim:Win32_Process .
-                        ?my0_process cim:Handle "123" .
-                        ?my2_file rdf:type cim:CIM_DataFile .
-                        ?my2_file cim:Name ?my_file_name .
+                        ?my1_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?my1_assoc cimv2:Dependent ?my0_process .
+                        ?my1_assoc cimv2:Antecedent ?my2_file .
+                        ?my0_process rdf:type cimv2:Win32_Process .
+                        ?my0_process cimv2:Handle "123" .
+                        ?my2_file rdf:type cimv2:CIM_DataFile .
+                        ?my2_file cimv2:Name ?my_file_name .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -481,17 +481,17 @@ public class DependenciesBuilderTest {
     @Test
     public void Plan3_4Test() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_caption
                     where {
-                        ?my1_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?my1_assoc cim:Dependent ?my2_process .
-                        ?my1_assoc cim:Antecedent ?my0_file .
-                        ?my2_process rdf:type cim:Win32_Process .
-                        ?my2_process cim:Caption ?my_process_caption .
-                        ?my0_file rdf:type cim:CIM_DataFile .
-                        ?my0_file cim:Name "C:" .
+                        ?my1_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?my1_assoc cimv2:Dependent ?my2_process .
+                        ?my1_assoc cimv2:Antecedent ?my0_file .
+                        ?my2_process rdf:type cimv2:Win32_Process .
+                        ?my2_process cimv2:Caption ?my_process_caption .
+                        ?my0_file rdf:type cimv2:CIM_DataFile .
+                        ?my0_file cimv2:Name "C:" .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
@@ -542,13 +542,13 @@ public class DependenciesBuilderTest {
     @Test
     public void MissingClass() throws Exception {
         String sparql_query = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label ?caption
                     where {
-                        ?process cim:Win32_Process.Handle "12345" .
-                        ?process cim:Win32_Process.Caption ?caption .
-                        cim:Win32_Process.Handle rdfs:label ?label .
+                        ?process cimv2:Win32_Process.Handle "12345" .
+                        ?process cimv2:Win32_Process.Caption ?caption .
+                        cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);

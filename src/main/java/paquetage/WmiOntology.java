@@ -107,14 +107,14 @@ public class WmiOntology {
         with unique property name or the ambiguous one (which is more natural).
         Example of Sparql statements:
 
-        ?x rdf:type cim:CIM_Process
-        ?x cim:Name ?name
-        ... then WMI processing returns triples with the predicate cim:Name
+        ?x rdf:type cimv2:CIM_Process
+        ?x cimv2:Name ?name
+        ... then WMI processing returns triples with the predicate cimv2:Name
 
         But if it is:
-        ?x rdf:type cim:CIM_Process
-        ?x cim:Process.Name ?name
-        ... then WMI processing returns triples with the predicate cim:Process.Name
+        ?x rdf:type cimv2:CIM_Process
+        ?x cimv2:Process.Name ?name
+        ... then WMI processing returns triples with the predicate cimv2:Process.Name
         */
         HashMap<String, IRI> ambiguousProperties = new HashMap<>();
 
@@ -215,8 +215,8 @@ public class WmiOntology {
             try {
 
                 // Get the temporary directory and print it. Similar to:
-                // TEMP=C:\Users\user\AppData\Local\Temp
-                // TMP=C:\Users\user\AppData\Local\Temp
+                // TEMP=C:/Users/user/AppData/Local/Temp
+                // TMP=C:/Users/user/AppData/Local/Temp
                 String tempDir = System.getProperty("java.io.tmpdir");
 
                 // To cleanup the ontology, this entire directory must be deleted, and not only its content.

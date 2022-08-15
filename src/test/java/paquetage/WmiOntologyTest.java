@@ -136,11 +136,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_Process_Description() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_description
                     where {
-                        cim:Win32_Process rdfs:comment ?my_class_description .
+                        cimv2:Win32_Process rdfs:comment ?my_class_description .
                     }
                 """;
         HashSet<String> descriptionsSet = selectColumn(queryString, "my_class_description");
@@ -156,11 +156,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_Process_BaseClass() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_base_class
                     where {
-                        cim:Win32_Process rdfs:subClassOf ?my_base_class .
+                        cimv2:Win32_Process rdfs:subClassOf ?my_base_class .
                     }
                 """;
         HashSet<String> baseClassesSet = selectColumn(queryString, "my_base_class");
@@ -173,11 +173,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_DerivedClasses() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_caption
                     where {
-                        ?my_derived_class rdfs:subClassOf+ cim:CIM_LogicalElement .
+                        ?my_derived_class rdfs:subClassOf+ cimv2:CIM_LogicalElement .
                         ?my_derived_class rdfs:label ?my_caption .
                     }
                 """;
@@ -192,12 +192,12 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_Process_Handle_Description() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_description
                     where {
-                        cim:Win32_Process.Handle rdfs:comment ?my_property_description .
-                        cim:Win32_Process.Handle rdfs:domain cim:Win32_Process .
+                        cimv2:Win32_Process.Handle rdfs:comment ?my_property_description .
+                        cimv2:Win32_Process.Handle rdfs:domain cimv2:Win32_Process .
                     }
                 """;
         HashSet<String> descriptionsSet = selectColumn(queryString, "my_property_description");
@@ -212,12 +212,12 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_UserAccount_Name_Description() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_description
                     where {
-                        cim:Win32_UserAccount.Name rdfs:comment ?my_property_description .
-                        cim:Win32_UserAccount.Name rdfs:domain cim:Win32_UserAccount .
+                        cimv2:Win32_UserAccount.Name rdfs:comment ?my_property_description .
+                        cimv2:Win32_UserAccount.Name rdfs:domain cimv2:Win32_UserAccount .
                     }
                 """;
         HashSet<String> descriptionsSet = selectColumn(queryString, "my_property_description");
@@ -230,11 +230,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Win32_ClassInfoAction_AppID() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_node
                     where {
-                        cim:Win32_ClassInfoAction.AppID rdfs:domain ?my_class_node .
+                        cimv2:Win32_ClassInfoAction.AppID rdfs:domain ?my_class_node .
                     }
                 """;
         HashSet<String> domainsSet = selectColumn(queryString, "my_class_node");
@@ -246,12 +246,12 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Classes_AppID() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_node
                     where {
                         ?my_property_node rdfs:domain ?my_class_node .
-                        ?my_property_node rdfs:subPropertyOf cim:AppID .
+                        ?my_property_node rdfs:subPropertyOf cimv2:AppID .
                     }
                 """;
         HashSet<String> domainsSet = selectColumn(queryString, "my_class_node");
@@ -265,7 +265,7 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Classes_SharedProperty() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_property_node (COUNT(?my_property_node) AS ?total)
                     where {
@@ -286,15 +286,15 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_Antecedent() {
         String queryString = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_domain
                     where {
-                        cim:CIM_ProcessExecutable.Antecedent rdfs:range ?my_domain .
-                        cim:CIM_ProcessExecutable.Antecedent rdfs:domain cim:CIM_ProcessExecutable .
+                        cimv2:CIM_ProcessExecutable.Antecedent rdfs:range ?my_domain .
+                        cimv2:CIM_ProcessExecutable.Antecedent rdfs:domain cimv2:CIM_ProcessExecutable .
                     }
                 """;
-        // Beware, there are several cim:Antecedent properties.
+        // Beware, there are several cimv2:Antecedent properties.
         HashSet<String> domainsSet = selectColumn(queryString, "my_domain");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsSurvolItem(domainsSet, "CIM_DataFile");
@@ -303,15 +303,15 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_Dependent() {
         String queryString = """
-                prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                 select ?my_domain
                 where {
-                    cim:CIM_ProcessExecutable.Dependent rdfs:range ?my_domain .
-                    cim:CIM_ProcessExecutable.Dependent rdfs:domain cim:CIM_ProcessExecutable .
+                    cimv2:CIM_ProcessExecutable.Dependent rdfs:range ?my_domain .
+                    cimv2:CIM_ProcessExecutable.Dependent rdfs:domain cimv2:CIM_ProcessExecutable .
                 }
             """;
-        // Beware, there are several cim:Dependent properties.
+        // Beware, there are several cimv2:Dependent properties.
         HashSet<String> domainsSet = selectColumn(queryString, "my_domain");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsSurvolItem(domainsSet, "CIM_Process");
@@ -321,11 +321,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Handle_Homonyms() {
         String queryString = """
-                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_sub_property
                         where {
-                            ?my_sub_property rdfs:subPropertyOf cim:Handle .
+                            ?my_sub_property rdfs:subPropertyOf cimv2:Handle .
                         }
                     """;
         HashSet<String> subPropertiesSet = selectColumn(queryString, "my_sub_property");
@@ -340,11 +340,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_To_CIM_Process() {
         String queryString = """
-                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_associator ?my_description
                         where {
-                            ?my_subproperty rdfs:range cim:CIM_Process .
+                            ?my_subproperty rdfs:range cimv2:CIM_Process .
                             ?my_subproperty rdfs:domain ?my_associator .
                             ?my_associator rdfs:comment ?my_description .
                         }
@@ -367,11 +367,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_To_Win32_Process() {
         String queryString = """
-                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_associator
                         where {
-                            ?my_subproperty rdfs:range cim:Win32_Process .
+                            ?my_subproperty rdfs:range cimv2:Win32_Process .
                             ?my_subproperty rdfs:domain ?my_associator .
                         }
                     """;
@@ -386,13 +386,13 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associators_Labels_To_Win32_Process() {
         String queryString = """
-                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
                         where {
                             ?my_property rdfs:label ?my_label .
                             ?my_subproperty rdfs:subPropertyOf ?my_property .
-                            ?my_subproperty rdfs:range cim:Win32_Process .
+                            ?my_subproperty rdfs:range cimv2:Win32_Process .
                             ?my_subproperty rdfs:domain ?my_associator .
                             ?my_associator rdfs:comment ?my_description .
                         }
@@ -408,11 +408,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associated_Classes_To_CIM_DataFile() {
         String queryString = """
-                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
                         where {
-                            ?my_subproperty1 rdfs:range cim:CIM_DataFile .
+                            ?my_subproperty1 rdfs:range cimv2:CIM_DataFile .
                             ?my_subproperty1 rdfs:domain ?my_associator .
                             ?my_subproperty2 rdfs:range ?my_class .
                             ?my_subproperty2 rdfs:domain ?my_associator .
@@ -434,11 +434,11 @@ public class WmiOntologyTest {
     @Test
     public void TestOntology_Associated_Classes_To_Win32_Process() {
         String queryString = """
-                        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                         select ?my_label
                         where {
-                            ?my_subproperty1 rdfs:range cim:Win32_Process .
+                            ?my_subproperty1 rdfs:range cimv2:Win32_Process .
                             ?my_subproperty1 rdfs:domain ?my_associator .
                             ?my_subproperty2 rdfs:range ?my_class .
                             ?my_subproperty2 rdfs:domain ?my_associator .
@@ -455,17 +455,17 @@ public class WmiOntologyTest {
 
 
 
-    // ?my_property_node rdfs:domain cim:CIM_ProcessExecutable
+    // ?my_property_node rdfs:domain cimv2:CIM_ProcessExecutable
         // my_property_node
         // propertiesSet=[http://www.primhillcomputers.com/ontology/survol#BaseAddress, http://www.primhillcomputers.com/ontology/survol#Antecedent,
         // http://www.primhillcomputers.com/ontology/survol#Dependent, http://www.primhillcomputers.com/ontology/survol#ModuleInstance,
         // http://www.primhillcomputers.com/ontology/survol#ProcessCount, http://www.primhillcomputers.com/ontology/survol#GlobalProcessCount]
         //
-        // cim:Antecedent rdfs:range ?y
+        // cimv2:Antecedent rdfs:range ?y
         // x
         // [http://www.w3.org/2001/XMLSchema#string]
         //
-        // cim:Antecedent ?x ?y .
+        // cimv2:Antecedent ?x ?y .
         // x
         // [http://www.w3.org/2000/01/rdf-schema#label, http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2000/01/rdf-schema#range]
         //

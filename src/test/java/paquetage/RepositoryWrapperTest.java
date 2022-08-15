@@ -48,11 +48,11 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelectFromOntology() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label
                     where {
-                        cim:Win32_Process.Handle rdfs:label ?label .
+                        cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """;
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -66,13 +66,13 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?caption ?process
                     where {
-                        ?process rdf:type cim:Win32_Process .
-                        ?process cim:Handle "%s" .
-                        ?process cim:Win32_Process.Caption ?caption .
+                        ?process rdf:type cimv2:Win32_Process .
+                        ?process cimv2:Handle "%s" .
+                        ?process cimv2:Win32_Process.Caption ?caption .
                     }
                 """, currentPidStr);
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -86,14 +86,14 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label ?caption
                     where {
-                        ?process rdf:type cim:Win32_Process .
-                        ?process cim:Handle "%s" .
-                        ?process cim:Win32_Process.Caption ?caption .
-                        cim:Win32_Process.Handle rdfs:label ?label .
+                        ?process rdf:type cimv2:Win32_Process .
+                        ?process cimv2:Handle "%s" .
+                        ?process cimv2:Win32_Process.Caption ?caption .
+                        cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -109,17 +109,17 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_SameExecutable_SubQuery() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?handle ?executablepath
                     where {
-                        ?process2 cim:Win32_Process.Handle ?handle .
-                        ?process2 cim:Win32_Process.ExecutablePath ?executablepath .
+                        ?process2 cimv2:Win32_Process.Handle ?handle .
+                        ?process2 cimv2:Win32_Process.ExecutablePath ?executablepath .
                         {
                             select ?executablepath
                             where {
-                                ?process cim:Handle "%s" .
-                                ?process cim:Win32_Process.ExecutablePath ?executablepath .
+                                ?process cimv2:Handle "%s" .
+                                ?process cimv2:Win32_Process.ExecutablePath ?executablepath .
                             }
                         }
                     }
@@ -151,13 +151,13 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithoutClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?process ?pid
                     where {
-                        ?process cim:Win32_Process.Handle "%s" .
-                        ?process cim:Win32_Process.Caption ?caption .
-                        ?process cim:Win32_Process.ProcessId ?pid .
+                        ?process cimv2:Win32_Process.Handle "%s" .
+                        ?process cimv2:Win32_Process.Caption ?caption .
+                        ?process cimv2:Win32_Process.ProcessId ?pid .
                     }
                 """, currentPidStr);
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -176,55 +176,55 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_AllProperties() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?readoperationcount ?caption ?executablepath ?usermodetime ?peakworkingsetsize ?othertransfercount ?pagefileusage ?writetransfercount ?pagefaults ?readtransfercount ?maximumworkingsetsize ?quotapeakpagedpoolusage ?handlecount ?osname ?writeoperationcount ?sessionid ?otheroperationcount ?csname ?windowsversion ?description ?quotanonpagedpoolusage ?threadcount ?priority ?parentprocessid ?installdate ?commandline ?virtualsize ?quotapagedpoolusage ?creationdate ?terminationdate ?name ?peakvirtualsize ?privatepagecount ?executionstate ?peakpagefileusage ?cscreationclassname ?minimumworkingsetsize ?quotapeaknonpagedpoolusage ?status ?creationclassname ?oscreationclassname ?processid ?kernelmodetime ?workingsetsize
                     where {
-                        ?process cim:Win32_Process.Handle "%s" .
-                        ?process cim:Win32_Process.ReadOperationCount ?readoperationcount .
-                        ?process cim:Win32_Process.Caption ?caption .
-                        ?process cim:Win32_Process.ExecutablePath ?executablepath .
-                        ?process cim:Win32_Process.UserModeTime ?usermodetime .
-                        ?process cim:Win32_Process.PeakWorkingSetSize ?peakworkingsetsize .
-                        ?process cim:Win32_Process.OtherTransferCount ?othertransfercount .
-                        ?process cim:Win32_Process.PageFileUsage ?pagefileusage .
-                        ?process cim:Win32_Process.WriteTransferCount ?writetransfercount .
-                        ?process cim:Win32_Process.PageFaults ?pagefaults .
-                        ?process cim:Win32_Process.ReadTransferCount ?readtransfercount .
-                        ?process cim:Win32_Process.MaximumWorkingSetSize ?maximumworkingsetsize .
-                        ?process cim:Win32_Process.QuotaPeakPagedPoolUsage ?quotapeakpagedpoolusage .
-                        ?process cim:Win32_Process.HandleCount ?handlecount .
-                        ?process cim:Win32_Process.OSName ?osname .
-                        ?process cim:Win32_Process.WriteOperationCount ?writeoperationcount .
-                        ?process cim:Win32_Process.SessionId ?sessionid .
-                        ?process cim:Win32_Process.OtherOperationCount ?otheroperationcount .
-                        ?process cim:Win32_Process.CSName ?csname .
-                        ?process cim:Win32_Process.WindowsVersion ?windowsversion .
-                        ?process cim:Win32_Process.Description ?description .
-                        ?process cim:Win32_Process.QuotaNonPagedPoolUsage ?quotanonpagedpoolusage .
-                        ?process cim:Win32_Process.ThreadCount ?threadcount .
-                        ?process cim:Win32_Process.Priority ?priority .
-                        ?process cim:Win32_Process.ParentProcessId ?parentprocessid .
-                        ?process cim:Win32_Process.InstallDate ?installdate .
-                        ?process cim:Win32_Process.CommandLine ?commandline .
-                        ?process cim:Win32_Process.VirtualSize ?virtualsize .
-                        ?process cim:Win32_Process.QuotaPagedPoolUsage ?quotapagedpoolusage .
-                        ?process cim:Win32_Process.CreationDate ?creationdate .
-                        ?process cim:Win32_Process.TerminationDate ?terminationdate .
-                        ?process cim:Win32_Process.Name ?name .
-                        ?process cim:Win32_Process.PeakVirtualSize ?peakvirtualsize .
-                        ?process cim:Win32_Process.PrivatePageCount ?privatepagecount .
-                        ?process cim:Win32_Process.ExecutionState ?executionstate .
-                        ?process cim:Win32_Process.PeakPageFileUsage ?peakpagefileusage .
-                        ?process cim:Win32_Process.CSCreationClassName ?cscreationclassname .
-                        ?process cim:Win32_Process.MinimumWorkingSetSize ?minimumworkingsetsize .
-                        ?process cim:Win32_Process.QuotaPeakNonPagedPoolUsage ?quotapeaknonpagedpoolusage .
-                        ?process cim:Win32_Process.Status ?status .
-                        ?process cim:Win32_Process.CreationClassName ?creationclassname .
-                        ?process cim:Win32_Process.OSCreationClassName ?oscreationclassname .
-                        ?process cim:Win32_Process.ProcessId ?processid .
-                        ?process cim:Win32_Process.KernelModeTime ?kernelmodetime .
-                        ?process cim:Win32_Process.WorkingSetSize ?workingsetsize . 
+                        ?process cimv2:Win32_Process.Handle "%s" .
+                        ?process cimv2:Win32_Process.ReadOperationCount ?readoperationcount .
+                        ?process cimv2:Win32_Process.Caption ?caption .
+                        ?process cimv2:Win32_Process.ExecutablePath ?executablepath .
+                        ?process cimv2:Win32_Process.UserModeTime ?usermodetime .
+                        ?process cimv2:Win32_Process.PeakWorkingSetSize ?peakworkingsetsize .
+                        ?process cimv2:Win32_Process.OtherTransferCount ?othertransfercount .
+                        ?process cimv2:Win32_Process.PageFileUsage ?pagefileusage .
+                        ?process cimv2:Win32_Process.WriteTransferCount ?writetransfercount .
+                        ?process cimv2:Win32_Process.PageFaults ?pagefaults .
+                        ?process cimv2:Win32_Process.ReadTransferCount ?readtransfercount .
+                        ?process cimv2:Win32_Process.MaximumWorkingSetSize ?maximumworkingsetsize .
+                        ?process cimv2:Win32_Process.QuotaPeakPagedPoolUsage ?quotapeakpagedpoolusage .
+                        ?process cimv2:Win32_Process.HandleCount ?handlecount .
+                        ?process cimv2:Win32_Process.OSName ?osname .
+                        ?process cimv2:Win32_Process.WriteOperationCount ?writeoperationcount .
+                        ?process cimv2:Win32_Process.SessionId ?sessionid .
+                        ?process cimv2:Win32_Process.OtherOperationCount ?otheroperationcount .
+                        ?process cimv2:Win32_Process.CSName ?csname .
+                        ?process cimv2:Win32_Process.WindowsVersion ?windowsversion .
+                        ?process cimv2:Win32_Process.Description ?description .
+                        ?process cimv2:Win32_Process.QuotaNonPagedPoolUsage ?quotanonpagedpoolusage .
+                        ?process cimv2:Win32_Process.ThreadCount ?threadcount .
+                        ?process cimv2:Win32_Process.Priority ?priority .
+                        ?process cimv2:Win32_Process.ParentProcessId ?parentprocessid .
+                        ?process cimv2:Win32_Process.InstallDate ?installdate .
+                        ?process cimv2:Win32_Process.CommandLine ?commandline .
+                        ?process cimv2:Win32_Process.VirtualSize ?virtualsize .
+                        ?process cimv2:Win32_Process.QuotaPagedPoolUsage ?quotapagedpoolusage .
+                        ?process cimv2:Win32_Process.CreationDate ?creationdate .
+                        ?process cimv2:Win32_Process.TerminationDate ?terminationdate .
+                        ?process cimv2:Win32_Process.Name ?name .
+                        ?process cimv2:Win32_Process.PeakVirtualSize ?peakvirtualsize .
+                        ?process cimv2:Win32_Process.PrivatePageCount ?privatepagecount .
+                        ?process cimv2:Win32_Process.ExecutionState ?executionstate .
+                        ?process cimv2:Win32_Process.PeakPageFileUsage ?peakpagefileusage .
+                        ?process cimv2:Win32_Process.CSCreationClassName ?cscreationclassname .
+                        ?process cimv2:Win32_Process.MinimumWorkingSetSize ?minimumworkingsetsize .
+                        ?process cimv2:Win32_Process.QuotaPeakNonPagedPoolUsage ?quotapeaknonpagedpoolusage .
+                        ?process cimv2:Win32_Process.Status ?status .
+                        ?process cimv2:Win32_Process.CreationClassName ?creationclassname .
+                        ?process cimv2:Win32_Process.OSCreationClassName ?oscreationclassname .
+                        ?process cimv2:Win32_Process.ProcessId ?processid .
+                        ?process cimv2:Win32_Process.KernelModeTime ?kernelmodetime .
+                        ?process cimv2:Win32_Process.WorkingSetSize ?workingsetsize . 
                    }
                 """, currentPidStr);
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -257,11 +257,11 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_AllAttributesOntology() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?property_label
                     where {
-                        ?property rdfs:domain cim:Win32_Process .
+                        ?property rdfs:domain cimv2:Win32_Process .
                         ?property rdfs:label ?property_label .
                     }
                 """;
@@ -286,13 +286,13 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithoutClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label ?caption
                     where {
-                        ?process cim:Win32_Process.Handle "%s" .
-                        ?process cim:Win32_Process.Caption ?caption .
-                        cim:Win32_Process.Handle rdfs:label ?label .
+                        ?process cimv2:Win32_Process.Handle "%s" .
+                        ?process cimv2:Win32_Process.Caption ?caption .
+                        cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -309,14 +309,14 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_ParentProcessId() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?handle
                     where {
-                        ?process1 cim:Win32_Process.Handle "%s" .
-                        ?process1 cim:Win32_Process.ParentProcessId ?parent_process_id .
-                        ?process2 cim:Win32_Process.Handle ?handle .
-                        ?process2 cim:Win32_Process.ParentProcessId ?parent_process_id .
+                        ?process1 cimv2:Win32_Process.Handle "%s" .
+                        ?process1 cimv2:Win32_Process.ParentProcessId ?parent_process_id .
+                        ?process2 cimv2:Win32_Process.Handle ?handle .
+                        ?process2 cimv2:Win32_Process.ParentProcessId ?parent_process_id .
                     }
                 """, currentPidStr);
 
@@ -336,15 +336,15 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Service_Caption() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?caption1 ?caption2
                     where {
-                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
-                        ?_1_service cim:Win32_Service.Caption ?caption1 .
-                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
-                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
-                        ?_2_process cim:Win32_Process.Caption ?caption2 .
+                        ?_1_service cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cimv2:Win32_Service.Caption ?caption1 .
+                        ?_1_service cimv2:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cimv2:Win32_Process.ProcessId ?process_id .
+                        ?_2_process cimv2:Win32_Process.Caption ?caption2 .
                     }
                 """;
 
@@ -368,15 +368,15 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Service_Antecedent() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?display_name ?dependency_type
                     where {
-                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
-                        ?_2_assoc cim:Win32_DependentService.Dependent ?_1_service .
-                        ?_2_assoc cim:Win32_DependentService.Antecedent ?_3_service .
-                        ?_2_assoc cim:Win32_DependentService.TypeOfDependency ?dependency_type .
-                        ?_3_service cim:Win32_Service.DisplayName ?display_name .
+                        ?_1_service cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?_2_assoc cimv2:Win32_DependentService.Dependent ?_1_service .
+                        ?_2_assoc cimv2:Win32_DependentService.Antecedent ?_3_service .
+                        ?_2_assoc cimv2:Win32_DependentService.TypeOfDependency ?dependency_type .
+                        ?_3_service cimv2:Win32_Service.DisplayName ?display_name .
                     }
                 """;
 
@@ -409,16 +409,16 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     public void testSelect_Win32_LogonSession() throws Exception {
         String currentUser = System.getProperty("user.name");
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?logon_type ?logon_id ?logon_name
                     where {
-                        ?_1_user cim:Win32_UserAccount.Name "%s" .
-                        ?_2_assoc cim:Win32_LoggedOnUser.Antecedent ?_1_user .
-                        ?_2_assoc cim:Win32_LoggedOnUser.Dependent ?_3_logon_session .
-                        ?_3_logon_session cim:Win32_LogonSession.LogonType ?logon_type .
-                        ?_3_logon_session cim:Win32_LogonSession.LogonId ?logon_id .
-                        ?_3_logon_session cim:Win32_LogonSession.Name ?logon_name .
+                        ?_1_user cimv2:Win32_UserAccount.Name "%s" .
+                        ?_2_assoc cimv2:Win32_LoggedOnUser.Antecedent ?_1_user .
+                        ?_2_assoc cimv2:Win32_LoggedOnUser.Dependent ?_3_logon_session .
+                        ?_3_logon_session cimv2:Win32_LogonSession.LogonType ?logon_type .
+                        ?_3_logon_session cimv2:Win32_LogonSession.LogonId ?logon_id .
+                        ?_3_logon_session cimv2:Win32_LogonSession.Name ?logon_name .
                    }
                 """, currentUser);
 
@@ -440,16 +440,16 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Ignore("The service forbid to access its executable and libraries") @Test
     public void testSelect_Win32_Service_Executable() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?executable_name
                     where {
-                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
-                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
-                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
-                        ?_3_assoc cim:CIM_ProcessExecutable.Dependent ?_2_process .
-                        ?_3_assoc cim:CIM_ProcessExecutable.Antecedent ?_4_file .
-                        ?_4_file cim:CIM_DataFile.Name ?executable_name .
+                        ?_1_service cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cimv2:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cimv2:Win32_Process.ProcessId ?process_id .
+                        ?_3_assoc cimv2:CIM_ProcessExecutable.Dependent ?_2_process .
+                        ?_3_assoc cimv2:CIM_ProcessExecutable.Antecedent ?_4_file .
+                        ?_4_file cimv2:CIM_DataFile.Name ?executable_name .
                     }
                 """;
 
@@ -466,16 +466,16 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Ignore("The service forbid to access its logon session") @Test
     public void testSelect_Win32_Service_Win32_LogonSession() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?logon_type
                     where {
-                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
-                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
-                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
-                        ?_3_assoc cim:Win32_SessionProcess.Dependent ?_2_process .
-                        ?_3_assoc cim:Win32_SessionProcess.Antecedent ?_4_logon_session .
-                        ?_4_logon_session cim:Win32_LogonSession.LogonType ?logon_type .
+                        ?_1_service cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cimv2:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cimv2:Win32_Process.ProcessId ?process_id .
+                        ?_3_assoc cimv2:Win32_SessionProcess.Dependent ?_2_process .
+                        ?_3_assoc cimv2:Win32_SessionProcess.Antecedent ?_4_logon_session .
+                        ?_4_logon_session cimv2:Win32_LogonSession.LogonType ?logon_type .
                     }
                 """;
 
@@ -493,16 +493,16 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Service_ParentProcessId() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?parent_caption
                     where {
-                        ?_1_service cim:Win32_Service.DisplayName "Windows Search" .
-                        ?_1_service cim:Win32_Service.ProcessId ?process_id .
-                        ?_2_process cim:Win32_Process.ProcessId ?process_id .
-                        ?_2_process cim:Win32_Process.ParentProcessId ?parent_process_id .
-                        ?_3_process cim:Win32_Process.ProcessId ?parent_process_id .
-                        ?_3_process cim:Win32_Process.Caption ?parent_caption .
+                        ?_1_service cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service cimv2:Win32_Service.ProcessId ?process_id .
+                        ?_2_process cimv2:Win32_Process.ProcessId ?process_id .
+                        ?_2_process cimv2:Win32_Process.ParentProcessId ?parent_process_id .
+                        ?_3_process cimv2:Win32_Process.ProcessId ?parent_process_id .
+                        ?_3_process cimv2:Win32_Process.Caption ?parent_caption .
                     }
                 """;
 
@@ -523,18 +523,18 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_ProcessExecutable_NoFilter() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_name
                     where {
-                        ?_1_process rdf:type cim:Win32_Process .
-                        ?_1_process cim:Handle "%s" .
-                        ?_1_process cim:Win32_Process.Caption ?caption .
-                        ?_2_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?_2_assoc cim:Dependent ?_1_process .
-                        ?_2_assoc cim:Antecedent ?_3_file .
-                        ?_3_file rdf:type cim:CIM_DataFile .
-                        ?_3_file cim:Name ?file_name .
+                        ?_1_process rdf:type cimv2:Win32_Process .
+                        ?_1_process cimv2:Handle "%s" .
+                        ?_1_process cimv2:Win32_Process.Caption ?caption .
+                        ?_2_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?_2_assoc cimv2:Dependent ?_1_process .
+                        ?_2_assoc cimv2:Antecedent ?_3_file .
+                        ?_3_file rdf:type cimv2:CIM_DataFile .
+                        ?_3_file cimv2:Name ?file_name .
                    }
                 """, currentPidStr);
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -557,18 +557,18 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_ProcessExecutable_Filter() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_name
                     where {
-                        ?_1_process rdf:type cim:Win32_Process .
-                        ?_1_process cim:Handle "%s" .
-                        ?_1_process cim:Win32_Process.Caption ?caption .
-                        ?_2_assoc rdf:type cim:CIM_ProcessExecutable .
-                        ?_2_assoc cim:Dependent ?_1_process .
-                        ?_2_assoc cim:Antecedent ?_3_file .
-                        ?_3_file rdf:type cim:CIM_DataFile .
-                        ?_3_file cim:Name ?file_name .
+                        ?_1_process rdf:type cimv2:Win32_Process .
+                        ?_1_process cimv2:Handle "%s" .
+                        ?_1_process cimv2:Win32_Process.Caption ?caption .
+                        ?_2_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                        ?_2_assoc cimv2:Dependent ?_1_process .
+                        ?_2_assoc cimv2:Antecedent ?_3_file .
+                        ?_3_file rdf:type cimv2:CIM_DataFile .
+                        ?_3_file cimv2:Name ?file_name .
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
@@ -589,15 +589,15 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_ProcessExecutable_Assoc() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?_3_file
                     where {
-                        ?_1_process cim:Handle "%s" .
-                        ?_1_process cim:Win32_Process.Caption ?caption .
-                        ?_2_assoc cim:CIM_ProcessExecutable.Dependent ?_1_process .
-                        ?_2_assoc cim:CIM_ProcessExecutable.Antecedent ?_3_file .
-                        ?_3_file cim:CIM_DataFile.Name ?file_name .
+                        ?_1_process cimv2:Handle "%s" .
+                        ?_1_process cimv2:Win32_Process.Caption ?caption .
+                        ?_2_assoc cimv2:CIM_ProcessExecutable.Dependent ?_1_process .
+                        ?_2_assoc cimv2:CIM_ProcessExecutable.Antecedent ?_3_file .
+                        ?_3_file cimv2:CIM_DataFile.Name ?file_name .
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
@@ -616,13 +616,13 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_UserAccount() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?name ?domain
                     where {
-                        ?user rdf:type cim:Win32_UserAccount .
-                        ?user cim:Name ?name .
-                        ?user cim:Domain ?domain .
+                        ?user rdf:type cimv2:Win32_UserAccount .
+                        ?user cimv2:Name ?name .
+                        ?user cimv2:Domain ?domain .
                    }
                 """;
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -649,14 +649,14 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         String currentUser = System.getProperty("user.name");
 
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?group_name
                     where {
-                        ?_1_user cim:Win32_UserAccount.Name "%s" .
-                        ?_2_assoc cim:Win32_GroupUser.GroupComponent ?_3_group .
-                        ?_2_assoc cim:PartComponent ?_1_user .
-                        ?_3_group cim:Win32_Group.Name ?group_name .
+                        ?_1_user cimv2:Win32_UserAccount.Name "%s" .
+                        ?_2_assoc cimv2:Win32_GroupUser.GroupComponent ?_3_group .
+                        ?_2_assoc cimv2:PartComponent ?_1_user .
+                        ?_3_group cimv2:Win32_Group.Name ?group_name .
                    }
                 """, currentUser);
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -677,16 +677,16 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Volume() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?device_id
                     where {
-                        ?my3_volume cim:DriveLetter ?my_drive .
-                        ?my3_volume cim:DeviceID ?device_id .
-                        ?my3_volume rdf:type cim:Win32_Volume .
-                        ?my0_dir rdf:type cim:Win32_Directory .
-                        ?my0_dir cim:Name "C:\\\\Program Files (x86)" .
-                        ?my0_dir cim:Drive ?my_drive .
+                        ?my3_volume cimv2:DriveLetter ?my_drive .
+                        ?my3_volume cimv2:DeviceID ?device_id .
+                        ?my3_volume rdf:type cimv2:Win32_Volume .
+                        ?my0_dir rdf:type cimv2:Win32_Directory .
+                        ?my0_dir cimv2:Name "C:\\\\Program Files (x86)" .
+                        ?my0_dir cimv2:Drive ?my_drive .
                     }
                 """;
 
@@ -710,17 +710,17 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_MountPoint() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
                     where {
-                        ?my3_dir cim:Win32_Directory.Name ?my_dir_name .
-                        ?my2_assoc cim:Win32_MountPoint.Volume ?my1_volume .
-                        ?my2_assoc cim:Directory ?my3_dir .
-                        ?my1_volume cim:Win32_Volume.DriveLetter ?my_drive .
-                        ?my1_volume cim:DeviceID ?device_id .
-                        ?my0_dir cim:Name "C:\\\\Program Files (x86)" .
-                        ?my0_dir cim:Win32_Directory.Drive ?my_drive .
+                        ?my3_dir cimv2:Win32_Directory.Name ?my_dir_name .
+                        ?my2_assoc cimv2:Win32_MountPoint.Volume ?my1_volume .
+                        ?my2_assoc cimv2:Directory ?my3_dir .
+                        ?my1_volume cimv2:Win32_Volume.DriveLetter ?my_drive .
+                        ?my1_volume cimv2:DeviceID ?device_id .
+                        ?my0_dir cimv2:Name "C:\\\\Program Files (x86)" .
+                        ?my0_dir cimv2:Win32_Directory.Drive ?my_drive .
                     }
                 """;
 
@@ -737,23 +737,23 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     }
 
     /** Number of files in a directory.
-     * Note: This is not needed to explicitly specify cim:CIM_DataFile in a Sparql statement like:
-     *     ?my2_file rdf:type cim:CIM_DataFile .
+     * Note: This is not needed to explicitly specify cimv2:CIM_DataFile in a Sparql statement like:
+     *     ?my2_file rdf:type cimv2:CIM_DataFile .
      * This is because CIM_DirectoryContainsFile.PartComponent point to CIM_DataFile only.
      *
      * @throws Exception
-    ?my2_file rdf:type cim:CIM_DataFile .
+    ?my2_file rdf:type cimv2:CIM_DataFile .
      */
     @Test
     public void testSelect_CIM_DataFile_Count() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (COUNT(?my2_file) as ?count_files)
                     where {
-                        ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
-                        ?my1_assoc cim:GroupComponent ?my0_dir .
-                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Windows" .
+                        ?my1_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my2_file .
+                        ?my1_assoc cimv2:GroupComponent ?my0_dir .
+                        ?my0_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                     } group by ?my0_dir
                 """;
 
@@ -792,14 +792,14 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_DataFile_SizeMinMaxSum() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (MIN(?file_size) as ?size_min) (MAX(?file_size) as ?size_max) (xsd:long(SUM(?file_size)) as ?size_sum)
                     where {
-                        ?my2_file cim:CIM_DataFile.FileSize ?file_size .
-                        ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
-                        ?my1_assoc cim:GroupComponent ?my0_dir .
-                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Windows" .
+                        ?my2_file cimv2:CIM_DataFile.FileSize ?file_size .
+                        ?my1_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my2_file .
+                        ?my1_assoc cimv2:GroupComponent ?my0_dir .
+                        ?my0_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                     } group by ?my0_dir
                 """;
 
@@ -849,12 +849,12 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_CurrentCreationDate() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?creation_date
                     where {
-                        ?my_process cim:Win32_Process.CreationDate ?creation_date .
-                        ?my_process cim:Win32_Process.Handle "%s" .
+                        ?my_process cimv2:Win32_Process.CreationDate ?creation_date .
+                        ?my_process cimv2:Win32_Process.Handle "%s" .
                     }
                 """, currentPidStr);
 
@@ -889,11 +889,11 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_Oldest() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (MIN(?creation_date) as ?min_creation_date)
                     where {
-                        ?my_process cim:Win32_Process.CreationDate ?creation_date .
+                        ?my_process cimv2:Win32_Process.CreationDate ?creation_date .
                     } group by ?my_process
                 """;
 
@@ -947,12 +947,12 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_DataFile_CreationDate() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?creation_date
                     where {
-                        ?my_file cim:CIM_DataFile.CreationDate ?creation_date .
-                        ?my_file cim:Name ?"%s" .
+                        ?my_file cimv2:CIM_DataFile.CreationDate ?creation_date .
+                        ?my_file cimv2:Name ?"%s" .
                     }
                 """, PresentUtils.CurrentJavaBinary().replace("\\", "\\\\"));
 
@@ -990,15 +990,15 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_MostUsedModule() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (MAX(?my_inusecount) as ?max_inusecount)
                     where {
-                        ?my1_process cim:Win32_Process.Handle "%s" .
-                        ?my2_assoc cim:CIM_ProcessExecutable.Dependent ?my1_process .
-                        ?my2_assoc cim:CIM_ProcessExecutable.Antecedent ?my3_file .
-                        ?my3_file  cim:CIM_DataFile.Name ?my_filename .
-                        ?my3_file  cim:CIM_DataFile.InUseCount ?my_inusecount .
+                        ?my1_process cimv2:Win32_Process.Handle "%s" .
+                        ?my2_assoc cimv2:CIM_ProcessExecutable.Dependent ?my1_process .
+                        ?my2_assoc cimv2:CIM_ProcessExecutable.Antecedent ?my3_file .
+                        ?my3_file  cimv2:CIM_DataFile.Name ?my_filename .
+                        ?my3_file  cimv2:CIM_DataFile.InUseCount ?my_inusecount .
                     } group by ?my2_assoc
                 """, currentPidStr);
 
@@ -1022,12 +1022,12 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CountThreadsCurrentProcess() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (COUNT(?my2_thread) as ?count_threads)
                     where {
-                        ?my1_process cim:Win32_Process.Handle "%s" .
-                        ?my2_thread cim:Win32_Thread.ProcessHandle "%s" .
+                        ?my1_process cimv2:Win32_Process.Handle "%s" .
+                        ?my2_thread cimv2:Win32_Thread.ProcessHandle "%s" .
                     } group by ?process_handle
                 """, currentPidStr, currentPidStr);
 
@@ -1053,13 +1053,13 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_AverageThreadsPerProcess() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/survol#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (AVG(?count_threads) as ?average_count_threads)
                     where {
                         select (COUNT(?_1_thread) as ?count_threads)
                         where {
-                            ?_1_thread cim:Win32_Thread.ProcessHandle ?process_handle .
+                            ?_1_thread cimv2:Win32_Thread.ProcessHandle ?process_handle .
                         } group by ?process_handle
                     }
                 """, currentPidStr);
