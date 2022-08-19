@@ -22,18 +22,18 @@ import java.util.Set;
  */
 public class RepositoryWrapper {
     final static private Logger logger = Logger.getLogger(RepositoryWrapper.class);
-    private RepositoryConnection reco;
+    private RepositoryConnection localRepositoryConnection;
 
-    private static WmiOntology ontology = new WmiOntology(true);
+    private static WmiOntology ontology = new WmiOntology("ROOT\\CIMV2", true);
 
     RepositoryWrapper(RepositoryConnection repositoryConnection)
     {
-        reco = repositoryConnection;
+        this.localRepositoryConnection = repositoryConnection;
         InsertOntology();
     }
 
     public boolean IsValid() {
-        return reco != null;
+        return localRepositoryConnection != null;
     }
 
     public static RepositoryWrapper CreateSailRepositoryFromMemory() throws Exception {
@@ -43,20 +43,17 @@ public class RepositoryWrapper {
     }
 
     void InsertOntology() {
-        logger.debug("Inserting ontology");
-        int count = 0;
+        logger.debug("Inserting ontology triples");
+        long countInit = localRepositoryConnection.size();
         RepositoryResult<Statement> result = ontology.repositoryConnection.getStatements(null, null, null, true);
-        while(result.hasNext()) {
-            count += 1;
-            Statement statement = result.next();
-            reco.add(statement.getSubject(), statement.getPredicate(), statement.getObject());
-        }
-        logger.debug("Inserted " + count + " triples");
+        localRepositoryConnection.add(result);
+        long countEnd = localRepositoryConnection.size();
+        logger.debug("Inserted " + (countEnd - countInit) + " triples from " + countInit);
     }
 
     void InsertTriples(List<Triple> triples) {
         for (Triple triple : triples) {
-            reco.add(triple.getSubject(), triple.getPredicate(), triple.getObject());
+            localRepositoryConnection.add(triple.getSubject(), triple.getPredicate(), triple.getObject());
         }
     }
 
@@ -82,7 +79,7 @@ public class RepositoryWrapper {
         // Now, execute the sparql query in the repository which contains the ontology
         // and the result of the WQL executions.
         List<GenericProvider.Row> listRows = new ArrayList<>();
-        TupleQuery tupleQuery = reco.prepareTupleQuery(sparqlQuery);
+        TupleQuery tupleQuery = localRepositoryConnection.prepareTupleQuery(sparqlQuery);
         boolean checkedBindingsExecution = false;
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result
