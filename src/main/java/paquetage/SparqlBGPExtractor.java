@@ -139,7 +139,7 @@ public class SparqlBGPExtractor {
 
     /**
      * IRIS must look like this:
-     * objectString=http://www.primhillcomputers.com/ontology/CIMV2#Win32_Process isIRI=true
+     * objectString=http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process isIRI=true
      *
      * But Wbem path are like that:
      * subjectString=\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="31640"
@@ -162,7 +162,7 @@ public class SparqlBGPExtractor {
             throw new Exception("Value " + var.getName() + "=" + valueString + " is not a node");
         }
         // Consistency check, for debugging.
-        if(valueString.startsWith(WmiOntology.cimv2_url_prefix)) {
+        if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
             throw new Exception("Double transformation in IRI:" + valueString);
         }
         Resource resourceValue = WmiOntology.WbemPathToIri(valueString);

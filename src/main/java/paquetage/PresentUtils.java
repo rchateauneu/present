@@ -108,6 +108,11 @@ public class PresentUtils {
     }
 
     static String toCIMV2(String term) {
-        return WmiOntology.cimv2_url_prefix + term;
+        return NamespaceTermToIRI("ROOT\\CIMV2", term);
+    }
+
+    static String NamespaceTermToIRI(String namespace, String term) {
+        return WmiOntology.NamespaceUrlPrefix(namespace) + term;
+
     }
 }

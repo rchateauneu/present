@@ -26,6 +26,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
@@ -38,7 +40,27 @@ public class WmiOntology {
     /** Consider using a Model to store the triples of the ontology. */
     RepositoryConnection repositoryConnection;
 
-    public static String cimv2_url_prefix = "http://www.primhillcomputers.com/ontology/CIMV2#";
+    public static String namespaces_url_prefix = "http://www.primhillcomputers.com/ontology/";
+
+    static private Pattern patternNamespace = Pattern.compile("^[\\\\_a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
+
+    static private void CheckValidNamespace(String namespace) {
+        if(!namespace.startsWith("ROOT")) {
+            throw new RuntimeException("Namespace must start with 'ROOT':" + namespace);
+        }
+        Matcher matcher = patternNamespace.matcher(namespace);
+        boolean matchFound = matcher.find();
+        if (!matchFound) {
+            throw new RuntimeException("Invalid namespace:" + namespace);
+        }
+    }
+
+    static String NamespaceUrlPrefix(String namespace) {
+        CheckValidNamespace(namespace);
+        // Backslashes could be replaced with "%5C" but a slash is clearer.
+        return namespaces_url_prefix + namespace.replace("\\", "/") + "#";
+    }
+    //public static String cimv2_url_prefix = NamespaceUrlPrefix("ROOT\\CIMV2");
 
     /** This maps WMI types to standard RDF types. */
     static final Map<String , IRI> wmi_type_to_xsd = new HashMap<>() {
@@ -61,14 +83,16 @@ public class WmiOntology {
     static Resource WbemPathToIri(String valueString) throws Exception {
         String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
         //logger.debug("encodedValueString=" + encodedValueString);
-        String iriValue = WmiOntology.cimv2_url_prefix + encodedValueString;
+        String iriValue = PresentUtils.toCIMV2(encodedValueString);
         //logger.debug("iriValue=" + iriValue);
         Resource resourceValue = Values.iri(iriValue);
         return resourceValue;
     }
 
-
     /**
+     * This transforms the classes and properties of a WMI namespace into a RDF ontology.
+     * This is a slow task so the result must be cached in a Sail repository file.
+     *
      * Difficulty when mapping WMI properties to RDF because several properties may have the same name.
      * Example: CIM_Property.Name and CIM_DataFile.Name
      *
@@ -93,10 +117,16 @@ public class WmiOntology {
      *         # No range for "Name" because it might have different types.
      *         CIM_Process.Name  rdfs:Range String
      *         CIM_DataFile.Name rdfs:Range String
-     * @param repository
+     *
+     * This difficulty is avoid by giving to a property a unique name prefixed with the class name.
+     * However, the non-unique property name for an instanceis tolerated in Sparql queries,
+     * if the type of the instance is also given with a rdf:type triple.
+     *
+     * @param connection
      */
-    private void InsertOntologyInRepository(RepositoryConnection connection){
-        logger.debug("Start");
+    private void InsertOntologyInRepository(String namespace, RepositoryConnection connection){
+        logger.debug("Start namespace=" + namespace);
+        CheckValidNamespace(namespace);
         // We want to reuse this namespace when creating several building blocks.
 
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -120,17 +150,19 @@ public class WmiOntology {
 
         HashMap<String, IRI> classToNode = new HashMap<>();
 
+        String namespace_iri_prefix = NamespaceUrlPrefix(namespace);
+
         Function<String, IRI> lambdaClassToNode = (String className) -> {
             IRI classNode = classToNode.get(className);
             if(classNode == null) {
-                classNode = iri(cimv2_url_prefix, className);
+                classNode = iri(namespace_iri_prefix, className);
                 classToNode.put(className, classNode);
             }
             return classNode;
         };
 
         WmiProvider wmiProvider = new WmiProvider();
-        Map<String, WmiProvider.WmiClass> classes = wmiProvider.ClassesCIMV2();
+        Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(namespace);
         for(Map.Entry<String, WmiProvider.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
             //System.out.println("className=" + className);
@@ -153,7 +185,7 @@ public class WmiOntology {
                 String ambiguousPropertyName = entry_property.getKey();
                 String uniquePropertyName = className + "." + ambiguousPropertyName;
 
-                IRI uniquePropertyIri = iri(cimv2_url_prefix, uniquePropertyName);
+                IRI uniquePropertyIri = iri(namespace_iri_prefix, uniquePropertyName);
                 WmiProvider.WmiProperty wmiProperty = entry_property.getValue();
 
                 connection.add(uniquePropertyIri, RDF.TYPE, RDF.PROPERTY);
@@ -164,7 +196,7 @@ public class WmiOntology {
                 if(wmiProperty.Type.startsWith("ref:")) {
                     String domainName = wmiProperty.Type.substring(4);
                     // This should be another class.
-                    IRI domainIri = iri(cimv2_url_prefix, domainName);
+                    IRI domainIri = iri(namespace_iri_prefix, domainName);
                     connection.add(uniquePropertyIri, RDFS.RANGE, domainIri);
                 }
                 else
@@ -180,7 +212,7 @@ public class WmiOntology {
                 // Now link this unique property with ambiguous one.
                 IRI ambiguousPropertyIri = ambiguousProperties.get(ambiguousPropertyName);
                 if(ambiguousPropertyIri == null) {
-                    ambiguousPropertyIri = iri(cimv2_url_prefix, ambiguousPropertyName);
+                    ambiguousPropertyIri = iri(namespace_iri_prefix, ambiguousPropertyName);
                     ambiguousProperties.put(ambiguousPropertyName, ambiguousPropertyIri);
                     connection.add(ambiguousPropertyIri, RDF.TYPE, RDF.PROPERTY);
                     connection.add(ambiguousPropertyIri, RDFS.LABEL, factory.createLiteral(ambiguousPropertyName));
@@ -207,9 +239,9 @@ public class WmiOntology {
         writer.endRDF();
     }
 
-
-    public WmiOntology(boolean isCached) {
-        logger.debug("isCached=" + isCached);
+    public WmiOntology(String namespace, boolean isCached) {
+        logger.debug("isCached=" + isCached + " namespace=" + namespace);
+        CheckValidNamespace(namespace);
         if(isCached)
         {
             try {
@@ -220,10 +252,13 @@ public class WmiOntology {
                 String tempDir = System.getProperty("java.io.tmpdir");
 
                 // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-                String namespace = "CIMV2";
                 Path pathCache = Paths.get(tempDir + "\\" + "Ontologies");
+
+                // The namespace might contain backslashes, but this is OK on Windows.
+                Path pathNamespacePrefix = Paths.get(pathCache + "\\" + namespace);
+
                 Files.createDirectories(pathCache);
-                File dirSaildump = new File(pathCache + "\\" + namespace + ".SailDir");
+                File dirSaildump = new File(pathNamespacePrefix + ".SailDir");
                 logger.debug("dirSaildump=" + dirSaildump);
                 if (Files.exists(dirSaildump.toPath())) {
                     logger.debug("Exists dirSaildump=" + dirSaildump);
@@ -240,12 +275,12 @@ public class WmiOntology {
                     Repository repo = new SailRepository(memStore);
                     repositoryConnection = repo.getConnection();
                     logger.debug("Caching new statements before=" + repositoryConnection.size());
-                    InsertOntologyInRepository(repositoryConnection);
+                    InsertOntologyInRepository(namespace, repositoryConnection);
                     repositoryConnection.commit();
                     memStore.sync();
                     logger.debug("Caching new statements after=" + repositoryConnection.size());
 
-                    WriteRepository(pathCache + "\\" + namespace + ".rdf");
+                    WriteRepository(pathNamespacePrefix + ".rdf");
                 }
             } catch(Exception exc) {
                 logger.error("Caught:" + exc);
@@ -258,7 +293,7 @@ public class WmiOntology {
             Repository repository = new SailRepository(new MemoryStore());
             repositoryConnection = repository.getConnection();
             logger.debug("New statements before=" + repositoryConnection.size());
-            InsertOntologyInRepository(repositoryConnection);
+            InsertOntologyInRepository(namespace, repositoryConnection);
             logger.debug("New statements after=" + repositoryConnection.size());
         }
     }

@@ -67,7 +67,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_CIM_DataFile() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_Caption ?file_Drive ?file_FileSize ?file_Path
                     where {
@@ -109,7 +109,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Win32_Process_1() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_handle
                     where {
@@ -140,7 +140,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Win32_Process_2() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_caption
                     where {
@@ -165,7 +165,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Win32_Process_3() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process
                     where {
@@ -189,7 +189,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Win32_Process_4() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_process_caption
                     where {
@@ -209,7 +209,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_CIM_ProcessExecutable_1() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
@@ -247,7 +247,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_CIM_ProcessExecutable_2() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_handle
                     where {
@@ -282,7 +282,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_CIM_ProcessExecutable_3() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_handle ?my_caption
                     where {
@@ -318,7 +318,7 @@ public class SparqlTranslationTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_1() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
                     where {
@@ -349,7 +349,7 @@ public class SparqlTranslationTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_2() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
@@ -382,7 +382,7 @@ public class SparqlTranslationTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_1() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
                     where {
@@ -416,7 +416,7 @@ public class SparqlTranslationTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_file_name
                     where {
@@ -452,7 +452,7 @@ public class SparqlTranslationTest {
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_3() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
                     where {
@@ -497,7 +497,7 @@ public class SparqlTranslationTest {
      */
     public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_1() throws Exception {
         String sparqlQuery = """
-            prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_dir_name
             where {
@@ -536,7 +536,7 @@ public class SparqlTranslationTest {
      */
     public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2() throws Exception {
         String sparqlQuery = """
-            prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_process_name
             where {
@@ -581,7 +581,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_MountPoint_1() throws Exception {
         String sparqlQuery = """
-            prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?device_id
             where {
@@ -615,7 +615,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_MountPoint_2() throws Exception {
         String sparqlQuery = """
-            prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?dir_name
             where {
@@ -648,7 +648,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_Directory_Drive_1() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_drive ?my1_dir
                     where {
@@ -684,7 +684,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_Account() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_account_name
                     where {
@@ -706,7 +706,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_COMClass() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_class_name
                     where {
@@ -731,7 +731,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_Thread() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_thread_name
                     where {
@@ -759,7 +759,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_Thread_NoType() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_thread_name
                     where {
@@ -785,7 +785,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_Product() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_product_number ?my_product_name ?my_product_vendor ?my_product_caption ?my_product_version
                     where {
@@ -816,7 +816,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_DCOMApplication() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_application_name
                     where {
@@ -843,7 +843,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_DCOMApplication_Win32_DCOMApplicationSetting() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_application_name ?my_local_service
                     where {
@@ -878,7 +878,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_Process_CIM_ProcessExecutable_CIM_DataFile() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_name
                     where {
@@ -911,7 +911,7 @@ public class SparqlTranslationTest {
     @Test
     public void Execution_Forced_Win32_Process_CIM_DataFile_Name_FileSize() throws Exception {
         String sparqlQuery = String.format("""
-                prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                 select ?file_name ?file_size
                 where {

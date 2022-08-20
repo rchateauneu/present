@@ -48,7 +48,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelectFromOntology() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label
                     where {
@@ -66,7 +66,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?caption ?process
                     where {
@@ -86,7 +86,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label ?caption
                     where {
@@ -109,7 +109,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_SameExecutable_SubQuery() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?handle ?executablepath
                     where {
@@ -151,7 +151,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithoutClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?process ?pid
                     where {
@@ -176,7 +176,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_AllProperties() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?readoperationcount ?caption ?executablepath ?usermodetime ?peakworkingsetsize ?othertransfercount ?pagefileusage ?writetransfercount ?pagefaults ?readtransfercount ?maximumworkingsetsize ?quotapeakpagedpoolusage ?handlecount ?osname ?writeoperationcount ?sessionid ?otheroperationcount ?csname ?windowsversion ?description ?quotanonpagedpoolusage ?threadcount ?priority ?parentprocessid ?installdate ?commandline ?virtualsize ?quotapagedpoolusage ?creationdate ?terminationdate ?name ?peakvirtualsize ?privatepagecount ?executionstate ?peakpagefileusage ?cscreationclassname ?minimumworkingsetsize ?quotapeaknonpagedpoolusage ?status ?creationclassname ?oscreationclassname ?processid ?kernelmodetime ?workingsetsize
                     where {
@@ -257,7 +257,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_AllAttributesOntology() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?property_label
                     where {
@@ -286,7 +286,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_WithoutClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?label ?caption
                     where {
@@ -309,7 +309,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_ParentProcessId() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?handle
                     where {
@@ -336,7 +336,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Service_Caption() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?caption1 ?caption2
                     where {
@@ -368,7 +368,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Service_Antecedent() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?display_name ?dependency_type
                     where {
@@ -409,7 +409,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     public void testSelect_Win32_LogonSession() throws Exception {
         String currentUser = System.getProperty("user.name");
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?logon_type ?logon_id ?logon_name
                     where {
@@ -440,7 +440,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Ignore("The service forbid to access its executable and libraries") @Test
     public void testSelect_Win32_Service_Executable() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?executable_name
                     where {
@@ -466,7 +466,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Ignore("The service forbid to access its logon session") @Test
     public void testSelect_Win32_Service_Win32_LogonSession() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?logon_type
                     where {
@@ -493,7 +493,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Service_ParentProcessId() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?parent_caption
                     where {
@@ -523,7 +523,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_ProcessExecutable_NoFilter() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_name
                     where {
@@ -557,7 +557,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_ProcessExecutable_Filter() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?file_name
                     where {
@@ -589,7 +589,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_ProcessExecutable_Assoc() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?_3_file
                     where {
@@ -616,7 +616,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_UserAccount() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?name ?domain
                     where {
@@ -649,7 +649,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
         String currentUser = System.getProperty("user.name");
 
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?group_name
                     where {
@@ -677,7 +677,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Volume() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?device_id
                     where {
@@ -710,7 +710,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_MountPoint() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?my_dir_name
                     where {
@@ -747,7 +747,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_DataFile_Count() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (COUNT(?my2_file) as ?count_files)
                     where {
@@ -792,7 +792,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_DataFile_SizeMinMaxSum() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (MIN(?file_size) as ?size_min) (MAX(?file_size) as ?size_max) (xsd:long(SUM(?file_size)) as ?size_sum)
                     where {
@@ -849,7 +849,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_CurrentCreationDate() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?creation_date
                     where {
@@ -889,7 +889,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_Win32_Process_Oldest() throws Exception {
         String sparqlQuery = """
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (MIN(?creation_date) as ?min_creation_date)
                     where {
@@ -947,7 +947,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CIM_DataFile_CreationDate() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?creation_date
                     where {
@@ -990,7 +990,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_MostUsedModule() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (MAX(?my_inusecount) as ?max_inusecount)
                     where {
@@ -1022,7 +1022,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_CountThreadsCurrentProcess() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (COUNT(?my2_thread) as ?count_threads)
                     where {
@@ -1053,7 +1053,7 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     @Test
     public void testSelect_AverageThreadsPerProcess() throws Exception {
         String sparqlQuery = String.format("""
-                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/CIMV2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (AVG(?count_threads) as ?average_count_threads)
                     where {
