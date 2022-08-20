@@ -42,6 +42,10 @@ public class RepositoryWrapper {
         return new RepositoryWrapper(repositoryConnect);
     }
 
+    /** This loads all triples of the ontology and inserts them in the repository.
+     * This is rather slow because an ontology contains thousands of triples.
+     * TODO: It may be faster to reload the Sail repository from the cache file, instead of looping on the memory cache.
+     */
     void InsertOntology() {
         logger.debug("Inserting ontology triples");
         long countInit = localRepositoryConnection.size();
@@ -51,6 +55,13 @@ public class RepositoryWrapper {
         logger.debug("Inserted " + (countEnd - countInit) + " triples from " + countInit);
     }
 
+    /** TODO: For performance, consider using Statement instead of Triple.
+     * This might avoid this explicit loop.
+     * https://rdf4j.org/javadoc/latest/org/eclipse/rdf4j/model/Triple.html
+     * "Unlike Statement, a triple never has an associated context."
+     *
+     * @param triples
+     */
     void InsertTriples(List<Triple> triples) {
         for (Triple triple : triples) {
             localRepositoryConnection.add(triple.getSubject(), triple.getPredicate(), triple.getObject());
