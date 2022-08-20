@@ -142,6 +142,9 @@ public class DependenciesBuilder {
     /**
      * This is for testing only a gives a symbolic representation of nested WQL queries
      * created from a Sparql query.
+     *
+     * TODO: Display an execution plan similar to RDF4J execution plan.
+     *
      * @return A multi-line string.
      */
     String SymbolicQuery() throws Exception
