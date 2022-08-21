@@ -782,6 +782,11 @@ public class SparqlTranslationTest {
         Assert.assertTrue(threadsSet.contains(null));
     }
 
+    /** Fetching Wmi32_Product is slow:
+     * https://stackoverflow.com/questions/25083520/wmi-select-from-win32-product-takes-a-long-time
+     *
+     * @throws Exception
+     */
     @Test
     public void Execution_Forced_Win32_Product() throws Exception {
         String sparqlQuery = """
