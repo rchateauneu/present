@@ -114,6 +114,9 @@ public class WmiProvider {
     // This will never change when a machine is running, so storing it in a cache makes tests faster.
     private static HashMap<String, Map<String, WmiClass>> cacheClassesMap = new HashMap<>();
 
+    // This will never change when a machine is running, so storing it in a cache makes tests faster.
+    private static HashSet<String> cacheNamespaces = null;
+
     /** Excluding Localization Namespaces : https://powershell.one/wmi/root
      * To find real namespaces with potentially interesting classes in them,
      * exclude any namespace name that starts with “ms_” followed by at least two numbers.
@@ -180,12 +183,16 @@ public class WmiProvider {
     }
 
     public Set<String> Namespaces() {
-        Set<String> namespacesHierarchical = new HashSet<>();
-        Namespaces(namespacesHierarchical, wbemServiceRoot, "ROOT");
-        return namespacesHierarchical;
+        if(cacheNamespaces == null) {
+            cacheNamespaces = new HashSet<>();
+            logger.debug("Filling namespaces cache");
+            Namespaces(cacheNamespaces, wbemServiceRoot, "ROOT");
+            logger.debug("End. Number of namespaces=" + cacheNamespaces.size());
+        }
+        return cacheNamespaces;
     }
 
-
+    // Very commonly used.
     public Map<String, WmiClass> ClassesCIMV2() {
         return Classes("ROOT\\CIMV2");
     }
@@ -325,14 +332,13 @@ public class WmiProvider {
             String lambda_variable,
             IntByReference pType,
             Variant.VARIANT.ByReference pVal) {
-        // TODO: If the value is a reference, get the object !
-                        /*
-                        if(pType.getValue() == Wbemcli.CIM_REFERENCE) ...
-                        Reference properties, which have the type CIM_REFERENCE,
-                        that contains the "REF:classname" value.
-                        The classname value describes the class type of the reference property.
-                        There is apparently no way to get the object pointed to by the reference.
-                         */
+        /** TODO: If the value is a reference, get the object if possible ! Or is it simply a string ?
+        if(pType.getValue() == Wbemcli.CIM_REFERENCE) ...
+            Reference properties, which have the type CIM_REFERENCE,
+            that contains the "REF:classname" value.
+            The classname value describes the class type of the reference property.
+            There is apparently no way to get the object pointed to by the reference.
+         */
         WTypes.VARTYPE wtypesValueType = pVal.getVarType();
         // The value is sometimes different. Take the supposedly good one.
         int valueTypeUnknown = wtypesValueType.intValue();
@@ -364,10 +370,9 @@ public class WmiProvider {
             switch(valueType) {
                 case Wbemcli.CIM_REFERENCE:
                 case Wbemcli.CIM_STRING:
-                    //oneRow.PutNode(lambda_variable, pVal.stringValue());
                     rowValue = pVal.stringValue();
                     rowType = GenericProvider.ValueType.NODE_TYPE;
-                    logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType.toString());
+                    // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
                     break;
                 case Wbemcli.CIM_SINT8:
                 case Wbemcli.CIM_UINT8:
@@ -382,8 +387,8 @@ public class WmiProvider {
                     if(valObject == null) {
                         // "Win32_Process.ExecutionState" might be null.
                         // This is temporarily indicated with a special string for later debugging.
+                        // TODO: Some values are null. Why ?
                         longValue = lambda_column + "_IS_NULL";
-                        //oneRow.PutString(lambda_variable, longValue);
                         rowType = GenericProvider.ValueType.STRING_TYPE;
                     } else {
                         rowType = GenericProvider.ValueType.INT_TYPE;
@@ -394,7 +399,7 @@ public class WmiProvider {
                             // Some corner cases do not work, i.e. Win32_Process.InstallDate
                             logger.warn("Different types:" + valueType
                                     + " != " + valueTypeUnknown
-                                    + "=" + pType.toString() );
+                                    + "=" + pType);
 
                             // FIXME: Obscure behaviour in some corner cases ??
                             switch(valueTypeUnknown) {
@@ -411,7 +416,6 @@ public class WmiProvider {
                                 case Wbemcli.CIM_UINT64:
                                 case Wbemcli.CIM_SINT64:
                                     longValue = Long.toString(pVal.longValue());
-                                    rowValue = longValue;
                                     break;
                                 case Wbemcli.CIM_REAL32:
                                 case Wbemcli.CIM_REAL64:
@@ -421,13 +425,11 @@ public class WmiProvider {
                                     break;
                             } // switch
                         }
-                        //oneRow.PutLong(lambda_variable, longValue);
                     }
                     rowValue = longValue;
                     break;
                 case Wbemcli.CIM_REAL32:
                 case Wbemcli.CIM_REAL64:
-                    //oneRow.PutFloat(lambda_variable, Double.toString(pVal.doubleValue()));
                     rowValue = Double.toString(pVal.doubleValue());
                     rowType = GenericProvider.ValueType.FLOAT_TYPE;
                     break;
@@ -442,7 +444,6 @@ public class WmiProvider {
                     }
                     String dateValue = pVal.stringValue();
                     logger.debug("dateValue=" + dateValue);
-                    //oneRow.PutDate(lambda_variable, dateValue);
                     rowValue = dateValue;
                     rowType = GenericProvider.ValueType.DATE_TYPE;
                     break;
@@ -452,7 +453,6 @@ public class WmiProvider {
                         logger.error("Null when converting lambda_column=" + lambda_column
                                 + " lambda_variable=" + lambda_variable + " type=" + valueType);
                     }
-                    //oneRow.PutString(lambda_variable, valStringValue);
                     rowValue = valStringValue;
                     rowType = GenericProvider.ValueType.STRING_TYPE;
                     break;

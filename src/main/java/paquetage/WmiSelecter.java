@@ -44,7 +44,8 @@ public class WmiSelecter extends BaseSelecter {
         // The results are batched in a big number, so it is faster.
         int countRows = 100;
 
-        // TODO: To speedup, especially Wmi_Product, consider partial object get, or asynchronous query.
+        // TODO: To speedup, especially Wmi_Product, consider partial object get, or asynchronous query,
+        // with WBEM_FLAG_RETURN_IMMEDIATELY
 
         // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
         Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.wbemServiceRootCimv2.ExecQuery("WQL", wqlQuery,
