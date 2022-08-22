@@ -44,7 +44,7 @@ public class WmiOntology {
 
     static private Pattern patternNamespace = Pattern.compile("^[\\\\_a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
-    static private void CheckValidNamespace(String namespace) {
+    static public void CheckValidNamespace(String namespace) {
         if(!namespace.startsWith("ROOT")) {
             throw new RuntimeException("Namespace must start with 'ROOT':" + namespace);
         }

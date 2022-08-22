@@ -535,7 +535,11 @@ public class SparqlTranslationTest {
      * Names of processes which have an executable or a library in a given directory.
      */
     public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2() throws Exception {
-        String sparqlQuery = """
+        File file = new File(PresentUtils.CurrentJavaBinary());
+        String parent = file.getAbsoluteFile().getParent();
+        // Typically "C:\\Program Files\\Java\\jdk-17.0.2\\bin"
+        String dirExecutable = parent.replace("\\", "\\\\");
+        String sparqlQuery = String.format("""
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_process_name
@@ -550,9 +554,9 @@ public class SparqlTranslationTest {
                 ?my1_assoc cimv2:PartComponent ?my2_file .
                 ?my1_assoc cimv2:GroupComponent ?my0_dir .
                 ?my0_dir rdf:type cimv2:Win32_Directory .
-                ?my0_dir cimv2:Name "C:\\\\Program Files\\\\Java\\\\jdk-17.0.2\\\\bin" .
+                ?my0_dir cimv2:Name "%s" .
             }
-        """;
+        """, dirExecutable);
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
@@ -782,6 +786,11 @@ public class SparqlTranslationTest {
         Assert.assertTrue(threadsSet.contains(null));
     }
 
+    /** Fetching Wmi32_Product is slow:
+     * https://stackoverflow.com/questions/25083520/wmi-select-from-win32-product-takes-a-long-time
+     *
+     * @throws Exception
+     */
     @Test
     public void Execution_Forced_Win32_Product() throws Exception {
         String sparqlQuery = """
@@ -935,6 +944,8 @@ public class SparqlTranslationTest {
         for(GenericProvider.Row row : listRows) {
             String fileName = row.GetStringValue("file_name");
             filesSetActual.add(fileName);
+            // This is not transformed into a XML value such as ""28400"^^<http://www.w3.org/2001/XMLSchema#long>"
+            // because it is not transformed by the Sparql engine.
             long fileSizeActual = row.GetLongValue("file_size");
             File f = new File(fileName);
             long fileSizeExpected = f.length();

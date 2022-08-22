@@ -14,8 +14,9 @@ import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
  * The class does not extend TestCase because it is based on JUnit 4.
+ * This is only for the namespace CIMV2.
  * */
-public class RepositoryWrapperTest /* extends TestCase */ {
+public class RepositoryWrapperCIMV2Test {
     static long currentPid = ProcessHandle.current().pid();
     static String currentPidStr = String.valueOf(currentPid);
 
@@ -387,10 +388,19 @@ public class RepositoryWrapperTest /* extends TestCase */ {
             System.out.println("Antecedent service:" + singleRow);
         }
         Set<String> setAntecedents = PresentUtils.StringValuesSet(listRows,"display_name");
-        // THese are the input dependencies of this service.
-        Assert.assertEquals(
-                Set.of("\"Remote Procedure Call (RPC)\"", "\"Background Tasks Infrastructure Service\""),
-                setAntecedents);
+        // These are the input dependencies of this service.
+        String windowsVersion = System.getProperty("os.name");
+        if(windowsVersion.equals("Windows 10")) {
+            Assert.assertEquals(
+                    Set.of("\"Remote Procedure Call (RPC)\"", "\"Background Tasks Infrastructure Service\""),
+                    setAntecedents);
+        } else if(windowsVersion.equals("Windows 7.1")) {
+            Assert.assertEquals(
+                    Set.of("\"Remote Procedure Call (RPC)\""),
+                    setAntecedents);
+        } else {
+            throw new RuntimeException("Unidentified Windows version:" + windowsVersion);
+        }
     }
 
     /** Logon type of the current user.
@@ -1091,6 +1101,5 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     TODO: Size of the dlls of the current process.
     TODO: Sum of the CPU of processes running a specific program.
     TODO: Sum of the CPU of processes using a specific DLL.
-    TODO: Replace "cim:" with "wmi:"
      */
 }

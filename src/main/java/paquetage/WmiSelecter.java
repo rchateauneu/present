@@ -44,23 +44,27 @@ public class WmiSelecter extends BaseSelecter {
         // The results are batched in a big number, so it is faster.
         int countRows = 100;
 
-        // TODO: To speedup, especially Wmi_Product, consider partial object get, or asynchronous query.
+        Wbemcli.IWbemServices wbemService = wmiProvider.GetWbemService(queryData.namespace);
 
         // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
-        Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.wbemServiceRootCimv2.ExecQuery("WQL", wqlQuery,
-                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+        // WBEM_FLAG_RETURN_IMMEDIATELY might be faster than WBEM_FLAG_COMPLETE
+        Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
+                "WQL", wqlQuery,
+                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY,
+                null);
         logger.debug("wqlQuery finished");
         try {
             Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
             IntByReference pType = new IntByReference();
-            IntByReference plFlavor = null;
             while (true) {
                 /**
                  * When selecting a single column "MyColumn", the returned effective columns are:
                  *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
                  *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
                  */
-                Wbemcli.IWbemClassObject[] wqlResults = enumerator.Next(0, countRows);
+                logger.debug("Next start countRows=" + countRows);
+                Wbemcli.IWbemClassObject[] wqlResults = enumerator.Next(Wbemcli.WBEM_INFINITE, countRows);
+                logger.debug("Next finished");
                 if (wqlResults.length == 0) {
                     break;
                 }
@@ -75,7 +79,7 @@ public class WmiSelecter extends BaseSelecter {
 
                     // This lambda extracts the value of a single column.
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
-                        WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, plFlavor);
+                        WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, null);
                         COMUtils.checkRC(hr);
 
                         GenericProvider.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, lambda_variable, pType, pVal);

@@ -17,6 +17,7 @@ public class WmiProviderTest {
     @Test
     public void TestBuildQuery() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
                 false,
@@ -43,9 +44,9 @@ public class WmiProviderTest {
         String[] namespacesSamples = {
                 "ROOT\\Cli",
                 "ROOT\\CIMV2",
-                "ROOT\\CIMV2\\mdm",
+                // "ROOT\\CIMV2\\mdm", // Not in Windows 7
                 "ROOT\\CIMV2\\power",
-                // "CIMV2\\Security\\MicrosoftVolumeEncryption",
+                // "CIMV2\\Security\\MicrosoftVolumeEncryption", //  Controlled access.
                 "ROOT\\Microsoft",
                 "ROOT\\Interop",
         };
@@ -74,6 +75,7 @@ public class WmiProviderTest {
     public void TestCIM_Process() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
         ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+                "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"));
@@ -92,6 +94,7 @@ public class WmiProviderTest {
     public void TestCIM_ProcessCurrent() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
         ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+                "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
@@ -116,6 +119,7 @@ public class WmiProviderTest {
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
         ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
@@ -145,6 +149,7 @@ public class WmiProviderTest {
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
         ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
@@ -167,18 +172,19 @@ public class WmiProviderTest {
     //  \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"
     @Test
     public void TestCIM_ProcessExecutableAntecedent() throws Exception {
-        String antecedentString = "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"";
+        String antecedentString = PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"");
 
         GenericProvider genericProvider = new GenericProvider();
         ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"),
                 Arrays.asList(new QueryData.WhereEquality("Antecedent", antecedentString)));
         String stringsResults = (String) listResults.stream().map(Object::toString)
                 .collect(Collectors.joining(", "));
-        System.out.println(stringsResults);
-        System.out.println(listResults.size());
+        System.out.println("stringsResults=" + stringsResults);
+        System.out.println("listResults.size()=" + listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
         for (GenericProvider.Row row : listResults) {
@@ -542,6 +548,7 @@ public class WmiProviderTest {
      * Please note that classes with the same name but in different namespaces, are different.
      * The intention of this test is simply to find classes worth of investigation.
      * Also, it tests whether these classes are correctly loaded.
+     * And it gives a list of interesting classes to test.
      */
     static private HashMap<String, List<String>> exclusiveClassesPerNamespace = new HashMap<>();
 
@@ -560,7 +567,7 @@ public class WmiProviderTest {
     }
 
     static {
-            exclusiveClassesPerNamespace.put("ROOT\\Cli",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Cli",List.of(
             "MSFT_CliConnection",
             "MSFT_CliTranslateTable",
             "MSFT_CliParam",
@@ -573,7 +580,7 @@ public class WmiProviderTest {
             "MSFT_CliVerb"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\directory\\LDAP",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\directory\\LDAP",List.of(
             "DSClass_To_DNInstance",
             "DS_LDAP_Instance_Containment",
             "DN_With_Binary",
@@ -585,11 +592,11 @@ public class WmiProviderTest {
             "RootDSE"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\winrm",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\winrm",List.of(
             "WsmAgent"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\subscription",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\subscription",List.of(
             "ActiveScriptEventConsumer",
             "LogFileEventConsumer",
             "SMTPEventConsumer",
@@ -597,7 +604,7 @@ public class WmiProviderTest {
             "NTEventLogEventConsumer"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\DEFAULT",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\DEFAULT",List.of(
             "__CIMOMIdentification",
             "ActiveScriptEventConsumer",
             "SystemRestore",
@@ -609,13 +616,13 @@ public class WmiProviderTest {
             "NTEventLogEventConsumer"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\WindowsUpdate",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\WindowsUpdate",List.of(
             "MSFT_WUOperations",
             "MSFT_WUSettings",
             "MSFT_WUUpdate"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Defender",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Defender",List.of(
             "MSFT_MpWDOScan",
             "MSFT_MpScan",
             "MSFT_MpEvent",
@@ -630,18 +637,18 @@ public class WmiProviderTest {
             "BaseStatus"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\PS_MMAgent",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\PS_MMAgent",List.of(
             "PS_MMAgent",
             "MMAgentComponents"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\SecurityCenter",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\SecurityCenter",List.of(
             "AntiSpywareProduct",
             "FirewallProduct",
             "AntiVirusProduct"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\StandardCimv2",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\StandardCimv2",List.of(
             "MSFT_NetNatExternalAddress",
             "MSFT_NetFirewallRuleFilterBySecurity",
             "MSFT_NetAdapterRdmaElementSetting",

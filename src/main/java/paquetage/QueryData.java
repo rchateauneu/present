@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
  */
 public class QueryData {
     final static Logger logger = Logger.getLogger(QueryData.class);
+
+    String namespace;
     String className;
 
     // Name of the Sparql variable containing the object. Its rdf:type is a CIM class.
@@ -210,16 +212,19 @@ public class QueryData {
     private Statistics statistics = new Statistics();
 
     QueryData(
+            String wmiNamespace,
             String wmiClassName,
             String variable,
             boolean mainVariableAvailable,
             Map<String, String> columns,
             List<QueryData.WhereEquality> wheres) throws Exception {
+        WmiOntology.CheckValidNamespace(wmiNamespace);
         mainVariable = variable;
         isMainVariableAvailable = mainVariableAvailable;
         if(wmiClassName.contains("#")) {
             throw new Exception("Invalid class:" + wmiClassName);
         }
+        namespace = wmiNamespace;
         className = wmiClassName;
         // Uniform representation of no columns selected (except the path).
         if(columns == null)

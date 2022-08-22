@@ -17,9 +17,35 @@ public class DependenciesBuilder {
      */
     public List<QueryData> prepared_queries;
 
+    /** This contains w WMI namespace, and a class or property. */
+    record NamespacedToken(String nameSpace, String Token) {}
+
+    // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessId"
+    static NamespacedToken SplitToken(String token) {
+        if(! token.contains("#")) {
+            throw new RuntimeException("Invalid token:" + token);
+        }
+        String[] splitToken = token.split("#");
+
+        String prefixUrl = splitToken[0];
+        String wmiNamespace;
+        if(prefixUrl.startsWith(WmiOntology.namespaces_url_prefix)) {
+            String wmiNamespaceSlashes = prefixUrl.substring(WmiOntology.namespaces_url_prefix.length());
+            // In the URL, the backslash separator of namespaces is replaced with a slash.
+            wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
+            WmiOntology.CheckValidNamespace(wmiNamespace);
+        } else {
+            wmiNamespace = null;
+        }
+        logger.debug("token="+token+" namespace="+wmiNamespace);
+
+        return new NamespacedToken(wmiNamespace, splitToken[1]);
+    }
+
     /** This takes as input a list of object patterns, and assumes that each of them represents a WQL query,
-     * there queries being nested into one another (top-level first).
+     * the queries being nested into one another (top-level first).
      * The execution of WQL queries is optimised be changing the order of the patterns list.
+     * Each ObjectPattern instances contains all the triples related to the same RDF subject.
      * @param patterns
      * @throws Exception
      */
@@ -43,6 +69,8 @@ public class DependenciesBuilder {
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
 
+            // The namespace must be the same for all predicates and the class.
+            String currentNamespace = null;
             // This will always be null if the properties are not prefixed with the class name.
             // This is OK of the type is given with a triple with rdf:type as predicate.
             String deducedClassName = null;
@@ -54,10 +82,15 @@ public class DependenciesBuilder {
             for(ObjectPattern.PredicateObjectPair keyValue: pattern.Members) {
                 String predicateName = keyValue.Predicate();
                 String valueContent = keyValue.Content();
-                if(! predicateName.contains("#")) {
-                    throw new Exception("Invalid predicate:" + predicateName);
+                NamespacedToken namespacedPredicate = SplitToken(predicateName);
+                String shortPredicate = namespacedPredicate.Token;
+                if(currentNamespace == null) {
+                    currentNamespace = namespacedPredicate.nameSpace;
+                } else {
+                    if(!currentNamespace.equals(namespacedPredicate.nameSpace)) {
+                        throw new RuntimeException("Different namespaces:"+currentNamespace+"!="+namespacedPredicate.nameSpace);
+                    }
                 }
-                String shortPredicate = predicateName.split("#")[1];
 
                 // Maybe the predicate is prefixed with the class name, for example "CIM_Process.Handle".
                 // If so, the class name is deduced and will be compared.
@@ -66,11 +99,11 @@ public class DependenciesBuilder {
                     if (splitPredicate.length == 2) {
                         // Without the prefix.
                         shortPredicate = splitPredicate[1];
-                        String predicatePrefix = splitPredicate[0];
+                        String predicateDotPrefix = splitPredicate[0];
                         if(deducedClassName == null)
-                            deducedClassName = predicatePrefix;
+                            deducedClassName = predicateDotPrefix;
                         else {
-                            if(!deducedClassName.equals(predicatePrefix)) {
+                            if(!deducedClassName.equals(predicateDotPrefix)) {
                                 throw new Exception("Different predicates prefixes:" + shortPredicate + "/" + deducedClassName);
                             }
                         }
@@ -122,21 +155,31 @@ public class DependenciesBuilder {
                 if (!pattern.className.contains("#")) {
                     throw new Exception("Invalid class name:" + pattern.className);
                 }
-                shortClassName = pattern.className.split("#")[1];
+                // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Process"
+                NamespacedToken namespacedClassName = SplitToken(pattern.className);
+                shortClassName = namespacedClassName.Token;
                 if (deducedClassName != null) {
                     // If the class is explicitly given, and also is the prefix of some attributes.
                     if (!shortClassName.equals(deducedClassName)) {
                         throw new Exception("Different short class=" + shortClassName + " and deduced=" + deducedClassName);
                     }
                 }
+                if (currentNamespace != null) {
+                    if (!currentNamespace.equals(namespacedClassName.nameSpace)) {
+                        throw new RuntimeException("Different namespaces:" + currentNamespace + "!=" + namespacedClassName.nameSpace);
+                    }
+                } else {
+                    currentNamespace = namespacedClassName.nameSpace;
+                }
             }
 
             if(shortClassName != null) {
-                // A class name is need to run WQL queries.
-                QueryData queryData = new QueryData(shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
+                // A class name is need to run WQL queries, and also its WMI namespace.
+                WmiOntology.CheckValidNamespace(currentNamespace);
+                QueryData queryData = new QueryData(currentNamespace, shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
                 prepared_queries.add(queryData);
             }
-        }
+        } // Next ObjectPattern
     }
 
     /**

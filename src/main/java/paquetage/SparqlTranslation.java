@@ -20,7 +20,7 @@ public class SparqlTranslation {
         bindings = input_extractor.bindings;
 
         if( 1 == 2) {
-            // Il faut le recreer a chaque vois meme si variableContext est le meme.
+            // TODO: Il faut le recreer a chaque vois meme si variableContext est le meme.
             PatternsOptimizer optimizer = new PatternsOptimizer();
             optimizer.ReorderPatterns(patterns);
         }
@@ -164,6 +164,8 @@ public class SparqlTranslation {
         }
     }
 
+    /** TODO: This should not return the same "Row" as ExecuteQuery because here, the Row are created by this
+     * TODO: local code, not by the Sparql engine. This is confusing. */
     public ArrayList<GenericProvider.Row> ExecuteToRows() throws Exception
     {
         current_rows = new ArrayList<GenericProvider.Row>();

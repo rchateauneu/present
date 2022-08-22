@@ -12,6 +12,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Map.entry;
+
+
 /**
  * This selects from WMI elements of a class, optionally with a WHERE clause made of key-value pairs.
  */
@@ -56,6 +59,7 @@ public class WmiProvider {
     }
 
     static Wbemcli.IWbemServices GetWbemService(String namespace) {
+        WmiOntology.CheckValidNamespace(namespace);
         Wbemcli.IWbemServices wbemService = wbemServices.get(namespace);
         if(wbemService == null) {
             // String prefixedNamespace = namespace.equals("") ? "ROOT" : "ROOT\\" + namespace;
@@ -114,6 +118,9 @@ public class WmiProvider {
     // This will never change when a machine is running, so storing it in a cache makes tests faster.
     private static HashMap<String, Map<String, WmiClass>> cacheClassesMap = new HashMap<>();
 
+    // This will never change when a machine is running, so storing it in a cache makes tests faster.
+    private static HashSet<String> cacheNamespaces = null;
+
     /** Excluding Localization Namespaces : https://powershell.one/wmi/root
      * To find real namespaces with potentially interesting classes in them,
      * exclude any namespace name that starts with “ms_” followed by at least two numbers.
@@ -122,9 +129,7 @@ public class WmiProvider {
 
     private void Namespaces(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
         logger.debug("namespace=" + namespace);
-        if(! namespace.startsWith("ROOT")) {
-            throw new RuntimeException("Invalid namespace:" + namespace);
-        }
+        WmiOntology.CheckValidNamespace(namespace);
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
         "WQL",
                 "SELECT Name FROM __NAMESPACE",
@@ -180,12 +185,16 @@ public class WmiProvider {
     }
 
     public Set<String> Namespaces() {
-        Set<String> namespacesHierarchical = new HashSet<>();
-        Namespaces(namespacesHierarchical, wbemServiceRoot, "ROOT");
-        return namespacesHierarchical;
+        if(cacheNamespaces == null) {
+            cacheNamespaces = new HashSet<>();
+            logger.debug("Filling namespaces cache");
+            Namespaces(cacheNamespaces, wbemServiceRoot, "ROOT");
+            logger.debug("End. Number of namespaces=" + cacheNamespaces.size());
+        }
+        return cacheNamespaces;
     }
 
-
+    // Very commonly used.
     public Map<String, WmiClass> ClassesCIMV2() {
         return Classes("ROOT\\CIMV2");
     }
@@ -320,26 +329,107 @@ public class WmiProvider {
         return resultClasses;
     }
 
+    static Map<Integer, String> mapVariantTypes = Map.ofEntries(
+            entry(Variant.VT_EMPTY, "VT_EMPTY"),
+            entry(Variant.VT_NULL, "VT_NULL"),
+            entry(Variant.VT_I2, "VT_I2"),
+            entry(Variant.VT_I4, "VT_I4"),
+            entry(Variant.VT_R4, "VT_R4"),
+            entry(Variant.VT_R8, "VT_R8"),
+            entry(Variant.VT_CY, "VT_CY"),
+            entry(Variant.VT_DATE, "VT_DATE"),
+            entry(Variant.VT_BSTR, "VT_BSTR"),
+            entry(Variant.VT_DISPATCH, "VT_DISPATCH"),
+            entry(Variant.VT_ERROR, "VT_ERROR"),
+            entry(Variant.VT_BOOL, "VT_BOOL"),
+            entry(Variant.VT_VARIANT, "VT_VARIANT"),
+            entry(Variant.VT_UNKNOWN, "VT_UNKNOWN"),
+            entry(Variant.VT_DECIMAL, "VT_DECIMAL"),
+            entry(Variant.VT_I1, "VT_I1"),
+            entry(Variant.VT_UI1, "VT_UI1"),
+            entry(Variant.VT_UI2, "VT_UI2"),
+            entry(Variant.VT_UI4, "VT_UI4"),
+            entry(Variant.VT_I8, "VT_I8"),
+            entry(Variant.VT_UI8, "VT_UI8"),
+            entry(Variant.VT_INT, "VT_INT"),
+            entry(Variant.VT_UINT, "VT_UINT"),
+            entry(Variant.VT_VOID, "VT_VOID"),
+            entry(Variant.VT_HRESULT, "VT_HRESULT"),
+            entry(Variant.VT_PTR, "VT_PTR"),
+            entry(Variant.VT_SAFEARRAY, "VT_SAFEARRAY"),
+            entry(Variant.VT_CARRAY, "VT_CARRAY"),
+            entry(Variant.VT_USERDEFINED, "VT_USERDEFINED"),
+            entry(Variant.VT_LPSTR, "VT_LPSTR"),
+            entry(Variant.VT_LPWSTR, "VT_LPWSTR"),
+            entry(Variant.VT_RECORD, "VT_RECORD"),
+            entry(Variant.VT_INT_PTR, "VT_INT_PTR"),
+            entry(Variant.VT_UINT_PTR, "VT_UINT_PTR"),
+            entry(Variant.VT_FILETIME, "VT_FILETIME"),
+            entry(Variant.VT_BLOB, "VT_BLOB"),
+            entry(Variant.VT_STREAM, "VT_STREAM"),
+            entry(Variant.VT_STORAGE, "VT_STORAGE"),
+            entry(Variant.VT_STREAMED_OBJECT, "VT_STREAMED_OBJECT"),
+            entry(Variant.VT_STORED_OBJECT, "VT_STORED_OBJECT"),
+            entry(Variant.VT_BLOB_OBJECT, "VT_BLOB_OBJECT"),
+            entry(Variant.VT_CF, "VT_CF"),
+            entry(Variant.VT_CLSID, "VT_CLSID"),
+            entry(Variant.VT_VERSIONED_STREAM, "VT_VERSIONED_STREAM"),
+            // entry(Variant.VT_BSTR_BLOB, "VT_BSTR_BLOB"), // Duplicate 4095
+            entry(Variant.VT_VECTOR, "VT_VECTOR"),
+            entry(Variant.VT_ARRAY, "VT_ARRAY"),
+            entry(Variant.VT_BYREF, "VT_BYREF"),
+            entry(Variant.VT_RESERVED, "VT_RESERVED"),
+            entry(Variant.VT_ILLEGAL, "VT_ILLEGAL"),
+            // entry(Variant.VT_ILLEGALMASKED, "VT_ILLEGALMASKED"), // Duplicate 4095
+            entry(Variant.VT_TYPEMASK, "VT_TYPEMASK")
+            );
+
+
+    static Map<Integer, String> mapCimTypes = Map.ofEntries(
+            entry(Wbemcli.CIM_ILLEGAL, "CIM_ILLEGAL"),
+            entry(Wbemcli.CIM_EMPTY, "CIM_EMPTY"),
+            entry(Wbemcli.CIM_SINT8, "CIM_SINT8"),
+            entry(Wbemcli.CIM_UINT8, "CIM_UINT8"),
+            entry(Wbemcli.CIM_SINT16, "CIM_SINT16"),
+            entry(Wbemcli.CIM_UINT16, "CIM_UINT16"),
+            entry(Wbemcli.CIM_SINT32, "CIM_SINT32"),
+            entry(Wbemcli.CIM_UINT32, "CIM_UINT32"),
+            entry(Wbemcli.CIM_SINT64, "CIM_SINT64"),
+            entry(Wbemcli.CIM_UINT64, "CIM_UINT64"),
+            entry(Wbemcli.CIM_REAL32, "CIM_REAL32"),
+            entry(Wbemcli.CIM_REAL64, "CIM_REAL64"),
+            entry(Wbemcli.CIM_BOOLEAN, "CIM_BOOLEAN"),
+            entry(Wbemcli.CIM_STRING, "CIM_STRING"),
+            entry(Wbemcli.CIM_DATETIME, "CIM_DATETIME"),
+            entry(Wbemcli.CIM_REFERENCE, "CIM_REFERENCE"),
+            entry(Wbemcli.CIM_CHAR16, "CIM_CHAR16"),
+            entry(Wbemcli.CIM_OBJECT, "CIM_OBJECT"),
+            entry(Wbemcli.CIM_FLAG_ARRAY, "CIM_FLAG_ARRAY")
+    );
+
     static GenericProvider.Row.ValueTypePair VariantToValueTypePair(
             String lambda_column,
             String lambda_variable,
             IntByReference pType,
             Variant.VARIANT.ByReference pVal) {
-        // TODO: If the value is a reference, get the object !
-                        /*
-                        if(pType.getValue() == Wbemcli.CIM_REFERENCE) ...
-                        Reference properties, which have the type CIM_REFERENCE,
-                        that contains the "REF:classname" value.
-                        The classname value describes the class type of the reference property.
-                        There is apparently no way to get the object pointed to by the reference.
-                         */
+        /** TODO: If the value is a reference, get the object if possible ! Or is it simply a string ?
+        if(pType.getValue() == Wbemcli.CIM_REFERENCE) ...
+            Reference properties, which have the type CIM_REFERENCE,
+            that contains the "REF:classname" value.
+            The classname value describes the class type of the reference property.
+            There is apparently no way to get the object pointed to by the reference.
+         */
         WTypes.VARTYPE wtypesValueType = pVal.getVarType();
         // The value is sometimes different. Take the supposedly good one.
         int valueTypeUnknown = wtypesValueType.intValue();
         int valueType = pType.getValue();
+        /*
         if(valueType != valueTypeUnknown) {
-            logger.warn("Different types:" + valueType + " != " + valueTypeUnknown + "=" + pType.toString());
+            String valueTypeUnknownStr = mapVariantTypes.get(valueTypeUnknown);
+            String valueTypeStr = mapCimTypes.get(valueType);
+            logger.warn("Different types:" + valueType + "/" + valueTypeStr + " [" + pType + "]" + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
         }
+        */
 
         Object valObject = pVal.getValue();
         if(valObject == null) {
@@ -364,10 +454,9 @@ public class WmiProvider {
             switch(valueType) {
                 case Wbemcli.CIM_REFERENCE:
                 case Wbemcli.CIM_STRING:
-                    //oneRow.PutNode(lambda_variable, pVal.stringValue());
                     rowValue = pVal.stringValue();
                     rowType = GenericProvider.ValueType.NODE_TYPE;
-                    logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType.toString());
+                    // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
                     break;
                 case Wbemcli.CIM_SINT8:
                 case Wbemcli.CIM_UINT8:
@@ -382,8 +471,8 @@ public class WmiProvider {
                     if(valObject == null) {
                         // "Win32_Process.ExecutionState" might be null.
                         // This is temporarily indicated with a special string for later debugging.
+                        // TODO: Some values are null. Why ?
                         longValue = lambda_column + "_IS_NULL";
-                        //oneRow.PutString(lambda_variable, longValue);
                         rowType = GenericProvider.ValueType.STRING_TYPE;
                     } else {
                         rowType = GenericProvider.ValueType.INT_TYPE;
@@ -392,9 +481,9 @@ public class WmiProvider {
                             longValue = Long.toString(pVal.longValue());
                         } else {
                             // Some corner cases do not work, i.e. Win32_Process.InstallDate
-                            logger.warn("Different types:" + valueType
-                                    + " != " + valueTypeUnknown
-                                    + "=" + pType.toString() );
+                            String valueTypeUnknownStr = mapVariantTypes.get(valueTypeUnknown);
+                            String valueTypeStr = mapCimTypes.get(valueType);
+                            logger.warn("Different types:" + valueType + "/" + valueTypeStr + " [" + pType + "]" + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
 
                             // FIXME: Obscure behaviour in some corner cases ??
                             switch(valueTypeUnknown) {
@@ -411,7 +500,6 @@ public class WmiProvider {
                                 case Wbemcli.CIM_UINT64:
                                 case Wbemcli.CIM_SINT64:
                                     longValue = Long.toString(pVal.longValue());
-                                    rowValue = longValue;
                                     break;
                                 case Wbemcli.CIM_REAL32:
                                 case Wbemcli.CIM_REAL64:
@@ -421,13 +509,11 @@ public class WmiProvider {
                                     break;
                             } // switch
                         }
-                        //oneRow.PutLong(lambda_variable, longValue);
                     }
                     rowValue = longValue;
                     break;
                 case Wbemcli.CIM_REAL32:
                 case Wbemcli.CIM_REAL64:
-                    //oneRow.PutFloat(lambda_variable, Double.toString(pVal.doubleValue()));
                     rowValue = Double.toString(pVal.doubleValue());
                     rowType = GenericProvider.ValueType.FLOAT_TYPE;
                     break;
@@ -442,7 +528,6 @@ public class WmiProvider {
                     }
                     String dateValue = pVal.stringValue();
                     logger.debug("dateValue=" + dateValue);
-                    //oneRow.PutDate(lambda_variable, dateValue);
                     rowValue = dateValue;
                     rowType = GenericProvider.ValueType.DATE_TYPE;
                     break;
@@ -452,7 +537,6 @@ public class WmiProvider {
                         logger.error("Null when converting lambda_column=" + lambda_column
                                 + " lambda_variable=" + lambda_variable + " type=" + valueType);
                     }
-                    //oneRow.PutString(lambda_variable, valStringValue);
                     rowValue = valStringValue;
                     rowType = GenericProvider.ValueType.STRING_TYPE;
                     break;
