@@ -1,6 +1,13 @@
 package paquetage;
 
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PresentUtils {
 
@@ -36,7 +43,76 @@ public class PresentUtils {
         String javaHome = System.getProperty("java.home");
         return javaHome + "\\bin\\java.exe";
     }
-    static public String ToXml(long longNumber) {
+
+    static public String LongToXml(long longNumber) {
         return "\"" + longNumber + "\"^^<http://www.w3.org/2001/XMLSchema#long>";
+    }
+
+    static public String IntToXml(int intNumber) {
+        return "\"" + intNumber + "\"^^<http://www.w3.org/2001/XMLSchema#integer>";
+    }
+
+    /** This is used to extract the significant part for "\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>",
+     * for example. The XSD type is not checked.
+     */
+    static private String regexQuotes = "\"(.*)\".*";
+    static private Pattern patternQuotesXML = Pattern.compile(regexQuotes);
+
+    static private String extractStringXML(String xmlString) {
+        Matcher matcher = patternQuotesXML.matcher(xmlString);
+        matcher.find();
+        String stringOnly = matcher.group(1);
+        return stringOnly;
+    }
+
+    /** For example longStr = "\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>" */
+    static public long XmlToLong(String longStr) {
+        String longOnly = extractStringXML(longStr);
+        return Long.parseLong(longOnly);
+    }
+
+    static public double XmlToDouble(String doubleStr) {
+        String doubleOnly = extractStringXML(doubleStr);
+        return Double.parseDouble(doubleOnly);
+    }
+
+    /** Transforms a RDF date into a string.
+     *
+     * @param theDate Example: '"2022-02-11T00:44:44.730519"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
+     * @return Example: '2022-02-11T00:44:44.730519'
+     * @throws Exception
+     */
+    static public XMLGregorianCalendar ToXMLGregorianCalendar(String theDate) throws Exception {
+        // https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
+        // yyyymmddHHMMSS.mmmmmmsUUU
+        // "20220720101048.502446+060"
+
+        // '"2022-07-20"^^<http://www.w3.org/2001/XMLSchema#date>'
+        DatatypeFactory dataTypeFactory = DatatypeFactory.newInstance();
+        String dateOnly = extractStringXML(theDate);
+
+        //System.out.println("dateOnly=" + dateOnly);
+
+        XMLGregorianCalendar xmlDate = dataTypeFactory.newXMLGregorianCalendar(dateOnly);
+        return xmlDate;
+    }
+
+    /** This is used for testing.
+     *
+     * @param listRows
+     * @param variable_name
+     * @return
+     */
+    static Set<String> StringValuesSet(List<GenericProvider.Row> listRows, String variable_name) {
+        return listRows.stream().map(row->row.GetStringValue(variable_name)).collect(Collectors.toSet());
+    }
+
+    static String toCIMV2(String term) {
+        return NamespaceTermToIRI("ROOT\\CIMV2", term);
+    }
+
+    static String NamespaceTermToIRI(String namespace, String term) {
+        return WmiOntology.NamespaceUrlPrefix(namespace) + term;
+
     }
 }

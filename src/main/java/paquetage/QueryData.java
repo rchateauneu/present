@@ -74,8 +74,6 @@ public class QueryData {
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
 
-            // key = "http://www.primhillcomputers.com/ontology/survol#Win32_Process"
-
             if(value == null) {
                 // This should not happen.
                 logger.debug("Value of " + predicate + " is null");
@@ -85,17 +83,19 @@ public class QueryData {
         }
     };
 
-    public boolean CompatibleQuery(String whereClassName, Set<String> whereColumns)
+    /** Checks if a selecter or a getter can be used for a QueryData. */
+    public boolean CompatibleQuery(String whereClassName, Set<String> whereColumns, Set<String> availableColumns)
     {
-        if(! className.equals(whereClassName)) {
+        // It must be for the goo=d class, and be able to return the needed columns.
+        if(! ColumnsSubsetOf(whereClassName, availableColumns)) {
             return false;
         }
-        Set<String> queryWhereColumns = whereTests.stream().map(x -> x.predicate).collect(Collectors.toSet());
 
+        // The lookup is based on properties given in a "where" test. So this column must be given.
+        Set<String> queryWhereColumns = whereTests.stream().map(x -> x.predicate).collect(Collectors.toSet());
         if(! queryWhereColumns.equals(whereColumns)) {
             return false;
         }
-
         return true;
     }
 

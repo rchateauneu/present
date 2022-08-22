@@ -28,9 +28,19 @@ abstract class BaseSelecter {
 class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
     {
-        return queryData.CompatibleQuery("CIM_DataFile", Set.of("Name"));
+        // In this selecter, the column "Name" must be provided.
+        return queryData.CompatibleQuery(
+                "CIM_DataFile",
+                Set.of("Name"),
+                BaseGetter_CIM_DataFile_Name.columnsMap.keySet());
     }
 
+    /** This selects attributes of files whose name is given. This will return one file only.
+     *
+     * @param queryData
+     * @return
+     * @throws Exception
+     */
     public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<GenericProvider.Row> result = new ArrayList<>();
         String fileName = queryData.GetWhereValue("Name");
@@ -49,7 +59,10 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
 
 class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData) {
-        return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("PartComponent"));
+        return queryData.CompatibleQuery(
+                "CIM_DirectoryContainsFile",
+                Set.of("PartComponent"),
+                Set.of("GroupComponent"));
     }
     public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<GenericProvider.Row> result = new ArrayList<>();
@@ -78,7 +91,9 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
 
 class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData) {
-        return queryData.CompatibleQuery("CIM_DirectoryContainsFile", Set.of("GroupComponent"));
+        return queryData.CompatibleQuery("CIM_DirectoryContainsFile",
+                Set.of("GroupComponent"),
+                Set.of("PartComponent"));
     }
     public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<GenericProvider.Row> result = new ArrayList<>();
@@ -124,7 +139,10 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
     static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchProvider(QueryData queryData) {
-        return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Antecedent"));
+        return queryData.CompatibleQuery(
+                "CIM_ProcessExecutable",
+                Set.of("Antecedent"),
+                Set.of("Dependent"));
     }
     public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<GenericProvider.Row> result = new ArrayList<>();
@@ -157,10 +175,14 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
  *
  */
 class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
+    final static private Logger logger = Logger.getLogger(BaseSelecter_CIM_ProcessExecutable_Dependent.class);
     static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchProvider(QueryData queryData) {
-        return queryData.CompatibleQuery("CIM_ProcessExecutable", Set.of("Dependent"));
+        return queryData.CompatibleQuery(
+                "CIM_ProcessExecutable",
+                Set.of("Dependent"),
+                Set.of("Antecedent"));
     }
     public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
         ArrayList<GenericProvider.Row> result = new ArrayList<>();
@@ -278,7 +300,12 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
 
     public static void FillRowFromQueryAndFilename(GenericProvider.Row singleRow, QueryData queryData, String fileName) {
         for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
-            Function<String, GenericProvider.Row.ValueTypePair> lambda = columnsMap.get(qCol.getKey());
+            String columnKey = qCol.getKey();
+            Function<String, GenericProvider.Row.ValueTypePair> lambda = columnsMap.get(columnKey);
+            if(lambda == null)
+            {
+                throw new RuntimeException("No lambda for columnKey=" + columnKey + " fileName=" + fileName);
+            }
             GenericProvider.Row.ValueTypePair variableValue = lambda.apply(fileName); // columnsMap.get)
             singleRow.PutValueType(qCol.getValue(), variableValue);
         }
@@ -418,7 +445,7 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
 public class GenericProvider {
     final static private Logger logger = Logger.getLogger(GenericProvider.class);
 
-    /** This is a special value type for Survol, to bridge data types between WMI/WBEM and RDF.
+    /** This is a special value type for this software, to bridge data types between WMI/WBEM and RDF.
      * The most important feature is NODE_TYPE which models a WBEM path and an IRI.
      */
     public enum ValueType {
@@ -482,6 +509,14 @@ public class GenericProvider {
 
         public String GetStringValue(String key) {
             return GetValueType(key).Value;
+        }
+
+        public double GetDoubleValue(String key) {
+            return Double.parseDouble(GetValueType(key).Value);
+        }
+
+        public long GetLongValue(String key) {
+            return Long.parseLong(GetValueType(key).Value);
         }
 
         public void PutString(String key, String str) {

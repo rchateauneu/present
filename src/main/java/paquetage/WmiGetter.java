@@ -28,7 +28,7 @@ public class WmiGetter extends BaseGetter {
 
     public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) throws Exception {
         try {
-            Wbemcli.IWbemClassObject objectNode = wmiselecter.svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+            Wbemcli.IWbemClassObject objectNode = wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
             return objectNode;
         } catch (com.sun.jna.platform.win32.COM.COMException exc) {
             // Error Code 80041002 – Object Not Found
@@ -92,67 +92,22 @@ public class WmiGetter extends BaseGetter {
         pctxDrive.SetValue("__GET_EXT_PROPERTIES", 0, vPropertyList);
         psaProperties.destroy();
 
-        return wmiselecter.svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
+        return wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
     GenericProvider.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
+        IntByReference plFlavor = new IntByReference(); //  Maybe this is not needed.
         try {
-            COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, null));
+            COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, plFlavor));
         } catch (Exception exc) {
             // So it is easier to debug.
             throw exc;
         }
-        try {
-            String value = null;
-            GenericProvider.ValueType valueType = null;
-            /*
-            public static final int CIM_UINT32 = 19;
-            public static final int CIM_SINT64 = 20;
-            public static final int CIM_UINT64 = 21;
-            public static final int CIM_REAL32 = 4;
-            public static final int CIM_REAL64 = 5;
-            public static final int CIM_BOOLEAN = 11;
-            public static final int CIM_STRING = 8;
-            public static final int CIM_DATETIME = 101;
-            public static final int CIM_REFERENCE = 102;
-            */
 
-            int wbemValueType = pType.getValue();
-            if(propertyName.equals("__PATH")) {
-                /** Problem: How to detect in the general case, when this is a path, for example
-                 * CIM_Process.Executable.Antecedent or Win32_SubDirectory.GroupComponent ?
-                 */
-                if(wbemValueType != Wbemcli.CIM_STRING) {
-                    throw new RuntimeException("Not CIM_STRING: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
-                }
-                //logger.debug("value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
-                value = pVal.stringValue();
-                valueType = GenericProvider.ValueType.NODE_TYPE;
-            } else if(wbemValueType == Wbemcli.CIM_UINT32) {
-                // Needed for example for Win32_Process.ProcessId.
-                value = Integer.toString(pVal.intValue());
-                valueType = GenericProvider.ValueType.INT_TYPE;
-            } else if (wbemValueType == Wbemcli.CIM_REFERENCE) {
-                logger.error("Is CIM_REFERENCE: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
-                value = pVal.stringValue();
-                valueType = GenericProvider.ValueType.NODE_TYPE;
-                throw new RuntimeException("When does it happen: value=" + value + " valueType=" + valueType + " wbemValueType=" + Integer.toString(wbemValueType));
-            } else {
-                value = pVal.stringValue();
-                valueType = GenericProvider.ValueType.STRING_TYPE;
-            }
-            OleAuto.INSTANCE.VariantClear(pVal);
-
-            if(value == null) {
-                logger.error("Cannot convert propertyName=" + propertyName + " type=" + wbemValueType);
-            }
-            return new GenericProvider.Row.ValueTypePair(value, valueType);
-        } catch (ClassCastException exc) {
-            // So it is easier to debug.
-            throw exc;
-        }
+        GenericProvider.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, "n/a", pType, pVal);
+        return rowValueType;
     }
 
     /**

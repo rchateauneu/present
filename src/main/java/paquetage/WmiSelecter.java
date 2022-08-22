@@ -4,13 +4,11 @@ import COM.Wbemcli;
 import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.platform.win32.OleAuto;
 import com.sun.jna.platform.win32.Variant;
-import com.sun.jna.platform.win32.WTypes;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.function.BiConsumer;
 
 public class WmiSelecter extends BaseSelecter {
@@ -46,8 +44,10 @@ public class WmiSelecter extends BaseSelecter {
         // The results are batched in a big number, so it is faster.
         int countRows = 100;
 
+        // TODO: To speedup, especially Wmi_Product, consider partial object get, or asynchronous query.
+
         // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
-        Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.svc.ExecQuery("WQL", wqlQuery,
+        Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.wbemServiceRootCimv2.ExecQuery("WQL", wqlQuery,
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
         logger.debug("wqlQuery finished");
         try {
@@ -72,90 +72,15 @@ public class WmiSelecter extends BaseSelecter {
                     // All values are NULL except, typically:
                     //     __CLASS=Win32_Process
                     //     __RELPATH=Win32_Process.Handle="4"
-                    if (false) {
-                        String[] names = wqlResult.GetNames(null, 0, null);
-                        System.out.println("names=" + String.join("+", names));
-
-                        for (String col : names) {
-                            COMUtils.checkRC(wqlResult.Get(col, 0, pVal, pType, plFlavor));
-                            if (pVal.getValue() == null)
-                                System.out.println(col + "=" + "NULL");
-                            else
-                                System.out.println(col + "=" + pVal.getValue().toString());
-                            OleAuto.INSTANCE.VariantClear(pVal);
-                        }
-                    }
 
                     // This lambda extracts the value of a single column.
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
                         WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, plFlavor);
                         COMUtils.checkRC(hr);
-                        // TODO: If the value is a reference, get the object !
-                        /*
-                        if(pType.getValue() == Wbemcli.CIM_REFERENCE) ...
-                        Reference properties, which have the type CIM_REFERENCE,
-                        that contains the "REF:classname" value.
-                        The classname value describes the class type of the reference property.
-                        There is apparently no way to get the object pointed to by the reference.
-                         */
-                        WTypes.VARTYPE wtypesValueType = pVal.getVarType();
-                        int valueType = wtypesValueType.intValue();
 
-                        Object valObject = pVal.getValue();
-                        if(valObject == null) {
-                            logger.debug("Value is null. lambda_column=" + lambda_column
-                                    + " lambda_variable=" + lambda_variable + " type=" + valueType);
-                        }
+                        GenericProvider.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, lambda_variable, pType, pVal);
+                        oneRow.PutValueType(lambda_variable, rowValueType);
 
-                        if(lambda_column.equals("__PATH")) {
-                            // Not consistent for Win32_Product.
-                            if(valueType != Wbemcli.CIM_REFERENCE && valueType != Wbemcli.CIM_STRING && valueType != 1) {
-                                // FIXME: Theoretically, it should only be CIM_REFERENCE ...
-                                throw new RuntimeException(
-                                        "Should be CIM_STRING lambda_column=" + lambda_column
-                                                + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
-                            }
-                            oneRow.PutNode(lambda_variable, pVal.stringValue());
-                        }
-                        else {
-                            switch(valueType) {
-                                case Wbemcli.CIM_REFERENCE:
-                                case Wbemcli.CIM_STRING:
-                                    oneRow.PutNode(lambda_variable, pVal.stringValue());
-                                    break;
-                                case Wbemcli.CIM_SINT8:
-                                case Wbemcli.CIM_UINT8:
-                                case Wbemcli.CIM_SINT16:
-                                case Wbemcli.CIM_UINT16:
-                                case Wbemcli.CIM_UINT32:
-                                case Wbemcli.CIM_SINT32:
-                                case Wbemcli.CIM_UINT64:
-                                case Wbemcli.CIM_SINT64:
-                                    // Mandatory conversion for Win32_Process.ProcessId, for example.
-                                    // "Win32_Process.ExecutionState" might be null.
-                                    // This is temporarily indicated with a special string.
-                                    String longValue = valObject == null ? lambda_column + "_IS_NULL" : Long.toString(pVal.longValue());
-                                    oneRow.PutLong(lambda_variable, longValue);
-                                    break;
-                                case Wbemcli.CIM_REAL32:
-                                case Wbemcli.CIM_REAL64:
-                                    oneRow.PutFloat(lambda_variable, Double.toString(pVal.doubleValue()));
-                                    break;
-                                case Wbemcli.CIM_DATETIME:
-                                    Date dateValueDate = pVal.dateValue();
-                                    String dateValue = dateValueDate.toString();
-                                    oneRow.PutDate(lambda_variable, dateValue);
-                                    break;
-                                default:
-                                    String valStringValue = pVal.stringValue();
-                                    if (valStringValue == null) {
-                                        logger.error("Null when converting lambda_column=" + lambda_column
-                                                + " lambda_variable=" + lambda_variable + " type=" + valueType);
-                                    }
-                                    oneRow.PutString(lambda_variable, valStringValue);
-                                    break;
-                            } // switch
-                        }
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
 

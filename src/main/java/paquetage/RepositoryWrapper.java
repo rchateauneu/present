@@ -3,8 +3,6 @@ package paquetage;
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
@@ -24,24 +22,18 @@ import java.util.Set;
  */
 public class RepositoryWrapper {
     final static private Logger logger = Logger.getLogger(RepositoryWrapper.class);
-    private RepositoryConnection reco;
+    private RepositoryConnection localRepositoryConnection;
 
-    private static WmiOntology ontology = new WmiOntology(true);
-
-    /*
-    RepositoryWrapper() {
-        reco = null;
-    }
-    */
+    private static WmiOntology ontology = new WmiOntology("ROOT\\CIMV2", true);
 
     RepositoryWrapper(RepositoryConnection repositoryConnection)
     {
-        reco = repositoryConnection;
+        this.localRepositoryConnection = repositoryConnection;
         InsertOntology();
     }
 
     public boolean IsValid() {
-        return reco != null;
+        return localRepositoryConnection != null;
     }
 
     public static RepositoryWrapper CreateSailRepositoryFromMemory() throws Exception {
@@ -50,17 +42,29 @@ public class RepositoryWrapper {
         return new RepositoryWrapper(repositoryConnect);
     }
 
-    void InsertOntology(){
-        RepositoryResult<Statement> result = ontology.connection.getStatements(null, null, null, true);
-        while(result.hasNext()) {
-            Statement statement = result.next();
-            reco.add(statement.getSubject(), statement.getPredicate(), statement.getObject());
-        }
+    /** This loads all triples of the ontology and inserts them in the repository.
+     * This is rather slow because an ontology contains thousands of triples.
+     * TODO: It may be faster to reload the Sail repository from the cache file, instead of looping on the memory cache.
+     */
+    void InsertOntology() {
+        logger.debug("Inserting ontology triples");
+        long countInit = localRepositoryConnection.size();
+        RepositoryResult<Statement> result = ontology.repositoryConnection.getStatements(null, null, null, true);
+        localRepositoryConnection.add(result);
+        long countEnd = localRepositoryConnection.size();
+        logger.debug("Inserted " + (countEnd - countInit) + " triples from " + countInit);
     }
 
+    /** TODO: For performance, consider using Statement instead of Triple.
+     * This might avoid this explicit loop.
+     * https://rdf4j.org/javadoc/latest/org/eclipse/rdf4j/model/Triple.html
+     * "Unlike Statement, a triple never has an associated context."
+     *
+     * @param triples
+     */
     void InsertTriples(List<Triple> triples) {
         for (Triple triple : triples) {
-            reco.add(triple.getSubject(), triple.getPredicate(), triple.getObject());
+            localRepositoryConnection.add(triple.getSubject(), triple.getPredicate(), triple.getObject());
         }
     }
 
@@ -78,9 +82,6 @@ public class RepositoryWrapper {
 
         ArrayList<GenericProvider.Row> translatedRows = sparqlTranslator.ExecuteToRows();
         logger.debug("Translated rows:" + translatedRows.size());
-        for(GenericProvider.Row oneRow : translatedRows) {
-            logger.debug("Translated row:" + oneRow);
-        }
 
         List<Triple> triples = extractor.GenerateTriples(translatedRows);
 
@@ -89,7 +90,7 @@ public class RepositoryWrapper {
         // Now, execute the sparql query in the repository which contains the ontology
         // and the result of the WQL executions.
         List<GenericProvider.Row> listRows = new ArrayList<>();
-        TupleQuery tupleQuery = reco.prepareTupleQuery(sparqlQuery);
+        TupleQuery tupleQuery = localRepositoryConnection.prepareTupleQuery(sparqlQuery);
         boolean checkedBindingsExecution = false;
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result

@@ -22,10 +22,6 @@ public class SparqlBGPExtractorTest {
         return pattern;
     }
 
-    static String toSurvol(String term) {
-        return WmiOntology.survol_url_prefix + term;
-    }
-
     @Test
     public void ParsePlainQuery() throws Exception {
         String sparqlQuery = """
@@ -58,12 +54,12 @@ public class SparqlBGPExtractorTest {
      */
     public void Parse_Win32_Directory_NoVariable() throws Exception {
         String sparqlQuery = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_directory
             where {
-                ?my_directory rdf:type cim:Win32_Directory .
-                ?my_directory cim:Name "C:" .
+                ?my_directory rdf:type cimv2:Win32_Directory .
+                ?my_directory cimv2:Name "C:" .
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -72,9 +68,9 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(toSurvol("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.className);
         Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), false, "C:");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), false, "C:");
     }
 
     @Test
@@ -83,12 +79,12 @@ public class SparqlBGPExtractorTest {
      */
     public void Parse_Win32_Directory_OneVariable() throws Exception {
         String sparqlQuery = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_name
             where {
-                ?my_directory rdf:type cim:Win32_Directory .
-                ?my_directory cim:Name ?my_name .
+                ?my_directory rdf:type cimv2:Win32_Directory .
+                ?my_directory cimv2:Name ?my_name .
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -97,9 +93,9 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(toSurvol("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.className);
         Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "my_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "my_name");
     }
 
     static void FindAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObjectPair> members, String predicate, boolean is_variable, String content) {
@@ -116,17 +112,17 @@ public class SparqlBGPExtractorTest {
      */
     public void Parse_CIM_ProcessExecutable_Win32_Process_CIM_DataFile() throws Exception {
         String sparqlQuery = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_file_name
             where {
-                ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-                ?my_assoc cim:Dependent ?my_process .
-                ?my_assoc cim:Antecedent ?my_file .
-                ?my_process rdf:type cim:Win32_Process .
-                ?my_process cim:Handle ?my_process_handle .
-                ?my_file rdf:type cim:CIM_DataFile .
-                ?my_file cim:Name "C:\\\\WINDOWS\\\\System32\\\\kernel32.dll" .
+                ?my_assoc rdf:type cimv2:CIM_ProcessExecutable .
+                ?my_assoc cimv2:Dependent ?my_process .
+                ?my_assoc cimv2:Antecedent ?my_file .
+                ?my_process rdf:type cimv2:Win32_Process .
+                ?my_process cimv2:Handle ?my_process_handle .
+                ?my_file rdf:type cimv2:CIM_DataFile .
+                ?my_file cimv2:Name "C:\\\\WINDOWS\\\\System32\\\\kernel32.dll" .
                 }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -135,20 +131,20 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(extractor.patternsAsArray().size(), 3);
 
         ObjectPattern patternCIM_ProcessExecutable = FindObjectPattern(extractor, "my_assoc");
-        Assert.assertEquals(patternCIM_ProcessExecutable.className, toSurvol("CIM_ProcessExecutable"));
+        Assert.assertEquals(patternCIM_ProcessExecutable.className, PresentUtils.toCIMV2("CIM_ProcessExecutable"));
         Assert.assertEquals(patternCIM_ProcessExecutable.Members.size(), 2);
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, toSurvol("Dependent"), true, "my_process");
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, toSurvol("Antecedent"), true, "my_file");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, PresentUtils.toCIMV2("Dependent"), true, "my_process");
+        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, PresentUtils.toCIMV2("Antecedent"), true, "my_file");
 
         ObjectPattern patternWin32_Process = FindObjectPattern(extractor, "my_process");
-        Assert.assertEquals(patternWin32_Process.className, toSurvol("Win32_Process"));
+        Assert.assertEquals(patternWin32_Process.className, PresentUtils.toCIMV2("Win32_Process"));
         Assert.assertEquals(patternWin32_Process.Members.size(), 1);
-        FindAndCompareKeyValue(patternWin32_Process.Members, toSurvol("Handle"), true, "my_process_handle");
+        FindAndCompareKeyValue(patternWin32_Process.Members, PresentUtils.toCIMV2("Handle"), true, "my_process_handle");
 
         ObjectPattern patternCIM_DataFile = FindObjectPattern(extractor, "my_file");
-        Assert.assertEquals(patternCIM_DataFile.className, toSurvol("CIM_DataFile"));
+        Assert.assertEquals(patternCIM_DataFile.className, PresentUtils.toCIMV2("CIM_DataFile"));
         Assert.assertEquals(patternCIM_DataFile.Members.size(), 1);
-        FindAndCompareKeyValue(patternCIM_DataFile.Members, toSurvol("Name"), false, "C:\\WINDOWS\\System32\\kernel32.dll");
+        FindAndCompareKeyValue(patternCIM_DataFile.Members, PresentUtils.toCIMV2("Name"), false, "C:\\WINDOWS\\System32\\kernel32.dll");
     }
 
     @Test
@@ -238,14 +234,14 @@ public class SparqlBGPExtractorTest {
      */
     public void Parse_GroupSum() throws Exception {
         String sparqlQuery = """
-                prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                 select (SUM(?file_size) as ?size_sum)
                 where {
-                    ?my2_file cim:CIM_DataFile.FileSize ?file_size .
-                    ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
-                    ?my1_assoc cim:GroupComponent ?my0_dir .
-                    ?my0_dir cim:Win32_Directory.Name "C:\\\\Program Files (x86)" .
+                    ?my2_file cimv2:CIM_DataFile.FileSize ?file_size .
+                    ?my1_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my2_file .
+                    ?my1_assoc cimv2:GroupComponent ?my0_dir .
+                    ?my0_dir cimv2:Win32_Directory.Name "C:\\\\Program Files (x86)" .
                 } group by ?my2_file
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -259,7 +255,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals("my0_dir", firstPattern.VariableName);
 
         Assert.assertEquals(1, firstPattern.Members.size());
-        CompareKeyValue(firstPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/survol#Win32_Directory.Name", false, "C:\\Program Files (x86)");
+        CompareKeyValue(firstPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Directory.Name", false, "C:\\Program Files (x86)");
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "my1_assoc"), null);
         ObjectPattern secondPattern = patterns.get(1);
@@ -267,8 +263,8 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals("my1_assoc", secondPattern.VariableName);
 
         Assert.assertEquals(2, secondPattern.Members.size());
-        CompareKeyValue(secondPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/survol#CIM_DirectoryContainsFile.PartComponent", true, "my2_file");
-        CompareKeyValue(secondPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/survol#CIM_DirectoryContainsFile.PartComponent", true, "my2_file");
+        CompareKeyValue(secondPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DirectoryContainsFile.PartComponent", true, "my2_file");
+        CompareKeyValue(secondPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DirectoryContainsFile.PartComponent", true, "my2_file");
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "my2_file"), null);
         ObjectPattern thirdPattern = patterns.get(2);
@@ -276,7 +272,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals("my2_file", thirdPattern.VariableName);
 
         Assert.assertEquals(1, thirdPattern.Members.size());
-        CompareKeyValue(secondPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/survol#CIM_DirectoryContainsFile.PartComponent", true, "my2_file");
+        CompareKeyValue(secondPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DirectoryContainsFile.PartComponent", true, "my2_file");
     }
 
     @Test
@@ -285,14 +281,14 @@ public class SparqlBGPExtractorTest {
      */
     public void Parse_GroupMinMaxSum() throws Exception {
         String sparqlQuery = """
-                    prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select (MIN(?file_size) as ?size_min) (MAX(?file_size) as ?size_max) (SUM(?file_size) as ?size_sum)
                     where {
-                        ?my2_file cim:CIM_DataFile.FileSize ?file_size .
-                        ?my1_assoc cim:CIM_DirectoryContainsFile.PartComponent ?my2_file .
-                        ?my1_assoc cim:GroupComponent ?my0_dir .
-                        ?my0_dir cim:Win32_Directory.Name "C:\\\\Program Files (x86)" .
+                        ?my2_file cimv2:CIM_DataFile.FileSize ?file_size .
+                        ?my1_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my2_file .
+                        ?my1_assoc cimv2:GroupComponent ?my0_dir .
+                        ?my0_dir cimv2:Win32_Directory.Name "C:\\\\Program Files (x86)" .
                     } group by ?my2_file
             """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -408,12 +404,12 @@ public class SparqlBGPExtractorTest {
      */
     public void TriplesGenerationFromBGPs_1() throws Exception {
         String sparqlQuery = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?dir_name
             where {
-                ?my_dir rdf:type cim:Win32_Directory .
-                ?my_dir cim:Name ?dir_name .
+                ?my_dir rdf:type cimv2:Win32_Directory .
+                ?my_dir cimv2:Name ?dir_name .
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -423,9 +419,9 @@ public class SparqlBGPExtractorTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "any_iri_will_do";
@@ -442,11 +438,11 @@ public class SparqlBGPExtractorTest {
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
     }
@@ -457,12 +453,12 @@ public class SparqlBGPExtractorTest {
      */
     public void TriplesGenerationFromBGPs_2() throws Exception {
         String sparqlQuery = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?dir_name
             where {
-                ?my_dir rdf:type cim:Win32_Directory .
-                ?my_dir cim:Name ?dir_name .
+                ?my_dir rdf:type cimv2:Win32_Directory .
+                ?my_dir cimv2:Name ?dir_name .
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -472,9 +468,9 @@ public class SparqlBGPExtractorTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIriC = "iriC";
@@ -499,21 +495,21 @@ public class SparqlBGPExtractorTest {
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriC),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriC),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriD),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIriD),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("D:"))
         ));
     }
@@ -521,13 +517,13 @@ public class SparqlBGPExtractorTest {
     @Test
     public void TriplesGenerationFromBGPs_3() throws Exception {
         String sparqlQuery = """
-            prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?dir_name ?dir_caption
             where {
-                ?my_dir rdf:type cim:Win32_Directory .
-                ?my_dir cim:Name ?dir_name .
-                ?my_dir cim:Caption ?dir_caption .
+                ?my_dir rdf:type cimv2:Win32_Directory .
+                ?my_dir cimv2:Name ?dir_name .
+                ?my_dir cimv2:Caption ?dir_caption .
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
@@ -537,10 +533,10 @@ public class SparqlBGPExtractorTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, toSurvol("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 2);
-        CompareKeyValue(patternWin32_Directory.Members.get(1), toSurvol("Caption"), true, "dir_caption");
-        CompareKeyValue(patternWin32_Directory.Members.get(0), toSurvol("Name"), true, "dir_name");
+        CompareKeyValue(patternWin32_Directory.Members.get(1), PresentUtils.toCIMV2("Caption"), true, "dir_caption");
+        CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "arbitrary_iri";
@@ -559,26 +555,29 @@ public class SparqlBGPExtractorTest {
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(toSurvol("Win32_Directory")))
+                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(toSurvol("Name")),
+                Values.iri(PresentUtils.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(triples.contains(factory.createTriple(
                 WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(toSurvol("Caption")),
+                Values.iri(PresentUtils.toCIMV2("Caption")),
                 Values.literal("This is a text"))
         ));
     }
+
+    // TODO: Check that BGPs of federated queries are NOT extracted.
+
 
 }
 
 /*
 
     query_all_classes = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         select distinct ?the_class
@@ -588,31 +587,31 @@ public class SparqlBGPExtractorTest {
         """
 
     query_CIM_ProcessExecutable = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?prop
         where {
-        cim:CIM_ProcessExecutable ?prop ?obj .
+        cimv2:CIM_ProcessExecutable ?prop ?obj .
         }
         """
 
     # Classes which are associators.
     query_associators = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?class_node
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         }
         """
 
     # Properties of associator classes.
     query_associators_properties = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?class_name ?property_name
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         ?class_node rdfs:label ?class_name .
         ?property_node rdfs:domain ?class_node .
         ?property_node rdfs:label ?property_name .
@@ -621,11 +620,11 @@ public class SparqlBGPExtractorTest {
 
     # Range of properties of associator CIM_DirectoryContainsFile.
     query_CIM_DirectoryContainsFile_properties_range = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?property_name ?range_class_node
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         ?class_node rdfs:label "CIM_DirectoryContainsFile" .
         ?property_node rdfs:domain ?class_node .
         ?property_node rdfs:range ?range_class_node .
@@ -635,11 +634,11 @@ public class SparqlBGPExtractorTest {
 
     # Name of class of range of properties of associator Win32_ShareToDirectory.
     query_Win32_ShareToDirectory_properties_range = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?property_name ?range_class_name
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         ?class_node rdfs:label "Win32_ShareToDirectory" .
         ?property_node rdfs:domain ?class_node .
         ?property_node rdfs:range ?range_class_node .
@@ -650,11 +649,11 @@ public class SparqlBGPExtractorTest {
 
     # Associators pointing to a CIM_DataFile.
     query_associators_to_CIM_DataFile = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?class_name ?property_name
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         ?class_node rdfs:label ?class_name .
         ?property_node rdfs:domain ?class_node .
         ?property_node rdfs:range ?range_class_node .
@@ -665,11 +664,11 @@ public class SparqlBGPExtractorTest {
 
     # Name of class of range of properties of associator CIM_ProcessThread.
     query_Win32_CIM_ProcessThread_properties_range = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?property_name ?range_class_name
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         ?class_node rdfs:label "CIM_ProcessThread" .
         ?property_node rdfs:domain ?class_node .
         ?property_node rdfs:range ?range_class_node .
@@ -680,11 +679,11 @@ public class SparqlBGPExtractorTest {
 
     # Associators pointing to a CIM_Thread.
     query_associators_to_CIM_Thread = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?class_name ?property_name
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         ?class_node rdfs:label ?class_name .
         ?property_node rdfs:domain ?class_node .
         ?property_node rdfs:range ?range_class_node .
@@ -695,11 +694,11 @@ public class SparqlBGPExtractorTest {
 
     # Associators pointing to CIM_Process.
     query_associators_to_CIM_Process = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?class_name ?property_name
         where {
-        ?class_node cim:is_association ?obj .
+        ?class_node cimv2:is_association ?obj .
         ?class_node rdfs:label ?class_name .
         ?property_node rdfs:domain ?class_node .
         ?property_node rdfs:range ?range_class_node .
@@ -711,12 +710,12 @@ public class SparqlBGPExtractorTest {
 
 class Testing_CIM_Directory(metaclass=TestBase):
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_directory
         where {
-        ?my_directory rdf:type cim:Win32_Directory .
-        ?my_directory cim:Name "C:" .
+        ?my_directory rdf:type cimv2:Win32_Directory .
+        ?my_directory cimv2:Name "C:" .
         }
     """
 
@@ -725,36 +724,36 @@ class Testing_CIM_Process(metaclass=TestBase):
     This selects all process ids and their names.
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_process_name ?my_process_handle
         where {
-        ?my_process rdf:type cim:CIM_Process .
-        ?my_process cim:Handle ?my_process_handle .
-        ?my_process cim:Name ?my_process_name .
+        ?my_process rdf:type cimv2:CIM_Process .
+        ?my_process cimv2:Handle ?my_process_handle .
+        ?my_process cimv2:Name ?my_process_name .
         }
     """
 
 class Testing_CIM_Process_WithHandle(metaclass=TestBase):
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_process_caption
         where {
-        ?my_process rdf:type cim:CIM_Process .
-        ?my_process cim:Handle %s .
-        ?my_process cim:Caption ?my_process_caption .
+        ?my_process rdf:type cimv2:CIM_Process .
+        ?my_process cimv2:Handle %s .
+        ?my_process cimv2:Caption ?my_process_caption .
         }
     """ % current_pid
 
 class Testing_CIM_Directory_WithName(metaclass=TestBase):
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_dir
         where {
-        ?my_dir rdf:type cim:Win32_Directory .
-        ?my_dir cim:Name 'C:' .
+        ?my_dir rdf:type cimv2:Win32_Directory .
+        ?my_dir cimv2:Name 'C:' .
         }
     """
 
@@ -763,12 +762,12 @@ class Testing_CIM_Directory_SubDirWithName(metaclass=TestBase):
     This tests that directories separators are correctly handled.
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_subdir
         where {
-        ?my_subdir rdf:type cim:Win32_Directory .
-        ?my_subdir cim:Name 'C:\\\\Windows' .
+        ?my_subdir rdf:type cimv2:Win32_Directory .
+        ?my_subdir cimv2:Name 'C:\\\\Windows' .
         }
     """
 
@@ -777,33 +776,33 @@ class Testing_CIM_ProcessExecutable_WithDependent(metaclass=TestBase):
     This selects executable file and dlls used by the current process.
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_file_name
         where {
-        ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-        ?my_assoc cim:Dependent ?my_process .
-        ?my_assoc cim:Antecedent ?my_file .
-        ?my_process rdf:type cim:Win32_Process .
-        ?my_process cim:Handle "%d" .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name ?my_file_name .
+        ?my_assoc rdf:type cimv2:CIM_ProcessExecutable .
+        ?my_assoc cimv2:Dependent ?my_process .
+        ?my_assoc cimv2:Antecedent ?my_file .
+        ?my_process rdf:type cimv2:Win32_Process .
+        ?my_process cimv2:Handle "%d" .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name ?my_file_name .
         }
     """ % current_pid
 
 class Testing_CIM_ProcessExecutable_WithAntecedent(metaclass=TestBase):
     query = r"""
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_process_handle
         where {
-        ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-        ?my_assoc cim:Dependent ?my_process .
-        ?my_assoc cim:Antecedent ?my_file .
-        ?my_process rdf:type cim:Win32_Process .
-        ?my_process cim:Handle ?my_process_handle .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name "C:\\WINDOWS\\System32\\kernel32.dll" .
+        ?my_assoc rdf:type cimv2:CIM_ProcessExecutable .
+        ?my_assoc cimv2:Dependent ?my_process .
+        ?my_assoc cimv2:Antecedent ?my_file .
+        ?my_process rdf:type cimv2:Win32_Process .
+        ?my_process cimv2:Handle ?my_process_handle .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name "C:\\WINDOWS\\System32\\kernel32.dll" .
         }
     """
 
@@ -812,17 +811,17 @@ class Testing_CIM_DirectoryContainsFile_WithFile(metaclass=TestBase):
     This returns the directory of a given file.
     """
     query = r"""
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_dir_name
         where {
-        ?my_assoc_dir rdf:type cim:CIM_DirectoryContainsFile .
-        ?my_assoc_dir cim:GroupComponent ?my_dir .
-        ?my_assoc_dir cim:PartComponent ?my_file .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name "C:\\WINDOWS\\System32\\kernel32.dll" .
-        ?my_dir rdf:type cim:Win32_Directory .
-        ?my_dir cim:Name ?my_dir_name .
+        ?my_assoc_dir rdf:type cimv2:CIM_DirectoryContainsFile .
+        ?my_assoc_dir cimv2:GroupComponent ?my_dir .
+        ?my_assoc_dir cimv2:PartComponent ?my_file .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name "C:\\WINDOWS\\System32\\kernel32.dll" .
+        ?my_dir rdf:type cimv2:Win32_Directory .
+        ?my_dir cimv2:Name ?my_dir_name .
         }
     """
 
@@ -831,17 +830,17 @@ class Testing_CIM_DirectoryContainsFile_WithDir(metaclass=TestBase):
     Files under the directory "C:"
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_file_name
         where {
-        ?my_assoc_dir rdf:type cim:CIM_DirectoryContainsFile .
-        ?my_assoc_dir cim:GroupComponent ?my_dir .
-        ?my_assoc_dir cim:PartComponent ?my_file .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name ?my_file_name .
-        ?my_dir rdf:type cim:Win32_Directory .
-        ?my_dir cim:Name 'C:' .
+        ?my_assoc_dir rdf:type cimv2:CIM_DirectoryContainsFile .
+        ?my_assoc_dir cimv2:GroupComponent ?my_dir .
+        ?my_assoc_dir cimv2:PartComponent ?my_file .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name ?my_file_name .
+        ?my_dir rdf:type cimv2:Win32_Directory .
+        ?my_dir cimv2:Name 'C:' .
         }
     """
 
@@ -850,17 +849,17 @@ class Testing_Win32_SubDirectory_WithFile(metaclass=TestBase):
     This returns the directory of a given directory.
     """
     query = r"""
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_dir_name
         where {
-        ?my_assoc_dir rdf:type cim:Win32_SubDirectory .
-        ?my_assoc_dir cim:GroupComponent ?my_dir .
-        ?my_assoc_dir cim:PartComponent ?my_subdir .
-        ?my_subdir rdf:type cim:Win32_Directory .
-        ?my_subdir cim:Name "C:\\WINDOWS\\System32" .
-        ?my_dir rdf:type cim:Win32_Directory .
-        ?my_dir cim:Name ?my_dir_name .
+        ?my_assoc_dir rdf:type cimv2:Win32_SubDirectory .
+        ?my_assoc_dir cimv2:GroupComponent ?my_dir .
+        ?my_assoc_dir cimv2:PartComponent ?my_subdir .
+        ?my_subdir rdf:type cimv2:Win32_Directory .
+        ?my_subdir cimv2:Name "C:\\WINDOWS\\System32" .
+        ?my_dir rdf:type cimv2:Win32_Directory .
+        ?my_dir cimv2:Name ?my_dir_name .
         }
     """
 
@@ -869,17 +868,17 @@ class Testing_Win32_SubDirectory_WithDir(metaclass=TestBase):
     Directories under the directory "C:"
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_subdir_name
         where {
-        ?my_assoc_dir rdf:type cim:Win32_SubDirectory .
-        ?my_assoc_dir cim:GroupComponent ?my_dir .
-        ?my_assoc_dir cim:PartComponent ?my_subdir .
-        ?my_subdir rdf:type cim:Win32_Directory .
-        ?my_subdir cim:Name ?my_subdir_name .
-        ?my_dir rdf:type cim:Win32_Directory .
-        ?my_dir cim:Name 'C:' .
+        ?my_assoc_dir rdf:type cimv2:Win32_SubDirectory .
+        ?my_assoc_dir cimv2:GroupComponent ?my_dir .
+        ?my_assoc_dir cimv2:PartComponent ?my_subdir .
+        ?my_subdir rdf:type cimv2:Win32_Directory .
+        ?my_subdir cimv2:Name ?my_subdir_name .
+        ?my_dir rdf:type cimv2:Win32_Directory .
+        ?my_dir cimv2:Name 'C:' .
         }
     """
 
@@ -888,42 +887,42 @@ class Testing_Win32_Directory_Win32_SubDirectory_Win32_SubDirectory(metaclass=Te
     This displays the sub-sub-directories of C:.
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_dir_name3
         where {
-        ?my_dir1 rdf:type cim:Win32_Directory .
-        ?my_dir1 cim:Name "C:" .
-        ?my_assoc_dir1 rdf:type cim:Win32_SubDirectory .
-        ?my_assoc_dir1 cim:GroupComponent ?my_dir1 .
-        ?my_assoc_dir1 cim:PartComponent ?my_dir2 .
-        ?my_dir2 rdf:type cim:Win32_Directory .
-        ?my_assoc_dir2 rdf:type cim:Win32_SubDirectory .
-        ?my_assoc_dir2 cim:GroupComponent ?my_dir2 .
-        ?my_assoc_dir2 cim:PartComponent ?my_dir3 .
-        ?my_dir3 rdf:type cim:Win32_Directory .
-        ?my_dir3 cim:Name ?my_dir_name3 .
+        ?my_dir1 rdf:type cimv2:Win32_Directory .
+        ?my_dir1 cimv2:Name "C:" .
+        ?my_assoc_dir1 rdf:type cimv2:Win32_SubDirectory .
+        ?my_assoc_dir1 cimv2:GroupComponent ?my_dir1 .
+        ?my_assoc_dir1 cimv2:PartComponent ?my_dir2 .
+        ?my_dir2 rdf:type cimv2:Win32_Directory .
+        ?my_assoc_dir2 rdf:type cimv2:Win32_SubDirectory .
+        ?my_assoc_dir2 cimv2:GroupComponent ?my_dir2 .
+        ?my_assoc_dir2 cimv2:PartComponent ?my_dir3 .
+        ?my_dir3 rdf:type cimv2:Win32_Directory .
+        ?my_dir3 cimv2:Name ?my_dir_name3 .
         }
     """
 
 class Testing_CIM_ProcessExecutable_CIM_DirectoryContainsFile_WithHandle(metaclass=TestBase):
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_dir_name
         where {
-        ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-        ?my_assoc cim:Dependent ?my_process .
-        ?my_assoc cim:Antecedent ?my_file .
-        ?my_assoc_dir rdf:type cim:CIM_DirectoryContainsFile .
-        ?my_assoc_dir cim:GroupComponent ?my_dir .
-        ?my_assoc_dir cim:PartComponent ?my_file .
-        ?my_process rdf:type cim:Win32_Process .
-        ?my_process cim:Handle "%d" .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name ?my_file_name .
-        ?my_dir rdf:type cim:Win32_Directory .
-        ?my_dir cim:Name ?my_dir_name .
+        ?my_assoc rdf:type cimv2:CIM_ProcessExecutable .
+        ?my_assoc cimv2:Dependent ?my_process .
+        ?my_assoc cimv2:Antecedent ?my_file .
+        ?my_assoc_dir rdf:type cimv2:CIM_DirectoryContainsFile .
+        ?my_assoc_dir cimv2:GroupComponent ?my_dir .
+        ?my_assoc_dir cimv2:PartComponent ?my_file .
+        ?my_process rdf:type cimv2:Win32_Process .
+        ?my_process cimv2:Handle "%d" .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name ?my_file_name .
+        ?my_dir rdf:type cimv2:Win32_Directory .
+        ?my_dir cimv2:Name ?my_dir_name .
         }
     """ % current_pid
 
@@ -932,17 +931,17 @@ class Testing_CIM_ProcessExecutable_FullScan(metaclass=TestBase):
     This gets the directories of all executables and libraries of all processes.
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_file_name ?my_process_handle
         where {
-        ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-        ?my_assoc cim:Dependent ?my_process .
-        ?my_assoc cim:Antecedent ?my_file .
-        ?my_process rdf:type cim:Win32_Process .
-        ?my_process cim:Handle ?my_process_handle .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name ?my_file_name .
+        ?my_assoc rdf:type cimv2:CIM_ProcessExecutable .
+        ?my_assoc cimv2:Dependent ?my_process .
+        ?my_assoc cimv2:Antecedent ?my_file .
+        ?my_process rdf:type cimv2:Win32_Process .
+        ?my_process cimv2:Handle ?my_process_handle .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name ?my_file_name .
         }
     """
 
@@ -951,51 +950,51 @@ class Testing_CIM_ProcessExecutable_Groups(metaclass=TestBase):
     This gets the directories of all executables and libraries of all processes.
     """
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_file_name (COUNT(?my_file_name) AS ?ELEMENTCOUNT)
         where {
-        ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-        ?my_assoc cim:Dependent ?my_process .
-        ?my_assoc cim:Antecedent ?my_file .
-        ?my_process rdf:type cim:Win32_Process .
-        ?my_process cim:Handle ?my_process_handle .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name ?my_file_name .
+        ?my_assoc rdf:type cimv2:CIM_ProcessExecutable .
+        ?my_assoc cimv2:Dependent ?my_process .
+        ?my_assoc cimv2:Antecedent ?my_file .
+        ?my_process rdf:type cimv2:Win32_Process .
+        ?my_process cimv2:Handle ?my_process_handle .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name ?my_file_name .
         }
         group by ?my_file_name
     """
 
 class Testing_CIM_ProcessExecutable_CIM_DirectoryContainsFile(metaclass=TestBase):
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?my_dir_name
         where {
-        ?my_assoc rdf:type cim:CIM_ProcessExecutable .
-        ?my_assoc cim:Dependent ?my_process .
-        ?my_assoc cim:Antecedent ?my_file .
-        ?my_assoc_dir rdf:type cim:CIM_DirectoryContainsFile .
-        ?my_assoc_dir cim:GroupComponent ?my_dir .
-        ?my_assoc_dir cim:PartComponent ?my_file .
-        ?my_process rdf:type cim:Win32_Process .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Name ?my_file_name .
-        ?my_dir rdf:type cim:Win32_Directory .
-        ?my_dir cim:Name ?my_dir_name .
+        ?my_assoc rdf:type cimv2:CIM_ProcessExecutable .
+        ?my_assoc cimv2:Dependent ?my_process .
+        ?my_assoc cimv2:Antecedent ?my_file .
+        ?my_assoc_dir rdf:type cimv2:CIM_DirectoryContainsFile .
+        ?my_assoc_dir cimv2:GroupComponent ?my_dir .
+        ?my_assoc_dir cimv2:PartComponent ?my_file .
+        ?my_process rdf:type cimv2:Win32_Process .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Name ?my_file_name .
+        ?my_dir rdf:type cimv2:Win32_Directory .
+        ?my_dir cimv2:Name ?my_dir_name .
         }
     """
 
 class Testing_CIM_Process_CIM_DataFile_SameCaption(metaclass=TestBase):
     query = """
-        prefix cim:  <http://www.primhillcomputers.com/ontology/survol#>
+        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         select ?same_caption
         where {
-        ?my_process rdf:type cim:CIM_Process .
-        ?my_process cim:Caption ?same_caption .
-        ?my_file rdf:type cim:CIM_DataFile .
-        ?my_file cim:Caption ?same_caption .
+        ?my_process rdf:type cimv2:CIM_Process .
+        ?my_process cimv2:Caption ?same_caption .
+        ?my_file rdf:type cimv2:CIM_DataFile .
+        ?my_file cimv2:Caption ?same_caption .
         }
     """
 */

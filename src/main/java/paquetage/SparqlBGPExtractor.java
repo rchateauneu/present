@@ -3,6 +3,8 @@ package paquetage;
 // See "query explain"
 // https://rdf4j.org/documentation/programming/repository/
 
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -14,6 +16,9 @@ import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
+
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
@@ -134,7 +139,7 @@ public class SparqlBGPExtractor {
 
     /**
      * IRIS must look like this:
-     * objectString=http://www.primhillcomputers.com/ontology/survol#Win32_Process isIRI=true
+     * objectString=http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process isIRI=true
      *
      * But Wbem path are like that:
      * subjectString=\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="31640"
@@ -157,30 +162,80 @@ public class SparqlBGPExtractor {
             throw new Exception("Value " + var.getName() + "=" + valueString + " is not a node");
         }
         // Consistency check, for debugging.
-        if(valueString.startsWith(WmiOntology.survol_url_prefix)) {
+        if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
             throw new Exception("Double transformation in IRI:" + valueString);
         }
         Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
         return resourceValue;
     }
 
+    private static ValueFactory factory = SimpleValueFactory.getInstance();
+    private static final DatatypeFactory datatypeFactory ;
+
+    static {
+        try {
+            datatypeFactory = DatatypeFactory.newInstance();
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Cannot initialize DatatypeFactory:", e);
+        }
+    }
+
     private static Value ValueTypeToLiteral(GenericProvider.Row.ValueTypePair pairValueType) {
-        if(pairValueType.Value() == null) {
-            logger.warn("Invalid null literal value. Type=" + pairValueType.Type());
+        GenericProvider.ValueType valueType = pairValueType.Type();
+        if(valueType == null) {
+            logger.warn("Invalid null type of literal value.");
             Object nullObject = new Object();
             return Values.literal(nullObject);
         }
-        GenericProvider.ValueType valueType = pairValueType.Type();
-        if(valueType == GenericProvider.ValueType.INT_TYPE) {
-            return Values.literal(Long.parseLong(pairValueType.Value()));
+        String strValue = pairValueType.Value();
+        if(strValue == null) {
+            logger.warn("Invalid null literal value.");
+            return Values.literal("Unexpected null value. Type=\" + valueType");
         }
-        if(valueType == GenericProvider.ValueType.FLOAT_TYPE) {
-            return Values.literal(Double.parseDouble(pairValueType.Value()));
+        switch(valueType) {
+            case INT_TYPE:
+                return Values.literal(Long.parseLong(strValue));
+            case FLOAT_TYPE:
+                return Values.literal(Double.parseDouble(strValue));
+            case DATE_TYPE:
+                if (strValue == null) {
+                    return Values.literal("NULL_DATE");
+                } else {
+                    ZoneId zone = ZoneId.systemDefault();
+                    /**
+                     * See SWbemDateTime
+                     * https://docs.microsoft.com/en-us/windows/win32/wmisdk/swbemdatetime
+                     * https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
+                     *
+                     * strValue = '20220720095636.399854+060' for example.
+                     * The time zone offset is in minutes.
+                     *
+                     * https://stackoverflow.com/questions/37308672/parse-cim-datetime-with-milliseconds-to-java-date                     *
+                     */
+                    //logger.debug("strValue=" + strValue);
+
+                    String offsetInMinutesAsString = strValue.substring ( 22 );
+                    long offsetInMinutes = Long.parseLong ( offsetInMinutesAsString );
+                    LocalTime offsetAsLocalTime = LocalTime.MIN.plusMinutes ( offsetInMinutes );
+                    String offsetAsString = offsetAsLocalTime.format ( DateTimeFormatter.ISO_LOCAL_TIME );
+                    String inputModified = strValue.substring ( 0 , 22 ) + offsetAsString;
+
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSSSSSZZZZZ");
+                    LocalDateTime dateFromGmtString = formatter.parse(inputModified, Instant::from).atZone(zone).toLocalDateTime();
+
+                    String strDate = dateFromGmtString.toString();
+                    //logger.debug("strDate=" + strDate);
+                    XMLGregorianCalendar dateGregorian = datatypeFactory.newXMLGregorianCalendar(strDate);
+
+                    return Values.literal(factory, dateGregorian, true);
+                }
+            case STRING_TYPE:
+                return Values.literal(strValue);
+            case NODE_TYPE:
+                return Values.literal(strValue);
         }
-        if(valueType == GenericProvider.ValueType.STRING_TYPE || valueType == GenericProvider.ValueType.NODE_TYPE) {
-            return Values.literal(pairValueType.Value());
-        }
-        throw new RuntimeException("Data type not handled:" + pairValueType.Type());
+        throw new RuntimeException("Data type not handled:" + valueType);
     }
 
     /** This generates the triples from substituting the variables of the patterns by their values.
@@ -191,8 +246,6 @@ public class SparqlBGPExtractor {
      */
     List<Triple> GenerateTriples(List<GenericProvider.Row> rows) throws Exception {
         List<Triple> generatedTriples = new ArrayList<>();
-
-        ValueFactory factory = SimpleValueFactory.getInstance();
 
         logger.debug("Visitor patterns number:" + Long.toString(visitorPatternsRaw.size()));
         logger.debug("Rows number:" + Long.toString(rows.size()));
@@ -268,9 +321,15 @@ public class SparqlBGPExtractor {
 
                         GenericProvider.Row.ValueTypePair objectValue = GetVarValue(object, row);
                         //String objectString = objectValue.Value();
-                        Value resourceObject = patternsMap.containsKey(object.getName())
-                                ? AsIRI(object, row) // Values.iri(objectString)
-                                : ValueTypeToLiteral(objectValue);
+                        Value resourceObject;
+                        if(patternsMap.containsKey(object.getName())) {
+                            resourceObject = AsIRI(object, row); // Values.iri(objectString);
+                        } else {
+                            if(objectValue == null) {
+                                throw new RuntimeException("Null value for " + object.getName());
+                            }
+                            resourceObject = ValueTypeToLiteral(objectValue);
+                        }
 
                         generatedTriples.add(factory.createTriple(
                                 resourceSubject,
