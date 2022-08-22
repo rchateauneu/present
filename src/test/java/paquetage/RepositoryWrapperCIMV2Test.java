@@ -394,7 +394,7 @@ public class RepositoryWrapperCIMV2Test {
             Assert.assertEquals(
                     Set.of("\"Remote Procedure Call (RPC)\"", "\"Background Tasks Infrastructure Service\""),
                     setAntecedents);
-        } else if(windowsVersion.equals("Windows 7.1")) {
+        } else if(windowsVersion.equals("Windows 7")) {
             Assert.assertEquals(
                     Set.of("\"Remote Procedure Call (RPC)\""),
                     setAntecedents);
