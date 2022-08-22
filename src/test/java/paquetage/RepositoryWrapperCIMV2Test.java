@@ -388,10 +388,19 @@ public class RepositoryWrapperCIMV2Test {
             System.out.println("Antecedent service:" + singleRow);
         }
         Set<String> setAntecedents = PresentUtils.StringValuesSet(listRows,"display_name");
-        // THese are the input dependencies of this service.
-        Assert.assertEquals(
-                Set.of("\"Remote Procedure Call (RPC)\"", "\"Background Tasks Infrastructure Service\""),
-                setAntecedents);
+        // These are the input dependencies of this service.
+        String windowsVersion = System.getProperty("os.name");
+        if(windowsVersion.equals("Windows 10")) {
+            Assert.assertEquals(
+                    Set.of("\"Remote Procedure Call (RPC)\"", "\"Background Tasks Infrastructure Service\""),
+                    setAntecedents);
+        } else if(windowsVersion.equals("Windows 7.1")) {
+            Assert.assertEquals(
+                    Set.of("\"Remote Procedure Call (RPC)\""),
+                    setAntecedents);
+        } else {
+            throw new RuntimeException("Unidentified Windows version:" + windowsVersion);
+        }
     }
 
     /** Logon type of the current user.
