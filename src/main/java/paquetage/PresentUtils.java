@@ -91,8 +91,6 @@ public class PresentUtils {
         DatatypeFactory dataTypeFactory = DatatypeFactory.newInstance();
         String dateOnly = extractStringXML(theDate);
 
-        //System.out.println("dateOnly=" + dateOnly);
-
         XMLGregorianCalendar xmlDate = dataTypeFactory.newXMLGregorianCalendar(dateOnly);
         return xmlDate;
     }
