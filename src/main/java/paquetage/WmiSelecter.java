@@ -44,9 +44,11 @@ public class WmiSelecter extends BaseSelecter {
         // The results are batched in a big number, so it is faster.
         int countRows = 100;
 
+        Wbemcli.IWbemServices wbemService = wmiProvider.GetWbemService(queryData.namespace);
+
         // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
         // WBEM_FLAG_RETURN_IMMEDIATELY might be faster than WBEM_FLAG_COMPLETE
-        Wbemcli.IEnumWbemClassObject enumerator = wmiProvider.wbemServiceRootCimv2.ExecQuery(
+        Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL", wqlQuery,
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY,
                 null);

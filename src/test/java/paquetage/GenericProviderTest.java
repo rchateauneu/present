@@ -47,6 +47,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Win32_Process_1() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "the_process",
                 false,
@@ -65,6 +66,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Win32_Process_2() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "the_process",
                 false,
@@ -86,6 +88,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_DataFile_Name_Several() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "the_file",
                 false,
@@ -113,6 +116,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_DataFile_Name() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "the_file",
                 false,
@@ -138,6 +142,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_DataFile_Name_CreationDate() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "the_file",
                 false,
@@ -158,6 +163,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_DataFile_Name_InUseCount() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "the_file",
                 false,
@@ -179,6 +185,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_DirectoryContainsFile_PartComponent() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DirectoryContainsFile",
                 "uvw",
                 false,
@@ -196,6 +203,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_DirectoryContainsFile_GroupComponent() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DirectoryContainsFile",
                 "uvw",
                 false,
@@ -208,6 +216,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_ProcessExecutable_Dependent() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "uvw",
                 false,
@@ -220,6 +229,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareProvider_Provider_CIM_ProcessExecutable_Antecedent() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "uvw",
                 false,
@@ -239,6 +249,7 @@ public class GenericProviderTest extends TestCase {
     public void testCompareGetter_CIM_DataFile() throws Exception {
         String filePath = "C:\\WINDOWS\\SYSTEM32\\ntdll.dll";
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "the_file",
                 true,
@@ -266,6 +277,7 @@ public class GenericProviderTest extends TestCase {
     @Test
     public void testCompareGetter_Win32_Process() throws Exception {
         QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "the_process",
                 true,

@@ -107,6 +107,11 @@ public class PresentUtils {
         return listRows.stream().map(row->row.GetStringValue(variable_name)).collect(Collectors.toSet());
     }
 
+    static Set<Long> LongValuesSet(List<GenericProvider.Row> listRows, String variable_name) {
+        // return listRows.stream().map(row->row.GetLongValue(variable_name)).collect(Collectors.toSet());
+        return listRows.stream().map(row->XmlToLong(row.GetStringValue(variable_name))).collect(Collectors.toSet());
+    }
+
     static String toCIMV2(String term) {
         return NamespaceTermToIRI("ROOT\\CIMV2", term);
     }

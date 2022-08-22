@@ -652,12 +652,16 @@ public class GenericProvider {
         }
     }
 
-    public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
-        return SelectVariablesFromWhere(new QueryData(className, variable, false,columns, wheres), true);
+    public ArrayList<Row> SelectVariablesFromWhere(
+            String namespace,
+            String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
+        return SelectVariablesFromWhere(new QueryData(namespace, className, variable, false,columns, wheres), true);
     }
 
-    public ArrayList<Row> SelectVariablesFromWhere(String className, String variable, Map<String, String> columns) throws Exception {
-        return SelectVariablesFromWhere(className, variable, columns, null);
+    public ArrayList<Row> SelectVariablesFromWhere(
+            String namespace,
+            String className, String variable, Map<String, String> columns) throws Exception {
+        return SelectVariablesFromWhere(namespace, className, variable, columns, null);
     }
 
     static private BaseGetter[] baseGetters = {

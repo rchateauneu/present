@@ -14,8 +14,9 @@ import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
  * The class does not extend TestCase because it is based on JUnit 4.
+ * This is only for the namespace CIMV2.
  * */
-public class RepositoryWrapperTest /* extends TestCase */ {
+public class RepositoryWrapperCIMV2Test {
     static long currentPid = ProcessHandle.current().pid();
     static String currentPidStr = String.valueOf(currentPid);
 
@@ -1085,6 +1086,5 @@ public class RepositoryWrapperTest /* extends TestCase */ {
     TODO: Size of the dlls of the current process.
     TODO: Sum of the CPU of processes running a specific program.
     TODO: Sum of the CPU of processes using a specific DLL.
-    TODO: Replace "cim:" with "wmi:"
      */
 }

@@ -94,6 +94,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "my_process",
                 false,
@@ -126,6 +127,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Directory",
                 "my_directory",
                 false,
@@ -156,6 +158,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_Process",
                 "my_process",
                 false,
@@ -186,6 +189,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_Process",
                 "my_process",
                 false,
@@ -227,6 +231,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "my1_process",
                 false,
@@ -237,6 +242,7 @@ public class DependenciesBuilderTest {
         );
 
         QueryData queryData1 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "my2_assoc",
                 false,
@@ -278,6 +284,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "my0_process",
                 false,
@@ -286,6 +293,7 @@ public class DependenciesBuilderTest {
         );
 
         QueryData queryData1 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "my1_assoc",
                 false,
@@ -328,6 +336,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "my0_assoc",
                 false,
@@ -336,6 +345,7 @@ public class DependenciesBuilderTest {
         );
 
         QueryData queryData1 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "my1_file",
                 true,
@@ -345,6 +355,7 @@ public class DependenciesBuilderTest {
 
         // Here, there is no WMI selection but the instantiation of the COM object with the moniker.
         QueryData queryData2 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "my2_process",
                 true,
@@ -383,6 +394,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "my0_assoc",
                 false,
@@ -392,6 +404,7 @@ public class DependenciesBuilderTest {
 
         // Here, there is no WMI selection but the instantiation of the COM object with the moniker.
         QueryData queryData1 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "my1_process",
                 true,
@@ -402,6 +415,7 @@ public class DependenciesBuilderTest {
         );
 
         QueryData queryData2 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "my2_file",
                 true,
@@ -438,6 +452,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "my0_process",
                 false,
@@ -448,6 +463,7 @@ public class DependenciesBuilderTest {
         );
 
         QueryData queryData1 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "my1_assoc",
                 false,
@@ -460,6 +476,7 @@ public class DependenciesBuilderTest {
         // In fact, no need to select anything because the object variable is already known.
         // However, this variable must be in the WHERE clause, so a WQL selection will work.
         QueryData queryData2 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "my2_file",
                 true,
@@ -497,6 +514,7 @@ public class DependenciesBuilderTest {
 
         // No need to select anything because the object is already known.
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_DataFile",
                 "my0_file",
                 false,
@@ -507,6 +525,7 @@ public class DependenciesBuilderTest {
         );
 
         QueryData queryData1 = new QueryData(
+                "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "my1_assoc",
                 false,
@@ -517,6 +536,7 @@ public class DependenciesBuilderTest {
         );
 
         QueryData queryData2 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "my2_process",
                 true,
@@ -551,6 +571,7 @@ public class DependenciesBuilderTest {
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
         QueryData queryData0 = new QueryData(
+                "ROOT\\CIMV2",
                 "Win32_Process",
                 "process",
                 false,

@@ -940,6 +940,8 @@ public class SparqlTranslationTest {
         for(GenericProvider.Row row : listRows) {
             String fileName = row.GetStringValue("file_name");
             filesSetActual.add(fileName);
+            // This is not transformed into a XML value such as ""28400"^^<http://www.w3.org/2001/XMLSchema#long>"
+            // because it is not transformed by the Sparql engine.
             long fileSizeActual = row.GetLongValue("file_size");
             File f = new File(fileName);
             long fileSizeExpected = f.length();
