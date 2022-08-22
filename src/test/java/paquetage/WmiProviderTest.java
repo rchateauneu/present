@@ -44,9 +44,9 @@ public class WmiProviderTest {
         String[] namespacesSamples = {
                 "ROOT\\Cli",
                 "ROOT\\CIMV2",
-                "ROOT\\CIMV2\\mdm",
+                // "ROOT\\CIMV2\\mdm", // Not in Windows 7
                 "ROOT\\CIMV2\\power",
-                // "CIMV2\\Security\\MicrosoftVolumeEncryption",
+                // "CIMV2\\Security\\MicrosoftVolumeEncryption", //  Controlled access.
                 "ROOT\\Microsoft",
                 "ROOT\\Interop",
         };
