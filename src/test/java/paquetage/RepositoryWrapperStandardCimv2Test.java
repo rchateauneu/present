@@ -66,10 +66,14 @@ public class RepositoryWrapperStandardCimv2Test {
     }
 
     /**
-     * Select from TCP connection for the Microsoft TCP/IP WMI v2 provider, and the process names.
+     * Select TCP connections of the Microsoft TCP/IP WMI v2 provider, and the process names.
      * It selects from two classes of different namespaces.
      * This classes order is faster than the other way around, because there are less sockets than processes,
      * or it is faster to select from processes than from sockets.
+     *
+     * TODO: Optimisation: Si deux requetes successives ne dependent pas l'une de l'autre,
+     * ne faire la seconde qu'une seule fois. Soit on garde le resultat en cache, soit etc...
+     *
      * @throws Exception
      */
     @Test
@@ -98,7 +102,7 @@ public class RepositoryWrapperStandardCimv2Test {
     }
 
     /**
-     * Select from TCP connection for the Microsoft TCP/IP WMI v2 provider, and the process names.
+     * Select TCP connections of the Microsoft TCP/IP WMI v2 provider, and the process names.
      * It selects from two classes of different namespaces.
      * The order of evaluation is forced the other way around and it slower.
      * @throws Exception
@@ -168,4 +172,31 @@ public class RepositoryWrapperStandardCimv2Test {
         // At least a couple of processes should still be present.
         Assert.assertTrue(countPresentProcess > 3);
     }
+    /**
+     * Select from TCP connection for the Microsoft TCP/IP WMI v2 provider, and the process names.
+     * It selects from two classes of different namespaces.
+     * The order of evaluation is forced the other way around and it slower.
+     * @throws Exception
+     */
+    @Test
+    public void testMSFT_NetUDPEndpoint_Win32_Process() throws Exception {
+        String sparqlQuery = """
+                    prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?process_name
+                    where {
+                        ?_2_tcp_connection standard_cimv2:MSFT_NetUDPEndpoint.OwningProcess ?owning_process .
+                        ?_1_process cimv2:Win32_Process.ProcessId ?owning_process .
+                        ?_1_process cimv2:Win32_Process.Name ?process_name .
+                    }
+                """;
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
+        System.out.println("namesProcesses=" + namesProcesses);
+        Assert.assertTrue(namesProcesses.contains("\"svchost.exe\""));
+        Assert.assertTrue(namesProcesses.contains("\"System\""));
+    }
+
 }
