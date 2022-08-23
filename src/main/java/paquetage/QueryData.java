@@ -69,6 +69,7 @@ public class QueryData {
 
         /**
          * This is useful for building a WMI query only.
+         * TODO: Move this is WMI-specific code.
          * @return
          */
         public String ToEqualComparison() {
