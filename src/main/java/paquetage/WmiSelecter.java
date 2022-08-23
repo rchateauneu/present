@@ -25,8 +25,6 @@ public class WmiSelecter extends BaseSelecter {
      * TODO: For some classes which do not change, when a query was run and does not return too many elements,
      * TODO: store the result in a cache. It needs to know if results might change between two runs,
      * TODO: between two machine startup (could be stored in a file cache) etc...
-     * TODO: Also, results of a query could be stored, and its cache could be used for another query,
-     * TODO: similar but with extra "where" parameters.
      * @param queryData
      * @return A list of rows containing the values of the variables as taken from the query results.
      * @throws Exception
@@ -47,7 +45,7 @@ public class WmiSelecter extends BaseSelecter {
         Wbemcli.IWbemServices wbemService = wmiProvider.GetWbemService(queryData.namespace);
 
         // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
-        // WBEM_FLAG_RETURN_IMMEDIATELY might be faster than WBEM_FLAG_COMPLETE
+        // WBEM_FLAG_RETURN_IMMEDIATELY might be faster than WBEM_FLAG_RETURN_WBEM_COMPLETE
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL", wqlQuery,
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY,
