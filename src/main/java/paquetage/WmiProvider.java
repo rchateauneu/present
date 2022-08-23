@@ -28,6 +28,28 @@ public class WmiProvider {
 
     static {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
+        /*
+        HRESULT=0x80041003 with connectServer
+        https://social.msdn.microsoft.com/Forums/vstudio/en-US/4d54adf4-56d0-4261-ac74-5c5fe736d505/wmi-call-from-c-results-in-hresult0x80041003?forum=vcgeneral
+         on Windows XP replace RPC_C_IMP_LEVEL_IMPERSONATE with RPC_C_IMP_LEVEL_DELEGATE in the calls to CoInitializeSecurity() and CoSetProxyBlanket().
+         */
+
+        if(false) {
+            // Not needed, it is already done in "connectServer".
+            Ole32.INSTANCE.CoInitializeSecurity(
+                    null,
+                    -1,
+                    null,
+                    null,
+                    Ole32.RPC_C_AUTHN_LEVEL_DEFAULT,
+                    Ole32.RPC_C_IMP_LEVEL_IMPERSONATE,
+                    null,
+                    Ole32.EOAC_NONE,
+                    null
+            );
+        } else {
+            logger.info("Not calling CoInitializeSecurity");
+        }
 
         // These namespaces are always needed. Other namespaces are loaded on demand.
         wbemServiceRoot = GetWbemService("ROOT");
@@ -35,39 +57,31 @@ public class WmiProvider {
     }
 
     public WmiProvider() {
-        /*
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-
-        // These namespaces are always needed. Other namespaces are loaded on demand.
-        wbemServiceRoot = GetWbemService("");
-        wbemServiceRootCimv2 = GetWbemService("CIMV2");
-        */
-
-        //wbemServiceRoot = WbemcliUtil.connectServer("ROOT");
-        //wbemServiceRootCimv2 = WbemcliUtil.connectServer("ROOT\\CIMV2");
-
-        //wbemServices.put("", wbemServiceRoot);
-        //wbemServices.put("CIMV2", wbemServiceRootCimv2);
-
-        //
-        // More well-known namespaces. This is temporary, for tests.
-        //wbemServices.put("Microsoft", WbemcliUtil.connectServer("ROOT\\Microsoft"));
-        //wbemServices.put("Interop", WbemcliUtil.connectServer("ROOT\\Interop"));
-        //wbemServices.put("Cli", WbemcliUtil.connectServer("ROOT\\Cli"));
-        //wbemServices.put("aspnet", WbemcliUtil.connectServer("ROOT\\aspnet"));
-        //wbemServices.put("CIMV2\\Security", WbemcliUtil.connectServer("ROOT\\CIMV2\\Security"));
     }
 
     static Wbemcli.IWbemServices GetWbemService(String namespace) {
         WmiOntology.CheckValidNamespace(namespace);
         Wbemcli.IWbemServices wbemService = wbemServices.get(namespace);
         if(wbemService == null) {
-            // String prefixedNamespace = namespace.equals("") ? "ROOT" : "ROOT\\" + namespace;
             try {
                 // This may throw : "com.sun.jna.platform.win32.COM.COMException: (HRESULT: 80041003)"
                 // 80041003: The current user does not have permission to perform the action.
                 // In this case, set the service to null.
                 wbemService = WbemcliUtil.connectServer(namespace);
+                if(true) {
+                    Ole32.INSTANCE.CoSetProxyBlanket(
+                            wbemService, /* IWbemServices *pSvc */
+                            Ole32.RPC_C_AUTHN_WINNT,
+                            Ole32.RPC_C_AUTHZ_NONE,
+                            null,
+                            Ole32.RPC_C_AUTHN_LEVEL_CALL,
+                            Ole32.RPC_C_IMP_LEVEL_IMPERSONATE,
+                            null,
+                            Ole32.EOAC_NONE
+                    );
+                } else {
+                    logger.info("Not calling CoSetProxyBlanket");
+                }
             }
             catch(Exception exception) {
                 logger.error("Caught:" + exception + " namespace=" + namespace);
@@ -110,7 +124,7 @@ public class WmiProvider {
 
         public WmiClass(String className) {
             Name = className;
-            Properties = new HashMap<String, WmiProperty>();
+            Properties = new HashMap<>();
             Description = "No description available yet for class " + className;
         }
     }
@@ -133,7 +147,8 @@ public class WmiProvider {
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
         "WQL",
                 "SELECT Name FROM __NAMESPACE",
-                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
 
         Set<String> namespacesFlat = new HashSet<>();
         try {
@@ -143,7 +158,7 @@ public class WmiProvider {
             IntByReference plFlavor = new IntByReference();
 
             while (true) {
-                result = enumerator.Next(0, 1);
+                result = enumerator.Next(Wbemcli.WBEM_INFINITE, 1);
                 if (result.length == 0) {
                     break;
                 }
@@ -423,18 +438,12 @@ public class WmiProvider {
         // The value is sometimes different. Take the supposedly good one.
         int valueTypeUnknown = wtypesValueType.intValue();
         int valueType = pType.getValue();
-        /*
-        if(valueType != valueTypeUnknown) {
-            String valueTypeUnknownStr = mapVariantTypes.get(valueTypeUnknown);
-            String valueTypeStr = mapCimTypes.get(valueType);
-            logger.warn("Different types:" + valueType + "/" + valueTypeStr + " [" + pType + "]" + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
-        }
-        */
 
         Object valObject = pVal.getValue();
         if(valObject == null) {
+            String valueTypeStr = mapCimTypes.get(valueType);
             logger.debug("Value is null. lambda_column=" + lambda_column
-                    + " lambda_variable=" + lambda_variable + " type=" + valueType);
+                    + " lambda_variable=" + lambda_variable + " type=" + valueType + "/" + valueTypeStr);
         }
 
         String rowValue;

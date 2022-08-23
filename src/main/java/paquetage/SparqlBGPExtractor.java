@@ -62,7 +62,7 @@ public class SparqlBGPExtractor {
      * @param sparql_query
      * @throws Exception
      */
-    void ParseQuery(String sparql_query) throws Exception {
+    private void ParseQuery(String sparql_query) throws Exception {
         SPARQLParser parser = new SPARQLParser();
         ParsedQuery pq = parser.parseQuery(sparql_query, null);
         TupleExpr tupleExpr = pq.getTupleExpr();
@@ -75,9 +75,9 @@ public class SparqlBGPExtractor {
         {
             Var subject = myPattern.getSubjectVar();
             String subjectName = subject.getName();
-            //logger.debug("subjectName=" + subjectName);
-            if(subject.isConstant() || subject.isAnonymous()) {
-                logger.warn("Anonymous or constant subject:" + subjectName);
+            logger.debug("subjectName=" + subjectName);
+            if(subject.isConstant()) {
+                logger.warn("Constant subject:" + subjectName);
                 continue;
             }
 
@@ -90,6 +90,25 @@ public class SparqlBGPExtractor {
                 logger.warn("Predicate is null");
                 continue;
             }
+            String predicateStr = predicateValue.stringValue();
+
+            if(subject.isAnonymous()) {
+                logger.warn("Anonymous subject:" + subjectName);
+                /* Anonymous nodes due to fixed-length paths should be processed by creating an anonymous variable.
+                but this is not implemented yet for data later loaded from WMI.
+                This occurs with triples like:
+                "^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent"
+                or, on top of an ArbitraryLengthPath:
+                "?service1 (^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent)+ ?service2"
+
+                However, with triples whose instance are unrelated to WMI, this is OK. Like:
+                "cimv2:Win32_Process.Handle rdfs:label ?label"
+                */
+                if(predicateStr.startsWith(WmiOntology.namespaces_url_prefix)) {
+                    throw new RuntimeException("Anonymous WMI subjects are not allowed yet.");
+                }
+            }
+
 
             ObjectPattern refPattern;
             if(! patternsMap.containsKey(subjectName))
@@ -101,19 +120,19 @@ public class SparqlBGPExtractor {
             {
                 refPattern = patternsMap.get(subjectName);
             }
-            if(!predicateValue.stringValue().equals(RDF.TYPE.stringValue())) {
+            if(!predicateStr.equals(RDF.TYPE.stringValue())) {
                 if(object.isConstant()) {
                     if( !object.isAnonymous()) {
                         throw new Exception("isConstant and not isAnonymous");
                     }
-                    refPattern.AddKeyValue(predicateValue.stringValue(), false, object.getValue().stringValue());
+                    refPattern.AddKeyValue(predicateStr, false, object.getValue().stringValue());
                 }
                 else {
                     // If it is a variable.
                     if( object.isAnonymous()) {
                         throw new Exception("not isConstant and isAnonymous");
                     }
-                    refPattern.AddKeyValue(predicateValue.stringValue(), true, object.getName());
+                    refPattern.AddKeyValue(predicateStr, true, object.getName());
                 }
             }
             else {
@@ -126,9 +145,6 @@ public class SparqlBGPExtractor {
     private static String GetVarString(Var var, GenericProvider.Row row) throws Exception {
         GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
         String value = pairValueType.Value();
-        //if(pairValueType.Type() == GenericSelecter.ValueType.NODE_TYPE) {
-        //    logger.debug("This is a NODE:" + var.getName() + "=" + value);
-        //}
         return value;
     }
 
@@ -181,6 +197,11 @@ public class SparqlBGPExtractor {
         }
     }
 
+    /** This transforms a ValueType (as calculated from WMI) into a literal usable by RDF.
+     * The original data type is preserved in the literal because the value is not blindly converted to a string.
+     * @param pairValueType
+     * @return
+     */
     private static Value ValueTypeToLiteral(GenericProvider.Row.ValueTypePair pairValueType) {
         GenericProvider.ValueType valueType = pairValueType.Type();
         if(valueType == null) {
@@ -353,8 +374,34 @@ public class SparqlBGPExtractor {
         private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
 
         @Override
-        public void meet(StatementPattern sp) {
-            visitedStatementPatterns.add(sp.clone());
+        public void meet(ArbitraryLengthPath arbitraryLengthPathNode) {
+            /* This correctly parses paths like:
+            "?service1 (^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent)+ ?service2"
+            and creates anonymous nodes, but this is not allowed yet. Arbitrary length paths need
+            a special exploration of WMI instances.
+            */
+            logger.debug("ArbitraryLengthPath=" + arbitraryLengthPathNode);
+            throw new RuntimeException("ArbitraryLengthPath are not allowed yet.");
+        }
+
+        @Override
+        public void meet(Service serviceNode) {
+            // Do not store the statements of the serviceNode,
+            // because it does not make sense to preload its content with WMI.
+            logger.debug("Service=" + serviceNode);
+        }
+
+        @Override
+        public void meet(StatementPattern statementPatternNode) {
+            /* Store this statement. At the end, they are grouped by subject, and the associated WMI instances
+            are loaded then inserted in the repository, and then the original Sparql query is run.
+
+            This correctly parses paths like:
+            "?service1 ^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent ?service2"
+            and creates anonymous nodes, but this is not allowed yet.
+            However, anonymous nodes in fixed-length paths should be processed by creating an anonymous variable.
+            */
+            visitedStatementPatterns.add(statementPatternNode.clone());
         }
 
         public List<StatementPattern> patterns() {
