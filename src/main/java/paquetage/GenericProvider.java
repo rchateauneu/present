@@ -645,6 +645,11 @@ public class GenericProvider {
         if(queryData.classBaseSelecter == null) {
             throw new RuntimeException("Provider is not set");
         }
+        /*
+        * TODO: Results of a query could be stored if the "where" clause is identical for a given Sparql execution.
+        * TODO: Also, if a QueryData is met with more restrictive "where" clauses, then reuse the result
+        * TODO: with an extra filtering.
+        */
         if(withCustom) {
             return queryData.classBaseSelecter.EffectiveSelect(queryData);
         } else {
