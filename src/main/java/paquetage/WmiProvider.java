@@ -34,8 +34,8 @@ public class WmiProvider {
          on Windows XP replace RPC_C_IMP_LEVEL_IMPERSONATE with RPC_C_IMP_LEVEL_DELEGATE in the calls to CoInitializeSecurity() and CoSetProxyBlanket().
          */
 
+        // For documentation only. Not needed, see connectServer().
         if(false) {
-            // Not needed, it is already done in "connectServer".
             Ole32.INSTANCE.CoInitializeSecurity(
                     null,
                     -1,
@@ -68,7 +68,9 @@ public class WmiProvider {
                 // 80041003: The current user does not have permission to perform the action.
                 // In this case, set the service to null.
                 wbemService = WbemcliUtil.connectServer(namespace);
-                if(true) {
+
+                // For documentation only. Not needed, see connectServer().
+                if(false) {
                     Ole32.INSTANCE.CoSetProxyBlanket(
                             wbemService, /* IWbemServices *pSvc */
                             Ole32.RPC_C_AUTHN_WINNT,
