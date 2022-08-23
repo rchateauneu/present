@@ -28,6 +28,7 @@ public class WmiGetter extends BaseGetter {
 
     public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) throws Exception {
         try {
+            // FIXME: This will not work with other namespaces than "ROOT\\CIMV2".
             Wbemcli.IWbemClassObject objectNode = wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
             return objectNode;
         } catch (com.sun.jna.platform.win32.COM.COMException exc) {
