@@ -104,9 +104,10 @@ public class RepositoryWrapperStandardCimv2Test {
     /**
      * Select TCP connections of the Microsoft TCP/IP WMI v2 provider, and the process names.
      * It selects from two classes of different namespaces.
-     * The order of evaluation is forced the other way around and it slower.
+     * The order of evaluation is forced the other way around and it is slower.
      * @throws Exception
      */
+    @Ignore ("Same as testMSFT_NetTCPConnection_Win32_Process_Order1 but slower")
     @Test
     public void testMSFT_NetTCPConnection_Win32_Process_Order2() throws Exception {
         String sparqlQuery = """
@@ -172,6 +173,7 @@ public class RepositoryWrapperStandardCimv2Test {
         // At least a couple of processes should still be present.
         Assert.assertTrue(countPresentProcess > 3);
     }
+
     /**
      * Select from TCP connection for the Microsoft TCP/IP WMI v2 provider, and the process names.
      * It selects from two classes of different namespaces.
@@ -186,9 +188,9 @@ public class RepositoryWrapperStandardCimv2Test {
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?process_name
                     where {
-                        ?_2_tcp_connection standard_cimv2:MSFT_NetUDPEndpoint.OwningProcess ?owning_process .
-                        ?_1_process cimv2:Win32_Process.ProcessId ?owning_process .
-                        ?_1_process cimv2:Win32_Process.Name ?process_name .
+                        ?_1_tcp_connection standard_cimv2:MSFT_NetUDPEndpoint.OwningProcess ?owning_process .
+                        ?_2_process cimv2:Win32_Process.ProcessId ?owning_process .
+                        ?_2_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
         List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
