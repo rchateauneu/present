@@ -38,4 +38,8 @@ public class ObjectPattern {
         PredicateObjectPair keyValue = new PredicateObjectPair(predicate, isVariable, content);
         Members.add(keyValue);
     }
+
+    public String toString() {
+        return "className=" + className + " VariableName=" + VariableName;
+    }
 }
