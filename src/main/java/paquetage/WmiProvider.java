@@ -67,6 +67,16 @@ public class WmiProvider {
                 // This may throw : "com.sun.jna.platform.win32.COM.COMException: (HRESULT: 80041003)"
                 // 80041003: The current user does not have permission to perform the action.
                 // In this case, set the service to null.
+
+                /* To sort out access rights, consider:
+                    From the Start Menu, choose "Run"
+                    Enter wmimgmt.msc
+                    Right-click "WMI-Control (Local)" and choose Properties
+                    Go to "Security" tab.
+                            Navigate to: root/microsoft/windows/storage/
+                            Check permissions at this level by clicking to highlight "Storage",
+                            and then click "Security" button in the lower right. Dig deeper if needed.
+                 */
                 wbemService = WbemcliUtil.connectServer(namespace);
 
                 // For documentation only. Not needed, see connectServer().
@@ -150,6 +160,7 @@ public class WmiProvider {
         "WQL",
                 "SELECT Name FROM __NAMESPACE",
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY, null);
                 // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
 
         Set<String> namespacesFlat = new HashSet<>();
@@ -223,7 +234,7 @@ public class WmiProvider {
             Wbemcli.IWbemServices wbemService = GetWbemService(namespace);
             logger.debug("Getting classes for namespace=" + namespace);
             cacheClasses = ClassesCached(wbemService);
-            logger.debug("End. Number of classes=" + cacheClasses.size());
+            logger.debug("End getting classes in " + namespace + " Number of classes=" + cacheClasses.size());
             cacheClassesMap.put(namespace, cacheClasses);
         }
         return cacheClasses;
@@ -239,6 +250,8 @@ public class WmiProvider {
                 "WQL",
                 "SELECT * FROM meta_class",
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY, null);
         logger.debug("After query");
 
         try {
@@ -248,7 +261,7 @@ public class WmiProvider {
             IntByReference plFlavor = new IntByReference();
 
             while (true) {
-                result = enumerator.Next(0, 1);
+                result = enumerator.Next(Wbemcli.WBEM_INFINITE, 1);
                 if (result.length == 0) {
                     break;
                 }
@@ -290,6 +303,8 @@ public class WmiProvider {
                 String classDescription = classQualifiersSet.Get("Description");
                 if(classDescription != null) {
                     newClass.Description = classDescription;
+                } else {
+                    logger.error("Error getting Description qualifiers of " + className);
                 }
                 if(false) {
                     String isAssociation = classQualifiersSet.Get("Association");
@@ -323,7 +338,7 @@ public class WmiProvider {
                                 String[] propertyQualifierNames = propertyQualifiersSet.GetNames();
                                 System.out.println("propertyQualifierNames=" + String.join("+", propertyQualifierNames));
                                 for (String propertyQualifierName : propertyQualifierNames) {
-                                    if (propertyQualifierName == "CIMTYPE") continue;
+                                    if (propertyQualifierName.equals("CIMTYPE")) continue;
                                     String propertyQualifierValue = propertyQualifiersSet.Get(propertyQualifierName);
                                     System.out.println("propertyQualifierValue=" + propertyQualifierValue);
                                 }
