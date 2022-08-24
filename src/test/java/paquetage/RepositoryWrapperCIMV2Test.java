@@ -1091,7 +1091,120 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertTrue(average_count_threads >= 1.0);
     }
 
+    @Ignore("Property paths not implemented yet")
+    @Test
+    public void testSelect_PropertyPath_Win32_DependentService_One() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?service_name
+                    where {
+                        ?service1 cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?service1 ^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent ?service2 .
+                        ?service2 cimv2:Win32_Service.DisplayName ?service_name .
+                    }
+                """;
+        Assert.fail("Not implemented yet");
+    }
 
+    @Ignore("Property paths not implemented yet")
+    @Test
+    public void testSelect_PropertyPath_Win32_DependentService_Many() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?service_name
+                    where {
+                        ?service1 cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?service1 (^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent)+ ?service2 .
+                        ?service2 cimv2:Win32_Service.DisplayName ?service_name .
+                    }
+                """;
+        Assert.fail("Not implemented yet");
+    }
+
+    /** Files in a directory.
+     * *
+     * @throws Exception
+     */
+    @Ignore("Property paths not implemented yet")
+    @Test
+    public void testSelect_PropertyPath_Win32_Directory_One() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?service_name
+                    where {
+                        ?dir cimv2:Win32_Directory.Name "dir_name" .
+                        ?dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?file .
+                        ?file cimv2:Win32_Service.Name ?file_name .
+                    }
+                """;
+        Assert.fail("Not implemented yet");
+    }
+
+    /** Files in a directory at any level.
+     *
+     * @throws Exception
+     */
+    @Ignore("Property paths not implemented yet")
+    @Test
+    public void testSelect_PropertyPath_Win32_Directory_Many() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?service_name
+                    where {
+                        ?dir cimv2:Win32_Directory.Name "dir_name" .
+                        ?dir (^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent)+ ?file .
+                        ?file cimv2:Win32_Service.Name ?file_name .
+                    }
+                """;
+        Assert.fail("Not implemented yet");
+    }
+
+
+    /** Subprocesses of a process.
+     * *
+     * @throws Exception
+     */
+    @Ignore("Property paths not implemented yet")
+    @Test
+    public void testSelect_PropertyPath_Win32_Process_One() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?service_name
+                    where {
+                        ?process_top cimv2:Win32_Process.Name "dir_name" .
+                        ?process_top ^cimv2:CIM_DirectoryContainsFile.Dependent/cimv2:CIM_DirectoryContainsFile.Antecedent ?process_sub .
+                        ?process_sub cimv2:Win32_Process.Name ?file_name .
+                    }
+                """;
+        Assert.fail("Not implemented yet");
+    }
+
+    /** Subprocesses of a process at any level.
+     *
+     * @throws Exception
+     */
+    @Ignore("Property paths not implemented yet")
+    @Test
+    public void testSelect_PropertyPath_Win32_Process_Many() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?service_name
+                    where {
+                        ?process_top cimv2:Win32_Process.Name "dir_name" .
+                        ?process_top (^cimv2:CIM_DirectoryContainsFile.Dependent/cimv2:CIM_DirectoryContainsFile.Antecedent)+ ?process_sub .
+                        ?process_sub cimv2:Win32_Process.Name ?file_name .
+                    }
+                """;
+        Assert.fail("Not implemented yet");
+    }
+
+    // Win32_Service.ProcessId
 
     /*
     TODO: Recursive search of files and sub-directories.

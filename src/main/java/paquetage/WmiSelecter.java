@@ -9,6 +9,7 @@ import com.sun.jna.ptr.IntByReference;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.function.BiConsumer;
 
 public class WmiSelecter extends BaseSelecter {
@@ -30,14 +31,20 @@ public class WmiSelecter extends BaseSelecter {
      * @throws Exception
      */
     public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
-        ArrayList<GenericProvider.Row> resultRows = new ArrayList<>();
-        String wqlQuery = queryData.BuildWqlQuery();
-        // Temporary debugging purpose.
-        logger.debug("wqlQuery=" + wqlQuery);
-
         if (queryData.isMainVariableAvailable) {
             throw new Exception("Main variable should not be available in a WQL query.");
         }
+
+        String wqlQuery = queryData.BuildWqlQuery();
+        logger.debug("wqlQuery=" + wqlQuery);
+
+        ArrayList<GenericProvider.Row> cachedResultRows = queryData.GetCachedQueryResults(wqlQuery);
+        if(cachedResultRows != null) {
+            logger.debug("CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT");
+            return cachedResultRows;
+        }
+
+        ArrayList<GenericProvider.Row> resultRows = new ArrayList<>();
 
         // The results are batched in a big number, so it is faster.
         int countRows = 100;
@@ -97,6 +104,7 @@ public class WmiSelecter extends BaseSelecter {
             enumerator.Release();
         }
         logger.debug("Leaving. Rows=" + resultRows.size());
+        queryData.StoreCachedQueryResults(wqlQuery, resultRows);
         return resultRows;
     }
 }

@@ -34,6 +34,28 @@ public class QueryData {
     // Getter class used for a query similar to GetOebject. Used to evaluate performance.
     BaseGetter classGetter = null;
 
+    // Used only for WMI.
+    // The query must be stored because the values in the "where" clause change.
+    // However, the main variable must not change.
+    // Consider a LRU cache to limit memory usage.
+    private HashMap<String, ArrayList<GenericProvider.Row> > CacheQueries = null;
+
+    public ArrayList<GenericProvider.Row> GetCachedQueryResults(String wqlQuery) {
+        if(CacheQueries == null) {
+            return null;
+        }
+        // Namespaces cannot contains a "+" sign, so this key is OK.
+        return CacheQueries.get(namespace + "+" + wqlQuery);
+    }
+
+    public void StoreCachedQueryResults(String wqlQuery, ArrayList<GenericProvider.Row> resultRows) {
+        if(CacheQueries == null) {
+            CacheQueries = new HashMap<>();
+        }
+        CacheQueries.put(namespace + "+" + wqlQuery, resultRows);
+    }
+
+    // This is just for debugging.
     public String toString() {
         String cols = String.join("+", queryColumns.keySet());
         String wheres =  (String) whereTests.stream()

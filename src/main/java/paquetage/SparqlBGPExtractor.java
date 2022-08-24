@@ -8,7 +8,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.Triple;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -368,10 +372,22 @@ public class SparqlBGPExtractor {
      *
      */
     static class PatternsVisitor extends AbstractQueryModelVisitor {
-        public void meet(TripleRef node) {
-        }
 
         private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
+
+        // @Override
+        public void meet(TripleRef node) {
+            // FIXME: Why is it disabled and not overriden ?
+            logger.warn("TripleRef=" + node);
+        }
+
+        @Override
+        // public void meet(org.eclipse.rdf4j.query.algebra.Namespace namespaceNode) throws Exception {
+        public void meet(Namespace namespaceNode) throws Exception {
+            // FIXME: Why is it disabled and not overriden ?
+            logger.debug("Namespace=" + namespaceNode);
+            super.meet(namespaceNode);
+        }
 
         @Override
         public void meet(ArbitraryLengthPath arbitraryLengthPathNode) {

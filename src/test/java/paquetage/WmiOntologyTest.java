@@ -11,13 +11,25 @@ import org.junit.Test;
 import java.util.Formatter;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class WmiOntologyTest {
-    static WmiOntology ontologyCIMV2 = new WmiOntology("ROOT\\CIMV2", false);
-    static WmiOntology ontologyMicrosoft = new WmiOntology("ROOT\\Microsoft", false);
+    // TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
+    static private WmiOntology ontologyCIMV2 = new WmiOntology("ROOT\\CIMV2", false);
+    static private WmiOntology ontologyInterop = new WmiOntology("ROOT\\Interop", false);
+    static private WmiOntology ontologyStandardCimv2 = new WmiOntology("ROOT\\StandardCimv2", false);
 
+    /** The Sparql query is executed in the repository of the ontology.
+     * This is why this repository must NOT be cached because it is polluted with the output of the tests.
+     * @param ontologyRef
+     * @param sparqlQuery
+     * @param columnName
+     * @return
+     */
     private static HashSet<String> selectColumnFromOntology(WmiOntology ontologyRef, String sparqlQuery, String columnName){
         HashSet<String> variablesSet = new HashSet<String>();
+        System.out.println("Repository size before=" + ontologyRef.repositoryConnection.size());
         TupleQuery tupleQuery = ontologyRef.repositoryConnection.prepareTupleQuery(sparqlQuery);
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result
@@ -26,31 +38,42 @@ public class WmiOntologyTest {
                 variablesSet.add(valueOfX.toString());
             }
         }
+        System.out.println("Repository size after=" + ontologyRef.repositoryConnection.size());
         return variablesSet;
     }
 
-    /** This executes a Sparql query in the repository containing the WMI ontology. */
-    private HashSet<String> selectColumnCIMV2(String sparqlQuery, String columnName){
+    /** This executes a Sparql query in the repository containing the CIMV2 ontology. */
+    private static HashSet<String> selectColumnCIMV2(String sparqlQuery, String columnName){
         return selectColumnFromOntology(ontologyCIMV2, sparqlQuery, columnName);
     }
 
-    static void assertContainsItemMicrosoft(HashSet<String> itemsSet, String shortItem) {
-        Assert.assertTrue(itemsSet.contains(PresentUtils.NamespaceTermToIRI("ROOT\\Microsoft", shortItem)));
+    /** This executes a Sparql query in the repository containing the StandardCIMV2 ontology. */
+    private static HashSet<String> selectColumnStandardCimv2(String sparqlQuery, String columnName){
+        return selectColumnFromOntology(ontologyStandardCimv2, sparqlQuery, columnName);
     }
 
-    /*
-    @Test
-    public void TestOntologyMicrosoft_ClassesAll() {
-        HashSet<String> subjectsSet = selectColumnFromOntology(ontologyMicrosoft, "SELECT ?x WHERE { ?x ?p ?y }", "x");
-        System.out.println("subjectsSet=" + subjectsSet);
-        assertContainsItemMicrosoft(subjectsSet, "Win32_PhysicalMemoryLocation");
-        assertContainsItemMicrosoft(subjectsSet, "Win32_NamedJobObject");
-        assertContainsItemMicrosoft(subjectsSet, "Win32_OperatingSystem");
-    }
-    */
-
-    static void assertContainsItemCIMV2(HashSet<String> itemsSet, String shortItem) {
+    private static void assertContainsItemCIMV2(HashSet<String> itemsSet, String shortItem) {
         Assert.assertTrue(itemsSet.contains(PresentUtils.toCIMV2(shortItem)));
+    }
+
+    private static void assertContainsItemInterop(HashSet<String> itemsSet, String shortItem) {
+        Assert.assertTrue(itemsSet.contains(PresentUtils.NamespaceTermToIRI("ROOT\\Interop", shortItem)));
+    }
+
+    private static void assertContainsItemStandardCimv2(HashSet<String> itemsSet, String shortItem) {
+        Assert.assertTrue(itemsSet.contains(PresentUtils.NamespaceTermToIRI("ROOT\\StandardCimv2", shortItem)));
+    }
+
+    @Test
+    public void Interop_ClassesAll() {
+        HashSet<String> subjectsSet = selectColumnFromOntology(
+                ontologyInterop,
+                "SELECT ?x WHERE { ?x ?p ?y }",
+                "x");
+        System.out.println("subjectsSet=" + subjectsSet);
+        assertContainsItemInterop(subjectsSet, "CIM_ReferencedProfile");
+        assertContainsItemInterop(subjectsSet, "CIM_ElementConformsToProfile");
+        assertContainsItemInterop(subjectsSet, "Win32_PowerMeterConformsToProfile");
     }
 
     /** The content of the cached ontology and the fresh one should be the same.
@@ -59,7 +82,7 @@ public class WmiOntologyTest {
      */
     @Ignore("Frequently returns different numbers. No idea why.")
     @Test
-    public void TestOntologyCIMV2_Cached() {
+    public void CIMV2_Cached() {
         WmiOntology ontologyCachedCIMV2 = new WmiOntology("ROOT\\CIMV2", true);
         String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
         HashSet<String> countFresh = selectColumnFromOntology(ontologyCIMV2, sparqlQuery, "count");
@@ -71,7 +94,7 @@ public class WmiOntologyTest {
      *
      */
     @Test
-    public void TestCreateAllOntologies() {
+    public void CreateAllOntologies() {
         WmiProvider wmiProvider = new WmiProvider();
         Set<String> setNamespaces = wmiProvider.Namespaces();
         for (String oneNamespace : setNamespaces) {
@@ -87,7 +110,7 @@ public class WmiOntologyTest {
 
     /** This selects all triples, and detects that some classes are present. */
     @Test
-    public void TestOntologyCIMV2_ClassesAll() {
+    public void CIMV2_ClassesAll() {
         HashSet<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
         assertContainsItemCIMV2(subjectsSet, "Win32_Process");
         assertContainsItemCIMV2(subjectsSet, "CIM_DataFile");
@@ -99,7 +122,7 @@ public class WmiOntologyTest {
 
     /** This selects all definitions of RDF types and checks the presence of some classes. */
     @Test
-    public void TestOntology_ClassesFilter() {
+    public void CIMV2_ClassesFilter() {
         HashSet<String> typesSet = selectColumnCIMV2("SELECT ?x WHERE { ?x rdf:type rdfs:Class }", "x");
         assertContainsItemCIMV2(typesSet, "Win32_Process");
         assertContainsItemCIMV2(typesSet, "CIM_ProcessExecutable");
@@ -108,7 +131,7 @@ public class WmiOntologyTest {
 
     /** This selects all triples, and detects that some properties are present. */
     @Test
-    public void TestOntology_PropertiesAll() {
+    public void CIMV2_PropertiesAll() {
         HashSet<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
         assertContainsItemCIMV2(subjectsSet, "Handle");
         assertContainsItemCIMV2(subjectsSet, "Name");
@@ -118,7 +141,7 @@ public class WmiOntologyTest {
 
     /** This selects all definitions of RDF properties and checks the presence of some properties. */
     @Test
-    public void TestOntology_PropertiesFilter() {
+    public void CIMV2_PropertiesFilter() {
         HashSet<String> propertiesSet = selectColumnCIMV2(
                 "SELECT ?y WHERE { ?y rdf:type rdf:Property }", "y");
         assertContainsItemCIMV2(propertiesSet, "Handle");
@@ -129,7 +152,7 @@ public class WmiOntologyTest {
      *
      */
     @Test
-    public void TestOntology_Handle_Domain_All() {
+    public void CIMV2_Handle_Domain_All() {
         String queryString = new Formatter().format(
                 "SELECT ?y WHERE { ?y rdfs:domain ?z }").toString();
         HashSet<String> domainsSet = selectColumnCIMV2(queryString, "y");
@@ -142,7 +165,7 @@ public class WmiOntologyTest {
      * The node of Win32_Process.Handle is explicitly given.
      */
     @Test
-    public void TestOntology_Win32_Process_Handle_Domain_Filter() {
+    public void CIMV2_Win32_Process_Handle_Domain_Filter() {
         String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:domain ?x }", PresentUtils.toCIMV2("Win32_Process.Handle")).toString();
         HashSet<String> domainsSet = selectColumnCIMV2(queryString, "x");
@@ -152,7 +175,7 @@ public class WmiOntologyTest {
 
     /** This checks the presence of class string in one of the ranges. */
     @Test
-    public void TestOntology_Range_Filter() {
+    public void CIMV2_Range_Filter() {
         // Predicates: [
         // http://www.w3.org/2000/01/rdf-schema#label,
         // http://www.w3.org/2000/01/rdf-schema#domain,
@@ -167,7 +190,7 @@ public class WmiOntologyTest {
 
     /** This checks the presence Description for class Win32_Process. */
     @Test
-    public void TestOntology_Win32_Process_Description() {
+    public void CIMV2_Win32_Process_Description() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -187,7 +210,7 @@ public class WmiOntologyTest {
 
     /** This selects the base class of Win32_Process */
     @Test
-    public void TestOntology_Win32_Process_BaseClass() {
+    public void CIMV2_Win32_Process_BaseClass() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -204,7 +227,7 @@ public class WmiOntologyTest {
 
     /** This select the labels of all CIM classes starting from the top. */
     @Test
-    public void TestOntology_DerivedClasses() {
+    public void CIMV2_DerivedClasses() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -223,7 +246,7 @@ public class WmiOntologyTest {
 
     /** This checks the presence of Description for property Win32_Process.Handle. */
     @Test
-    public void TestOntology_Win32_Process_Handle_Description() {
+    public void CIMV2_Win32_Process_Handle_Description() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -243,7 +266,7 @@ public class WmiOntologyTest {
 
     /** This checks the presence of Description for property Win32_Process.Handle. */
     @Test
-    public void TestOntology_Win32_UserAccount_Name_Description() {
+    public void CIMV2_Win32_UserAccount_Name_Description() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -261,7 +284,7 @@ public class WmiOntologyTest {
     }
 
     @Test
-    public void TestOntology_Win32_ClassInfoAction_AppID() {
+    public void CIMV2_Win32_ClassInfoAction_AppID() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -277,7 +300,7 @@ public class WmiOntologyTest {
 
     /** All class with the property "AppID". */
     @Test
-    public void TestOntology_Classes_AppID() {
+    public void CIMV2_Classes_AppID() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -296,7 +319,7 @@ public class WmiOntologyTest {
 
     /** Properties used by at least four tables. */
     @Test
-    public void TestOntology_Classes_SharedProperty() {
+    public void CIMV2_Classes_SharedProperty() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -317,7 +340,7 @@ public class WmiOntologyTest {
     }
 
     @Test
-    public void TestOntology_Associators_Antecedent() {
+    public void CIMV2_Associators_Antecedent() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -334,7 +357,7 @@ public class WmiOntologyTest {
     }
 
     @Test
-    public void TestOntology_Associators_Dependent() {
+    public void CIMV2_Associators_Dependent() {
         String queryString = """
                 prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -352,7 +375,7 @@ public class WmiOntologyTest {
 
     /** All unique properties which have the same name "Handle". */
     @Test
-    public void TestOntology_Handle_Homonyms() {
+    public void CIMV2_Handle_Homonyms() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -371,7 +394,7 @@ public class WmiOntologyTest {
 
     /** All associators referring to a CIM_Process. */
     @Test
-    public void TestOntology_Associators_To_CIM_Process() {
+    public void CIMV2_Associators_To_CIM_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -398,7 +421,7 @@ public class WmiOntologyTest {
 
     /** All associators referring to a Win32_Process. */
     @Test
-    public void TestOntology_Associators_To_Win32_Process() {
+    public void CIMV2_Associators_To_Win32_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -417,7 +440,7 @@ public class WmiOntologyTest {
 
     /** This selects the labels of the base properties of properties pointing to a Win32_Process in associators. */
     @Test
-    public void TestOntology_Associators_Labels_To_Win32_Process() {
+    public void CIMV2_Associators_Labels_To_Win32_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -439,7 +462,7 @@ public class WmiOntologyTest {
 
     /** Labels of classes linked to a CIM_DataFile with an associator. */
     @Test
-    public void TestOntology_Associated_Classes_To_CIM_DataFile() {
+    public void CIMV2_Associated_Classes_To_CIM_DataFile() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -465,7 +488,7 @@ public class WmiOntologyTest {
 
     /** Labels of classes linked to a Win32_Process with an associator. */
     @Test
-    public void TestOntology_Associated_Classes_To_Win32_Process() {
+    public void CIMV2_Associated_Classes_To_Win32_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -479,82 +502,91 @@ public class WmiOntologyTest {
                         }
                     """;
         HashSet<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
-        System.out.println("labelsSet=" + labelsSet.toString());
+        System.out.println("labelsSet=" + labelsSet);
         Assert.assertTrue(labelsSet.contains("\"Win32_LogonSession\""));
         Assert.assertTrue(labelsSet.contains("\"Win32_ComputerSystem\""));
         Assert.assertTrue(labelsSet.contains("\"Win32_NamedJobObject\""));
         Assert.assertTrue(labelsSet.contains("\"Win32_Process\""));
     }
 
+    /**
+     * Properties of StandardCimv2 class "MSFT_NetTCPConnection".
+     */
+    @Test
+    public void StandardCimv2_MSFT_NetUDPEndpoint_Properties() {
+        String queryString = """
+                        prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?my_label
+                        where {
+                            ?my_subproperty rdfs:domain standard_cimv2:MSFT_NetUDPEndpoint .
+                            ?my_subproperty rdfs:label ?my_label .
+                        }
+                    """;
+        HashSet<String> labelsSet = selectColumnStandardCimv2(queryString, "my_label");
+        System.out.println("labelsSet=" + labelsSet);
+        // Checks the presence of arbitrary properties.
+        Assert.assertTrue(labelsSet.contains("\"MSFT_NetUDPEndpoint.AggregationBehavior\""));
+        Assert.assertTrue(labelsSet.contains("\"MSFT_NetUDPEndpoint.CommunicationStatus\""));
+        Assert.assertTrue(labelsSet.contains("\"MSFT_NetUDPEndpoint.LocalAddress\""));
+        Assert.assertTrue(labelsSet.contains("\"MSFT_NetUDPEndpoint.LocalPort\""));
+        Assert.assertTrue(labelsSet.contains("\"MSFT_NetUDPEndpoint.OwningProcess\""));
+    }
 
+    /**
+     * Classes in the namespace StandardCimv2, whose a property name contains the string "Process".
+     */
+    @Test
+    public void StandardCimv2_ClassesWithFilteredProperties() {
+        String queryString = """
+                        prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?property_label
+                        where {
+                            ?my_property rdf:type rdf:Property .
+                            ?my_subproperty rdfs:subPropertyOf ?my_property .
+                            ?my_subproperty rdfs:domain ?my_class .
+                            ?my_subproperty rdfs:label ?property_label .
+                            ?my_class rdf:type rdfs:Class .
+                            FILTER regex(STR(?property_label), "Process").
+                        }
+                    """;
+        HashSet<String> labelsSet = selectColumnStandardCimv2(queryString, "property_label");
+        System.out.println("labelsSet=" + labelsSet);
+        Pattern patternNamespace = Pattern.compile("^.*Process.*$", Pattern.CASE_INSENSITIVE);
+        for(String label: labelsSet ) {
+            System.out.println("    label=" + label);
+            Matcher matcher = patternNamespace.matcher(label);
+            boolean matchFound = matcher.find();
+            Assert.assertTrue(matchFound);
+        }
+        Assert.assertTrue(labelsSet.contains("\"MSFT_NetTransportConnection.OwningProcess\""));
+        Assert.assertTrue(labelsSet.contains("\"MSFT_NetUDPEndpoint.OwningProcess\""));
+    }
 
-    // ?my_property_node rdfs:domain cimv2:CIM_ProcessExecutable
-        // my_property_node
-        // propertiesSet=[http://www.primhillcomputers.com/ontology/ROOT/CIMV2#BaseAddress, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Antecedent,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Dependent, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ModuleInstance,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessCount, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#GlobalProcessCount]
-        //
-        // cimv2:Antecedent rdfs:range ?y
-        // x
-        // [http://www.w3.org/2001/XMLSchema#string]
-        //
-        // cimv2:Antecedent ?x ?y .
-        // x
-        // [http://www.w3.org/2000/01/rdf-schema#label, http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2000/01/rdf-schema#range]
-        //
-        // y
-        // propertiesSet=[http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedSupplyVoltageSensor, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_SoftwareFeatureServiceImplementation,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_1394ControllerDevice, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_DeviceBus,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_BootServiceAccessBySAP, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedBattery,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_PrinterController, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_PrinterShare,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_DiskDriveToDiskPartition, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_SCSIControllerDevice,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_LogicalDiskBasedOnPartition, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Mount,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_SlotInSlot, "Antecedent", http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_AssociatedProcessorMemory,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Dependency, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AllocatedResource,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_DriverForDevice, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_SoftwareFeatureSAPImplementation,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ResidesOnExtent, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_HostedJobDestination,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ShadowBy, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_PNPAllocatedResource,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ServiceSAPDependency, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedSupplyCurrentSensor,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ProcessExecutable, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_PackageCooling,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_SubSession, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_DependentService,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ElementsLinked, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedProcessorMemory,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ShadowVolumeSupport, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_MemoryArrayLocation,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ShadowDiffVolumeSupport, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_DfsNodeTarget,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_MemoryWithMedia, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_RealizesAggregatePExtent,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ShadowFor, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_CardInSlot
-        // , http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_LogicalDiskToPartition, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_PnPSignedDriverCIMDataFile
-        // , http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_LoadOrderGroupServiceDependencies, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_LogonSessionMappedDisk,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_AllocatedResource, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_MediaPresent,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_SerialInterface, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_LoggedOnUser,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_HostedBootSAP, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_PackageTempSensor,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_LogicalProgramGroupItemDataFile, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ControlledBy,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_PackageInSlot, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ConnectionShare,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_HostedAccessPoint, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_SoftwareFeatureParent,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_JobDestinationJobs, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DeviceAccessedByFile,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_IDEControllerDevice, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ConnectedTo,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedCooling, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedAlarm,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_RealizesPExtent, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_CIMLogicalDeviceCIMDataFile,
-        // http://www.w3.org/1999/02/22-rdf-syntax-ns#Property, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_HostedService,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ComputerSystemPackage, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_PackageAlarm,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ShadowOn, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_PSExtentBasedOnPExtent,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ApplicationCommandLine, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ProtocolBinding,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_HostedBootService, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DeviceServiceImplementation,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_OperatingSystemQFE, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_SAPSAPDependency,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_DiskDrivePhysicalMedia, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DeviceConnection,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ServiceServiceDependency, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_BIOSLoadedInNV,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_POTSModemToSerialPort, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_MemoryDeviceLocation,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ServiceAccessBySAP, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_USBControllerDevice,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_SystemDriverPNPEntity, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DeviceSoftware,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_RunningOS, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_BasedOn,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_SessionConnection, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ClusterServiceAccessBySAP,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_SCSIInterface, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_LogicalProgramGroupDirectory,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_SessionResource, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Realizes,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_SessionProcess, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_LogicalDiskBasedOnVolumeSet,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_RealizesDiskPartition, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedMemory,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_USBControllerHasHub, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Docked,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_PrinterDriverDll, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_BootOSFromFS,
-        // http://www.w3.org/2001/XMLSchema#string, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_ControllerHasHub,
-        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_AssociatedSensor, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_DeviceSAPImplementation]
+    /**
+     * Classes with the same name in the namespaces StandardCimv2 and CIMV2.
+     */
+    @Ignore("WMI namespace not available yet")
+    @Test
+    public void StandardCimv2_CIMV2_HomonymClasses() {
+        String queryString = """
+                        prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?class_label
+                        where {
+                            ?my_class_cimv2 rdf:type rdfs:Class .
+                            ?my_class_cimv2 rdfs:label ?class_label .
+                            ?my_class_standard_cimv2 rdf:type rdfs:Class .
+                            ?my_class_standard_cimv2 rdfs:label ?class_label .
+                        }
+                    """;
+        HashSet<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
+        System.out.println("labelsSet=" + labelsSet);
+
+        Assert.assertTrue(false);
+    }
 
 
     /* TODO:

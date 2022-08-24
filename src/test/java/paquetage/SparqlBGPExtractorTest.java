@@ -601,7 +601,7 @@ public class SparqlBGPExtractorTest {
         Assert.fail("SparqlBGPExtractor did not throw an exception");
     }
 
-    /** Property pathes are not handled yet.
+    /** Property paths are not handled yet.
      * This query is equivalent to:
      * select ?display_name ?dependency_type
      * where {

@@ -92,7 +92,7 @@ public class WmiProvider {
                             Ole32.EOAC_NONE
                     );
                 } else {
-                    logger.info("Not calling CoSetProxyBlanket");
+                    logger.info("Not calling CoSetProxyBlanket for namespace=" + namespace);
                 }
             }
             catch(Exception exception) {
