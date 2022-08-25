@@ -263,23 +263,34 @@ public class WmiOntology {
         return dirSaildump;
     }
 
+    /** This stores the repository connection containing the ontology for each namespace,
+     * so it is not necessary to read them several times from file.
+     * They should never be modified but instead copied to a new repository.
+     */
+    static private HashMap<String, RepositoryConnection> mapConnects = new HashMap<>();
+
     static public RepositoryConnection ReadOnlyOntologyConnection(String namespace, boolean isCached) {
         CheckValidNamespace(namespace);
+        RepositoryConnection repositoryConnection = mapConnects.get(namespace);
+        if (repositoryConnection != null) {
+            logger.debug("Ontology connection in cache for namespace=" + namespace);
+            return repositoryConnection;
+        }
+        repositoryConnection = ReadOnlyOntologyConnectionNoCache(namespace, isCached);
+        if(isCached) {
+            mapConnects.put(namespace, repositoryConnection);
+        }
+        return repositoryConnection;
+    }
+
+    static public RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace, boolean isCached) {
+        CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection;
+
         try {
-            // TODO: If the file exists, store the connection in a cache !!
-            // TODO: If the file exists, store the connection in a cache !!
-            // TODO: If the file exists, store the connection in a cache !!
-            // TODO: If the file exists, store the connection in a cache !!
-            // TODO: If the file exists, store the connection in a cache !!
-            // Oui mais incompatible avec MemoryStore.setPersist(false); // Qui n'est pas documente.
             File dirSaildump = DirSailDump(namespace);
             logger.debug("dirSaildump=" + dirSaildump);
             boolean fileExists = Files.exists(dirSaildump.toPath());
-            MemoryStore memStore = new MemoryStore(dirSaildump);
-            memStore.setSyncDelay(1000L);
-            Repository repo = new SailRepository(memStore);
-            repositoryConnection = repo.getConnection();
 
             // TODO: Find a way to IMPORT this content into a new MemoryStore, later unconnected to the file.
             // TODO: This will avoid a stupid copy.
@@ -288,10 +299,17 @@ public class WmiOntology {
             if (isCached && fileExists) {
                 // Load the existing ontology from the file and sets the repository connection to it.
                 logger.debug("Exists dirSaildump=" + dirSaildump);
+                MemoryStore memStore = new MemoryStore(dirSaildump);
+                Repository repo = new SailRepository(memStore);
+                repositoryConnection = repo.getConnection();
                 logger.debug("Cached statements=" + repositoryConnection.size());
             } else {
                 // Creates a file repository and creates the ontology into it.
                 logger.debug("Does not exist dirSaildump=" + dirSaildump);
+                MemoryStore memStore = new MemoryStore(dirSaildump);
+                memStore.setSyncDelay(1000L);
+                Repository repo = new SailRepository(memStore);
+                repositoryConnection = repo.getConnection();
                 logger.debug("Caching new statements before=" + repositoryConnection.size());
                 CreateOntologyInRepository(namespace, repositoryConnection);
                 repositoryConnection.commit();
