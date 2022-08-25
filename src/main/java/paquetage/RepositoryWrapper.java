@@ -24,36 +24,13 @@ public class RepositoryWrapper {
     final static private Logger logger = Logger.getLogger(RepositoryWrapper.class);
     private RepositoryConnection localRepositoryConnection;
 
-    private static WmiOntology ontology = new WmiOntology("ROOT\\CIMV2", true);
 
-    RepositoryWrapper(RepositoryConnection repositoryConnection)
+    RepositoryWrapper(String namespace)
     {
-        this.localRepositoryConnection = repositoryConnection;
-        InsertOntology();
+        localRepositoryConnection = WmiOntology.CloneToMemoryConnection(namespace);
     }
 
-    public boolean IsValid() {
-        return localRepositoryConnection != null;
-    }
 
-    public static RepositoryWrapper CreateSailRepositoryFromMemory() throws Exception {
-        Repository repo = new SailRepository(new MemoryStore());
-        RepositoryConnection repositoryConnect = repo.getConnection();
-        return new RepositoryWrapper(repositoryConnect);
-    }
-
-    /** This loads all triples of the ontology and inserts them in the repository.
-     * This is rather slow because an ontology contains thousands of triples.
-     * TODO: It may be faster to reload the Sail repository from the cache file, instead of looping on the memory cache.
-     */
-    void InsertOntology() {
-        logger.debug("Inserting ontology triples");
-        long countInit = localRepositoryConnection.size();
-        RepositoryResult<Statement> result = ontology.repositoryConnection.getStatements(null, null, null, true);
-        localRepositoryConnection.add(result);
-        long countEnd = localRepositoryConnection.size();
-        logger.debug("Inserted " + (countEnd - countInit) + " triples from " + countInit);
-    }
 
     /** TODO: For performance, consider using Statement instead of Triple.
      * This might avoid this explicit loop.
@@ -62,7 +39,7 @@ public class RepositoryWrapper {
      *
      * @param triples
      */
-    void InsertTriples(List<Triple> triples) {
+    private void InsertTriples(List<Triple> triples) {
         for (Triple triple : triples) {
             localRepositoryConnection.add(triple.getSubject(), triple.getPredicate(), triple.getObject());
         }

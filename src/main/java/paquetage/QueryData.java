@@ -44,15 +44,14 @@ public class QueryData {
         if(CacheQueries == null) {
             return null;
         }
-        // Namespaces cannot contains a "+" sign, so this key is OK.
-        return CacheQueries.get(namespace + "+" + wqlQuery);
+        return CacheQueries.get(wqlQuery);
     }
 
     public void StoreCachedQueryResults(String wqlQuery, ArrayList<GenericProvider.Row> resultRows) {
         if(CacheQueries == null) {
             CacheQueries = new HashMap<>();
         }
-        CacheQueries.put(namespace + "+" + wqlQuery, resultRows);
+        CacheQueries.put(wqlQuery, resultRows);
     }
 
     // This is just for debugging.

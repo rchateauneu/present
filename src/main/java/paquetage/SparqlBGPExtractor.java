@@ -376,10 +376,12 @@ public class SparqlBGPExtractor {
         private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
 
         // @Override
+        /*
         public void meet(TripleRef node) {
             // FIXME: Why is it disabled and not overriden ?
             logger.warn("TripleRef=" + node);
         }
+        */
 
         @Override
         // public void meet(org.eclipse.rdf4j.query.algebra.Namespace namespaceNode) throws Exception {

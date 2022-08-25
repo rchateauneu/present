@@ -4,6 +4,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,22 +16,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class WmiOntologyTest {
-    // TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
-    static private WmiOntology ontologyCIMV2 = new WmiOntology("ROOT\\CIMV2", false);
-    static private WmiOntology ontologyInterop = new WmiOntology("ROOT\\Interop", false);
-    static private WmiOntology ontologyStandardCimv2 = new WmiOntology("ROOT\\StandardCimv2", false);
+    static private RepositoryConnection ontologyCIMV2 = WmiOntology.CloneToMemoryConnection("ROOT\\CIMV2");
+    static private RepositoryConnection ontologyInterop = WmiOntology.CloneToMemoryConnection("ROOT\\Interop");
+    static private RepositoryConnection ontologyStandardCimv2 = WmiOntology.CloneToMemoryConnection("ROOT\\StandardCimv2");
 
     /** The Sparql query is executed in the repository of the ontology.
      * This is why this repository must NOT be cached because it is polluted with the output of the tests.
-     * @param ontologyRef
+     * @param repositoryConnection
      * @param sparqlQuery
      * @param columnName
      * @return
      */
-    private static HashSet<String> selectColumnFromOntology(WmiOntology ontologyRef, String sparqlQuery, String columnName){
+    private static HashSet<String> selectColumnFromOntology(RepositoryConnection repositoryConnection, String sparqlQuery, String columnName){
         HashSet<String> variablesSet = new HashSet<String>();
-        System.out.println("Repository size before=" + ontologyRef.repositoryConnection.size());
-        TupleQuery tupleQuery = ontologyRef.repositoryConnection.prepareTupleQuery(sparqlQuery);
+        System.out.println("Repository size before=" + repositoryConnection.size());
+        TupleQuery tupleQuery = repositoryConnection.prepareTupleQuery(sparqlQuery);
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result
                 BindingSet bindingSet = result.next();
@@ -38,7 +38,7 @@ public class WmiOntologyTest {
                 variablesSet.add(valueOfX.toString());
             }
         }
-        System.out.println("Repository size after=" + ontologyRef.repositoryConnection.size());
+        System.out.println("Repository size after=" + repositoryConnection.size());
         return variablesSet;
     }
 
@@ -83,10 +83,10 @@ public class WmiOntologyTest {
     @Ignore("Frequently returns different numbers. No idea why.")
     @Test
     public void CIMV2_Cached() {
-        WmiOntology ontologyCachedCIMV2 = new WmiOntology("ROOT\\CIMV2", true);
+        RepositoryConnection ontologyNonCachedCIMV2 = WmiOntology.ReadOnlyOntologyConnection("ROOT\\CIMV2", false);
         String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
         HashSet<String> countFresh = selectColumnFromOntology(ontologyCIMV2, sparqlQuery, "count");
-        HashSet<String> countCache = selectColumnFromOntology(ontologyCachedCIMV2, sparqlQuery, "count");
+        HashSet<String> countCache = selectColumnFromOntology(ontologyNonCachedCIMV2, sparqlQuery, "count");
         Assert.assertEquals(countFresh, countCache);
     }
 
@@ -98,7 +98,7 @@ public class WmiOntologyTest {
         WmiProvider wmiProvider = new WmiProvider();
         Set<String> setNamespaces = wmiProvider.Namespaces();
         for (String oneNamespace : setNamespaces) {
-            WmiOntology ontologyNamespace = new WmiOntology(oneNamespace, true);
+            RepositoryConnection ontologyNamespace = WmiOntology.CloneToMemoryConnection(oneNamespace);
             String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
             HashSet<String> countTriples = selectColumnFromOntology(ontologyNamespace, sparqlQuery, "count");
             Assert.assertEquals(1, countTriples.size());

@@ -24,8 +24,7 @@ public class RepositoryWrapperCIMV2Test {
 
     @Before
     public void setUp() throws Exception {
-        repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
+        repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
     }
 
     //@Override
@@ -656,8 +655,7 @@ public class RepositoryWrapperCIMV2Test {
      */
     @Test
     public void testSelect_Win32_GroupUser () throws Exception {
-        RepositoryWrapper repositoryWrapper = RepositoryWrapper.CreateSailRepositoryFromMemory();
-        Assert.assertTrue(repositoryWrapper.IsValid());
+        RepositoryWrapper repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
         String currentUser = System.getProperty("user.name");
 
         String sparqlQuery = String.format("""
