@@ -1202,6 +1202,55 @@ public class RepositoryWrapperCIMV2Test {
         Assert.fail("Not implemented yet");
     }
 
+    /** Union of processes with pid multiple of 2 and pids multiple of 3.
+     * This is arbitrary but the result is easy to check.
+     * @throws Exception
+     */
+    @Ignore("Union not fixed yet")
+    @Test
+    public void testSelect__Win32_Process_Filter_Union() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?handle where 
+                    {
+                        {
+                            select ?handle1
+                            where {
+                                ?process1 rdf:type cimv2:Win32_Process.ProcessId ?handle1 .
+                                filter(?handle1 % 3 = 0) 
+                            }
+                        }
+                        union
+                        {
+                            select ?handle2
+                            where {
+                                ?process2 rdf:type cimv2:Win32_Process.ProcessId ?handle2 .
+                                filter(?handle1 % 3 = 0) 
+                            }
+                        }
+                    }
+                    
+        """;
+
+        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Set<Long> setPids = PresentUtils.LongValuesSet(listRows,"handle");
+        Assert.assertTrue(setPids.contains(0));
+        for(Long onePid: setPids) {
+            Assert.assertTrue(onePid % 2 == 0 || onePid % 3 == 0);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
     // Win32_Service.ProcessId
 
     /*
