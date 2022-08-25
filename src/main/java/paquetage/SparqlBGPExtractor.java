@@ -67,9 +67,11 @@ public class SparqlBGPExtractor {
      * @throws Exception
      */
     private void ParseQuery(String sparql_query) throws Exception {
+        logger.debug("Parsing:\n" + sparql_query);
         SPARQLParser parser = new SPARQLParser();
         ParsedQuery pq = parser.parseQuery(sparql_query, null);
         TupleExpr tupleExpr = pq.getTupleExpr();
+        // FIXME: This is an unordered set. What about an union without BIND() statements, if several variables ?
         bindings = tupleExpr.getBindingNames();
         PatternsVisitor myVisitor = new PatternsVisitor();
         tupleExpr.visit(myVisitor);
@@ -272,13 +274,13 @@ public class SparqlBGPExtractor {
     List<Triple> GenerateTriples(List<GenericProvider.Row> rows) throws Exception {
         List<Triple> generatedTriples = new ArrayList<>();
 
-        logger.debug("Visitor patterns number:" + Long.toString(visitorPatternsRaw.size()));
-        logger.debug("Rows number:" + Long.toString(rows.size()));
+        logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
+        logger.debug("Rows number:" + rows.size());
         for(StatementPattern myPattern : visitorPatternsRaw) {
             Var subject = myPattern.getSubjectVar();
             Var predicate = myPattern.getPredicateVar();
             if(!predicate.isConstant()) {
-                logger.debug("Predicate is not constant:" + predicate.toString());
+                logger.debug("Predicate is not constant:" + predicate);
                 continue;
             }
             IRI predicateIri = Values.iri(predicate.getValue().stringValue());
@@ -298,6 +300,7 @@ public class SparqlBGPExtractor {
                             resourceObject));
                 } else {
                     // Only the object changes for each row.
+                    logger.debug("Adding rows:" + rows.size());
                     for (GenericProvider.Row row : rows) {
                         GenericProvider.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
                         if(pairValueType == null) {
@@ -325,6 +328,7 @@ public class SparqlBGPExtractor {
                         ? Values.iri(objectString)
                         : object.getValue(); // Keep the original type of the constant.
 
+                    logger.debug("Adding rows:" + rows.size());
                     for (GenericProvider.Row row : rows) {
                         // Consistency check.
                         // TODO: Maybe this is an IRI ? So, do not transform it again !
@@ -339,16 +343,16 @@ public class SparqlBGPExtractor {
                     }
                 } else {
                     // The subject and the object change for each row.
+                    logger.debug("Adding rows:" + rows.size());
                     for (GenericProvider.Row row : rows) {
                         //logger.debug("subject=" + subject + ".");
 
                         Resource resourceSubject = AsIRI(subject, row);
 
                         GenericProvider.Row.ValueTypePair objectValue = GetVarValue(object, row);
-                        //String objectString = objectValue.Value();
                         Value resourceObject;
                         if(patternsMap.containsKey(object.getName())) {
-                            resourceObject = AsIRI(object, row); // Values.iri(objectString);
+                            resourceObject = AsIRI(object, row);
                         } else {
                             if(objectValue == null) {
                                 throw new RuntimeException("Null value for " + object.getName());
@@ -365,6 +369,7 @@ public class SparqlBGPExtractor {
             }
         }
 
+        logger.debug("Generated triples number:" + generatedTriples.size());
         return generatedTriples;
     }
 
