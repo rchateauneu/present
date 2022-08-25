@@ -283,7 +283,7 @@ public class WmiOntology {
         return repositoryConnection;
     }
 
-    static public RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace, boolean isCached) {
+    static private RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace, boolean isCached) {
         CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection;
 
@@ -300,6 +300,7 @@ public class WmiOntology {
                 // Load the existing ontology from the file and sets the repository connection to it.
                 logger.debug("Exists dirSaildump=" + dirSaildump);
                 MemoryStore memStore = new MemoryStore(dirSaildump);
+                logger.debug("MemoryStore created");
                 Repository repo = new SailRepository(memStore);
                 repositoryConnection = repo.getConnection();
                 logger.debug("Cached statements=" + repositoryConnection.size());
@@ -333,17 +334,17 @@ public class WmiOntology {
 
     /** This loads all triples of the ontology and inserts them in the repository.
      * This is rather slow because an ontology contains thousands of triples.
-     * TODO: It may be faster to reload the Sail repository from the cache file, instead of looping on the memory cache.
      * TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
      */
     public static RepositoryConnection CloneToMemoryConnection(String namespace) {
         CheckValidNamespace(namespace);
+        // This is not persisted to a file.
         Repository repo = new SailRepository(new MemoryStore());
         RepositoryConnection repositoryConnection = repo.getConnection();
 
-        logger.debug("Inserting ontology triples");
-        CheckValidNamespace(namespace);
         long countInit = repositoryConnection.size();
+        logger.debug("Inserting ontology triples:" + countInit);
+        CheckValidNamespace(namespace);
         RepositoryConnection sourceConnection = ReadOnlyOntologyConnection(namespace, true);
         // TODO: Avoid this useless copy.
         RepositoryResult<Statement> result = sourceConnection.getStatements(null, null, null, true);
