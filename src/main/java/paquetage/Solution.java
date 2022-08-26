@@ -1,10 +1,22 @@
 package paquetage;
 
 import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.algebra.Var;
 
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -12,6 +24,11 @@ public class Solution {
     final static private Logger logger = Logger.getLogger(Solution.class);
 
     public List<String> Header; // Not used yet.
+
+
+
+
+
 
     /**
      * This is a row returned by a WMI select query.
@@ -22,6 +39,43 @@ public class Solution {
      * TODO: When returning List<Row>, store the variable names once only, in a header. All rows have the same binding.
      */
     public static class Row {
+
+        /**
+         * IRIS must look like this:
+         * objectString=http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process isIRI=true
+         *
+         * But Wbem path are like that:
+         * subjectString=\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="31640"
+         *
+         * So, Wbem path must be URL-encoded and prefixed.
+         *
+         * @param var
+         * @return
+         * @throws Exception
+         */
+        Resource AsIRI(Var var) throws Exception {
+            String varName = var.getName();
+            ValueTypePair pairValueType = GetValueType(varName);
+            if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
+                throw new Exception("This should be a NODE:" + varName + "=" + pairValueType);
+            }
+            String valueString = pairValueType.Value();
+            if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
+                throw new Exception("Value " + varName + "=" + valueString + " is not a node");
+            }
+            // Consistency check, for debugging.
+            if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
+                throw new Exception("Double transformation in IRI:" + valueString);
+            }
+            Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
+            return resourceValue;
+        }
+
+        ValueTypePair GetVarValue(Var var) throws Exception {
+            ValueTypePair pairValueType = GetValueType(var.getName());
+            return pairValueType;
+        }
+
         /** In this library, only the string value is used because this is what is needed for WQL.
          * WQL does not really manipulate floats or dates, so string conversion is OK.
          *
@@ -33,12 +87,86 @@ public class Solution {
          * @param Type
          */
         public record ValueTypePair (String Value, GenericProvider.ValueType Type) {
+            private static final DatatypeFactory datatypeFactory ;
+
+            static {
+                try {
+                    datatypeFactory = DatatypeFactory.newInstance();
+                }
+                catch (Exception e) {
+                    throw new RuntimeException("Cannot initialize DatatypeFactory:", e);
+                }
+            }
+
+            private static ValueFactory factory = SimpleValueFactory.getInstance();
+
             public static ValueTypePair Factory(String value) {
                 return new ValueTypePair(value, GenericProvider.ValueType.STRING_TYPE);
             }
 
             public static ValueTypePair Factory(long value) {
                 return new ValueTypePair(Long.toString(value), GenericProvider.ValueType.INT_TYPE);
+            }
+
+            /** This transforms a ValueType (as calculated from WMI) into a literal usable by RDF.
+             * The original data type is preserved in the literal because the value is not blindly converted to a string.
+             * @return
+             */
+            Value ValueTypeToLiteral() {
+                GenericProvider.ValueType valueType = Type();
+                if(valueType == null) {
+                    logger.warn("Invalid null type of literal value.");
+                    Object nullObject = new Object();
+                    return Values.literal(nullObject);
+                }
+                String strValue = Value();
+                if(strValue == null) {
+                    logger.warn("Invalid null literal value.");
+                    return Values.literal("Unexpected null value. Type=\" + valueType");
+                }
+                switch(valueType) {
+                    case INT_TYPE:
+                        return Values.literal(Long.parseLong(strValue));
+                    case FLOAT_TYPE:
+                        return Values.literal(Double.parseDouble(strValue));
+                    case DATE_TYPE:
+                        if (strValue == null) {
+                            return Values.literal("NULL_DATE");
+                        } else {
+                            ZoneId zone = ZoneId.systemDefault();
+                            /**
+                             * See SWbemDateTime
+                             * https://docs.microsoft.com/en-us/windows/win32/wmisdk/swbemdatetime
+                             * https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
+                             *
+                             * strValue = '20220720095636.399854+060' for example.
+                             * The time zone offset is in minutes.
+                             *
+                             * https://stackoverflow.com/questions/37308672/parse-cim-datetime-with-milliseconds-to-java-date                     *
+                             */
+                            //logger.debug("strValue=" + strValue);
+
+                            String offsetInMinutesAsString = strValue.substring ( 22 );
+                            long offsetInMinutes = Long.parseLong ( offsetInMinutesAsString );
+                            LocalTime offsetAsLocalTime = LocalTime.MIN.plusMinutes ( offsetInMinutes );
+                            String offsetAsString = offsetAsLocalTime.format ( DateTimeFormatter.ISO_LOCAL_TIME );
+                            String inputModified = strValue.substring ( 0 , 22 ) + offsetAsString;
+
+                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSSSSSZZZZZ");
+                            LocalDateTime dateFromGmtString = formatter.parse(inputModified, Instant::from).atZone(zone).toLocalDateTime();
+
+                            String strDate = dateFromGmtString.toString();
+                            //logger.debug("strDate=" + strDate);
+                            XMLGregorianCalendar dateGregorian = datatypeFactory.newXMLGregorianCalendar(strDate);
+
+                            return Values.literal(factory, dateGregorian, true);
+                        }
+                    case STRING_TYPE:
+                        return Values.literal(strValue);
+                    case NODE_TYPE:
+                        return Values.literal(strValue);
+                }
+                throw new RuntimeException("Data type not handled:" + valueType);
             }
         };
 

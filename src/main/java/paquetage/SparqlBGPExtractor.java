@@ -3,8 +3,6 @@ package paquetage;
 // See "query explain"
 // https://rdf4j.org/documentation/programming/repository/
 
-import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -21,9 +19,6 @@ import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
 
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
-
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 // https://github.com/apache/rya/blob/master/sail/src/main/java/org/apache/rya/rdftriplestore/inference/IntersectionOfVisitor.java#L54
@@ -37,6 +32,7 @@ public class SparqlBGPExtractor {
     public Set<String> bindings;
 
     // This should be private except for tests.
+    // Ca va etre un expressionTree
     public Map<String, ObjectPattern> patternsMap;
 
     // These are the raw patterns extracted from the query. They may contain variables which are not defined
@@ -148,121 +144,99 @@ public class SparqlBGPExtractor {
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
 
-    private static String GetVarString(Var var, Solution.Row row) throws Exception {
-        Solution.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
-        String value = pairValueType.Value();
-        return value;
-    }
-
-    private static Solution.Row.ValueTypePair GetVarValue(Var var, Solution.Row row) throws Exception {
-        Solution.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
-        return pairValueType;
-    }
-
-    /**
-     * IRIS must look like this:
-     * objectString=http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process isIRI=true
-     *
-     * But Wbem path are like that:
-     * subjectString=\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="31640"
-     *
-     * So, Wbem path must be URL-encoded and prefixed.
-     *
-     * @param var
-     * @param row
-     * @return
-     * @throws Exception
-     */
-    private static Resource AsIRI(Var var, Solution.Row row) throws Exception {
-        Solution.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
-        if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
-            throw new Exception("This should be a NODE:" + var.getName() + "=" + pairValueType);
-        }
-        String valueString = pairValueType.Value();
-        //logger.debug("valueTypePair=" + valueTypePair);
-        if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
-            throw new Exception("Value " + var.getName() + "=" + valueString + " is not a node");
-        }
-        // Consistency check, for debugging.
-        if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
-            throw new Exception("Double transformation in IRI:" + valueString);
-        }
-        Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
-        return resourceValue;
-    }
-
     private static ValueFactory factory = SimpleValueFactory.getInstance();
-    private static final DatatypeFactory datatypeFactory ;
 
-    static {
-        try {
-            datatypeFactory = DatatypeFactory.newInstance();
+    private void PatternToTriples(List<Triple> generatedTriples, StatementPattern myPattern, Solution rows) throws Exception {
+        Var subject = myPattern.getSubjectVar();
+        Var predicate = myPattern.getPredicateVar();
+        if(!predicate.isConstant()) {
+            logger.debug("Predicate is not constant:" + predicate);
+            return;
         }
-        catch (Exception e) {
-            throw new RuntimeException("Cannot initialize DatatypeFactory:", e);
-        }
-    }
+        IRI predicateIri = Values.iri(predicate.getValue().stringValue());
+        Var object = myPattern.getObjectVar();
+        if (subject.isConstant()) {
+            String subjectString = subject.getValue().stringValue();
+            Resource resourceSubject = Values.iri(subjectString);
 
-    /** This transforms a ValueType (as calculated from WMI) into a literal usable by RDF.
-     * The original data type is preserved in the literal because the value is not blindly converted to a string.
-     * @param pairValueType
-     * @return
-     */
-    private static Value ValueTypeToLiteral(Solution.Row.ValueTypePair pairValueType) {
-        GenericProvider.ValueType valueType = pairValueType.Type();
-        if(valueType == null) {
-            logger.warn("Invalid null type of literal value.");
-            Object nullObject = new Object();
-            return Values.literal(nullObject);
-        }
-        String strValue = pairValueType.Value();
-        if(strValue == null) {
-            logger.warn("Invalid null literal value.");
-            return Values.literal("Unexpected null value. Type=\" + valueType");
-        }
-        switch(valueType) {
-            case INT_TYPE:
-                return Values.literal(Long.parseLong(strValue));
-            case FLOAT_TYPE:
-                return Values.literal(Double.parseDouble(strValue));
-            case DATE_TYPE:
-                if (strValue == null) {
-                    return Values.literal("NULL_DATE");
-                } else {
-                    ZoneId zone = ZoneId.systemDefault();
-                    /**
-                     * See SWbemDateTime
-                     * https://docs.microsoft.com/en-us/windows/win32/wmisdk/swbemdatetime
-                     * https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
-                     *
-                     * strValue = '20220720095636.399854+060' for example.
-                     * The time zone offset is in minutes.
-                     *
-                     * https://stackoverflow.com/questions/37308672/parse-cim-datetime-with-milliseconds-to-java-date                     *
-                     */
-                    //logger.debug("strValue=" + strValue);
+            if (object.isConstant()) {
+                // One insertion only. Variables are not needed.
+                String objectString = object.getValue().stringValue();
+                Resource resourceObject = Values.iri(objectString);
 
-                    String offsetInMinutesAsString = strValue.substring ( 22 );
-                    long offsetInMinutes = Long.parseLong ( offsetInMinutesAsString );
-                    LocalTime offsetAsLocalTime = LocalTime.MIN.plusMinutes ( offsetInMinutes );
-                    String offsetAsString = offsetAsLocalTime.format ( DateTimeFormatter.ISO_LOCAL_TIME );
-                    String inputModified = strValue.substring ( 0 , 22 ) + offsetAsString;
-
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSSSSSZZZZZ");
-                    LocalDateTime dateFromGmtString = formatter.parse(inputModified, Instant::from).atZone(zone).toLocalDateTime();
-
-                    String strDate = dateFromGmtString.toString();
-                    //logger.debug("strDate=" + strDate);
-                    XMLGregorianCalendar dateGregorian = datatypeFactory.newXMLGregorianCalendar(strDate);
-
-                    return Values.literal(factory, dateGregorian, true);
+                generatedTriples.add(factory.createTriple(
+                        resourceSubject,
+                        predicateIri,
+                        resourceObject));
+            } else {
+                // Only the object changes for each row.
+                Iterator<Solution.Row> rowIterator = rows.iterator();
+                while(rowIterator.hasNext()) {
+                    Solution.Row row = rowIterator.next();
+                    Solution.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
+                    if(pairValueType == null) {
+                        // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
+                        logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
+                        continue;
+                    }
+                    String objectString = pairValueType.Value();
+                    Value resourceObject = patternsMap.containsKey(object.getName())
+                            ? Values.iri(objectString)
+                            : pairValueType.ValueTypeToLiteral();
+                    generatedTriples.add(factory.createTriple(
+                            resourceSubject,
+                            predicateIri,
+                            resourceObject));
                 }
-            case STRING_TYPE:
-                return Values.literal(strValue);
-            case NODE_TYPE:
-                return Values.literal(strValue);
+            }
+        } else {
+            if (object.isConstant()) {
+                // Only the subject changes for each row.
+                String objectString = object.getValue().stringValue();
+                logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
+                // TODO: Maybe this is already an IRI ? So, should not transform it again !
+                Value resourceObject = object.getValue().isIRI()
+                        ? Values.iri(objectString)
+                        : object.getValue(); // Keep the original type of the constant.
+
+                Iterator<Solution.Row> rowIterator = rows.iterator();
+                while (rowIterator.hasNext()) {
+                    Solution.Row row = rowIterator.next();
+                    // Consistency check.
+                    // TODO: Maybe this is an IRI ? So, do not transform it again !
+                    Resource resourceSubject = row.AsIRI(subject);
+
+                    generatedTriples.add(factory.createTriple(
+                            resourceSubject,
+                            predicateIri,
+                            resourceObject));
+                }
+            } else {
+                // The subject and the object change for each row.
+                Iterator<Solution.Row> rowIterator = rows.iterator();
+                while (rowIterator.hasNext()) {
+                    Solution.Row row = rowIterator.next();
+
+                    Resource resourceSubject = row.AsIRI(subject);
+
+                    Solution.Row.ValueTypePair objectValue = row.GetVarValue(object);
+                    Value resourceObject;
+                    if (patternsMap.containsKey(object.getName())) {
+                        resourceObject = row.AsIRI(object);
+                    } else {
+                        if (objectValue == null) {
+                            throw new RuntimeException("Null value for " + object.getName());
+                        }
+                        resourceObject = objectValue.ValueTypeToLiteral();
+                    }
+
+                    generatedTriples.add(factory.createTriple(
+                            resourceSubject,
+                            predicateIri,
+                            resourceObject));
+                }
+            }
         }
-        throw new RuntimeException("Data type not handled:" + valueType);
     }
 
     /** This generates the triples from substituting the variables of the patterns by their values.
@@ -277,99 +251,7 @@ public class SparqlBGPExtractor {
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
         logger.debug("Rows number:" + rows.size());
         for(StatementPattern myPattern : visitorPatternsRaw) {
-            Var subject = myPattern.getSubjectVar();
-            Var predicate = myPattern.getPredicateVar();
-            if(!predicate.isConstant()) {
-                logger.debug("Predicate is not constant:" + predicate);
-                continue;
-            }
-            IRI predicateIri = Values.iri(predicate.getValue().stringValue());
-            Var object = myPattern.getObjectVar();
-            if (subject.isConstant()) {
-                String subjectString = subject.getValue().stringValue();
-                Resource resourceSubject = Values.iri(subjectString);
-
-                if (object.isConstant()) {
-                    // One insertion only. Variables are not needed.
-                    String objectString = object.getValue().stringValue();
-                    Resource resourceObject = Values.iri(objectString);
-
-                    generatedTriples.add(factory.createTriple(
-                            resourceSubject,
-                            predicateIri,
-                            resourceObject));
-                } else {
-                    // Only the object changes for each row.
-                    Iterator<Solution.Row> rowIterator = rows.iterator();
-                    while(rowIterator.hasNext()) {
-                        Solution.Row row = rowIterator.next();
-                        Solution.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
-                        if(pairValueType == null) {
-                            // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
-                            logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
-                            continue;
-                        }
-                        String objectString = pairValueType.Value();
-                        Value resourceObject = patternsMap.containsKey(object.getName())
-                                ? Values.iri(objectString)
-                                : ValueTypeToLiteral(pairValueType);
-                        generatedTriples.add(factory.createTriple(
-                                resourceSubject,
-                                predicateIri,
-                                resourceObject));
-                    }
-                }
-            } else {
-                if (object.isConstant()) {
-                    // Only the subject changes for each row.
-                    String objectString = object.getValue().stringValue();
-                    logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
-                    // TODO: Maybe this is already an IRI ? So, should not transform it again !
-                    Value resourceObject = object.getValue().isIRI()
-                        ? Values.iri(objectString)
-                        : object.getValue(); // Keep the original type of the constant.
-
-                    Iterator<Solution.Row> rowIterator = rows.iterator();
-                    while(rowIterator.hasNext()) {
-                        Solution.Row row = rowIterator.next();
-                        // Consistency check.
-                        // TODO: Maybe this is an IRI ? So, do not transform it again !
-                        Resource resourceSubject = AsIRI(subject, row);
-
-                        //logger.debug("resourceSubject=" + resourceSubject);
-
-                        generatedTriples.add(factory.createTriple(
-                                resourceSubject,
-                                predicateIri,
-                                resourceObject));
-                    }
-                } else {
-                    // The subject and the object change for each row.
-                    Iterator<Solution.Row> rowIterator = rows.iterator();
-                    while(rowIterator.hasNext()) {
-                        Solution.Row row = rowIterator.next();
-                        //logger.debug("subject=" + subject + ".");
-
-                        Resource resourceSubject = AsIRI(subject, row);
-
-                        Solution.Row.ValueTypePair objectValue = GetVarValue(object, row);
-                        Value resourceObject;
-                        if(patternsMap.containsKey(object.getName())) {
-                            resourceObject = AsIRI(object, row);
-                        } else {
-                            if(objectValue == null) {
-                                throw new RuntimeException("Null value for " + object.getName());
-                            }
-                            resourceObject = ValueTypeToLiteral(objectValue);
-                        }
-
-                        generatedTriples.add(factory.createTriple(
-                                resourceSubject,
-                                predicateIri,
-                                resourceObject));
-                    }
-                }
-            }
+            PatternToTriples(generatedTriples, myPattern, rows);
         }
 
         logger.debug("Generated triples number:" + generatedTriples.size());
