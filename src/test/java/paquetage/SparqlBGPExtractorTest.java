@@ -220,7 +220,6 @@ public class SparqlBGPExtractorTest {
      *
      * @throws Exception
      */
-    @Ignore("This must be fixed")
     @Test
     public void Parse_Union_CheckNoMix() throws Exception {
         String sparqlQuery = """
@@ -245,20 +244,25 @@ public class SparqlBGPExtractorTest {
                     
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertTrue(false);
-        /*
-        Ca ne doit PAS renvoyer quelque chose comme
-         */
+
         Assert.assertEquals(Set.of("process"), extractor.bindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
-        Assert.assertEquals(1, patterns.size());
-        Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
-        ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
-        Assert.assertEquals("process", firstPattern.VariableName);
-        Assert.assertEquals(2, firstPattern.Members.size());
-        CompareKeyValue(firstPattern.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Caption", false, "Caption1");
-        CompareKeyValue(firstPattern.Members.get(1), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Caption", false, "Caption2");
+        Assert.assertEquals(2, patterns.size());
+        for(ObjectPattern objectPattern: patterns) {
+            System.out.println("objectPattern=" + objectPattern);
+        }
+        ObjectPattern pattern1 = FindObjectPattern(extractor, "process1");
+        Assert.assertNotEquals(pattern1, null);
+        Assert.assertEquals(null, pattern1.className);
+        Assert.assertEquals("process1", pattern1.VariableName);
+        Assert.assertEquals(1, pattern1.Members.size());
+        CompareKeyValue(pattern1.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", false, "Caption1");
+
+        ObjectPattern pattern2 = FindObjectPattern(extractor, "process2");
+        Assert.assertNotEquals(pattern2, null);
+        Assert.assertEquals("process2", pattern2.VariableName);
+        Assert.assertEquals(1, pattern2.Members.size());
+        CompareKeyValue(pattern2.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", false, "Caption2");
     }
 
     /***
