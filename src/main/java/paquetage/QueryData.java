@@ -38,16 +38,16 @@ public class QueryData {
     // The query must be stored because the values in the "where" clause change.
     // However, the main variable must not change.
     // Consider a LRU cache to limit memory usage.
-    private HashMap<String, ArrayList<GenericProvider.Row> > CacheQueries = null;
+    private HashMap<String, Solution > CacheQueries = null;
 
-    public ArrayList<GenericProvider.Row> GetCachedQueryResults(String wqlQuery) {
+    public Solution GetCachedQueryResults(String wqlQuery) {
         if(CacheQueries == null) {
             return null;
         }
         return CacheQueries.get(wqlQuery);
     }
 
-    public void StoreCachedQueryResults(String wqlQuery, ArrayList<GenericProvider.Row> resultRows) {
+    public void StoreCachedQueryResults(String wqlQuery, Solution resultRows) {
         if(CacheQueries == null) {
             CacheQueries = new HashMap<>();
         }

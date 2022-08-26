@@ -439,7 +439,7 @@ public class WmiProvider {
             entry(Wbemcli.CIM_FLAG_ARRAY, "CIM_FLAG_ARRAY")
     );
 
-    static GenericProvider.Row.ValueTypePair VariantToValueTypePair(
+    static Solution.Row.ValueTypePair VariantToValueTypePair(
             String lambda_column,
             String lambda_variable,
             IntByReference pType,
@@ -568,7 +568,7 @@ public class WmiProvider {
                     break;
             } // switch
         }
-        GenericProvider.Row.ValueTypePair rowValueType = new GenericProvider.Row.ValueTypePair(rowValue, rowType);
+        Solution.Row.ValueTypePair rowValueType = new Solution.Row.ValueTypePair(rowValue, rowType);
         return rowValueType;
     }
 

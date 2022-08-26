@@ -96,7 +96,7 @@ public class WmiGetter extends BaseGetter {
         return wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
-    GenericProvider.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
+    Solution.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
         IntByReference plFlavor = new IntByReference(); //  Maybe this is not needed.
@@ -107,7 +107,7 @@ public class WmiGetter extends BaseGetter {
             throw exc;
         }
 
-        GenericProvider.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, "n/a", pType, pVal);
+        Solution.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, "n/a", pType, pVal);
         return rowValueType;
     }
 
@@ -146,7 +146,7 @@ public class WmiGetter extends BaseGetter {
      * @return
      * @throws Exception
      */
-    public GenericProvider.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
@@ -156,7 +156,7 @@ public class WmiGetter extends BaseGetter {
             return null;
         }
 
-        GenericProvider.Row singleRow = new GenericProvider.Row();
+        Solution.Row singleRow = new Solution.Row();
         for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
             String variableName = entry.getValue();
             if(variableName == null) {
@@ -175,7 +175,7 @@ public class WmiGetter extends BaseGetter {
             */
         }
         // We are sure this is a node.
-        GenericProvider.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
+        Solution.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
         if(wbemPath.Type() != GenericProvider.ValueType.NODE_TYPE) {
             throw new Exception("GetSingleObject objectPath should be a node:" + objectPath);
         }

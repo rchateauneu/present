@@ -9,38 +9,13 @@ public class DependenciesBuilder {
     /**
      * This never changes whatever the order of input BGPs is.
      */
-    public HashMap<String, GenericProvider.Row.ValueTypePair> variablesContext;
+    public HashMap<String, Solution.Row.ValueTypePair> variablesContext;
 
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.
      The order, and input and output columns, and the performance depend highly on the order of the input BGPs.
      */
     public List<QueryData> prepared_queries;
-
-    /** This contains w WMI namespace, and a class or property. */
-    record NamespacedToken(String nameSpace, String Token) {}
-
-    // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessId"
-    static NamespacedToken SplitToken(String token) {
-        if(! token.contains("#")) {
-            throw new RuntimeException("Invalid token:" + token);
-        }
-        String[] splitToken = token.split("#");
-
-        String prefixUrl = splitToken[0];
-        String wmiNamespace;
-        if(prefixUrl.startsWith(WmiOntology.namespaces_url_prefix)) {
-            String wmiNamespaceSlashes = prefixUrl.substring(WmiOntology.namespaces_url_prefix.length());
-            // In the URL, the backslash separator of namespaces is replaced with a slash.
-            wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
-            WmiOntology.CheckValidNamespace(wmiNamespace);
-        } else {
-            wmiNamespace = null;
-        }
-        logger.debug("token="+token+" namespace="+wmiNamespace);
-
-        return new NamespacedToken(wmiNamespace, splitToken[1]);
-    }
 
     /** This takes as input a list of object patterns, and assumes that each of them represents a WQL query,
      * the queries being nested into one another (top-level first).
@@ -82,7 +57,7 @@ public class DependenciesBuilder {
             for(ObjectPattern.PredicateObjectPair keyValue: pattern.Members) {
                 String predicateName = keyValue.Predicate();
                 String valueContent = keyValue.Content();
-                NamespacedToken namespacedPredicate = SplitToken(predicateName);
+                WmiOntology.NamespacedToken namespacedPredicate = WmiOntology.SplitToken(predicateName);
                 String shortPredicate = namespacedPredicate.Token;
                 if(currentNamespace == null) {
                     currentNamespace = namespacedPredicate.nameSpace;
@@ -156,7 +131,7 @@ public class DependenciesBuilder {
                     throw new Exception("Invalid class name:" + pattern.className);
                 }
                 // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Process"
-                NamespacedToken namespacedClassName = SplitToken(pattern.className);
+                WmiOntology.NamespacedToken namespacedClassName = WmiOntology.SplitToken(pattern.className);
                 shortClassName = namespacedClassName.Token;
                 if (deducedClassName != null) {
                     // If the class is explicitly given, and also is the prefix of some attributes.

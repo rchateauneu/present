@@ -37,10 +37,10 @@ public class RepositoryWrapperCIMV2Test {
     @Test
     public void testSelectAnyTriples() throws Exception {
         String sparqlQuery = "SELECT ?x WHERE { ?x ?y ?z } limit 10";
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(10, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("x"), singleRow.KeySet());
     }
 
@@ -55,10 +55,10 @@ public class RepositoryWrapperCIMV2Test {
                         cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """;
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("label"), singleRow.KeySet());
     }
 
@@ -75,10 +75,10 @@ public class RepositoryWrapperCIMV2Test {
                         ?process cimv2:Win32_Process.Caption ?caption .
                     }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "process"), singleRow.KeySet());
     }
 
@@ -96,10 +96,10 @@ public class RepositoryWrapperCIMV2Test {
                         cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
     }
 
@@ -124,7 +124,7 @@ public class RepositoryWrapperCIMV2Test {
                         }
                     }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // The current process must be here.
         Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
@@ -137,7 +137,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(1, setExecutables.size());
 
         // ... and have the correct value.
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("handle", "executablepath"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetStringValue("executablepath"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
@@ -160,10 +160,10 @@ public class RepositoryWrapperCIMV2Test {
                         ?process cimv2:Win32_Process.ProcessId ?pid .
                     }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("process", "pid"), singleRow.KeySet());
         // "18936"^^<http://www.w3.org/2001/XMLSchema#long>
         Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetStringValue("pid"));
@@ -227,11 +227,11 @@ public class RepositoryWrapperCIMV2Test {
                         ?process cimv2:Win32_Process.WorkingSetSize ?workingsetsize . 
                    }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // Only one row because pids are unique.
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
         WmiProvider.WmiClass cl = new WmiProvider().ClassesCIMV2().get("Win32_Process");
@@ -265,7 +265,7 @@ public class RepositoryWrapperCIMV2Test {
                         ?property rdfs:label ?property_label .
                     }
                 """;
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Set<String> setLabels = PresentUtils.StringValuesSet(listRows,"property_label");
         // Checks the presence of an arbitrary property.
         System.out.println("setLabels=" + setLabels);
@@ -295,10 +295,10 @@ public class RepositoryWrapperCIMV2Test {
                         cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
     }
 
@@ -320,7 +320,7 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, currentPidStr);
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
 
         System.out.println("currentPidStr=" + currentPidStr);
@@ -348,13 +348,13 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         // One service only with this name.
         Assert.assertEquals(1, listRows.size());
 
         // Win32_Service.Caption = "Windows Search"
         // Win32_Process.Caption = "SearchIndexer.exe"
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals("\"Windows Search\"",singleRow.GetStringValue("caption1"));
         Assert.assertEquals("\"SearchIndexer.exe\"",singleRow.GetStringValue("caption2"));
     }
@@ -380,10 +380,10 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         // One service only with this name.
         Assert.assertTrue(listRows.size() > 0);
-        for(GenericProvider.Row singleRow : listRows) {
+        for(Solution.Row singleRow : listRows) {
             System.out.println("Antecedent service:" + singleRow);
         }
         Set<String> setAntecedents = PresentUtils.StringValuesSet(listRows,"display_name");
@@ -431,7 +431,7 @@ public class RepositoryWrapperCIMV2Test {
                    }
                 """, currentUser);
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         System.out.println("listRows=" + listRows);
 
         // It might contain several sessions.
@@ -463,7 +463,7 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Set<String> listExecutables = PresentUtils.StringValuesSet(listRows, "executable_name");
         System.out.println("listExecutables=" + listExecutables);
         Assert.assertTrue(listExecutables.contains("\"SearchIndexer.exe\""));
@@ -490,9 +490,9 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         // Service (5)
         Assert.assertEquals(Set.of(PresentUtils.LongToXml(5)), singleRow.GetStringValue("logon_type"));
     }
@@ -517,9 +517,9 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals("\"services.exe\"", singleRow.GetStringValue("parent_caption"));
     }
 
@@ -548,10 +548,10 @@ public class RepositoryWrapperCIMV2Test {
                         ?_3_file cimv2:Name ?file_name .
                    }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         //Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetStringValue("file_name"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
@@ -583,10 +583,10 @@ public class RepositoryWrapperCIMV2Test {
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetStringValue("file_name"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
@@ -612,11 +612,11 @@ public class RepositoryWrapperCIMV2Test {
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         //Assert.assertEquals(1, listRows.size());
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("_3_file"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetStringValue("_3_file"));
     }
@@ -636,10 +636,10 @@ public class RepositoryWrapperCIMV2Test {
                         ?user cimv2:Domain ?domain .
                    }
                 """;
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("name", "domain"), singleRow.KeySet());
 
         Set<String> setNames = PresentUtils.StringValuesSet(listRows,"name");
@@ -669,11 +669,11 @@ public class RepositoryWrapperCIMV2Test {
                         ?_3_group cimv2:Win32_Group.Name ?group_name .
                    }
                 """, currentUser);
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // The current user is at least in one group.
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("group_name"), singleRow.KeySet());
 
         Set<String> setGroups = PresentUtils.StringValuesSet(listRows,"group_name");
@@ -700,10 +700,10 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("device_id"), singleRow.KeySet());
 
         Set<String> setDevices = PresentUtils.StringValuesSet(listRows,"device_id");
@@ -734,10 +734,10 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("my_dir_name"), singleRow.KeySet());
 
         Set<String> setDirs = PresentUtils.StringValuesSet(listRows,"my_dir_name");
@@ -767,10 +767,10 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?my0_dir
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("count_files"), singleRow.KeySet());
 
         // Check that no file is missing.
@@ -813,11 +813,11 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?my0_dir
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         System.out.println("listRows=" + listRows);
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
 
         // Calculate "by hand" what the result should be.
         long expectedFileMin = Long.MAX_VALUE;
@@ -868,10 +868,10 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, currentPidStr);
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() == 1);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
 
         String minCreationDate = singleRow.GetStringValue("creation_date");
@@ -908,10 +908,10 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?my_process
                 """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("min_creation_date"), singleRow.KeySet());
 
         String minCreationDate = singleRow.GetStringValue("min_creation_date");
@@ -966,10 +966,10 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, PresentUtils.CurrentJavaBinary().replace("\\", "\\\\"));
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
 
         String actualCreationDate = singleRow.GetStringValue("creation_date");
@@ -1013,10 +1013,10 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?my2_assoc
                 """, currentPidStr);
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("max_inusecount"), singleRow.KeySet());
 
         // FIXME: This value is always null. Why ?
@@ -1042,10 +1042,10 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?process_handle
                 """, currentPidStr, currentPidStr);
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("count_threads"), singleRow.KeySet());
 
         // For example: count_threads = ""41"^^<http://www.w3.org/2001/XMLSchema#integer>"
@@ -1075,10 +1075,10 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, currentPidStr);
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
-        GenericProvider.Row singleRow = listRows.get(0);
+        Solution.Row singleRow = listRows.get(0);
         // Typical value: "14.870860927152317880794702"^^<http://www.w3.org/2001/XMLSchema#decimal>
         Assert.assertEquals(Set.of("average_count_threads"), singleRow.KeySet());
 
@@ -1233,7 +1233,7 @@ public class RepositoryWrapperCIMV2Test {
                     
         """;
 
-        List<GenericProvider.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Set<Long> setPids = PresentUtils.LongValuesSet(listRows,"handle");
         Assert.assertTrue(setPids.contains(0));

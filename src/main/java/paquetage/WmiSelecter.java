@@ -30,7 +30,7 @@ public class WmiSelecter extends BaseSelecter {
      * @return A list of rows containing the values of the variables as taken from the query results.
      * @throws Exception
      */
-    public ArrayList<GenericProvider.Row> EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) throws Exception {
         if (queryData.isMainVariableAvailable) {
             throw new Exception("Main variable should not be available in a WQL query.");
         }
@@ -38,13 +38,13 @@ public class WmiSelecter extends BaseSelecter {
         String wqlQuery = queryData.BuildWqlQuery();
         logger.debug("wqlQuery=" + wqlQuery);
 
-        ArrayList<GenericProvider.Row> cachedResultRows = queryData.GetCachedQueryResults(wqlQuery);
+        Solution cachedResultRows = queryData.GetCachedQueryResults(wqlQuery);
         if(cachedResultRows != null) {
             logger.debug("CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT");
             return cachedResultRows;
         }
 
-        ArrayList<GenericProvider.Row> resultRows = new ArrayList<>();
+        Solution resultRows = new Solution();
 
         // The results are batched in a big number, so it is faster.
         int countRows = 100;
@@ -75,7 +75,7 @@ public class WmiSelecter extends BaseSelecter {
                 }
                 for (int indexRow = 0; indexRow < wqlResults.length; ++indexRow) {
                     Wbemcli.IWbemClassObject wqlResult = wqlResults[indexRow];
-                    GenericProvider.Row oneRow = new GenericProvider.Row();
+                    Solution.Row oneRow = new Solution.Row();
                     // The path is always returned if the key is selected.
                     // This path should never be recalculated to ensure consistency with WMI.
                     // All values are NULL except, typically:
@@ -87,7 +87,7 @@ public class WmiSelecter extends BaseSelecter {
                         WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, null);
                         COMUtils.checkRC(hr);
 
-                        GenericProvider.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, lambda_variable, pType, pVal);
+                        Solution.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, lambda_variable, pType, pVal);
                         oneRow.PutValueType(lambda_variable, rowValueType);
 
                         OleAuto.INSTANCE.VariantClear(pVal);

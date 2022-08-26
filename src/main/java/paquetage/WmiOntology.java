@@ -355,7 +355,36 @@ public class WmiOntology {
         return repositoryConnection;
     }
 
-    // Recalculate.
+    // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessId"
+    static NamespacedToken SplitToken(String token) {
+        if(! token.contains("#")) {
+            throw new RuntimeException("Invalid token:" + token);
+        }
+        String[] splitToken = token.split("#");
 
+        String prefixUrl = splitToken[0];
+        String wmiNamespace;
+        if(prefixUrl.startsWith(namespaces_url_prefix)) {
+            String wmiNamespaceSlashes = prefixUrl.substring(namespaces_url_prefix.length());
+            // In the URL, the backslash separator of namespaces is replaced with a slash.
+            wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
+            CheckValidNamespace(wmiNamespace);
+        } else {
+            wmiNamespace = null;
+        }
+        logger.debug("token=" + token + " namespace=" + wmiNamespace);
+
+        return new NamespacedToken(wmiNamespace, splitToken[1]);
+    }
+
+    /** This contains a WMI namespace, and a class or property. */
+    public static class NamespacedToken {
+        public String nameSpace;
+        public String Token;
+        NamespacedToken(String namespace, String token) {
+            nameSpace = namespace;
+            Token = token;
+        }
+    }
 
 }

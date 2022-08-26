@@ -54,14 +54,14 @@ public class RepositoryWrapper {
      * @param sparqlQuery
      * @throws Exception
      */
-    public List<GenericProvider.Row> ExecuteQuery(String sparqlQuery) throws Exception
+    public List<Solution.Row> ExecuteQuery(String sparqlQuery) throws Exception
     {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         logger.debug("bindings=" + extractor.bindings);
 
         SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
 
-        ArrayList<GenericProvider.Row> translatedRows = sparqlTranslator.ExecuteToRows();
+        Solution translatedRows = sparqlTranslator.ExecuteToRows();
         logger.debug("Translated rows:" + translatedRows.size());
 
         List<Triple> triples = extractor.GenerateTriples(translatedRows);
@@ -70,14 +70,14 @@ public class RepositoryWrapper {
 
         // Now, execute the sparql query in the repository which contains the ontology
         // and the result of the WQL executions.
-        List<GenericProvider.Row> listRows = new ArrayList<>();
+        List<Solution.Row> listRows = new ArrayList<>();
         TupleQuery tupleQuery = localRepositoryConnection.prepareTupleQuery(sparqlQuery);
         boolean checkedBindingsExecution = false;
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {  // iterate over the result
                 BindingSet bindingSet = result.next();
                 bindingSet.getBindingNames();
-                GenericProvider.Row newRow = new GenericProvider.Row(bindingSet);
+                Solution.Row newRow = new Solution.Row(bindingSet);
                 if(!checkedBindingsExecution) {
                     logger.debug("Selected row:" + newRow);
                     Set<String> bindingNames = bindingSet.getBindingNames();

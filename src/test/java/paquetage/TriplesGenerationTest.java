@@ -69,10 +69,10 @@ public class TriplesGenerationTest {
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "any_iri_will_do";
-        List<GenericProvider.Row> rows = Arrays.asList(new GenericProvider.Row(Map.of(
-                "my_dir", new GenericProvider.Row.ValueTypePair(dirIri, GenericProvider.ValueType.NODE_TYPE),
-                "dir_name", new GenericProvider.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE)))
-        );
+        Solution rows = new Solution();
+        rows.add(new Solution.Row(Map.of(
+                "my_dir", new Solution.Row.ValueTypePair(dirIri, GenericProvider.ValueType.NODE_TYPE),
+                "dir_name", new Solution.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE))));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -119,13 +119,15 @@ public class TriplesGenerationTest {
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIriC = "iriC";
         String dirIriD = "iriD";
-        List<GenericProvider.Row> rows = Arrays.asList(
-                new GenericProvider.Row(Map.of(
-                        "my_dir", new GenericProvider.Row.ValueTypePair(dirIriC, GenericProvider.ValueType.NODE_TYPE),
-                        "dir_name", new GenericProvider.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE))),
-                new GenericProvider.Row(Map.of(
-                        "my_dir", new GenericProvider.Row.ValueTypePair(dirIriD, GenericProvider.ValueType.NODE_TYPE),
-                        "dir_name", new GenericProvider.Row.ValueTypePair("D:", GenericProvider.ValueType.STRING_TYPE))));
+        Solution rows = new Solution();
+        rows.add(
+                new Solution.Row(Map.of(
+                        "my_dir", new Solution.Row.ValueTypePair(dirIriC, GenericProvider.ValueType.NODE_TYPE),
+                        "dir_name", new Solution.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE))));
+        rows.add(
+                new Solution.Row(Map.of(
+                        "my_dir", new Solution.Row.ValueTypePair(dirIriD, GenericProvider.ValueType.NODE_TYPE),
+                        "dir_name", new Solution.Row.ValueTypePair("D:", GenericProvider.ValueType.STRING_TYPE))));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 
@@ -189,10 +191,12 @@ public class TriplesGenerationTest {
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "arbitrary_iri";
-        List<GenericProvider.Row> rows = Arrays.asList(new GenericProvider.Row(Map.of(
-                "my_dir", new GenericProvider.Row.ValueTypePair(dirIri, GenericProvider.ValueType.NODE_TYPE),
-                "dir_name", new GenericProvider.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE),
-                "dir_caption", new GenericProvider.Row.ValueTypePair("This is a text", GenericProvider.ValueType.STRING_TYPE))));
+        Solution rows = new Solution();
+        rows.add(
+            new Solution.Row(Map.of(
+                "my_dir", new Solution.Row.ValueTypePair(dirIri, GenericProvider.ValueType.NODE_TYPE),
+                "dir_name", new Solution.Row.ValueTypePair("C:", GenericProvider.ValueType.STRING_TYPE),
+                "dir_caption", new Solution.Row.ValueTypePair("This is a text", GenericProvider.ValueType.STRING_TYPE))));
 
         List<Triple> triples = extractor.GenerateTriples(rows);
 

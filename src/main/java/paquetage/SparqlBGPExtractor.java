@@ -148,14 +148,14 @@ public class SparqlBGPExtractor {
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
 
-    private static String GetVarString(Var var, GenericProvider.Row row) throws Exception {
-        GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+    private static String GetVarString(Var var, Solution.Row row) throws Exception {
+        Solution.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
         String value = pairValueType.Value();
         return value;
     }
 
-    private static GenericProvider.Row.ValueTypePair GetVarValue(Var var, GenericProvider.Row row) throws Exception {
-        GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+    private static Solution.Row.ValueTypePair GetVarValue(Var var, Solution.Row row) throws Exception {
+        Solution.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
         return pairValueType;
     }
 
@@ -173,8 +173,8 @@ public class SparqlBGPExtractor {
      * @return
      * @throws Exception
      */
-    private static Resource AsIRI(Var var, GenericProvider.Row row) throws Exception {
-        GenericProvider.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
+    private static Resource AsIRI(Var var, Solution.Row row) throws Exception {
+        Solution.Row.ValueTypePair pairValueType = row.GetValueType(var.getName());
         if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
             throw new Exception("This should be a NODE:" + var.getName() + "=" + pairValueType);
         }
@@ -208,7 +208,7 @@ public class SparqlBGPExtractor {
      * @param pairValueType
      * @return
      */
-    private static Value ValueTypeToLiteral(GenericProvider.Row.ValueTypePair pairValueType) {
+    private static Value ValueTypeToLiteral(Solution.Row.ValueTypePair pairValueType) {
         GenericProvider.ValueType valueType = pairValueType.Type();
         if(valueType == null) {
             logger.warn("Invalid null type of literal value.");
@@ -271,7 +271,7 @@ public class SparqlBGPExtractor {
      * @return Triples ready to be inserted in a repository.
      * @throws Exception
      */
-    List<Triple> GenerateTriples(List<GenericProvider.Row> rows) throws Exception {
+    List<Triple> GenerateTriples(Solution rows) throws Exception {
         List<Triple> generatedTriples = new ArrayList<>();
 
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
@@ -300,9 +300,10 @@ public class SparqlBGPExtractor {
                             resourceObject));
                 } else {
                     // Only the object changes for each row.
-                    logger.debug("Adding rows:" + rows.size());
-                    for (GenericProvider.Row row : rows) {
-                        GenericProvider.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
+                    Iterator<Solution.Row> rowIterator = rows.iterator();
+                    while(rowIterator.hasNext()) {
+                        Solution.Row row = rowIterator.next();
+                        Solution.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
                         if(pairValueType == null) {
                             // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
                             logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
@@ -328,8 +329,9 @@ public class SparqlBGPExtractor {
                         ? Values.iri(objectString)
                         : object.getValue(); // Keep the original type of the constant.
 
-                    logger.debug("Adding rows:" + rows.size());
-                    for (GenericProvider.Row row : rows) {
+                    Iterator<Solution.Row> rowIterator = rows.iterator();
+                    while(rowIterator.hasNext()) {
+                        Solution.Row row = rowIterator.next();
                         // Consistency check.
                         // TODO: Maybe this is an IRI ? So, do not transform it again !
                         Resource resourceSubject = AsIRI(subject, row);
@@ -343,13 +345,14 @@ public class SparqlBGPExtractor {
                     }
                 } else {
                     // The subject and the object change for each row.
-                    logger.debug("Adding rows:" + rows.size());
-                    for (GenericProvider.Row row : rows) {
+                    Iterator<Solution.Row> rowIterator = rows.iterator();
+                    while(rowIterator.hasNext()) {
+                        Solution.Row row = rowIterator.next();
                         //logger.debug("subject=" + subject + ".");
 
                         Resource resourceSubject = AsIRI(subject, row);
 
-                        GenericProvider.Row.ValueTypePair objectValue = GetVarValue(object, row);
+                        Solution.Row.ValueTypePair objectValue = GetVarValue(object, row);
                         Value resourceObject;
                         if(patternsMap.containsKey(object.getName())) {
                             resourceObject = AsIRI(object, row);

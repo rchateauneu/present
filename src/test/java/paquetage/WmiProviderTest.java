@@ -74,14 +74,16 @@ public class WmiProviderTest {
     @Test
     public void TestCIM_Process() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"));
 
         boolean isIn = false;
-        for (GenericProvider.Row aRow : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row aRow = rowIterator.next();
             if (aRow.GetStringValue("var_handle").equals(currentPidStr)) {
                 isIn = true;
                 break;
@@ -93,7 +95,7 @@ public class WmiProviderTest {
     @Test
     public void TestCIM_ProcessCurrent() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
@@ -118,13 +120,15 @@ public class WmiProviderTest {
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
         Assert.assertTrue(listResults.size() > 10);
-        for (GenericProvider.Row row : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row row = rowIterator.next();
             Assert.assertEquals(2, row.ElementsSize());
             // For example: \\LAPTOP-R89KG6V1\ROOT\CIMV2:CIM_ProcessExecutable.Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\fwpuclnt.dll\"",Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"3156\""
             Assert.assertTrue(row.TryValueType("any_variable") != null);
@@ -148,7 +152,7 @@ public class WmiProviderTest {
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
@@ -156,7 +160,9 @@ public class WmiProviderTest {
                 Arrays.asList(new QueryData.WhereEquality("Dependent", dependentString)));
         // Many libraries.
         Assert.assertTrue(listResults.size() > 5);
-        for (GenericProvider.Row row : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row row = rowIterator.next();
             Assert.assertEquals(2, row.ElementsSize());
             Assert.assertTrue(row.TryValueType("any_variable") != null);
             Assert.assertTrue(row.TryValueType("var_antecedent") != null);
@@ -175,7 +181,7 @@ public class WmiProviderTest {
         String antecedentString = PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"");
 
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
@@ -187,7 +193,9 @@ public class WmiProviderTest {
         System.out.println("listResults.size()=" + listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
-        for (GenericProvider.Row row : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row row = rowIterator.next();
             Assert.assertEquals(row.ElementsSize(), 2);
             Assert.assertTrue(row.ContainsKey("any_variable"));
             Assert.assertTrue(row.ContainsKey("var_dependent"));
