@@ -450,7 +450,8 @@ public class GenericProvider {
         DATE_TYPE,
         INT_TYPE,
         FLOAT_TYPE,
-        NODE_TYPE
+        NODE_TYPE,
+        XML_TYPE
     }
 
     static private WmiProvider WmiProvider = new WmiProvider();

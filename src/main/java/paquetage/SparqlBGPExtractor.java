@@ -6,13 +6,10 @@ package paquetage;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
@@ -144,100 +141,7 @@ public class SparqlBGPExtractor {
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
 
-    private static ValueFactory factory = SimpleValueFactory.getInstance();
-
-    private void PatternToTriples(List<Triple> generatedTriples, StatementPattern myPattern, Solution rows) throws Exception {
-        Var subject = myPattern.getSubjectVar();
-        Var predicate = myPattern.getPredicateVar();
-        if(!predicate.isConstant()) {
-            logger.debug("Predicate is not constant:" + predicate);
-            return;
-        }
-        IRI predicateIri = Values.iri(predicate.getValue().stringValue());
-        Var object = myPattern.getObjectVar();
-        if (subject.isConstant()) {
-            String subjectString = subject.getValue().stringValue();
-            Resource resourceSubject = Values.iri(subjectString);
-
-            if (object.isConstant()) {
-                // One insertion only. Variables are not needed.
-                String objectString = object.getValue().stringValue();
-                Resource resourceObject = Values.iri(objectString);
-
-                generatedTriples.add(factory.createTriple(
-                        resourceSubject,
-                        predicateIri,
-                        resourceObject));
-            } else {
-                // Only the object changes for each row.
-                Iterator<Solution.Row> rowIterator = rows.iterator();
-                while(rowIterator.hasNext()) {
-                    Solution.Row row = rowIterator.next();
-                    Solution.Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
-                    if(pairValueType == null) {
-                        // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
-                        logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
-                        continue;
-                    }
-                    String objectString = pairValueType.Value();
-                    Value resourceObject = patternsMap.containsKey(object.getName())
-                            ? Values.iri(objectString)
-                            : pairValueType.ValueTypeToLiteral();
-                    generatedTriples.add(factory.createTriple(
-                            resourceSubject,
-                            predicateIri,
-                            resourceObject));
-                }
-            }
-        } else {
-            if (object.isConstant()) {
-                // Only the subject changes for each row.
-                String objectString = object.getValue().stringValue();
-                logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
-                // TODO: Maybe this is already an IRI ? So, should not transform it again !
-                Value resourceObject = object.getValue().isIRI()
-                        ? Values.iri(objectString)
-                        : object.getValue(); // Keep the original type of the constant.
-
-                Iterator<Solution.Row> rowIterator = rows.iterator();
-                while (rowIterator.hasNext()) {
-                    Solution.Row row = rowIterator.next();
-                    // Consistency check.
-                    // TODO: Maybe this is an IRI ? So, do not transform it again !
-                    Resource resourceSubject = row.AsIRI(subject);
-
-                    generatedTriples.add(factory.createTriple(
-                            resourceSubject,
-                            predicateIri,
-                            resourceObject));
-                }
-            } else {
-                // The subject and the object change for each row.
-                Iterator<Solution.Row> rowIterator = rows.iterator();
-                while (rowIterator.hasNext()) {
-                    Solution.Row row = rowIterator.next();
-
-                    Resource resourceSubject = row.AsIRI(subject);
-
-                    Solution.Row.ValueTypePair objectValue = row.GetVarValue(object);
-                    Value resourceObject;
-                    if (patternsMap.containsKey(object.getName())) {
-                        resourceObject = row.AsIRI(object);
-                    } else {
-                        if (objectValue == null) {
-                            throw new RuntimeException("Null value for " + object.getName());
-                        }
-                        resourceObject = objectValue.ValueTypeToLiteral();
-                    }
-
-                    generatedTriples.add(factory.createTriple(
-                            resourceSubject,
-                            predicateIri,
-                            resourceObject));
-                }
-            }
-        }
-    }
+    //private static ValueFactory factory = SimpleValueFactory.getInstance();
 
     /** This generates the triples from substituting the variables of the patterns by their values.
      *
@@ -251,7 +155,7 @@ public class SparqlBGPExtractor {
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
         logger.debug("Rows number:" + rows.size());
         for(StatementPattern myPattern : visitorPatternsRaw) {
-            PatternToTriples(generatedTriples, myPattern, rows);
+            rows.PatternToTriples(generatedTriples, myPattern);
         }
 
         logger.debug("Generated triples number:" + generatedTriples.size());

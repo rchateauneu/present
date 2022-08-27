@@ -14,6 +14,12 @@ public class SparqlTranslation {
     private GenericProvider genericSelecter = new GenericProvider();
     private Set<String> bindings;
 
+    /*
+    On cree un nouveau truc similaire.
+    On cree un format pour verifier l ExpressionTree.
+    Pour faciliter les tests,
+     */
+
     public SparqlTranslation(SparqlBGPExtractor input_extractor) throws Exception {
         // TODO: Optimize QueryData list here. Providers are necessary.
         List<ObjectPattern> patterns = input_extractor.patternsAsArray();

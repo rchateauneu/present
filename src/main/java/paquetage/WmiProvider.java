@@ -479,9 +479,42 @@ public class WmiProvider {
         else {
             switch(valueType) {
                 case Wbemcli.CIM_REFERENCE:
-                case Wbemcli.CIM_STRING:
                     rowValue = pVal.stringValue();
                     rowType = GenericProvider.ValueType.NODE_TYPE;
+                    if(rowValue != null) {
+                        /*
+                            Here, "?my3_dir" is a reference but it does not have the syntax.
+
+                            select ?my_dir_name
+                            where {
+                                ?my3_dir cimv2:Win32_Directory.Name ?my_dir_name .
+                                ?my2_assoc cimv2:Win32_MountPoint.Volume ?my1_volume .
+                                ?my2_assoc cimv2:Directory ?my3_dir .
+                                ?my1_volume cimv2:Win32_Volume.DriveLetter ?my_drive .
+                                ?my1_volume cimv2:DeviceID ?device_id .
+                                ?my0_dir cimv2:Name "C:\\Program Files (x86)" .
+                                ?my0_dir cimv2:Win32_Directory.Drive ?my_drive .
+                            }
+
+                            valueType='Win32_Directory.Name="C:\\"'
+                         */
+                        if(!PresentUtils.isWmiReference(rowValue)) {
+                            logger.warn("lambda_column=" + lambda_column
+                                    + " lambda_variable=" + lambda_variable + "  cannot be a reference:" + rowValue);
+                        }
+                    }
+                    // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
+                    break;
+                case Wbemcli.CIM_STRING:
+                    rowValue = pVal.stringValue();
+                    // SAUF S'IL Y A UNE ERREUR DE WMI QUI PASSERAIT UN NODE COMME UNE STRING ??
+                    if(rowValue != null) {
+                        if (rowValue.startsWith("\\\\") && !rowValue.startsWith("\\\\?\\")) {
+                            logger.warn("lambda_column=" + lambda_column
+                                    + " lambda_variable=" + lambda_variable + "  cannot be a string:" + rowValue);
+                        }
+                    }
+                    rowType = GenericProvider.ValueType.STRING_TYPE;
                     // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
                     break;
                 case Wbemcli.CIM_SINT8:

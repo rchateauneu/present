@@ -68,7 +68,7 @@ public class TriplesGenerationTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
-        String dirIri = "any_iri_will_do";
+        String dirIri = "\\\\ANY_MACHINE\\ArbitraryIri";
         Solution rows = new Solution();
         rows.add(new Solution.Row(Map.of(
                 "my_dir", new Solution.Row.ValueTypePair(dirIri, GenericProvider.ValueType.NODE_TYPE),
@@ -117,8 +117,8 @@ public class TriplesGenerationTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
-        String dirIriC = "iriC";
-        String dirIriD = "iriD";
+        String dirIriC = "\\\\ANY_MACHINE\\DirC";
+        String dirIriD = "\\\\ANY_MACHINE\\DirD";
         Solution rows = new Solution();
         rows.add(
                 new Solution.Row(Map.of(
@@ -190,7 +190,7 @@ public class TriplesGenerationTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
-        String dirIri = "arbitrary_iri";
+        String dirIri = "\\\\ANY_MACHINE\\Something";
         Solution rows = new Solution();
         rows.add(
             new Solution.Row(Map.of(

@@ -1,13 +1,12 @@
 package paquetage;
 
 import org.apache.log4j.Logger;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Var;
 
 import javax.xml.datatype.DatatypeFactory;
@@ -25,10 +24,109 @@ public class Solution {
 
     public List<String> Header; // Not used yet.
 
+    private static ValueFactory factory = SimpleValueFactory.getInstance();
 
+    /** This takes a BGP as parsed from the original Sparql query, and replace the variables with the ones calculated
+     * from WMI.
+     * The resulting triples will be inserted in a RDF repository.
+     *
+     * @param generatedTriples
+     * @param myPattern
+     * @throws Exception
+     */
+    void PatternToTriples(List<Triple> generatedTriples, StatementPattern myPattern) throws Exception {
+        Var subject = myPattern.getSubjectVar();
+        Var predicate = myPattern.getPredicateVar();
+        if(!predicate.isConstant()) {
+            logger.debug("Predicate is not constant:" + predicate);
+            return;
+        }
+        IRI predicateIri = Values.iri(predicate.getValue().stringValue());
+        Var object = myPattern.getObjectVar();
+        if (subject.isConstant()) {
+            String subjectString = subject.getValue().stringValue();
+            Resource resourceSubject = Values.iri(subjectString);
 
+            if (object.isConstant()) {
+                // One insertion only. Variables are not needed.
+                String objectString = object.getValue().stringValue();
+                Resource resourceObject = Values.iri(objectString);
 
+                generatedTriples.add(factory.createTriple(
+                        resourceSubject,
+                        predicateIri,
+                        resourceObject));
+            } else {
+                // Only the object changes for each row.
+                Iterator<Row> rowIterator = iterator();
+                while(rowIterator.hasNext()) {
+                    Row row = rowIterator.next();
+                    Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
+                    if(pairValueType == null) {
+                        // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
+                        logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
+                        continue;
+                    }
+                    String objectString = pairValueType.Value();
+                    Value resourceObject = pairValueType.Type() == GenericProvider.ValueType.NODE_TYPE
+                            ? Values.iri(objectString)
+                            : pairValueType.ValueTypeToLiteral();
+                    generatedTriples.add(factory.createTriple(
+                            resourceSubject,
+                            predicateIri,
+                            resourceObject));
+                }
+            }
+        } else {
+            if (object.isConstant()) {
+                // Only the subject changes for each row.
+                String objectString = object.getValue().stringValue();
+                logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
+                // TODO: Maybe this is already an IRI ? So, should not transform it again !
+                Value resourceObject = object.getValue().isIRI()
+                        ? Values.iri(objectString)
+                        : object.getValue(); // Keep the original type of the constant.
 
+                Iterator<Row> rowIterator = iterator();
+                while (rowIterator.hasNext()) {
+                    Row row = rowIterator.next();
+                    // Consistency check.
+                    // TODO: Maybe this is an IRI ? So, do not transform it again !
+                    Resource resourceSubject = row.AsIRI(subject);
+
+                    generatedTriples.add(factory.createTriple(
+                            resourceSubject,
+                            predicateIri,
+                            resourceObject));
+                }
+            } else {
+                // The subject and the object change for each row.
+                Iterator<Row> rowIterator = iterator();
+                while (rowIterator.hasNext()) {
+                    Row row = rowIterator.next();
+
+                    Resource resourceSubject = row.AsIRI(subject);
+
+                    Row.ValueTypePair objectValue = row.GetValueType(object.getName());
+                    Value resourceObject;
+
+                    if (objectValue.Type() == GenericProvider.ValueType.NODE_TYPE) {
+                        resourceObject = row.AsIRI(object);
+                    } else {
+                        if (objectValue == null) {
+                            throw new RuntimeException("Null value for " + object.getName());
+                        }
+                        resourceObject = objectValue.ValueTypeToLiteral();
+                    }
+
+                    generatedTriples.add(factory.createTriple(
+                            resourceSubject,
+                            predicateIri,
+                            resourceObject));
+                }
+            }
+        }
+    }
 
     /**
      * This is a row returned by a WMI select query.
@@ -40,42 +138,6 @@ public class Solution {
      */
     public static class Row {
 
-        /**
-         * IRIS must look like this:
-         * objectString=http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process isIRI=true
-         *
-         * But Wbem path are like that:
-         * subjectString=\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="31640"
-         *
-         * So, Wbem path must be URL-encoded and prefixed.
-         *
-         * @param var
-         * @return
-         * @throws Exception
-         */
-        Resource AsIRI(Var var) throws Exception {
-            String varName = var.getName();
-            ValueTypePair pairValueType = GetValueType(varName);
-            if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
-                throw new Exception("This should be a NODE:" + varName + "=" + pairValueType);
-            }
-            String valueString = pairValueType.Value();
-            if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
-                throw new Exception("Value " + varName + "=" + valueString + " is not a node");
-            }
-            // Consistency check, for debugging.
-            if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
-                throw new Exception("Double transformation in IRI:" + valueString);
-            }
-            Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
-            return resourceValue;
-        }
-
-        ValueTypePair GetVarValue(Var var) throws Exception {
-            ValueTypePair pairValueType = GetValueType(var.getName());
-            return pairValueType;
-        }
-
         /** In this library, only the string value is used because this is what is needed for WQL.
          * WQL does not really manipulate floats or dates, so string conversion is OK.
          *
@@ -83,10 +145,53 @@ public class Solution {
          * are transformed into RDF IRIs. Also, it might be needed to convert string values to RDF types: ints etc...
          * and for this, their original type is needed.
          *
-         * @param Value
-         * @param Type
          */
-        public record ValueTypePair (String Value, GenericProvider.ValueType Type) {
+        public static class ValueTypePair {
+            public String m_Value;
+            public GenericProvider.ValueType m_Type;
+
+            public String Value() {
+                return m_Value;
+            }
+
+            public GenericProvider.ValueType Type() {
+                return m_Type;
+            }
+
+            boolean IsValid()
+            {
+                if(m_Value == null) {
+                    return true;
+                }
+                switch(m_Type) {
+                    case NODE_TYPE:
+                        return PresentUtils.isWmiReference(m_Value);
+                    case INT_TYPE:
+                        try {
+                            Long l = Long.parseLong(m_Value);
+                        }
+                        catch(Exception exc) {
+                            logger.error("Invalid integer:" + m_Value);
+                            return false;
+                        }
+                        return true;
+                    default:
+                        return true;
+                }
+            }
+
+            ValueTypePair(String value, GenericProvider.ValueType type) {
+                m_Value = value;
+                m_Type = type;
+                if(!IsValid()) {
+                    throw new RuntimeException("Wrong type:" + m_Value + " : " + m_Type);
+                }
+            }
+
+            public String toString() {
+                return "{" + m_Value + " -> " + m_Type + "}";
+            }
+
             private static final DatatypeFactory datatypeFactory ;
 
             static {
@@ -113,13 +218,13 @@ public class Solution {
              * @return
              */
             Value ValueTypeToLiteral() {
-                GenericProvider.ValueType valueType = Type();
+                GenericProvider.ValueType valueType = m_Type;
                 if(valueType == null) {
                     logger.warn("Invalid null type of literal value.");
                     Object nullObject = new Object();
                     return Values.literal(nullObject);
                 }
-                String strValue = Value();
+                String strValue = m_Value;
                 if(strValue == null) {
                     logger.warn("Invalid null literal value.");
                     return Values.literal("Unexpected null value. Type=\" + valueType");
@@ -172,16 +277,50 @@ public class Solution {
 
         private Map<String, ValueTypePair> Elements;
 
+
+
         public ValueTypePair TryValueType(String key) {
             ValueTypePair vtp = Elements.get(key);
             // This is just a hint to check that wbem paths are correctly typed.
-            if(vtp != null && vtp.Type != GenericProvider.ValueType.NODE_TYPE && vtp.Value != null
-                    && vtp.Value.startsWith("\\\\")
-                    && ! vtp.Value.startsWith("\\\\?\\")
-            ) {
-                throw new RuntimeException("TryValueType: Key=" + key + " looks like a node:" + vtp.Value);
+            if(vtp != null && !vtp.IsValid())
+            {
+                throw new RuntimeException("TryValueType: Key=" + key + " invalid:" + vtp.Value());
             }
             return vtp;
+        }
+
+        /**
+         * IRIS must look like this:
+         * objectString=http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process isIRI=true
+         *
+         * But Wbem path are like that:
+         * subjectString=\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="31640"
+         *
+         * So, Wbem path must be URL-encoded and prefixed.
+         *
+         * @param var
+         * @return
+         * @throws Exception
+         */
+        Resource AsIRI(Var var) throws Exception {
+            String varName = var.getName();
+            ValueTypePair pairValueType = GetValueType(varName);
+            if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
+                throw new Exception("This should be a NODE:" + varName + "=" + pairValueType);
+            }
+            String valueString = pairValueType.Value();
+
+            // Consistency check, for debugging.
+            if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
+                throw new Exception("Double transformation in IRI:" + valueString);
+            }
+            Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
+            return resourceValue;
+        }
+
+        ValueTypePair GetVarValue(Var var) throws Exception {
+            ValueTypePair pairValueType = GetValueType(var.getName());
+            return pairValueType;
         }
 
         public ValueTypePair GetValueType(String key) {
@@ -193,15 +332,15 @@ public class Solution {
         }
 
         public String GetStringValue(String key) {
-            return GetValueType(key).Value;
+            return GetValueType(key).Value();
         }
 
         public double GetDoubleValue(String key) {
-            return Double.parseDouble(GetValueType(key).Value);
+            return Double.parseDouble(GetValueType(key).Value());
         }
 
         public long GetLongValue(String key) {
-            return Long.parseLong(GetValueType(key).Value);
+            return Long.parseLong(GetValueType(key).Value());
         }
 
         public void PutString(String key, String str) {
@@ -229,11 +368,11 @@ public class Solution {
         public void PutValueType(String key, ValueTypePair pairValueType) {
             // This is just a hint to detect that Wbem paths are correctly typed.
             // It also checks for "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\" which is not a path.
-            if(pairValueType != null && pairValueType.Type != GenericProvider.ValueType.NODE_TYPE && pairValueType.Value != null
-                    && pairValueType.Value.startsWith("\\\\")
-                    && ! pairValueType.Value.startsWith("\\\\?\\")
+            if(pairValueType != null && pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE && pairValueType.Value() != null
+                    && pairValueType.Value().startsWith("\\\\")
+                    && ! pairValueType.Value().startsWith("\\\\?\\")
             ) {
-                throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType.Value);
+                throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType.Value());
             }
             Elements.put(key, pairValueType);
         }
@@ -273,7 +412,24 @@ public class Solution {
                 Value bindingValue = binding.getValue();
                 // TODO: If the value is a literal, it is formatted as in XML,
                 // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>"
-                GenericProvider.ValueType valueType = bindingValue.isIRI() ? GenericProvider.ValueType.NODE_TYPE : GenericProvider.ValueType.STRING_TYPE;
+
+                /*
+                Confusion avec NOS iris
+                    java.lang.RuntimeException: Wrong type:http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%2223460%22 : NODE_TYPE
+
+                    at paquetage.Solution$Row$ValueTypePair.<init>(Solution.java:118)
+                    at paquetage.Solution$Row.<init>(Solution.java:313)
+                    at paquetage.RepositoryWrapper.ExecuteQuery(RepositoryWrapper.java:81)
+
+                    ON PEUT PEUT-ETRE TOUT METTRE EN STRING !!!!!!
+                    A CE STADE, C'EST DU XML.
+                    METTRE EXPRES UN TYPE INVALIDE.
+
+                 */
+
+
+                // GenericProvider.ValueType valueType = bindingValue.isIRI() ? GenericProvider.ValueType.NODE_TYPE : GenericProvider.ValueType.STRING_TYPE;
+                GenericProvider.ValueType valueType = GenericProvider.ValueType.XML_TYPE;
                 PutValueType(binding.getName(), new ValueTypePair(bindingValue.toString(), valueType));
             }
         }
