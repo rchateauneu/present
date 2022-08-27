@@ -33,11 +33,11 @@ public class RdfSolution {
         }
 
         /** This is used to insert the result of a Sparql query execution.
+         * TODO: This might as well return a Binding object.
          *
          * @param bindingSet
          */
         public Tuple(BindingSet bindingSet) {
-            // Elements = new HashMap<>();
             for (Iterator<Binding> it = bindingSet.iterator(); it.hasNext(); ) {
                 Binding binding = it.next();
                 Value bindingValue = binding.getValue();

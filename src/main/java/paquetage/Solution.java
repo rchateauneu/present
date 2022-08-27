@@ -36,6 +36,7 @@ public class Solution {
      */
     void PatternToTriples(List<Triple> generatedTriples, StatementPattern myPattern) throws Exception {
         Var subject = myPattern.getSubjectVar();
+        String subjectName = subject.getName();
         Var predicate = myPattern.getPredicateVar();
         if(!predicate.isConstant()) {
             logger.debug("Predicate is not constant:" + predicate);
@@ -92,7 +93,7 @@ public class Solution {
                 Iterator<Row> rowIterator = iterator();
                 while (rowIterator.hasNext()) {
                     Row row = rowIterator.next();
-                    Resource resourceSubject = row.AsIRI(subject);
+                    Resource resourceSubject = row.AsIRI(subjectName);
 
                     generatedTriples.add(factory.createTriple(
                             resourceSubject,
@@ -105,12 +106,12 @@ public class Solution {
                 while (rowIterator.hasNext()) {
                     Row row = rowIterator.next();
 
-                    Resource resourceSubject = row.AsIRI(subject);
+                    Resource resourceSubject = row.AsIRI(subjectName);
                     Row.ValueTypePair objectWmiValue = row.GetValueType(objectName);
                     Value resourceObject;
 
                     if (objectWmiValue.Type() == ValueType.NODE_TYPE) {
-                        resourceObject = row.AsIRI(object);
+                        resourceObject = row.AsIRI(objectName);
                     } else {
                         if (objectWmiValue == null) {
                             throw new RuntimeException("Null value for " + objectName);
@@ -158,8 +159,8 @@ public class Solution {
          *
          */
         public static class ValueTypePair {
-            public String m_Value;
-            public ValueType m_Type;
+            private String m_Value;
+            private ValueType m_Type;
 
             public String Value() {
                 return m_Value;
@@ -260,7 +261,6 @@ public class Solution {
                              *
                              * https://stackoverflow.com/questions/37308672/parse-cim-datetime-with-milliseconds-to-java-date                     *
                              */
-                            //logger.debug("strValue=" + strValue);
 
                             String offsetInMinutesAsString = strValue.substring(22);
                             long offsetInMinutes = Long.parseLong(offsetInMinutesAsString);
@@ -297,12 +297,11 @@ public class Solution {
          *
          * So, Wbem path must be URL-encoded and prefixed.
          *
-         * @param var
+         * @param varName
          * @return
          * @throws Exception
          */
-        Resource AsIRI(Var var) throws Exception {
-            String varName = var.getName();
+        Resource AsIRI(String varName) throws Exception {
             ValueTypePair pairValueType = GetValueType(varName);
             if(pairValueType.Type() != ValueType.NODE_TYPE) {
                 throw new Exception("This should be a NODE:" + varName + "=" + pairValueType);
@@ -372,11 +371,10 @@ public class Solution {
         public void PutValueType(String key, ValueTypePair pairValueType) {
             // This is just a hint to detect that Wbem paths are correctly typed.
             // It also checks for "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\" which is not a path.
-            if(pairValueType != null && pairValueType.Type() != ValueType.NODE_TYPE && pairValueType.Value() != null
-                    && pairValueType.Value().startsWith("\\\\")
-                    && ! pairValueType.Value().startsWith("\\\\?\\")
-            ) {
-                throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType.Value());
+            if(pairValueType != null) {
+                if (!pairValueType.IsValid()) {
+                    throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType);
+                }
             }
             Elements.put(key, pairValueType);
         }
