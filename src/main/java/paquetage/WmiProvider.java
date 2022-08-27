@@ -498,7 +498,7 @@ public class WmiProvider {
 
                             valueType='Win32_Directory.Name="C:\\"'
                          */
-                        if(!PresentUtils.isWmiReference(rowValue)) {
+                        if(!PresentUtils.hasWmiReferenceSyntax(rowValue)) {
                             logger.warn("lambda_column=" + lambda_column
                                     + " lambda_variable=" + lambda_variable + "  cannot be a reference:" + rowValue);
                         }

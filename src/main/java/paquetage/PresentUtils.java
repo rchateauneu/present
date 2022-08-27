@@ -117,7 +117,7 @@ public class PresentUtils {
         return WmiOntology.NamespaceUrlPrefix(namespace) + term;
     }
 
-    static boolean isWmiReference(String refString) {
+    static boolean hasWmiReferenceSyntax(String refString) {
         /*
             Here, "?my3_dir" is a reference but it does not have the syntax.
 

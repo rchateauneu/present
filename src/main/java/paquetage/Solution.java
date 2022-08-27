@@ -43,13 +43,15 @@ public class Solution {
         }
         IRI predicateIri = Values.iri(predicate.getValue().stringValue());
         Var object = myPattern.getObjectVar();
+        String objectName = object.getName();
+        Value objectValue = object.getValue();
         if (subject.isConstant()) {
             String subjectString = subject.getValue().stringValue();
             Resource resourceSubject = Values.iri(subjectString);
 
             if (object.isConstant()) {
                 // One insertion only. Variables are not needed.
-                String objectString = object.getValue().stringValue();
+                String objectString = objectValue.stringValue();
                 Resource resourceObject = Values.iri(objectString);
 
                 generatedTriples.add(factory.createTriple(
@@ -61,16 +63,16 @@ public class Solution {
                 Iterator<Row> rowIterator = iterator();
                 while(rowIterator.hasNext()) {
                     Row row = rowIterator.next();
-                    Row.ValueTypePair pairValueType = row.TryValueType(object.getName());
-                    if(pairValueType == null) {
+                    Row.ValueTypePair objectWmiValueType = row.TryValueType(objectName);
+                    if(objectWmiValueType == null) {
                         // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
-                        logger.debug("Variable " + object.getName() + " not defined. Continuing to next pattern.");
+                        logger.debug("Variable " + objectName + " not defined. Continuing to next pattern.");
                         continue;
                     }
-                    String objectString = pairValueType.Value();
-                    Value resourceObject = pairValueType.Type() == GenericProvider.ValueType.NODE_TYPE
+                    String objectString = objectWmiValueType.Value();
+                    Value resourceObject = objectWmiValueType.Type() == GenericProvider.ValueType.NODE_TYPE
                             ? Values.iri(objectString)
-                            : pairValueType.ValueTypeToLiteral();
+                            : objectWmiValueType.ValueTypeToLiteral();
                     generatedTriples.add(factory.createTriple(
                             resourceSubject,
                             predicateIri,
@@ -80,18 +82,16 @@ public class Solution {
         } else {
             if (object.isConstant()) {
                 // Only the subject changes for each row.
-                String objectString = object.getValue().stringValue();
-                logger.debug("objectString=" + objectString + " isIRI=" + object.getValue().isIRI());
+                String objectString = objectValue.stringValue();
+                logger.debug("objectString=" + objectString + " isIRI=" + objectValue.isIRI());
                 // TODO: Maybe this is already an IRI ? So, should not transform it again !
-                Value resourceObject = object.getValue().isIRI()
+                Value resourceObject = objectValue.isIRI()
                         ? Values.iri(objectString)
-                        : object.getValue(); // Keep the original type of the constant.
+                        : objectValue; // Keep the original type of the constant.
 
                 Iterator<Row> rowIterator = iterator();
                 while (rowIterator.hasNext()) {
                     Row row = rowIterator.next();
-                    // Consistency check.
-                    // TODO: Maybe this is an IRI ? So, do not transform it again !
                     Resource resourceSubject = row.AsIRI(subject);
 
                     generatedTriples.add(factory.createTriple(
@@ -106,17 +106,16 @@ public class Solution {
                     Row row = rowIterator.next();
 
                     Resource resourceSubject = row.AsIRI(subject);
-
-                    Row.ValueTypePair objectValue = row.GetValueType(object.getName());
+                    Row.ValueTypePair objectWmiValue = row.GetValueType(objectName);
                     Value resourceObject;
 
-                    if (objectValue.Type() == GenericProvider.ValueType.NODE_TYPE) {
+                    if (objectWmiValue.Type() == GenericProvider.ValueType.NODE_TYPE) {
                         resourceObject = row.AsIRI(object);
                     } else {
-                        if (objectValue == null) {
-                            throw new RuntimeException("Null value for " + object.getName());
+                        if (objectWmiValue == null) {
+                            throw new RuntimeException("Null value for " + objectName);
                         }
-                        resourceObject = objectValue.ValueTypeToLiteral();
+                        resourceObject = objectWmiValue.ValueTypeToLiteral();
                     }
 
                     generatedTriples.add(factory.createTriple(
@@ -165,7 +164,7 @@ public class Solution {
                 }
                 switch(m_Type) {
                     case NODE_TYPE:
-                        return PresentUtils.isWmiReference(m_Value);
+                        return PresentUtils.hasWmiReferenceSyntax(m_Value);
                     case INT_TYPE:
                         try {
                             Long l = Long.parseLong(m_Value);
@@ -279,15 +278,6 @@ public class Solution {
 
 
 
-        public ValueTypePair TryValueType(String key) {
-            ValueTypePair vtp = Elements.get(key);
-            // This is just a hint to check that wbem paths are correctly typed.
-            if(vtp != null && !vtp.IsValid())
-            {
-                throw new RuntimeException("TryValueType: Key=" + key + " invalid:" + vtp.Value());
-            }
-            return vtp;
-        }
 
         /**
          * IRIS must look like this:
@@ -318,9 +308,14 @@ public class Solution {
             return resourceValue;
         }
 
-        ValueTypePair GetVarValue(Var var) throws Exception {
-            ValueTypePair pairValueType = GetValueType(var.getName());
-            return pairValueType;
+        public ValueTypePair TryValueType(String key) {
+            ValueTypePair vtp = Elements.get(key);
+            // This is just a hint to check that wbem paths are correctly typed.
+            if(vtp != null && !vtp.IsValid())
+            {
+                throw new RuntimeException("TryValueType: Key=" + key + " invalid:" + vtp.Value());
+            }
+            return vtp;
         }
 
         public ValueTypePair GetValueType(String key) {
@@ -346,7 +341,7 @@ public class Solution {
         public void PutString(String key, String str) {
             if(str == null) {
                 logger.warn("PutString: Key=" + key + " null value");
-            } else if(str.startsWith("\\\\")) {
+            } else if(PresentUtils.hasWmiReferenceSyntax(str)) {
                 // This is a hint which might not always work, but helps finding problems.
                 throw new RuntimeException("PutString: Key=" + key + " looks like a node:" + str);
             }
