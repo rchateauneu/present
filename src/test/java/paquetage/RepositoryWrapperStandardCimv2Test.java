@@ -50,7 +50,7 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?tcp_connection standard_cimv2:OwningProcess ?owning_process .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // This checks that all processes are valid.
         // This test might fail if it is too slow.
@@ -89,7 +89,7 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_2_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);
@@ -121,7 +121,7 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_1_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);
@@ -155,7 +155,7 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_3_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);
@@ -194,10 +194,12 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?tcp_connection2 standard_cimv2:OwningProcess ?owning_process2 .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         int countPresentProcess = 0;
-        for(Solution.Row oneRow: listRows) {
+        Iterator<RdfSolution.Tuple> iteratorTuple = listRows.iterator();
+        while(iteratorTuple.hasNext()) {
+            RdfSolution.Tuple oneRow = iteratorTuple.next();
             Long pid1 = PresentUtils.XmlToLong(oneRow.GetStringValue("owning_process1"));
             // This test might fail if it is too slow.
             Optional<ProcessHandle> processHandle1 = ProcessHandle.of(pid1);
@@ -228,10 +230,12 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_1_service cimv2:Win32_Service.ProcessId ?owning_process .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         HashMap<String, List<Long>> mapServiceToPort = new HashMap<>();
-        for(Solution.Row oneRow: listRows) {
+        Iterator<RdfSolution.Tuple> iteratorTuple = listRows.iterator();
+        while(iteratorTuple.hasNext()) {
+            RdfSolution.Tuple oneRow = iteratorTuple.next();
             Long portNumber = PresentUtils.XmlToLong(oneRow.GetStringValue("local_port"));
             String serviceName = oneRow.GetStringValue("service_name");
             System.out.println("portNumber=" + portNumber + " serviceName=" + serviceName);
@@ -278,7 +282,7 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_4_process cimv2:Win32_Process.Name ?process_name2 .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         /* Result example:
         name1="MediaEngineService.exe" name2="wfica32.exe"
@@ -289,7 +293,9 @@ public class RepositoryWrapperStandardCimv2Test {
         name1="Tomcat9.exe" name2="Tomcat9.exe"
         */
         Set<String> setProcessNamesPairs = new HashSet<>();
-        for(Solution.Row oneRow: listRows) {
+        Iterator<RdfSolution.Tuple> iteratorTuple = listRows.iterator();
+        while(iteratorTuple.hasNext()) {
+            RdfSolution.Tuple oneRow = iteratorTuple.next();
             String name1 = oneRow.GetStringValue("process_name1");
             String name2 = oneRow.GetStringValue("process_name2");
             System.out.println("name1=" + name1 + " name2=" + name2);
@@ -319,7 +325,7 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_2_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        List<Solution.Row> listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);

@@ -442,18 +442,6 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
 public class GenericProvider {
     final static private Logger logger = Logger.getLogger(GenericProvider.class);
 
-    /** This is a special value type for this software, to bridge data types between WMI/WBEM and RDF.
-     * The most important feature is NODE_TYPE which models a WBEM path and an IRI.
-     */
-    public enum ValueType {
-        STRING_TYPE,
-        DATE_TYPE,
-        INT_TYPE,
-        FLOAT_TYPE,
-        NODE_TYPE,
-        XML_TYPE
-    }
-
     static private WmiProvider WmiProvider = new WmiProvider();
 
     static private BaseSelecter[] baseSelecters = {

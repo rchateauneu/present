@@ -101,11 +101,11 @@ public class PresentUtils {
      * @param variable_name
      * @return
      */
-    static Set<String> StringValuesSet(List<Solution.Row> listRows, String variable_name) {
+    static Set<String> StringValuesSet(RdfSolution listRows, String variable_name) {
         return listRows.stream().map(row->row.GetStringValue(variable_name)).collect(Collectors.toSet());
     }
 
-    static Set<Long> LongValuesSet(List<Solution.Row> listRows, String variable_name) {
+    static Set<Long> LongValuesSet(RdfSolution listRows, String variable_name) {
         return listRows.stream().map(row->XmlToLong(row.GetStringValue(variable_name))).collect(Collectors.toSet());
     }
 

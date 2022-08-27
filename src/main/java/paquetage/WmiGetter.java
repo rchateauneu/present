@@ -176,7 +176,7 @@ public class WmiGetter extends BaseGetter {
         }
         // We are sure this is a node.
         Solution.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
-        if(wbemPath.Type() != GenericProvider.ValueType.NODE_TYPE) {
+        if(wbemPath.Type() != Solution.ValueType.NODE_TYPE) {
             throw new Exception("GetSingleObject objectPath should be a node:" + objectPath);
         }
         singleRow.PutValueType(queryData.mainVariable, wbemPath);

@@ -38,7 +38,6 @@ public class SparqlBGPExtractor {
     // In this case, they are replicated for each value found by WMI.
     private List<StatementPattern> visitorPatternsRaw;
 
-
     public SparqlBGPExtractor(String input_query) throws Exception {
         patternsMap = null;
         ParseQuery(input_query);
@@ -108,7 +107,6 @@ public class SparqlBGPExtractor {
                 }
             }
 
-
             ObjectPattern refPattern;
             if(! patternsMap.containsKey(subjectName))
             {
@@ -140,8 +138,6 @@ public class SparqlBGPExtractor {
         }
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
-
-    //private static ValueFactory factory = SimpleValueFactory.getInstance();
 
     /** This generates the triples from substituting the variables of the patterns by their values.
      *

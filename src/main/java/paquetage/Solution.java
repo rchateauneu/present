@@ -70,7 +70,7 @@ public class Solution {
                         continue;
                     }
                     String objectString = objectWmiValueType.Value();
-                    Value resourceObject = objectWmiValueType.Type() == GenericProvider.ValueType.NODE_TYPE
+                    Value resourceObject = objectWmiValueType.Type() == ValueType.NODE_TYPE
                             ? Values.iri(objectString)
                             : objectWmiValueType.ValueTypeToLiteral();
                     generatedTriples.add(factory.createTriple(
@@ -109,7 +109,7 @@ public class Solution {
                     Row.ValueTypePair objectWmiValue = row.GetValueType(objectName);
                     Value resourceObject;
 
-                    if (objectWmiValue.Type() == GenericProvider.ValueType.NODE_TYPE) {
+                    if (objectWmiValue.Type() == ValueType.NODE_TYPE) {
                         resourceObject = row.AsIRI(object);
                     } else {
                         if (objectWmiValue == null) {
@@ -125,6 +125,18 @@ public class Solution {
                 }
             }
         }
+    }
+
+    /** This is a special value type for this software, to bridge data types between WMI/WBEM and RDF.
+     * The most important feature is NODE_TYPE which models a WBEM path and an IRI.
+     */
+    public enum ValueType {
+        STRING_TYPE,
+        DATE_TYPE,
+        INT_TYPE,
+        FLOAT_TYPE,
+        NODE_TYPE
+        //XML_TYPE
     }
 
     /**
@@ -147,13 +159,13 @@ public class Solution {
          */
         public static class ValueTypePair {
             public String m_Value;
-            public GenericProvider.ValueType m_Type;
+            public ValueType m_Type;
 
             public String Value() {
                 return m_Value;
             }
 
-            public GenericProvider.ValueType Type() {
+            public ValueType Type() {
                 return m_Type;
             }
 
@@ -179,7 +191,7 @@ public class Solution {
                 }
             }
 
-            ValueTypePair(String value, GenericProvider.ValueType type) {
+            ValueTypePair(String value, ValueType type) {
                 m_Value = value;
                 m_Type = type;
                 if(!IsValid()) {
@@ -205,11 +217,11 @@ public class Solution {
             private static ValueFactory factory = SimpleValueFactory.getInstance();
 
             public static ValueTypePair Factory(String value) {
-                return new ValueTypePair(value, GenericProvider.ValueType.STRING_TYPE);
+                return new ValueTypePair(value, ValueType.STRING_TYPE);
             }
 
             public static ValueTypePair Factory(long value) {
-                return new ValueTypePair(Long.toString(value), GenericProvider.ValueType.INT_TYPE);
+                return new ValueTypePair(Long.toString(value), ValueType.INT_TYPE);
             }
 
             /** This transforms a ValueType (as calculated from WMI) into a literal usable by RDF.
@@ -217,7 +229,7 @@ public class Solution {
              * @return
              */
             Value ValueTypeToLiteral() {
-                GenericProvider.ValueType valueType = m_Type;
+                ValueType valueType = m_Type;
                 if(valueType == null) {
                     logger.warn("Invalid null type of literal value.");
                     Object nullObject = new Object();
@@ -250,11 +262,11 @@ public class Solution {
                              */
                             //logger.debug("strValue=" + strValue);
 
-                            String offsetInMinutesAsString = strValue.substring ( 22 );
-                            long offsetInMinutes = Long.parseLong ( offsetInMinutesAsString );
-                            LocalTime offsetAsLocalTime = LocalTime.MIN.plusMinutes ( offsetInMinutes );
-                            String offsetAsString = offsetAsLocalTime.format ( DateTimeFormatter.ISO_LOCAL_TIME );
-                            String inputModified = strValue.substring ( 0 , 22 ) + offsetAsString;
+                            String offsetInMinutesAsString = strValue.substring(22);
+                            long offsetInMinutes = Long.parseLong(offsetInMinutesAsString);
+                            LocalTime offsetAsLocalTime = LocalTime.MIN.plusMinutes(offsetInMinutes);
+                            String offsetAsString = offsetAsLocalTime.format(DateTimeFormatter.ISO_LOCAL_TIME);
+                            String inputModified = strValue.substring(0, 22) + offsetAsString;
 
                             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSSSSSZZZZZ");
                             LocalDateTime dateFromGmtString = formatter.parse(inputModified, Instant::from).atZone(zone).toLocalDateTime();
@@ -276,9 +288,6 @@ public class Solution {
 
         private Map<String, ValueTypePair> Elements;
 
-
-
-
         /**
          * IRIS must look like this:
          * objectString=http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process isIRI=true
@@ -295,7 +304,7 @@ public class Solution {
         Resource AsIRI(Var var) throws Exception {
             String varName = var.getName();
             ValueTypePair pairValueType = GetValueType(varName);
-            if(pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE) {
+            if(pairValueType.Type() != ValueType.NODE_TYPE) {
                 throw new Exception("This should be a NODE:" + varName + "=" + pairValueType);
             }
             String valueString = pairValueType.Value();
@@ -345,25 +354,25 @@ public class Solution {
                 // This is a hint which might not always work, but helps finding problems.
                 throw new RuntimeException("PutString: Key=" + key + " looks like a node:" + str);
             }
-            Elements.put(key, new ValueTypePair(str, GenericProvider.ValueType.STRING_TYPE));
+            Elements.put(key, new ValueTypePair(str, ValueType.STRING_TYPE));
         }
         public void PutNode(String key, String str) {
-            Elements.put(key, new ValueTypePair(str, GenericProvider.ValueType.NODE_TYPE));
+            Elements.put(key, new ValueTypePair(str, ValueType.NODE_TYPE));
         }
         public void PutLong(String key, String str) {
-            Elements.put(key, new ValueTypePair(str, GenericProvider.ValueType.INT_TYPE));
+            Elements.put(key, new ValueTypePair(str, ValueType.INT_TYPE));
         }
         public void PutDate(String key, String str) {
-            Elements.put(key, new ValueTypePair(str, GenericProvider.ValueType.DATE_TYPE));
+            Elements.put(key, new ValueTypePair(str, ValueType.DATE_TYPE));
         }
         public void PutFloat(String key, String str) {
-            Elements.put(key, new ValueTypePair(str, GenericProvider.ValueType.FLOAT_TYPE));
+            Elements.put(key, new ValueTypePair(str, ValueType.FLOAT_TYPE));
         }
 
         public void PutValueType(String key, ValueTypePair pairValueType) {
             // This is just a hint to detect that Wbem paths are correctly typed.
             // It also checks for "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\" which is not a path.
-            if(pairValueType != null && pairValueType.Type() != GenericProvider.ValueType.NODE_TYPE && pairValueType.Value() != null
+            if(pairValueType != null && pairValueType.Type() != ValueType.NODE_TYPE && pairValueType.Value() != null
                     && pairValueType.Value().startsWith("\\\\")
                     && ! pairValueType.Value().startsWith("\\\\?\\")
             ) {
@@ -396,38 +405,6 @@ public class Solution {
             Elements = elements;
         }
 
-        /** This is used to insert the result of a Sparql query execution.
-         *
-         * @param bindingSet
-         */
-        public Row(BindingSet bindingSet) {
-            Elements = new HashMap<>();
-            for (Iterator<Binding> it = bindingSet.iterator(); it.hasNext(); ) {
-                Binding binding = it.next();
-                Value bindingValue = binding.getValue();
-                // TODO: If the value is a literal, it is formatted as in XML,
-                // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>"
-
-                /*
-                Confusion avec NOS iris
-                    java.lang.RuntimeException: Wrong type:http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%2223460%22 : NODE_TYPE
-
-                    at paquetage.Solution$Row$ValueTypePair.<init>(Solution.java:118)
-                    at paquetage.Solution$Row.<init>(Solution.java:313)
-                    at paquetage.RepositoryWrapper.ExecuteQuery(RepositoryWrapper.java:81)
-
-                    ON PEUT PEUT-ETRE TOUT METTRE EN STRING !!!!!!
-                    A CE STADE, C'EST DU XML.
-                    METTRE EXPRES UN TYPE INVALIDE.
-
-                 */
-
-
-                // GenericProvider.ValueType valueType = bindingValue.isIRI() ? GenericProvider.ValueType.NODE_TYPE : GenericProvider.ValueType.STRING_TYPE;
-                GenericProvider.ValueType valueType = GenericProvider.ValueType.XML_TYPE;
-                PutValueType(binding.getName(), new ValueTypePair(bindingValue.toString(), valueType));
-            }
-        }
 
         public String toString() {
             return Elements.toString();
