@@ -1,10 +1,7 @@
 package paquetage;
 
-import com.google.common.collect.Sets;
-import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.util.Values;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -24,9 +21,9 @@ public class SparqlBGPExtractorTest {
     }
 
     static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
-        Assert.assertEquals(predicate, a.Predicate());
-        Assert.assertEquals(isVariable, a.isVariable());
-        Assert.assertEquals(content, a.Content());
+        Assert.assertEquals(predicate, a.Predicate);
+        Assert.assertEquals(isVariable, a.IsVariableObject);
+        Assert.assertEquals(content, a.ObjectContent);
     }
 
     @Test
@@ -101,7 +98,7 @@ public class SparqlBGPExtractorTest {
 
     static void FindAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObjectPair> members, String predicate, boolean is_variable, String content) {
         ObjectPattern.PredicateObjectPair pairPredObj = members.stream()
-                .filter(x -> x.Predicate().equals(predicate))
+                .filter(x -> x.Predicate.equals(predicate))
                 .findFirst().orElse(null);
         Assert.assertNotEquals(null, pairPredObj);
         CompareKeyValue(pairPredObj, predicate, is_variable, content);
@@ -453,9 +450,9 @@ public class SparqlBGPExtractorTest {
             System.out.println("pattern.className"+pattern.className);
             System.out.println("pattern.VariableName"+pattern.VariableName);
             for(ObjectPattern.PredicateObjectPair pop:pattern.Members) {
-                System.out.println("    pattern.Predicate :" + pop.Predicate());
-                System.out.println("    pattern.Content   :" + pop.Content());
-                System.out.println("    pattern.isVariable:" + pop.isVariable());
+                System.out.println("    pattern.Predicate :" + pop.Predicate);
+                System.out.println("    pattern.Content   :" + pop.ObjectContent);
+                System.out.println("    pattern.isVariable:" + pop.IsVariableObject);
                 System.out.println("");
             }
         }
@@ -517,9 +514,9 @@ public class SparqlBGPExtractorTest {
             System.out.println("pattern.className"+pattern.className);
             System.out.println("pattern.VariableName"+pattern.VariableName);
             for(ObjectPattern.PredicateObjectPair pop:pattern.Members) {
-                System.out.println("    pattern.Predicate :" + pop.Predicate());
-                System.out.println("    pattern.Content   :" + pop.Content());
-                System.out.println("    pattern.isVariable:" + pop.isVariable());
+                System.out.println("    pattern.Predicate :" + pop.Predicate);
+                System.out.println("    pattern.Content   :" + pop.ObjectContent);
+                System.out.println("    pattern.isVariable:" + pop.IsVariableObject);
                 System.out.println("");
             }
         }

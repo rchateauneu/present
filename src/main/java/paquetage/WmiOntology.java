@@ -356,7 +356,7 @@ public class WmiOntology {
     }
 
     // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessId"
-    static NamespacedToken SplitToken(String token) {
+    static NamespaceTokenPair SplitToken(String token) {
         if(! token.contains("#")) {
             throw new RuntimeException("Invalid token:" + token);
         }
@@ -374,14 +374,14 @@ public class WmiOntology {
         }
         logger.debug("token=" + token + " namespace=" + wmiNamespace);
 
-        return new NamespacedToken(wmiNamespace, splitToken[1]);
+        return new NamespaceTokenPair(wmiNamespace, splitToken[1]);
     }
 
     /** This contains a WMI namespace, and a class or property. */
-    public static class NamespacedToken {
+    public static class NamespaceTokenPair {
         public String nameSpace;
         public String Token;
-        NamespacedToken(String namespace, String token) {
+        NamespaceTokenPair(String namespace, String token) {
             nameSpace = namespace;
             Token = token;
         }

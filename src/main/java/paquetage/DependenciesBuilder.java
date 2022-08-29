@@ -26,7 +26,7 @@ public class DependenciesBuilder {
      */
     public DependenciesBuilder(List<ObjectPattern> patterns) throws Exception
     {
-        prepared_queries = new ArrayList<QueryData>();
+        prepared_queries = new ArrayList<>();
 
         // In this constructor, it is filled with all variables and null values.
         // It is built and also needed when building the dependencies, so this cannot be done in two separate steps.
@@ -40,61 +40,28 @@ public class DependenciesBuilder {
         * If the class is not null, they must be equal.
         * If the class is not given, it can implicitly be deduced from the predicates prefixes.
         */
-        for(ObjectPattern pattern: patterns)  {
+        for(ObjectPattern pattern: patterns)
+        {
+            pattern.PreparePattern();
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
-
-            // The namespace must be the same for all predicates and the class.
-            String currentNamespace = null;
-            // This will always be null if the properties are not prefixed with the class name.
-            // This is OK of the type is given with a triple with rdf:type as predicate.
-            String deducedClassName = null;
 
             // Now, split the variables of this object, between:
             // - the variables known at this stage from the previous queries, which can be used in the "WHERE" clause,
             // - the variables which are not known yet, and returned by this WQL query.
             // The variable representing the object is selected anyway and contains the WMI relative path.
-            for(ObjectPattern.PredicateObjectPair keyValue: pattern.Members) {
-                String predicateName = keyValue.Predicate();
-                String valueContent = keyValue.Content();
-                WmiOntology.NamespacedToken namespacedPredicate = WmiOntology.SplitToken(predicateName);
-                String shortPredicate = namespacedPredicate.Token;
-                if(currentNamespace == null) {
-                    currentNamespace = namespacedPredicate.nameSpace;
-                } else {
-                    if(!currentNamespace.equals(namespacedPredicate.nameSpace)) {
-                        throw new RuntimeException("Different namespaces:"+currentNamespace+"!="+namespacedPredicate.nameSpace);
-                    }
-                }
+            for(ObjectPattern.PredicateObjectPair predicateObjectPair: pattern.Members) {
+                QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(
+                        predicateObjectPair.ShortPredicate,
+                        predicateObjectPair.ObjectContent,
+                        predicateObjectPair.IsVariableObject);
 
-                // Maybe the predicate is prefixed with the class name, for example "CIM_Process.Handle".
-                // If so, the class name is deduced and will be compared.
-                String[] splitPredicate = shortPredicate.split("\\.");
-                if(splitPredicate.length > 1) {
-                    if (splitPredicate.length == 2) {
-                        // Without the prefix.
-                        shortPredicate = splitPredicate[1];
-                        String predicateDotPrefix = splitPredicate[0];
-                        if(deducedClassName == null)
-                            deducedClassName = predicateDotPrefix;
-                        else {
-                            if(!deducedClassName.equals(predicateDotPrefix)) {
-                                throw new Exception("Different predicates prefixes:" + shortPredicate + "/" + deducedClassName);
-                            }
-                        }
-                    } else {
-                        throw new Exception("Too many dots in invalid predicate:" + shortPredicate);
-                    }
-                }
-
-                QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(shortPredicate, valueContent, keyValue.isVariable());
-
-                if(keyValue.isVariable()) {
-                    if(variablesContext.containsKey(valueContent))  {
+                if(predicateObjectPair.IsVariableObject) {
+                    if(variablesContext.containsKey(predicateObjectPair.ObjectContent))  {
                         // If it is a variable calculated in the previous queries, its value is known when executing.
                         wheres.add(wmiKeyValue);
                     } else {
-                        selected_variables.put(shortPredicate, valueContent);
+                        selected_variables.put(predicateObjectPair.ShortPredicate, predicateObjectPair.ObjectContent);
                     }
                 } else {
                     // If the value of the predicate is known because it is a constant.
@@ -114,44 +81,10 @@ public class DependenciesBuilder {
                 variablesContext.put(pattern.VariableName, null);
             }
 
-            String shortClassName = null;
-            if(pattern.className == null) {
-                // Maybe the class is not given.
-                if(deducedClassName == null) {
-                    // This is acceptable because it might work in a further Sparql execution.
-                    logger.debug("Class name is null and cannot be deduced.");
-                    shortClassName = null;
-                } else {
-                    logger.debug("Short class name deduced to " + deducedClassName);
-                    shortClassName = deducedClassName;
-                }
-            }  else {
-                // If the class is explicitly given.
-                if (!pattern.className.contains("#")) {
-                    throw new Exception("Invalid class name:" + pattern.className);
-                }
-                // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Process"
-                WmiOntology.NamespacedToken namespacedClassName = WmiOntology.SplitToken(pattern.className);
-                shortClassName = namespacedClassName.Token;
-                if (deducedClassName != null) {
-                    // If the class is explicitly given, and also is the prefix of some attributes.
-                    if (!shortClassName.equals(deducedClassName)) {
-                        throw new Exception("Different short class=" + shortClassName + " and deduced=" + deducedClassName);
-                    }
-                }
-                if (currentNamespace != null) {
-                    if (!currentNamespace.equals(namespacedClassName.nameSpace)) {
-                        throw new RuntimeException("Different namespaces:" + currentNamespace + "!=" + namespacedClassName.nameSpace);
-                    }
-                } else {
-                    currentNamespace = namespacedClassName.nameSpace;
-                }
-            }
-
-            if(shortClassName != null) {
+            if(pattern.ShortClassName != null) {
                 // A class name is need to run WQL queries, and also its WMI namespace.
-                WmiOntology.CheckValidNamespace(currentNamespace);
-                QueryData queryData = new QueryData(currentNamespace, shortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
+                WmiOntology.CheckValidNamespace(pattern.CurrentNamespace);
+                QueryData queryData = new QueryData(pattern.CurrentNamespace, pattern.ShortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
                 prepared_queries.add(queryData);
             }
         } // Next ObjectPattern

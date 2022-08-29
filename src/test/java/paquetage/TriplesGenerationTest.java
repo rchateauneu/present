@@ -36,9 +36,9 @@ public class TriplesGenerationTest {
     }
 
     static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
-        Assert.assertEquals(predicate, a.Predicate());
-        Assert.assertEquals(isVariable, a.isVariable());
-        Assert.assertEquals(content, a.Content());
+        Assert.assertEquals(predicate, a.Predicate);
+        Assert.assertEquals(isVariable, a.IsVariableObject);
+        Assert.assertEquals(content, a.ObjectContent);
     }
 
     @Test
