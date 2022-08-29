@@ -6,6 +6,7 @@ package paquetage;
 import java.util.*;
 
 import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -143,17 +144,17 @@ public class SparqlBGPExtractor {
      * @return Triples ready to be inserted in a repository.
      * @throws Exception
      */
-    List<Triple> GenerateTriples(Solution rows) throws Exception {
-        List<Triple> generatedTriples = new ArrayList<>();
+    List<Statement> GenerateStatements(Solution rows) throws Exception {
+        List<Statement> generatedStatements = new ArrayList<>();
 
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
         logger.debug("Rows number:" + rows.size());
         for(StatementPattern myPattern : visitorPatternsRaw) {
-            rows.PatternToTriples(generatedTriples, myPattern);
+            rows.PatternToStatements(generatedStatements, myPattern);
         }
 
-        logger.debug("Generated triples number:" + generatedTriples.size());
-        return generatedTriples;
+        logger.debug("Generated statements number:" + generatedStatements.size());
+        return generatedStatements;
     }
 
     /** This is used to extract the BGPs of a Sparql query.

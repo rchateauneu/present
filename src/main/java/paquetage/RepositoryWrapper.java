@@ -2,17 +2,12 @@ package paquetage;
 
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryResult;
-import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -24,25 +19,37 @@ public class RepositoryWrapper {
     final static private Logger logger = Logger.getLogger(RepositoryWrapper.class);
     private RepositoryConnection localRepositoryConnection;
 
-
     RepositoryWrapper(String namespace)
     {
         localRepositoryConnection = WmiOntology.CloneToMemoryConnection(namespace);
     }
 
-
-
-    /** TODO: For performance, consider using Statement instead of Triple.
-     * This might avoid this explicit loop.
-     * https://rdf4j.org/javadoc/latest/org/eclipse/rdf4j/model/Triple.html
-     * "Unlike Statement, a triple never has an associated context."
-     *
-     * @param triples
-     */
-    private void InsertTriples(List<Triple> triples) {
-        for (Triple triple : triples) {
-            localRepositoryConnection.add(triple.getSubject(), triple.getPredicate(), triple.getObject());
+    private RdfSolution ExecuteQueryWithStatements(String sparqlQuery, Set<String> expectedBindings) throws Exception {
+        // Now, execute the sparql query in the repository which contains the ontology
+        // and the result of the WQL executions.
+        RdfSolution listRows = new RdfSolution();
+        TupleQuery tupleQuery = localRepositoryConnection.prepareTupleQuery(sparqlQuery);
+        boolean checkedBindingsExecution = false;
+        try (TupleQueryResult result = tupleQuery.evaluate()) {
+            while (result.hasNext()) {
+                BindingSet bindingSet = result.next();
+                bindingSet.getBindingNames();
+                RdfSolution.Tuple newTuple = new RdfSolution.Tuple(bindingSet);
+                if(!checkedBindingsExecution) {
+                    logger.debug("Selected row:" + newTuple);
+                    Set<String> bindingNames = bindingSet.getBindingNames();
+                    if(!expectedBindings.equals(bindingNames)) {
+                        throw new RuntimeException("Different bindings:" + expectedBindings + " vs " + bindingNames);
+                    }
+                    if(!expectedBindings.equals(newTuple.KeySet())) {
+                        throw new RuntimeException("Bindings different of row keys:" + expectedBindings + " vs " + newTuple.KeySet());
+                    }
+                    checkedBindingsExecution = true;
+                }
+                listRows.add(newTuple);
+            }
         }
+        return listRows;
     }
 
     /** This transforms a Sparql query into a stack of WQL-like queries,
@@ -56,40 +63,35 @@ public class RepositoryWrapper {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         logger.debug("bindings=" + extractor.bindings);
 
-        // On remplace ceci.
         SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
 
         Solution translatedRows = sparqlTranslator.ExecuteToRows();
         logger.debug("Translated rows:" + translatedRows.size());
 
-        List<Triple> triples = extractor.GenerateTriples(translatedRows);
+        List<Statement> statements = extractor.GenerateStatements(translatedRows);
 
-        InsertTriples(triples);
+        localRepositoryConnection.add(statements);
 
-        // Now, execute the sparql query in the repository which contains the ontology
-        // and the result of the WQL executions.
-        RdfSolution listRows = new RdfSolution();
-        TupleQuery tupleQuery = localRepositoryConnection.prepareTupleQuery(sparqlQuery);
-        boolean checkedBindingsExecution = false;
-        try (TupleQueryResult result = tupleQuery.evaluate()) {
-            while (result.hasNext()) {
-                BindingSet bindingSet = result.next();
-                bindingSet.getBindingNames();
-                RdfSolution.Tuple newRow = new RdfSolution.Tuple(bindingSet);
-                if(!checkedBindingsExecution) {
-                    logger.debug("Selected row:" + newRow);
-                    Set<String> bindingNames = bindingSet.getBindingNames();
-                    if(!extractor.bindings.equals(bindingNames)) {
-                        throw new RuntimeException("Different bindings:" + extractor.bindings + " vs " + bindingNames);
-                    }
-                    if(!extractor.bindings.equals(newRow.KeySet())) {
-                        throw new RuntimeException("Bindings different of row keys:" + extractor.bindings + " vs " + newRow.KeySet());
-                    }
-                    checkedBindingsExecution = true;
-                }
-                listRows.add(newRow);
-            }
-        }
+        RdfSolution listRows = ExecuteQueryWithStatements(sparqlQuery, extractor.bindings);
         return listRows;
     }
+
+    public RdfSolution ExecuteQueryOptimized(String sparqlQuery) throws Exception {
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
+        logger.debug("bindings=" + extractor.bindings);
+
+        SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
+
+        Solution translatedRows = sparqlTranslator.ExecuteToRowsOptimized();
+        logger.debug("Translated rows:" + translatedRows.size());
+
+        List<Statement> statements = extractor.GenerateStatements(translatedRows);
+
+        localRepositoryConnection.add(statements);
+
+        RdfSolution listRows = ExecuteQueryWithStatements(sparqlQuery, extractor.bindings);
+        return listRows;
+    }
+
+
 }

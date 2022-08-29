@@ -34,7 +34,7 @@ public class Solution {
      * @param myPattern
      * @throws Exception
      */
-    void PatternToTriples(List<Triple> generatedTriples, StatementPattern myPattern) throws Exception {
+    void PatternToStatements(List<Statement> generatedTriples, StatementPattern myPattern) throws Exception {
         Var subject = myPattern.getSubjectVar();
         String subjectName = subject.getName();
         Var predicate = myPattern.getPredicateVar();
@@ -55,7 +55,7 @@ public class Solution {
                 String objectString = objectValue.stringValue();
                 Resource resourceObject = Values.iri(objectString);
 
-                generatedTriples.add(factory.createTriple(
+                generatedTriples.add(factory.createStatement(
                         resourceSubject,
                         predicateIri,
                         resourceObject));
@@ -74,7 +74,7 @@ public class Solution {
                     Value resourceObject = objectWmiValueType.Type() == ValueType.NODE_TYPE
                             ? Values.iri(objectString)
                             : objectWmiValueType.ValueTypeToLiteral();
-                    generatedTriples.add(factory.createTriple(
+                    generatedTriples.add(factory.createStatement(
                             resourceSubject,
                             predicateIri,
                             resourceObject));
@@ -95,7 +95,7 @@ public class Solution {
                     Row row = rowIterator.next();
                     Resource resourceSubject = row.AsIRI(subjectName);
 
-                    generatedTriples.add(factory.createTriple(
+                    generatedTriples.add(factory.createStatement(
                             resourceSubject,
                             predicateIri,
                             resourceObject));
@@ -119,7 +119,7 @@ public class Solution {
                         resourceObject = objectWmiValue.ValueTypeToLiteral();
                     }
 
-                    generatedTriples.add(factory.createTriple(
+                    generatedTriples.add(factory.createStatement(
                             resourceSubject,
                             predicateIri,
                             resourceObject));

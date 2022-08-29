@@ -10,26 +10,15 @@ import java.util.*;
 public class SparqlTranslation {
     final static private Logger logger = Logger.getLogger(SparqlTranslation.class);
     private DependenciesBuilder dependencies;
-    private Solution current_rows;
+    private Solution solution;
     private GenericProvider genericSelecter = new GenericProvider();
     private Set<String> bindings;
-
-    /*
-    On cree un nouveau truc similaire.
-    On cree un format pour verifier l ExpressionTree.
-    Pour faciliter les tests,
-     */
 
     public SparqlTranslation(SparqlBGPExtractor input_extractor) throws Exception {
         // TODO: Optimize QueryData list here. Providers are necessary.
         List<ObjectPattern> patterns = input_extractor.patternsAsArray();
         bindings = input_extractor.bindings;
 
-        if( 1 == 2) {
-            // TODO: Il faut le recreer a chaque vois meme si variableContext est le meme.
-            PatternsOptimizer optimizer = new PatternsOptimizer();
-            optimizer.ReorderPatterns(patterns);
-        }
         dependencies = new DependenciesBuilder(patterns);
     }
 
@@ -42,39 +31,21 @@ public class SparqlTranslation {
     {
         Solution.Row new_row = new Solution.Row();
         // It does not return only the variables in bindings, but all of them because they are
-        // needed for to generate the triples for further Sparql execution
+        // needed to generate the statements for further Sparql execution
         for(Map.Entry<String, Solution.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
         {
             // PresentUtils.WbemPathToIri( ? The type should not be lost, especially for IRIs
             new_row.PutValueType(pairKeyValue.getKey(), pairKeyValue.getValue());
         }
-        current_rows.add(new_row);
+        solution.add(new_row);
     }
-
-    /** It uses the generated rows and the BGPs to created RDF triples which are inserted in the targer repository.
-     * It would be faster to insert them on the fly.
-     * It is possible to create a triple each time the context is filled with a new variable value:
-     * At this moment, it is possible to find the patterns which need this variable.
-     * But first, the patterns must be keyed in a special way which gives the list of triples in the BGPs
-     * when one of their input variables are set. Special conditions:
-     * - Some triples in the BGPs are constant and are initialised once only.
-     * - Some triples might depend on two or three variables (this is not the case now, only the value can change)
-     * - Each variable triple must point to its variables if it depends on several variables.
-     * - Possibly have one container for BGP triples which depend on one variable only: This is implicitly
-     *   what is done here. Have a variable subject or predicate requires a different processing.
-     *
-     * However, this function is slower but simpler because there is an intermediate stage where all combinations
-     * of variables are exposed.
-     */
-    void GenerateTriples()
-    {}
 
     void RowToContext(Solution.Row singleRow) throws Exception {
         for(String variableName : singleRow.KeySet()) {
             if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new Exception("Variable " + variableName + " from selection not in context");
             }
-            // Or generates new triples for all BGP triples depending on this variable.
+            // Or generates new statements for all BGP triples depending on this variable.
             dependencies.variablesContext.put(variableName, singleRow.GetValueType(variableName));
         }
     }
@@ -221,7 +192,7 @@ public class SparqlTranslation {
      * TODO: ... local code, not by the Sparql engine. This is confusing. */
     public Solution ExecuteToRows() throws Exception
     {
-        current_rows = new Solution();
+        solution = new Solution();
         for(QueryData queryData : dependencies.prepared_queries) {
             queryData.ResetStatistics();
         }
@@ -235,10 +206,15 @@ public class SparqlTranslation {
             logger.debug("Query " + indexQueryData);
             queryData.DisplayStatistics();
         }
-        logger.debug("Rows generated:" + current_rows.size());
-        logger.debug("Header:" + current_rows.Header);
+        logger.debug("Rows generated:" + solution.size());
+        logger.debug("Header:" + solution.Header);
         logger.debug("Context keys:" + dependencies.variablesContext.keySet());
 
-    return current_rows;
+    return solution;
     }
+
+    public Solution ExecuteToRowsOptimized() throws Exception {
+        return null;
+    }
+
 }

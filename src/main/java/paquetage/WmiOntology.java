@@ -343,14 +343,14 @@ public class WmiOntology {
         RepositoryConnection repositoryConnection = repo.getConnection();
 
         long countInit = repositoryConnection.size();
-        logger.debug("Inserting ontology triples:" + countInit);
+        logger.debug("Inserting ontology statements:" + countInit);
         CheckValidNamespace(namespace);
         RepositoryConnection sourceConnection = ReadOnlyOntologyConnection(namespace, true);
         // TODO: Avoid this useless copy.
         RepositoryResult<Statement> result = sourceConnection.getStatements(null, null, null, true);
         repositoryConnection.add(result);
         long countEnd = repositoryConnection.size();
-        logger.debug("Inserted " + (countEnd - countInit) + " triples from " + countInit);
+        logger.debug("Inserted " + (countEnd - countInit) + " statements from " + countInit);
 
         return repositoryConnection;
     }
