@@ -66,7 +66,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.ClassName);
         Assert.assertEquals(1, patternWin32_Directory.Members.size());
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), false, "C:");
     }
@@ -91,7 +91,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.ClassName);
         Assert.assertEquals(1, patternWin32_Directory.Members.size());
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "my_name");
     }
@@ -129,18 +129,18 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(extractor.patternsAsArray().size(), 3);
 
         ObjectPattern patternCIM_ProcessExecutable = FindObjectPattern(extractor, "my_assoc");
-        Assert.assertEquals(patternCIM_ProcessExecutable.className, PresentUtils.toCIMV2("CIM_ProcessExecutable"));
+        Assert.assertEquals(patternCIM_ProcessExecutable.ClassName, PresentUtils.toCIMV2("CIM_ProcessExecutable"));
         Assert.assertEquals(patternCIM_ProcessExecutable.Members.size(), 2);
         FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, PresentUtils.toCIMV2("Dependent"), true, "my_process");
         FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, PresentUtils.toCIMV2("Antecedent"), true, "my_file");
 
         ObjectPattern patternWin32_Process = FindObjectPattern(extractor, "my_process");
-        Assert.assertEquals(patternWin32_Process.className, PresentUtils.toCIMV2("Win32_Process"));
+        Assert.assertEquals(patternWin32_Process.ClassName, PresentUtils.toCIMV2("Win32_Process"));
         Assert.assertEquals(patternWin32_Process.Members.size(), 1);
         FindAndCompareKeyValue(patternWin32_Process.Members, PresentUtils.toCIMV2("Handle"), true, "my_process_handle");
 
         ObjectPattern patternCIM_DataFile = FindObjectPattern(extractor, "my_file");
-        Assert.assertEquals(patternCIM_DataFile.className, PresentUtils.toCIMV2("CIM_DataFile"));
+        Assert.assertEquals(patternCIM_DataFile.ClassName, PresentUtils.toCIMV2("CIM_DataFile"));
         Assert.assertEquals(patternCIM_DataFile.Members.size(), 1);
         FindAndCompareKeyValue(patternCIM_DataFile.Members, PresentUtils.toCIMV2("Name"), false, "C:\\WINDOWS\\System32\\kernel32.dll");
     }
@@ -179,7 +179,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, patterns.size());
         Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.ClassName);
         Assert.assertEquals("s", firstPattern.VariableName);
         Assert.assertEquals(4, firstPattern.Members.size());
 
@@ -250,7 +250,7 @@ public class SparqlBGPExtractorTest {
         }
         ObjectPattern pattern1 = FindObjectPattern(extractor, "process1");
         Assert.assertNotEquals(pattern1, null);
-        Assert.assertEquals(null, pattern1.className);
+        Assert.assertEquals(null, pattern1.ClassName);
         Assert.assertEquals("process1", pattern1.VariableName);
         Assert.assertEquals(1, pattern1.Members.size());
         CompareKeyValue(pattern1.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", false, "Caption1");
@@ -284,7 +284,7 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "about"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.ClassName);
         Assert.assertEquals("about", firstPattern.VariableName);
 
         Assert.assertEquals(1, firstPattern.Members.size());
@@ -292,7 +292,7 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
         ObjectPattern secondPattern = patterns.get(1);
-        Assert.assertEquals(null, secondPattern.className);
+        Assert.assertEquals(null, secondPattern.ClassName);
         Assert.assertEquals("s", secondPattern.VariableName);
 
         Assert.assertEquals(1, secondPattern.Members.size());
@@ -322,7 +322,7 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "my0_dir"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.ClassName);
         Assert.assertEquals("my0_dir", firstPattern.VariableName);
 
         Assert.assertEquals(1, firstPattern.Members.size());
@@ -330,7 +330,7 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "my1_assoc"), null);
         ObjectPattern secondPattern = patterns.get(1);
-        Assert.assertEquals(null, secondPattern.className);
+        Assert.assertEquals(null, secondPattern.ClassName);
         Assert.assertEquals("my1_assoc", secondPattern.VariableName);
 
         Assert.assertEquals(2, secondPattern.Members.size());
@@ -339,7 +339,7 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "my2_file"), null);
         ObjectPattern thirdPattern = patterns.get(2);
-        Assert.assertEquals(null, thirdPattern.className);
+        Assert.assertEquals(null, thirdPattern.ClassName);
         Assert.assertEquals("my2_file", thirdPattern.VariableName);
 
         Assert.assertEquals(1, thirdPattern.Members.size());
@@ -389,20 +389,20 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "author"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.ClassName);
         Assert.assertEquals("author", firstPattern.VariableName);
         Assert.assertEquals(1, firstPattern.Members.size());
         CompareKeyValue(firstPattern.Members.get(0), "http://schema.org/name", true, "author_name");
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "creator"), null);
         ObjectPattern secondPattern = patterns.get(1);
-        Assert.assertEquals(null, secondPattern.className);
+        Assert.assertEquals(null, secondPattern.ClassName);
         Assert.assertEquals("creator", secondPattern.VariableName);
         CompareKeyValue(secondPattern.Members.get(0), "http://schema.org/name", true, "creator_name");
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "s"), null);
         ObjectPattern thirdPattern = patterns.get(2);
-        Assert.assertEquals(null, thirdPattern.className);
+        Assert.assertEquals(null, thirdPattern.ClassName);
         Assert.assertEquals("s", thirdPattern.VariableName);
         Assert.assertEquals(2, thirdPattern.Members.size());
         CompareKeyValue(thirdPattern.Members.get(0), "http://schema.org/creator", true, "creator");
@@ -447,7 +447,7 @@ public class SparqlBGPExtractorTest {
 
         for(ObjectPattern pattern : patterns )
         {
-            System.out.println("pattern.className"+pattern.className);
+            System.out.println("pattern.className"+pattern.ClassName);
             System.out.println("pattern.VariableName"+pattern.VariableName);
             for(ObjectPattern.PredicateObjectPair pop:pattern.Members) {
                 System.out.println("    pattern.Predicate :" + pop.Predicate);
@@ -459,7 +459,7 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "country"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.ClassName);
         Assert.assertEquals("country", firstPattern.VariableName);
         Assert.assertEquals(4, firstPattern.Members.size());
         CompareKeyValue(firstPattern.Members.get(0), "http://www.wikidata.org/prop/direct/P31", false, "http://www.wikidata.org/entity/Q3624078");
@@ -511,7 +511,7 @@ public class SparqlBGPExtractorTest {
 
         for(ObjectPattern pattern : patterns )
         {
-            System.out.println("pattern.className"+pattern.className);
+            System.out.println("pattern.className"+pattern.ClassName);
             System.out.println("pattern.VariableName"+pattern.VariableName);
             for(ObjectPattern.PredicateObjectPair pop:pattern.Members) {
                 System.out.println("    pattern.Predicate :" + pop.Predicate);
@@ -523,7 +523,7 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(FindObjectPattern(extractor, "country"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.ClassName);
         Assert.assertEquals("country", firstPattern.VariableName);
         Assert.assertEquals(4, firstPattern.Members.size());
         CompareKeyValue(firstPattern.Members.get(0), "http://www.wikidata.org/prop/direct/P31", false, "http://www.wikidata.org/entity/Q3624078");
@@ -557,7 +557,7 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_directory");
-        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.className);
+        Assert.assertEquals(PresentUtils.toCIMV2("Win32_Directory"), patternWin32_Directory.ClassName);
         Assert.assertEquals(1, patternWin32_Directory.Members.size());
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "directory_name");
     }

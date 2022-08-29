@@ -131,7 +131,7 @@ public class SparqlBGPExtractor {
                 }
             }
             else {
-                refPattern.className = object.getValue().stringValue();
+                refPattern.ClassName = object.getValue().stringValue();
             }
         }
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));

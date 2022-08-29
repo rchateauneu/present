@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class ObjectPattern {
     final static private Logger logger = Logger.getLogger(ObjectPattern.class);
 
-    public String className;
+    public String ClassName;
     public String VariableName;
 
     String CurrentNamespace;
@@ -25,10 +25,10 @@ public class ObjectPattern {
     /**
      * This is for debugging purpose. An object can be created with a single call.
      * @param variableName
-     * @param the_class
+     * @param className
      */
-    ObjectPattern(String variableName, String the_class) {
-        className = the_class;
+    ObjectPattern(String variableName, String className) {
+        ClassName = className;
         VariableName = variableName;
     }
 
@@ -57,12 +57,12 @@ public class ObjectPattern {
     }
 
     public String toString() {
-        return "className=" + className + " VariableName=" + VariableName;
+        return "className=" + ClassName + " VariableName=" + VariableName;
     }
 
     /** If some predicates are prefixed with the class name, it is extracted, checked if it is unique,
      * and used to deduce the class of the instance if it is not given.
-     * If the class name of the instance is given, the it must be identical to the deduced one.
+     * If the class name of the instance is given, then it must be identical to the deduced one.
      */
     public void PreparePattern() throws Exception
     {
@@ -108,8 +108,7 @@ public class ObjectPattern {
             keyValue.ShortPredicate = shortPredicate;
         }
 
-        //ShortClassName = null;
-        if(className == null) {
+        if(ClassName == null) {
             // Maybe the class is not given.
             if(deducedClassName == null) {
                 // This is acceptable because it might work in the further Sparql execution.
@@ -121,11 +120,11 @@ public class ObjectPattern {
             }
         }  else {
             // If the class is explicitly given, it must be correct.
-            if (!className.contains("#")) {
-                throw new Exception("Invalid class name:" + className);
+            if (!ClassName.contains("#")) {
+                throw new Exception("Invalid class name:" + ClassName);
             }
             // Example: className = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Process"
-            WmiOntology.NamespaceTokenPair pairNamespaceToken = WmiOntology.SplitToken(className);
+            WmiOntology.NamespaceTokenPair pairNamespaceToken = WmiOntology.SplitToken(ClassName);
             ShortClassName = pairNamespaceToken.Token;
             if (deducedClassName != null) {
                 // If the class is explicitly given, and also is the prefix of some attributes.
@@ -147,7 +146,7 @@ public class ObjectPattern {
             WmiOntology.CheckValidNamespace(CurrentNamespace);
         } else {
             // Maybe this is not a WMI-style IRI, so there is no WMI namespace.
-            logger.debug("The namespace could not be found in:" + className);
+            logger.debug("The namespace could not be found in:" + ClassName);
         }
     }
 

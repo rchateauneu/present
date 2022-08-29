@@ -62,7 +62,7 @@ public class TriplesGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.ClassName, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
@@ -111,7 +111,7 @@ public class TriplesGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.ClassName, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
 
@@ -183,7 +183,7 @@ public class TriplesGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
-        Assert.assertEquals(patternWin32_Directory.className, PresentUtils.toCIMV2("Win32_Directory"));
+        Assert.assertEquals(patternWin32_Directory.ClassName, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 2);
         CompareKeyValue(patternWin32_Directory.Members.get(1), PresentUtils.toCIMV2("Caption"), true, "dir_caption");
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
