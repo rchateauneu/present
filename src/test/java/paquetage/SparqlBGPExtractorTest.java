@@ -11,7 +11,6 @@ import java.util.*;
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 public class SparqlBGPExtractorTest {
-    ValueFactory factory = SimpleValueFactory.getInstance();
 
     static ObjectPattern FindObjectPattern(SparqlBGPExtractor extractor, String variable) {
         ObjectPattern pattern = extractor.patternsMap.get(variable);
@@ -262,9 +261,89 @@ public class SparqlBGPExtractorTest {
         CompareKeyValue(pattern2.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", false, "Caption2");
     }
 
-    /***
-     * Checks the BGPs extracted from an arbitrary query with a filter statement.
-     */
+    @Test
+    public void Parse_Union_CheckNoMix2() throws Exception {
+        String sparqlQuery1 = """
+                            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                            select ?process where 
+                            {
+                                {
+                                    select ?process1
+                                    where {
+                                        ?process1 cimv2:Win32_Process.Caption "Caption1" .
+                                    }
+                                }
+                                union
+                                {
+                                    select ?process2
+                                    where {
+                                        ?process2 cimv2:Win32_Process.Caption "Caption2" .
+                                    }
+                                }
+                                union
+                                {
+                                    select ?process3
+                                    where {
+                                        ?process3 cimv2:Win32_Process.Caption "Caption3" .
+                                    }
+                                }
+                            }
+                """;
+        SparqlBGPExtractor extractor1 = new SparqlBGPExtractor(sparqlQuery1);
+
+        String sparqlQuery2 = """
+                            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                            select *
+                            where {
+                                ?processX cimv2:Win32_Process.Caption "CaptionX" .
+                                ?processY cimv2:Win32_Process.Caption "CaptionY" .
+                                ?processZ cimv2:Win32_Process.Caption "CaptionZ" .
+                            }
+                """;
+        SparqlBGPExtractor extractor2 = new SparqlBGPExtractor(sparqlQuery2);
+
+        String sparqlQuery3 = """
+                            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                            select ?process where 
+                            {
+                                {
+                                    select ?process1
+                                    where {
+                                        ?process1 cimv2:Win32_Process.Caption "Caption1" .
+                                    }
+                                }
+                                union
+                                {
+                                    select ?process2 where 
+                                    {
+                                        {
+                                            select ?process21
+                                            where {
+                                                ?process1 cimv2:Win32_Process.Caption "Caption21" .
+                                            }
+                                        }
+                                        union
+                                        {
+                                            select ?process22
+                                            where {
+                                                ?process2 cimv2:Win32_Process.Caption "Caption22" .
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                """;
+        SparqlBGPExtractor extractor3 = new SparqlBGPExtractor(sparqlQuery3);
+
+        Assert.assertTrue(false);
+    }
+
+        /***
+         * Checks the BGPs extracted from an arbitrary query with a filter statement.
+         */
     @Test
     public void Parse_Filter() throws Exception {
         String sparqlQuery = """
