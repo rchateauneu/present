@@ -101,12 +101,11 @@ public class PresentUtils {
      * @param variable_name
      * @return
      */
-    static Set<String> StringValuesSet(List<GenericProvider.Row> listRows, String variable_name) {
+    static Set<String> StringValuesSet(RdfSolution listRows, String variable_name) {
         return listRows.stream().map(row->row.GetStringValue(variable_name)).collect(Collectors.toSet());
     }
 
-    static Set<Long> LongValuesSet(List<GenericProvider.Row> listRows, String variable_name) {
-        // return listRows.stream().map(row->row.GetLongValue(variable_name)).collect(Collectors.toSet());
+    static Set<Long> LongValuesSet(RdfSolution listRows, String variable_name) {
         return listRows.stream().map(row->XmlToLong(row.GetStringValue(variable_name))).collect(Collectors.toSet());
     }
 
@@ -116,6 +115,36 @@ public class PresentUtils {
 
     static String NamespaceTermToIRI(String namespace, String term) {
         return WmiOntology.NamespaceUrlPrefix(namespace) + term;
-
     }
+
+    static boolean hasWmiReferenceSyntax(String refString) {
+        /*
+            Here, "?my3_dir" is a reference but it does not have the syntax.
+
+            select ?my_dir_name
+            where {
+                ?my3_dir cimv2:Win32_Directory.Name ?my_dir_name .
+                ?my2_assoc cimv2:Win32_MountPoint.Volume ?my1_volume .
+                ?my2_assoc cimv2:Directory ?my3_dir .
+                ?my1_volume cimv2:Win32_Volume.DriveLetter ?my_drive .
+                ?my1_volume cimv2:DeviceID ?device_id .
+                ?my0_dir cimv2:Name "C:\\Program Files (x86)" .
+                ?my0_dir cimv2:Win32_Directory.Drive ?my_drive .
+            }
+
+            valueType='Win32_Directory.Name="C:\\"'
+
+            Or:
+            Win32_Volume.DeviceID="\\\\?\\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\\"
+
+            Very rough test which should be generalised to all WMI paths.
+
+            FIXME: If these are paths, the prefix with the machine name should be added.
+         */
+        if(refString.startsWith("Win32_Directory.Name=")
+        || refString.startsWith("Win32_Volume.DeviceID=")) return true;
+        if(refString.startsWith("\\\\") || refString.startsWith("\\\\?\\")) return true;
+        return false;
+    }
+
 }

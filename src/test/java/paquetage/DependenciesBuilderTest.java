@@ -39,7 +39,7 @@ public class DependenciesBuilderTest {
     public void SymbolicQuery1Test() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process", PresentUtils.toCIMV2("Win32_Process"));
-        objectPattern.AddKeyValue(PresentUtils.toCIMV2("Handle"), false, "123");
+        objectPattern.AddPredicateObjectPair(PresentUtils.toCIMV2("Handle"), false, "123");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -52,8 +52,8 @@ public class DependenciesBuilderTest {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process",
                 PresentUtils.toCIMV2("CIM_DataFile"));
-        objectPattern.AddKeyValue(PresentUtils.toCIMV2("Name"), false, "C:");
-        objectPattern.AddKeyValue(PresentUtils.toCIMV2("Caption"), true, "any_variable");
+        objectPattern.AddPredicateObjectPair(PresentUtils.toCIMV2("Name"), false, "C:");
+        objectPattern.AddPredicateObjectPair(PresentUtils.toCIMV2("Caption"), true, "any_variable");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -65,13 +65,13 @@ public class DependenciesBuilderTest {
         ObjectPattern objectPattern0 = new ObjectPattern(
                 "my_process",
                 PresentUtils.toCIMV2("Win32_Process"));
-        objectPattern0.AddKeyValue(PresentUtils.toCIMV2("Name"), false, "C:");
+        objectPattern0.AddPredicateObjectPair(PresentUtils.toCIMV2("Name"), false, "C:");
 
         ObjectPattern objectPattern1 = new ObjectPattern(
                 "my_assoc",
                 PresentUtils.toCIMV2("CIM_ProcessExecutable"));
-        objectPattern1.AddKeyValue(PresentUtils.toCIMV2("Dependent"), true, "my_process");
-        objectPattern1.AddKeyValue(PresentUtils.toCIMV2("Antecedent"), true, "my_file");
+        objectPattern1.AddPredicateObjectPair(PresentUtils.toCIMV2("Dependent"), true, "my_process");
+        objectPattern1.AddPredicateObjectPair(PresentUtils.toCIMV2("Antecedent"), true, "my_file");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern0, objectPattern1));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -89,7 +89,7 @@ public class DependenciesBuilderTest {
      */
     public void InternalQueryDataTest() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern("my_process", PresentUtils.toCIMV2("Win32_Process"));
-        objectPattern.AddKeyValue(PresentUtils.toCIMV2("Handle"), false, "123");
+        objectPattern.AddPredicateObjectPair(PresentUtils.toCIMV2("Handle"), false, "123");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
 

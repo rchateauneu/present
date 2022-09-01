@@ -206,20 +206,21 @@ public interface Wbemcli {
         }
 
         public String Get(String wszName) {
-            int lFlags = 0;
-            IntByReference plFlavor = new IntByReference();
+            WString wszNameStr = new WString(wszName);
             Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
-            // System.out.println("wszName=" + wszName);
-            HRESULT hres = Get(new WString(wszName), lFlags, pQualifierVal, plFlavor);
+            HRESULT hres = Get(wszNameStr, 0, pQualifierVal, null);
             if(hres.intValue() == 0x80041002) {
+                // This error for some classes only.
                 return null;
             }
-            COMUtils.checkRC(Get(new WString(wszName), lFlags, pQualifierVal, plFlavor));
-            if(pQualifierVal.getVarType().intValue() == Wbemcli.CIM_BOOLEAN)
-                return String.valueOf(pQualifierVal.booleanValue());
-            if(pQualifierVal.getVarType().intValue() == Wbemcli.CIM_STRING)
-                return pQualifierVal.stringValue();
-            return "Get " + wszName + " cannot convert type:" + String.valueOf(pQualifierVal.getVarType().intValue());
+            int qualifierInt = pQualifierVal.getVarType().intValue();
+            switch(qualifierInt) {
+                case Wbemcli.CIM_BOOLEAN:
+                    return String.valueOf(pQualifierVal.booleanValue());
+                case Wbemcli.CIM_STRING:
+                    return pQualifierVal.stringValue();
+            }
+            return "Get " + wszName + " cannot convert type:" + qualifierInt;
         }
 
         public HRESULT GetNames(long lFlags, PointerByReference pNames) {

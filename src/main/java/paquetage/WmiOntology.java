@@ -124,7 +124,7 @@ public class WmiOntology {
      *
      * @param connection
      */
-    private void InsertOntologyInRepository(String namespace, RepositoryConnection connection){
+    static private void CreateOntologyInRepository(String namespace, RepositoryConnection connection){
         logger.debug("Start namespace=" + namespace);
         CheckValidNamespace(namespace);
         // We want to reuse this namespace when creating several building blocks.
@@ -227,7 +227,7 @@ public class WmiOntology {
         logger.debug("End");
     }
 
-    private void WriteRepository(String rdfFileName) throws Exception {
+    static private void WriteRepository(RepositoryConnection repositoryConnection, String rdfFileName) throws Exception {
         FileOutputStream out = new FileOutputStream(rdfFileName);
         RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, out);
         writer.startRDF();
@@ -239,62 +239,152 @@ public class WmiOntology {
         writer.endRDF();
     }
 
-    public WmiOntology(String namespace, boolean isCached) {
-        logger.debug("isCached=" + isCached + " namespace=" + namespace);
+
+    static private Path pathCache;
+    static {
+        String tempDir = System.getProperty("java.io.tmpdir");
+
+        // To cleanup the ontology, this entire directory must be deleted, and not only its content.
+        pathCache = Paths.get(tempDir + "\\" + "Ontologies");
+    }
+
+    // To cleanup the ontology, this entire directory must be deleted, and not only its content.
+    static private Path PathNamespacePrefix(String namespace) throws Exception{
+        // The namespace might contain backslashes, but this is OK on Windows.
+        return Paths.get(pathCache + "\\" + namespace);
+    }
+    static private File DirSailDump(String namespace) throws Exception{
+        // The namespace might contain backslashes, but this is OK on Windows.
+        Path pathNamespacePrefix = PathNamespacePrefix(namespace);
+
+        Files.createDirectories(pathCache);
+        File dirSaildump = new File(pathNamespacePrefix + ".SailDir");
+        logger.debug("dirSaildump=" + dirSaildump);
+        return dirSaildump;
+    }
+
+    /** This stores the repository connection containing the ontology for each namespace,
+     * so it is not necessary to read them several times from file.
+     * They should never be modified but instead copied to a new repository.
+     */
+    static private HashMap<String, RepositoryConnection> mapConnects = new HashMap<>();
+
+    static public RepositoryConnection ReadOnlyOntologyConnection(String namespace, boolean isCached) {
         CheckValidNamespace(namespace);
-        if(isCached)
-        {
-            try {
+        RepositoryConnection repositoryConnection = mapConnects.get(namespace);
+        if (repositoryConnection != null) {
+            logger.debug("Ontology connection in cache for namespace=" + namespace);
+            return repositoryConnection;
+        }
+        repositoryConnection = ReadOnlyOntologyConnectionNoCache(namespace, isCached);
+        if(isCached) {
+            mapConnects.put(namespace, repositoryConnection);
+        }
+        return repositoryConnection;
+    }
 
-                // Get the temporary directory and print it. Similar to:
-                // TEMP=C:/Users/user/AppData/Local/Temp
-                // TMP=C:/Users/user/AppData/Local/Temp
-                String tempDir = System.getProperty("java.io.tmpdir");
+    static private RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace, boolean isCached) {
+        CheckValidNamespace(namespace);
+        RepositoryConnection repositoryConnection;
 
-                // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-                Path pathCache = Paths.get(tempDir + "\\" + "Ontologies");
+        try {
+            File dirSaildump = DirSailDump(namespace);
+            logger.debug("dirSaildump=" + dirSaildump);
+            boolean fileExists = Files.exists(dirSaildump.toPath());
 
-                // The namespace might contain backslashes, but this is OK on Windows.
-                Path pathNamespacePrefix = Paths.get(pathCache + "\\" + namespace);
+            // TODO: Find a way to IMPORT this content into a new MemoryStore, later unconnected to the file.
+            // TODO: This will avoid a stupid copy.
+            // TODO: See MemoryStore.setPersist
 
-                Files.createDirectories(pathCache);
-                File dirSaildump = new File(pathNamespacePrefix + ".SailDir");
-                logger.debug("dirSaildump=" + dirSaildump);
-                if (Files.exists(dirSaildump.toPath())) {
-                    logger.debug("Exists dirSaildump=" + dirSaildump);
-                    MemoryStore memStore = new MemoryStore(dirSaildump);
-                    memStore.setSyncDelay(1000L);
-                    Repository repo = new SailRepository(memStore);
-                    repositoryConnection = repo.getConnection();
-                    logger.debug("Cached statements=" + repositoryConnection.size());
-                    ;
-                } else {
-                    logger.debug("Does not exist dirSaildump=" + dirSaildump);
-                    MemoryStore memStore = new MemoryStore(dirSaildump);
-                    memStore.setSyncDelay(1000L);
-                    Repository repo = new SailRepository(memStore);
-                    repositoryConnection = repo.getConnection();
-                    logger.debug("Caching new statements before=" + repositoryConnection.size());
-                    InsertOntologyInRepository(namespace, repositoryConnection);
-                    repositoryConnection.commit();
-                    memStore.sync();
-                    logger.debug("Caching new statements after=" + repositoryConnection.size());
-
-                    WriteRepository(pathNamespacePrefix + ".rdf");
-                }
-            } catch(Exception exc) {
-                logger.error("Caught:" + exc);
-            }
-            if(repositoryConnection.size() == 0) {
-                throw new RuntimeException("Ontology is empty");
+            if (isCached && fileExists) {
+                // Load the existing ontology from the file and sets the repository connection to it.
+                logger.debug("Exists dirSaildump=" + dirSaildump);
+                MemoryStore memStore = new MemoryStore(dirSaildump);
+                logger.debug("MemoryStore created");
+                Repository repo = new SailRepository(memStore);
+                repositoryConnection = repo.getConnection();
+                logger.debug("Cached statements=" + repositoryConnection.size());
+            } else {
+                // Creates a file repository and creates the ontology into it.
+                logger.debug("Does not exist dirSaildump=" + dirSaildump);
+                MemoryStore memStore = new MemoryStore(dirSaildump);
+                memStore.setSyncDelay(1000L);
+                Repository repo = new SailRepository(memStore);
+                repositoryConnection = repo.getConnection();
+                logger.debug("Caching new statements before=" + repositoryConnection.size());
+                CreateOntologyInRepository(namespace, repositoryConnection);
+                repositoryConnection.commit();
+                memStore.sync();
+                logger.debug("Caching new statements after=" + repositoryConnection.size());
+                // Also saves the new ontology to a RDF file.
+                Path pathNamespacePrefix = PathNamespacePrefix(namespace);
+                WriteRepository(repositoryConnection, pathNamespacePrefix + ".rdf");
             }
         }
-        else {
-            Repository repository = new SailRepository(new MemoryStore());
-            repositoryConnection = repository.getConnection();
-            logger.debug("New statements before=" + repositoryConnection.size());
-            InsertOntologyInRepository(namespace, repositoryConnection);
-            logger.debug("New statements after=" + repositoryConnection.size());
+        catch(Exception exc)
+        {
+            throw new RuntimeException(exc);
+        }
+        if(repositoryConnection.size() == 0) {
+            throw new RuntimeException("Ontology is empty");
+        }
+        return repositoryConnection;
+    }
+
+
+    /** This loads all triples of the ontology and inserts them in the repository.
+     * This is rather slow because an ontology contains thousands of triples.
+     * TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
+     */
+    public static RepositoryConnection CloneToMemoryConnection(String namespace) {
+        CheckValidNamespace(namespace);
+        // This is not persisted to a file.
+        Repository repo = new SailRepository(new MemoryStore());
+        RepositoryConnection repositoryConnection = repo.getConnection();
+
+        long countInit = repositoryConnection.size();
+        logger.debug("Inserting ontology statements:" + countInit);
+        CheckValidNamespace(namespace);
+        RepositoryConnection sourceConnection = ReadOnlyOntologyConnection(namespace, true);
+        // TODO: Avoid this useless copy.
+        RepositoryResult<Statement> result = sourceConnection.getStatements(null, null, null, true);
+        repositoryConnection.add(result);
+        long countEnd = repositoryConnection.size();
+        logger.debug("Inserted " + (countEnd - countInit) + " statements from " + countInit);
+
+        return repositoryConnection;
+    }
+
+    // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessId"
+    static NamespaceTokenPair SplitToken(String token) {
+        if(! token.contains("#")) {
+            throw new RuntimeException("Invalid token:" + token);
+        }
+        String[] splitToken = token.split("#");
+
+        String prefixUrl = splitToken[0];
+        String wmiNamespace;
+        if(prefixUrl.startsWith(namespaces_url_prefix)) {
+            String wmiNamespaceSlashes = prefixUrl.substring(namespaces_url_prefix.length());
+            // In the URL, the backslash separator of namespaces is replaced with a slash.
+            wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
+            CheckValidNamespace(wmiNamespace);
+        } else {
+            wmiNamespace = null;
+        }
+        logger.debug("token=" + token + " namespace=" + wmiNamespace);
+
+        return new NamespaceTokenPair(wmiNamespace, splitToken[1]);
+    }
+
+    /** This contains a WMI namespace, and a class or property. */
+    public static class NamespaceTokenPair {
+        public String nameSpace;
+        public String Token;
+        NamespaceTokenPair(String namespace, String token) {
+            nameSpace = namespace;
+            Token = token;
         }
     }
+
 }

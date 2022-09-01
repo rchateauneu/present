@@ -29,7 +29,7 @@ public class GenericProviderTest extends TestCase {
         Assert.assertEquals(nameGetterActual, nameGetterExpected);
     }
 
-    static void CompareRows(GenericProvider.Row row1, GenericProvider.Row row2) {
+    static void CompareRows(Solution.Row row1, Solution.Row row2) {
         System.out.println("row1=" + row1.KeySet());
         System.out.println("row2=" + row2.KeySet());
         Assert.assertEquals(row1.ElementsSize(), row2.ElementsSize());
@@ -101,8 +101,8 @@ public class GenericProviderTest extends TestCase {
 
         CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name", "paquetage.BaseGetter_CIM_DataFile_Name");
 
-        ArrayList<GenericProvider.Row> rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
-        ArrayList<GenericProvider.Row> rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
+        Solution rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
+        Solution rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
 
         Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
         for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
@@ -126,8 +126,8 @@ public class GenericProviderTest extends TestCase {
 
         CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name", "paquetage.BaseGetter_CIM_DataFile_Name");
 
-        ArrayList<GenericProvider.Row> rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
-        ArrayList<GenericProvider.Row> rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
+        Solution rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
+        Solution rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
 
         Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
         for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
@@ -263,8 +263,8 @@ public class GenericProviderTest extends TestCase {
         CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name", "paquetage.BaseGetter_CIM_DataFile_Name");
 
         String objectPath = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", filePath));
-        GenericProvider.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
-        GenericProvider.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
+        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
+        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 
@@ -291,8 +291,8 @@ public class GenericProviderTest extends TestCase {
         CheckProvider(queryData, null, "paquetage.BaseGetter_Win32_Process_Handle");
 
         String objectPath = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", currentPidStr));
-        GenericProvider.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
-        GenericProvider.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
+        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
+        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 }

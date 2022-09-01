@@ -28,6 +28,28 @@ public class WmiProvider {
 
     static {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
+        /*
+        HRESULT=0x80041003 with connectServer
+        https://social.msdn.microsoft.com/Forums/vstudio/en-US/4d54adf4-56d0-4261-ac74-5c5fe736d505/wmi-call-from-c-results-in-hresult0x80041003?forum=vcgeneral
+         on Windows XP replace RPC_C_IMP_LEVEL_IMPERSONATE with RPC_C_IMP_LEVEL_DELEGATE in the calls to CoInitializeSecurity() and CoSetProxyBlanket().
+         */
+
+        // For documentation only. Not needed, see connectServer().
+        if(false) {
+            Ole32.INSTANCE.CoInitializeSecurity(
+                    null,
+                    -1,
+                    null,
+                    null,
+                    Ole32.RPC_C_AUTHN_LEVEL_DEFAULT,
+                    Ole32.RPC_C_IMP_LEVEL_IMPERSONATE,
+                    null,
+                    Ole32.EOAC_NONE,
+                    null
+            );
+        } else {
+            logger.info("Not calling CoInitializeSecurity");
+        }
 
         // These namespaces are always needed. Other namespaces are loaded on demand.
         wbemServiceRoot = GetWbemService("ROOT");
@@ -35,39 +57,43 @@ public class WmiProvider {
     }
 
     public WmiProvider() {
-        /*
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-
-        // These namespaces are always needed. Other namespaces are loaded on demand.
-        wbemServiceRoot = GetWbemService("");
-        wbemServiceRootCimv2 = GetWbemService("CIMV2");
-        */
-
-        //wbemServiceRoot = WbemcliUtil.connectServer("ROOT");
-        //wbemServiceRootCimv2 = WbemcliUtil.connectServer("ROOT\\CIMV2");
-
-        //wbemServices.put("", wbemServiceRoot);
-        //wbemServices.put("CIMV2", wbemServiceRootCimv2);
-
-        //
-        // More well-known namespaces. This is temporary, for tests.
-        //wbemServices.put("Microsoft", WbemcliUtil.connectServer("ROOT\\Microsoft"));
-        //wbemServices.put("Interop", WbemcliUtil.connectServer("ROOT\\Interop"));
-        //wbemServices.put("Cli", WbemcliUtil.connectServer("ROOT\\Cli"));
-        //wbemServices.put("aspnet", WbemcliUtil.connectServer("ROOT\\aspnet"));
-        //wbemServices.put("CIMV2\\Security", WbemcliUtil.connectServer("ROOT\\CIMV2\\Security"));
     }
 
     static Wbemcli.IWbemServices GetWbemService(String namespace) {
         WmiOntology.CheckValidNamespace(namespace);
         Wbemcli.IWbemServices wbemService = wbemServices.get(namespace);
         if(wbemService == null) {
-            // String prefixedNamespace = namespace.equals("") ? "ROOT" : "ROOT\\" + namespace;
             try {
                 // This may throw : "com.sun.jna.platform.win32.COM.COMException: (HRESULT: 80041003)"
                 // 80041003: The current user does not have permission to perform the action.
                 // In this case, set the service to null.
+
+                /* To sort out access rights, consider:
+                    From the Start Menu, choose "Run"
+                    Enter wmimgmt.msc
+                    Right-click "WMI-Control (Local)" and choose Properties
+                    Go to "Security" tab.
+                            Navigate to: root/microsoft/windows/storage/
+                            Check permissions at this level by clicking to highlight "Storage",
+                            and then click "Security" button in the lower right. Dig deeper if needed.
+                 */
                 wbemService = WbemcliUtil.connectServer(namespace);
+
+                // For documentation only. Not needed, see connectServer().
+                if(false) {
+                    Ole32.INSTANCE.CoSetProxyBlanket(
+                            wbemService, /* IWbemServices *pSvc */
+                            Ole32.RPC_C_AUTHN_WINNT,
+                            Ole32.RPC_C_AUTHZ_NONE,
+                            null,
+                            Ole32.RPC_C_AUTHN_LEVEL_CALL,
+                            Ole32.RPC_C_IMP_LEVEL_IMPERSONATE,
+                            null,
+                            Ole32.EOAC_NONE
+                    );
+                } else {
+                    logger.info("Not calling CoSetProxyBlanket for namespace=" + namespace);
+                }
             }
             catch(Exception exception) {
                 logger.error("Caught:" + exception + " namespace=" + namespace);
@@ -110,7 +136,7 @@ public class WmiProvider {
 
         public WmiClass(String className) {
             Name = className;
-            Properties = new HashMap<String, WmiProperty>();
+            Properties = new HashMap<>();
             Description = "No description available yet for class " + className;
         }
     }
@@ -133,7 +159,9 @@ public class WmiProvider {
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
         "WQL",
                 "SELECT Name FROM __NAMESPACE",
-                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+                Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
 
         Set<String> namespacesFlat = new HashSet<>();
         try {
@@ -143,7 +171,7 @@ public class WmiProvider {
             IntByReference plFlavor = new IntByReference();
 
             while (true) {
-                result = enumerator.Next(0, 1);
+                result = enumerator.Next(Wbemcli.WBEM_INFINITE, 1);
                 if (result.length == 0) {
                     break;
                 }
@@ -206,7 +234,7 @@ public class WmiProvider {
             Wbemcli.IWbemServices wbemService = GetWbemService(namespace);
             logger.debug("Getting classes for namespace=" + namespace);
             cacheClasses = ClassesCached(wbemService);
-            logger.debug("End. Number of classes=" + cacheClasses.size());
+            logger.debug("End getting classes in " + namespace + " Number of classes=" + cacheClasses.size());
             cacheClassesMap.put(namespace, cacheClasses);
         }
         return cacheClasses;
@@ -222,6 +250,8 @@ public class WmiProvider {
                 "WQL",
                 "SELECT * FROM meta_class",
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY, null);
         logger.debug("After query");
 
         try {
@@ -231,7 +261,7 @@ public class WmiProvider {
             IntByReference plFlavor = new IntByReference();
 
             while (true) {
-                result = enumerator.Next(0, 1);
+                result = enumerator.Next(Wbemcli.WBEM_INFINITE, 1);
                 if (result.length == 0) {
                     break;
                 }
@@ -273,6 +303,8 @@ public class WmiProvider {
                 String classDescription = classQualifiersSet.Get("Description");
                 if(classDescription != null) {
                     newClass.Description = classDescription;
+                } else {
+                    logger.error("Error getting Description qualifiers of " + className);
                 }
                 if(false) {
                     String isAssociation = classQualifiersSet.Get("Association");
@@ -306,7 +338,7 @@ public class WmiProvider {
                                 String[] propertyQualifierNames = propertyQualifiersSet.GetNames();
                                 System.out.println("propertyQualifierNames=" + String.join("+", propertyQualifierNames));
                                 for (String propertyQualifierName : propertyQualifierNames) {
-                                    if (propertyQualifierName == "CIMTYPE") continue;
+                                    if (propertyQualifierName.equals("CIMTYPE")) continue;
                                     String propertyQualifierValue = propertyQualifiersSet.Get(propertyQualifierName);
                                     System.out.println("propertyQualifierValue=" + propertyQualifierValue);
                                 }
@@ -407,7 +439,7 @@ public class WmiProvider {
             entry(Wbemcli.CIM_FLAG_ARRAY, "CIM_FLAG_ARRAY")
     );
 
-    static GenericProvider.Row.ValueTypePair VariantToValueTypePair(
+    static Solution.Row.ValueTypePair VariantToValueTypePair(
             String lambda_column,
             String lambda_variable,
             IntByReference pType,
@@ -423,22 +455,16 @@ public class WmiProvider {
         // The value is sometimes different. Take the supposedly good one.
         int valueTypeUnknown = wtypesValueType.intValue();
         int valueType = pType.getValue();
-        /*
-        if(valueType != valueTypeUnknown) {
-            String valueTypeUnknownStr = mapVariantTypes.get(valueTypeUnknown);
-            String valueTypeStr = mapCimTypes.get(valueType);
-            logger.warn("Different types:" + valueType + "/" + valueTypeStr + " [" + pType + "]" + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
-        }
-        */
 
         Object valObject = pVal.getValue();
         if(valObject == null) {
+            String valueTypeStr = mapCimTypes.get(valueType);
             logger.debug("Value is null. lambda_column=" + lambda_column
-                    + " lambda_variable=" + lambda_variable + " type=" + valueType);
+                    + " lambda_variable=" + lambda_variable + " type=" + valueType + "/" + valueTypeStr);
         }
 
         String rowValue;
-        GenericProvider.ValueType rowType;
+        Solution.ValueType rowType;
         if(lambda_column.equals("__PATH")) {
             // Not consistent for Win32_Product.
             if(valueType != Wbemcli.CIM_STRING) {
@@ -448,14 +474,47 @@ public class WmiProvider {
                                 + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
             }
             rowValue = pVal.stringValue();
-            rowType = GenericProvider.ValueType.NODE_TYPE;
+            rowType = Solution.ValueType.NODE_TYPE;
         }
         else {
             switch(valueType) {
                 case Wbemcli.CIM_REFERENCE:
+                    rowValue = pVal.stringValue();
+                    rowType = Solution.ValueType.NODE_TYPE;
+                    if(rowValue != null) {
+                        /*
+                            Here, "?my3_dir" is a reference but it does not have the syntax.
+
+                            select ?my_dir_name
+                            where {
+                                ?my3_dir cimv2:Win32_Directory.Name ?my_dir_name .
+                                ?my2_assoc cimv2:Win32_MountPoint.Volume ?my1_volume .
+                                ?my2_assoc cimv2:Directory ?my3_dir .
+                                ?my1_volume cimv2:Win32_Volume.DriveLetter ?my_drive .
+                                ?my1_volume cimv2:DeviceID ?device_id .
+                                ?my0_dir cimv2:Name "C:\\Program Files (x86)" .
+                                ?my0_dir cimv2:Win32_Directory.Drive ?my_drive .
+                            }
+
+                            valueType='Win32_Directory.Name="C:\\"'
+                         */
+                        if(!PresentUtils.hasWmiReferenceSyntax(rowValue)) {
+                            logger.warn("lambda_column=" + lambda_column
+                                    + " lambda_variable=" + lambda_variable + "  cannot be a reference:" + rowValue);
+                        }
+                    }
+                    // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
+                    break;
                 case Wbemcli.CIM_STRING:
                     rowValue = pVal.stringValue();
-                    rowType = GenericProvider.ValueType.NODE_TYPE;
+                    // SAUF S'IL Y A UNE ERREUR DE WMI QUI PASSERAIT UN NODE COMME UNE STRING ??
+                    if(rowValue != null) {
+                        if (rowValue.startsWith("\\\\") && !rowValue.startsWith("\\\\?\\")) {
+                            logger.warn("lambda_column=" + lambda_column
+                                    + " lambda_variable=" + lambda_variable + "  cannot be a string:" + rowValue);
+                        }
+                    }
+                    rowType = Solution.ValueType.STRING_TYPE;
                     // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
                     break;
                 case Wbemcli.CIM_SINT8:
@@ -473,9 +532,9 @@ public class WmiProvider {
                         // This is temporarily indicated with a special string for later debugging.
                         // TODO: Some values are null. Why ?
                         longValue = lambda_column + "_IS_NULL";
-                        rowType = GenericProvider.ValueType.STRING_TYPE;
+                        rowType = Solution.ValueType.STRING_TYPE;
                     } else {
-                        rowType = GenericProvider.ValueType.INT_TYPE;
+                        rowType = Solution.ValueType.INT_TYPE;
                         if(valueType == valueTypeUnknown) {
                             // This should work because no contradiction.
                             longValue = Long.toString(pVal.longValue());
@@ -515,7 +574,7 @@ public class WmiProvider {
                 case Wbemcli.CIM_REAL32:
                 case Wbemcli.CIM_REAL64:
                     rowValue = Double.toString(pVal.doubleValue());
-                    rowType = GenericProvider.ValueType.FLOAT_TYPE;
+                    rowType = Solution.ValueType.FLOAT_TYPE;
                     break;
                 case Wbemcli.CIM_DATETIME:
                     if(false) {
@@ -529,7 +588,7 @@ public class WmiProvider {
                     String dateValue = pVal.stringValue();
                     logger.debug("dateValue=" + dateValue);
                     rowValue = dateValue;
-                    rowType = GenericProvider.ValueType.DATE_TYPE;
+                    rowType = Solution.ValueType.DATE_TYPE;
                     break;
                 default:
                     String valStringValue = pVal.stringValue();
@@ -538,11 +597,11 @@ public class WmiProvider {
                                 + " lambda_variable=" + lambda_variable + " type=" + valueType);
                     }
                     rowValue = valStringValue;
-                    rowType = GenericProvider.ValueType.STRING_TYPE;
+                    rowType = Solution.ValueType.STRING_TYPE;
                     break;
             } // switch
         }
-        GenericProvider.Row.ValueTypePair rowValueType = new GenericProvider.Row.ValueTypePair(rowValue, rowType);
+        Solution.Row.ValueTypePair rowValueType = new Solution.Row.ValueTypePair(rowValue, rowType);
         return rowValueType;
     }
 

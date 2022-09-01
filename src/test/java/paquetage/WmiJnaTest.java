@@ -19,6 +19,8 @@ import org.jinterop.dcom.impls.JIObjectFactory;
 import org.jinterop.dcom.impls.automation.IJIDispatch;
 import org.junit.Test;
 
+/** This is just to test some tricky parameters passing techniques with JNA. */
+
 enum Win32_DiskDrive_Values {
     Caption,
     Capabilities

@@ -74,14 +74,16 @@ public class WmiProviderTest {
     @Test
     public void TestCIM_Process() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"));
 
         boolean isIn = false;
-        for (GenericProvider.Row aRow : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row aRow = rowIterator.next();
             if (aRow.GetStringValue("var_handle").equals(currentPidStr)) {
                 isIn = true;
                 break;
@@ -93,7 +95,7 @@ public class WmiProviderTest {
     @Test
     public void TestCIM_ProcessCurrent() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
@@ -118,13 +120,15 @@ public class WmiProviderTest {
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
         Assert.assertTrue(listResults.size() > 10);
-        for (GenericProvider.Row row : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row row = rowIterator.next();
             Assert.assertEquals(2, row.ElementsSize());
             // For example: \\LAPTOP-R89KG6V1\ROOT\CIMV2:CIM_ProcessExecutable.Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\fwpuclnt.dll\"",Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"3156\""
             Assert.assertTrue(row.TryValueType("any_variable") != null);
@@ -148,7 +152,7 @@ public class WmiProviderTest {
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
@@ -156,7 +160,9 @@ public class WmiProviderTest {
                 Arrays.asList(new QueryData.WhereEquality("Dependent", dependentString)));
         // Many libraries.
         Assert.assertTrue(listResults.size() > 5);
-        for (GenericProvider.Row row : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row row = rowIterator.next();
             Assert.assertEquals(2, row.ElementsSize());
             Assert.assertTrue(row.TryValueType("any_variable") != null);
             Assert.assertTrue(row.TryValueType("var_antecedent") != null);
@@ -175,7 +181,7 @@ public class WmiProviderTest {
         String antecedentString = PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"");
 
         GenericProvider genericProvider = new GenericProvider();
-        ArrayList<GenericProvider.Row> listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.SelectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
@@ -187,7 +193,9 @@ public class WmiProviderTest {
         System.out.println("listResults.size()=" + listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
-        for (GenericProvider.Row row : listResults) {
+        Iterator<Solution.Row> rowIterator = listResults.iterator();
+        while(rowIterator.hasNext()) {
+            Solution.Row row = rowIterator.next();
             Assert.assertEquals(row.ElementsSize(), 2);
             Assert.assertTrue(row.ContainsKey("any_variable"));
             Assert.assertTrue(row.ContainsKey("var_dependent"));
@@ -781,7 +789,7 @@ public class WmiProviderTest {
             "MSFT_NetAdapterQosSettingData",
             "CIM_IKEProposal",
             "MSFT_NetTransportFilterTCPSetting",
-            "MSFT_NetTCPConnection",
+            "MSFT_NetTCPConnection", // Gives all TCP connections with addresses and port numbers.
             "MSFT_NetAdapter_RssProcessor",
             "MSFT_NetAdapterStatisticsSettingData",
             "MSFT_NetSAActionInSARule",
@@ -923,12 +931,12 @@ public class WmiProviderTest {
             "CIM_PortImplementsEndpoint"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\AppBackgroundTask",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\AppBackgroundTask",List.of(
             "PS_BackgroundTask",
             "MSFT_BackgroundTask"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Storage",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Storage",List.of(
             "MSFT_ResiliencySetting",
             "MSFT_StorageHealthStatusChangeEvent",
             "MSFT_Partition",
@@ -1070,7 +1078,7 @@ public class WmiProviderTest {
             "MSFT_StorageFaultDomainToStorageFaultDomain"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Interop",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Interop",List.of(
             "Win32_PowerSupplyConformsToProfile",
             "CIM_ReferencedProfile",
             "CIM_RegisteredProfile",
@@ -1080,7 +1088,7 @@ public class WmiProviderTest {
             "CIM_RegisteredSpecification"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\msdtc",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\msdtc",List.of(
             "MSFT_DtcTransactionsTraceSettingTask",
             "DtcInstance",
             "MSFT_DtcClusterDefaultTask",
@@ -1103,7 +1111,7 @@ public class WmiProviderTest {
             "MSFT_DtcDefaultTask"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Dns",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Dns",List.of(
             "PS_DnsClientNrptPolicy",
             "DnsClientNrptGlobal",
             "PS_DnsClientNrptGlobal",
@@ -1112,18 +1120,18 @@ public class WmiProviderTest {
             "DnsClientPolicyConfiguration"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\SecurityCenter2",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\SecurityCenter2",List.of(
             "AntiSpywareProduct",
             "FirewallProduct",
             "AntiVirusProduct"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\RSOP",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\RSOP",List.of(
             "RsopPlanningModeProvider",
             "RsopLoggingModeProvider"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\SqlServer\\ComputerManagement15",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\SqlServer\\ComputerManagement15",List.of(
             "ServerSettingsExtendedProtection",
             "RegServices",
             "ClientNetworkProtocol",
@@ -1146,7 +1154,7 @@ public class WmiProviderTest {
             "ClientSettings"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\aspnet",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\aspnet",List.of(
             "HeartbeatEvent",
             "BaseErrorEvent",
             "ApplicationLifetimeEvent",
@@ -1164,7 +1172,7 @@ public class WmiProviderTest {
             "ViewStateFailureAuditEvent"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\CIMV2\\power",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\CIMV2\\power",List.of(
             "Win32_PowerSettingDefinition",
             "CIM_RegisteredProfile",
             "Win32_PowerSettingDefineCapabilities",
@@ -1192,7 +1200,7 @@ public class WmiProviderTest {
             "Win32_PowerSettingCapabilities"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Hardware",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Hardware",List.of(
             "Account",
             "CIM_LogRecord",
             "CIM_RegisteredProfile",
@@ -1220,7 +1228,7 @@ public class WmiProviderTest {
             "Sensor"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\CIMV2\\mdm",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\CIMV2\\mdm",List.of(
             "MDM_WNSConfiguration",
             "MDM_ApplicationMinVersion",
             "MDM_SideLoader",
@@ -1251,7 +1259,7 @@ public class WmiProviderTest {
             "MDM_ApplicationSetting"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Wdac",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Wdac",List.of(
             "MSFT_OdbcKeyValuePair",
             "MSFT_OdbcPerfCounter",
             "MSFT_OdbcPerfCounterTask",
@@ -1263,7 +1271,7 @@ public class WmiProviderTest {
             "MSFT_OdbcDriver"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\RemoteAccess\\Client",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\RemoteAccess\\Client",List.of(
             "PS_VpnServerAddress",
             "PS_VpnConnectionTriggerDnsConfiguration",
             "VpnConnectionProxy",
@@ -1290,11 +1298,11 @@ public class WmiProviderTest {
             "PS_VpnConnectionTrigger"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\DeviceGuard",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\DeviceGuard",List.of(
             "Win32_DeviceGuard"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\TaskScheduler",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\TaskScheduler",List.of(
             "MSFT_TaskRegistrationTrigger",
             "MSFT_TaskNamedValue",
             "MSFT_TaskWeeklyTrigger",
@@ -1327,13 +1335,13 @@ public class WmiProviderTest {
             "MSFT_TaskMonthlyDOWTrigger"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Powershellv3",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Powershellv3",List.of(
             "PS_ModuleFile",
             "PS_ModuleToModuleFile",
             "PS_Module"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\HardwareManagement",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\HardwareManagement",List.of(
             "CIM_ConcreteJob",
             "MSFT_PCSVLogRecord",
             "CIM_PhysicalComputerSystemView",
@@ -1343,13 +1351,13 @@ public class WmiProviderTest {
             "MSFT_PCSVDevice"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\EventTracingManagement",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\EventTracingManagement",List.of(
             "MSFT_AutologgerConfig",
             "MSFT_EtwTraceSession",
             "MSFT_EtwTraceProvider"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\SMB",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\SMB",List.of(
             "MSFT_SmbShareAccessControlEntry",
             "MSFT_SmbServerConfiguration",
             "MSFT_SmbClientNetworkInterface",
@@ -1369,11 +1377,11 @@ public class WmiProviderTest {
             "MSFT_SmbConnection"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\SmbWitness",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\SmbWitness",List.of(
             "MSFT_SmbWitnessClient"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\SecurityClient",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\SecurityClient",List.of(
             "ProtectionTechnologyStatus",
             "AntimalwareHealthStatus",
             "AntimalwareDetectionStatus",
@@ -1383,7 +1391,7 @@ public class WmiProviderTest {
             "SerializableToXml"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\HomeNet",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\HomeNet",List.of(
             "HNet_ConnectionAutoconfig",
             "HNet_Connection",
             "HNet_ApplicationProtocol",
@@ -1399,7 +1407,7 @@ public class WmiProviderTest {
             "HNet_PortMappingProtocol"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\DeliveryOptimization",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\DeliveryOptimization",List.of(
             "MSFT_DOCurrentStatus",
             "MSFT_DOUploadUsage",
             "MSFT_DeliveryOptimizationConfig",
@@ -1411,7 +1419,7 @@ public class WmiProviderTest {
             "MSFT_DOBaseStatus"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\WMI",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\WMI",List.of(
             "columnstore_migration_to_block_blob_started",
             "TP_V2_CBEnqueue",
             "TcpIp",
@@ -6667,7 +6675,7 @@ public class WmiProviderTest {
             "xtp_storage_table_create"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\protectionManagement",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\protectionManagement",List.of(
             "MSFT_MpWDOScan",
             "MSFT_MpScan",
             "MSFT_MpEvent",
@@ -6682,7 +6690,7 @@ public class WmiProviderTest {
             "BaseStatus"
             ));
 
-            exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Storage\\Providers_v2",List.of(
+        exclusiveClassesPerNamespace.put("ROOT\\Microsoft\\Windows\\Storage\\Providers_v2",List.of(
             "MSFT_ResiliencySetting",
             "MSFT_Partition",
             "MSFT_ReplicationCapabilities",

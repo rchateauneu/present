@@ -9,21 +9,16 @@ import java.util.*;
  */
 public class SparqlTranslation {
     final static private Logger logger = Logger.getLogger(SparqlTranslation.class);
-    DependenciesBuilder dependencies;
-    ArrayList<GenericProvider.Row> current_rows;
-    GenericProvider genericSelecter = new GenericProvider();
-    Set<String> bindings;
+    private DependenciesBuilder dependencies;
+    private Solution solution;
+    private GenericProvider genericSelecter = new GenericProvider();
+    private Set<String> bindings;
 
     public SparqlTranslation(SparqlBGPExtractor input_extractor) throws Exception {
         // TODO: Optimize QueryData list here. Providers are necessary.
         List<ObjectPattern> patterns = input_extractor.patternsAsArray();
         bindings = input_extractor.bindings;
 
-        if( 1 == 2) {
-            // TODO: Il faut le recreer a chaque vois meme si variableContext est le meme.
-            PatternsOptimizer optimizer = new PatternsOptimizer();
-            optimizer.ReorderPatterns(patterns);
-        }
         dependencies = new DependenciesBuilder(patterns);
     }
 
@@ -34,51 +29,79 @@ public class SparqlTranslation {
      */
     void CreateCurrentRow()
     {
-        GenericProvider.Row new_row = new GenericProvider.Row();
+        Solution.Row new_row = new Solution.Row();
         // It does not return only the variables in bindings, but all of them because they are
-        // needed for to generate the triples for further Sparql execution
-        for(Map.Entry<String, GenericProvider.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
+        // needed to generate the statements for further Sparql execution
+        for(Map.Entry<String, Solution.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
         {
             // PresentUtils.WbemPathToIri( ? The type should not be lost, especially for IRIs
             new_row.PutValueType(pairKeyValue.getKey(), pairKeyValue.getValue());
         }
-        current_rows.add(new_row);
+        solution.add(new_row);
     }
 
-    /** It uses the generated rows and the BGPs to created RDF triples which are inserted in the targer repository.
-     * It would be faster to insert them on the fly.
-     * It is possible to create a triple each time the context is filled with a new variable value:
-     * At this moment, it is possible to find the patterns which need this variable.
-     * But first, the patterns must be keyed in a special way which gives the list of triples in the BGPs
-     * when one of their input variables are set. Special conditions:
-     * - Some triples in the BGPs are constant and are initialised once only.
-     * - Some triples might depend on two or three variables (this is not the case now, only the value can change)
-     * - Each variable triple must point to its variables if it depends on several variables.
-     * - Possibly have one container for BGP triples which depend on one variable only: This is implicitly
-     *   what is done here. Have a variable subject or predicate requires a different processing.
-     *
-     * However, this function is slower but simpler because there is an intermediate stage where all combinations
-     * of variables are exposed.
-     */
-    void GenerateTriples()
-    {}
-
-    void RowToContext(GenericProvider.Row singleRow) throws Exception {
+    void RowToContext(Solution.Row singleRow) throws Exception {
         for(String variableName : singleRow.KeySet()) {
             if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new Exception("Variable " + variableName + " from selection not in context");
             }
-            // Or generates new triples for all BGP triples depending on this variable.
+            // Or generates new statements for all BGP triples depending on this variable.
             dependencies.variablesContext.put(variableName, singleRow.GetValueType(variableName));
         }
     }
 
+    /***
+     *
+     * TODO: Optimisation: If a "QueryData" does not depend from the lowest-level one,
+     * TODO: then it does not need to be re-executed.
+     * TODO: In other words, if "SwapWheres" does not change anything, then the previous rows can be reused ???
+     * Ce n'est pas vraiment le concept, mais en fait on veut optimiser ceci:
+     * where {
+     *     ?_2_tcp_connection standard_cimv2:MSFT_NetTCPConnection.OwningProcess ?owning_process .
+     *     ?_1_process cimv2:Win32_Process.ProcessId ?owning_process .
+     *     ?_1_process cimv2:Win32_Process.Name ?process_name .
+     * }
+     * On pourrait dans certains cas supprimer un "where" dans une requete interieure, s'il porte sur une colonne
+     * ou la plupart des rows seront retournees. Dans cas, on n'executerait la requete interieure qu'une seule fois.
+     *
+     * Pour commencer, voir s'il y a des cas ou on execute plusieurs fois une requete interieure pour rien. Exemple:
+     * where {
+     *     ?a propa1 ?vala
+     *     ?b propb1 ?valb
+     *     ?c propc1 ?vala
+     *     ?c propc2 ?valb
+     * }
+     * Execution pour un ordre donne:
+     * select propa1 from a
+     *     select propb1 from b
+     *         select propc1, propc2 from c where propc1=propa1 and propc2=propb1
+     * ... devient alors:
+     * select propa1 from a
+     * select propb1 from b
+     *     select propc1, propc2 from c where propc1=propa1 and propc2=propb1
+     *
+     * Execution pour un autre ordre:
+     * select propc1, propc2
+     *     select propa1 from a where propc1=propa1
+     *         select propb1 from b where propc2=propb1
+     *
+     * ... devient alors:
+     * select propc1, propc2
+     *     select propa1 from a where propc1=propa1
+     *     select propb1 from b where propc2=propb1
+     *
+     * Il faut integrer cette logique dans le calcul du meilleur ordre possible.
+     * TODO: S'inspirer du execution plan de Sparql.
+     *
+     * @param index
+     * @throws Exception
+     */
     void ExecuteOneLevel(int index) throws Exception
     {
         if(index == dependencies.prepared_queries.size())
         {
             // The most nested WQL query is reached. Store data then return.
-            // It returns rows of key-value paris made with the variables and thei values.
+            // It returns rows of key-value paris made with the variables and their values.
             // Later, these are used to generate triples, which are inserted in a repository,
             // and the Sparql query is run again - and now, the needed triples are here, ready to be selected.
             // In other words, they are virtually here.
@@ -101,7 +124,7 @@ public class SparqlTranslation {
             }
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
-            GenericProvider.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
+            Solution.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
             queryData.FinishSampling(objectPath);
 
             if(singleRow == null)
@@ -122,7 +145,7 @@ public class SparqlTranslation {
                 // - or the context value of this variable, theoretically of any type.
                 if(kv.isVariable) {
                     // Only the value representation is needed.
-                    GenericProvider.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.value);
+                    Solution.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.value);
                     if(pairValue == null) {
                         throw new RuntimeException("Null value for:" + kv.value);
                     }
@@ -139,15 +162,16 @@ public class SparqlTranslation {
             }
 
             List<QueryData.WhereEquality> oldWheres = queryData.SwapWheres(substitutedWheres);
-            // ArrayList<GenericSelecter.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData.className, queryData.mainVariable, queryData.queryColumns, substitutedWheres);
-            ArrayList<GenericProvider.Row> rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
+            Solution rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
             // restore to patterns wheres clauses (that is, with variable values).
             queryData.SwapWheres(oldWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
             queryData.FinishSampling();
 
             int numColumns = queryData.queryColumns.size();
-            for(GenericProvider.Row row: rows) {
+            Iterator<Solution.Row> rowIterator = rows.iterator();
+            while(rowIterator.hasNext()) {
+                Solution.Row row = rowIterator.next();
                 // An extra column contains the path.
                 if(row.ElementsSize() != numColumns + 1) {
                     /*
@@ -164,11 +188,11 @@ public class SparqlTranslation {
         }
     }
 
-    /** TODO: This should not return the same "Row" as ExecuteQuery because here, the Row are created by this
-     * TODO: local code, not by the Sparql engine. This is confusing. */
-    public ArrayList<GenericProvider.Row> ExecuteToRows() throws Exception
+    /** TODO: This should not return the same "Row" as ExecuteQuery because here, the Row are created by this ...
+     * TODO: ... local code, not by the Sparql engine. This is confusing. */
+    public Solution ExecuteToRows() throws Exception
     {
-        current_rows = new ArrayList<GenericProvider.Row>();
+        solution = new Solution();
         for(QueryData queryData : dependencies.prepared_queries) {
             queryData.ResetStatistics();
         }
@@ -182,15 +206,15 @@ public class SparqlTranslation {
             logger.debug("Query " + indexQueryData);
             queryData.DisplayStatistics();
         }
-        logger.debug("Rows generated:" + Long.toString(current_rows.size()));
-        if(current_rows.size() > 0)
-            logger.debug("Header:" + current_rows.get(0).KeySet());
+        logger.debug("Rows generated:" + solution.size());
+        logger.debug("Header:" + solution.Header);
         logger.debug("Context keys:" + dependencies.variablesContext.keySet());
 
-    return current_rows;
+    return solution;
     }
 
-    void DryRun() throws Exception {
-        // For performance evaluation and optimisation.
+    public Solution ExecuteToRowsOptimized() throws Exception {
+        return null;
     }
+
 }
