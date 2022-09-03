@@ -81,10 +81,8 @@ public class WmiProviderTest {
                 Map.of("Handle", "var_handle"));
 
         boolean isIn = false;
-        Iterator<Solution.Row> rowIterator = listResults.iterator();
-        while(rowIterator.hasNext()) {
-            Solution.Row aRow = rowIterator.next();
-            if (aRow.GetStringValue("var_handle").equals(currentPidStr)) {
+        for(Solution.Row row : listResults) {
+            if (row.GetStringValue("var_handle").equals(currentPidStr)) {
                 isIn = true;
                 break;
             }
@@ -126,9 +124,7 @@ public class WmiProviderTest {
                 "any_variable",
                 Map.of("Dependent", "var_dependent"));
         Assert.assertTrue(listResults.size() > 10);
-        Iterator<Solution.Row> rowIterator = listResults.iterator();
-        while(rowIterator.hasNext()) {
-            Solution.Row row = rowIterator.next();
+        for(Solution.Row row : listResults) {
             Assert.assertEquals(2, row.ElementsSize());
             // For example: \\LAPTOP-R89KG6V1\ROOT\CIMV2:CIM_ProcessExecutable.Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\fwpuclnt.dll\"",Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"3156\""
             Assert.assertTrue(row.TryValueType("any_variable") != null);
@@ -160,9 +156,7 @@ public class WmiProviderTest {
                 Arrays.asList(new QueryData.WhereEquality("Dependent", dependentString)));
         // Many libraries.
         Assert.assertTrue(listResults.size() > 5);
-        Iterator<Solution.Row> rowIterator = listResults.iterator();
-        while(rowIterator.hasNext()) {
-            Solution.Row row = rowIterator.next();
+        for(Solution.Row row : listResults) {
             Assert.assertEquals(2, row.ElementsSize());
             Assert.assertTrue(row.TryValueType("any_variable") != null);
             Assert.assertTrue(row.TryValueType("var_antecedent") != null);
@@ -193,9 +187,7 @@ public class WmiProviderTest {
         System.out.println("listResults.size()=" + listResults.size());
         // Many elements.
         Assert.assertTrue(listResults.size() > 5);
-        Iterator<Solution.Row> rowIterator = listResults.iterator();
-        while(rowIterator.hasNext()) {
-            Solution.Row row = rowIterator.next();
+        for(Solution.Row row : listResults) {
             Assert.assertEquals(row.ElementsSize(), 2);
             Assert.assertTrue(row.ContainsKey("any_variable"));
             Assert.assertTrue(row.ContainsKey("var_dependent"));

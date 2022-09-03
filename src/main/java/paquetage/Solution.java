@@ -19,10 +19,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class Solution {
+/*
+Consider: https://spark.apache.org/docs/1.6.1/api/java/index.html?org/apache/spark/sql/DataFrame.html
+"A distributed collection of data organized into named columns. "
+*/
+
+public class Solution implements Iterable<Solution.Row> {
     final static private Logger logger = Logger.getLogger(Solution.class);
 
     public List<String> Header; // Not used yet.
+
+     Solution GetProjection(List<String> binding) {
+        return null;
+    }
 
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
@@ -61,9 +70,10 @@ public class Solution {
                         resourceObject));
             } else {
                 // Only the object changes for each row.
-                Iterator<Row> rowIterator = iterator();
-                while(rowIterator.hasNext()) {
-                    Row row = rowIterator.next();
+                for(Row row : Rows) {
+                //Iterator<Row> rowIterator = iterator();
+                //while(rowIterator.hasNext()) {
+                //    Row row = rowIterator.next();
                     Row.ValueTypePair objectWmiValueType = row.TryValueType(objectName);
                     if(objectWmiValueType == null) {
                         // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
@@ -90,9 +100,10 @@ public class Solution {
                         ? Values.iri(objectString)
                         : objectValue; // Keep the original type of the constant.
 
-                Iterator<Row> rowIterator = iterator();
-                while (rowIterator.hasNext()) {
-                    Row row = rowIterator.next();
+                for(Row row : Rows) {
+                //Iterator<Row> rowIterator = iterator();
+                //while (rowIterator.hasNext()) {
+                //    Row row = rowIterator.next();
                     Resource resourceSubject = row.AsIRI(subjectName);
 
                     generatedTriples.add(factory.createStatement(
@@ -102,9 +113,10 @@ public class Solution {
                 }
             } else {
                 // The subject and the object change for each row.
-                Iterator<Row> rowIterator = iterator();
-                while (rowIterator.hasNext()) {
-                    Row row = rowIterator.next();
+                for(Row row: Rows) {
+                //Iterator<Row> rowIterator = iterator();
+                //while (rowIterator.hasNext()) {
+                //    Row row = rowIterator.next();
 
                     Resource resourceSubject = row.AsIRI(subjectName);
                     Row.ValueTypePair objectWmiValue = row.GetValueType(objectName);
@@ -416,7 +428,7 @@ public class Solution {
         Rows = new ArrayList<>();
     }
 
-    Iterator<Row> iterator() {
+    public Iterator<Row> iterator() {
         return Rows.iterator();
     }
 

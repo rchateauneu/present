@@ -124,9 +124,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.ExecuteToRows();
         boolean foundCurrentPid = false;
 
-        Iterator<Solution.Row> rowIterator = listRows.iterator();
-        while(rowIterator.hasNext()) {
-            Solution.Row row = rowIterator.next();
+        for(Solution.Row row: listRows) {
             if (row.GetStringValue("my_process_handle").equals(currentPidStr)) {
                 foundCurrentPid = true;
                 break;
@@ -943,9 +941,7 @@ public class SparqlTranslationTest {
         Set<String> filesSetActual = new HashSet<>();
 
         // Check that the sizes are correct.
-        Iterator<Solution.Row> rowIterator = listRows.iterator();
-        while(rowIterator.hasNext()) {
-            Solution.Row row = rowIterator.next();
+        for(Solution.Row row : listRows) {
             String fileName = row.GetStringValue("file_name");
             filesSetActual.add(fileName);
             // This is not transformed into a XML value such as ""28400"^^<http://www.w3.org/2001/XMLSchema#long>"

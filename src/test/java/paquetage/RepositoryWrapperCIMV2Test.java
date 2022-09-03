@@ -383,10 +383,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         // One service only with this name.
         Assert.assertTrue(listRows.size() > 0);
-        Iterator<RdfSolution.Tuple> iteratorTuples = listRows.iterator();
-        while(iteratorTuples.hasNext())
-        {
-            RdfSolution.Tuple singleRow = iteratorTuples.next();
+        for(RdfSolution.Tuple singleRow : listRows) {
             System.out.println("Antecedent service:" + singleRow);
         }
         Set<String> setAntecedents = PresentUtils.StringValuesSet(listRows,"display_name");

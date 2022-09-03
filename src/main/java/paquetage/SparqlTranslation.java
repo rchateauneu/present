@@ -169,9 +169,7 @@ public class SparqlTranslation {
             queryData.FinishSampling();
 
             int numColumns = queryData.queryColumns.size();
-            Iterator<Solution.Row> rowIterator = rows.iterator();
-            while(rowIterator.hasNext()) {
-                Solution.Row row = rowIterator.next();
+            for(Solution.Row row : rows) {
                 // An extra column contains the path.
                 if(row.ElementsSize() != numColumns + 1) {
                     /*
