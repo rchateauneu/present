@@ -39,8 +39,6 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
          */
         public Tuple(BindingSet bindingSet) {
             for(Binding binding : bindingSet) {
-            //for (Iterator<Binding> it = bindingSet.iterator(); it.hasNext(); ) {
-            //    Binding binding = it.next();
                 Value bindingValue = binding.getValue();
                 // TODO: If the value is a literal, it is formatted as in XML,
                 // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>"

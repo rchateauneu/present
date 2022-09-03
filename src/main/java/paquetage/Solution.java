@@ -71,9 +71,6 @@ public class Solution implements Iterable<Solution.Row> {
             } else {
                 // Only the object changes for each row.
                 for(Row row : Rows) {
-                //Iterator<Row> rowIterator = iterator();
-                //while(rowIterator.hasNext()) {
-                //    Row row = rowIterator.next();
                     Row.ValueTypePair objectWmiValueType = row.TryValueType(objectName);
                     if(objectWmiValueType == null) {
                         // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
@@ -101,9 +98,6 @@ public class Solution implements Iterable<Solution.Row> {
                         : objectValue; // Keep the original type of the constant.
 
                 for(Row row : Rows) {
-                //Iterator<Row> rowIterator = iterator();
-                //while (rowIterator.hasNext()) {
-                //    Row row = rowIterator.next();
                     Resource resourceSubject = row.AsIRI(subjectName);
 
                     generatedTriples.add(factory.createStatement(
@@ -114,10 +108,6 @@ public class Solution implements Iterable<Solution.Row> {
             } else {
                 // The subject and the object change for each row.
                 for(Row row: Rows) {
-                //Iterator<Row> rowIterator = iterator();
-                //while (rowIterator.hasNext()) {
-                //    Row row = rowIterator.next();
-
                     Resource resourceSubject = row.AsIRI(subjectName);
                     Row.ValueTypePair objectWmiValue = row.GetValueType(objectName);
                     Value resourceObject;
