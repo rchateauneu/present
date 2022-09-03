@@ -1,8 +1,16 @@
 package paquetage;
 
+import com.github.jsonldjava.utils.Obj;
 import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.algebra.StatementPattern;
+import org.eclipse.rdf4j.query.algebra.Var;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This models an object and its properties extracted from a Sparql query.
@@ -150,4 +158,75 @@ public class ObjectPattern {
         }
     }
 
+    /** This receives a list of StatementPattern taken from a SparqQuery and creates a map of ObjectPattern,
+     * whose key is the variable name of the common subject of these statements.
+     * @param visitorPatternsRaw
+     * @return
+     */
+    public static Map<String, ObjectPattern> Partition(List<StatementPattern> visitorPatternsRaw) {
+        HashMap<String, ObjectPattern> patternsMap = new HashMap<>();
+        for (StatementPattern myPattern : visitorPatternsRaw) {
+            Var subject = myPattern.getSubjectVar();
+            String subjectName = subject.getName();
+            logger.debug("subjectName=" + subjectName);
+            if (subject.isConstant()) {
+                logger.warn("Constant subject:" + subjectName);
+                continue;
+            }
+
+            Var predicate = myPattern.getPredicateVar();
+            Var object = myPattern.getObjectVar();
+            // TODO: Try comparing the nodes instead of the strings, if this is possible. It could be faster.
+            Value predicateValue = predicate.getValue();
+            // If the predicate is not usable, continue without creating a pattern.
+            if (predicateValue == null) {
+                logger.warn("Predicate is null");
+                continue;
+            }
+            String predicateStr = predicateValue.stringValue();
+
+            if (subject.isAnonymous()) {
+                logger.warn("Anonymous subject:" + subjectName);
+                    /* Anonymous nodes due to fixed-length paths should be processed by creating an anonymous variable.
+                    but this is not implemented yet for data later loaded from WMI.
+                    This occurs with triples like:
+                    "^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent"
+                    or, on top of an ArbitraryLengthPath:
+                    "?service1 (^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent)+ ?service2"
+
+                    However, with triples whose instance are unrelated to WMI, this is OK. Like:
+                    "cimv2:Win32_Process.Handle rdfs:label ?label"
+                    */
+                if (predicateStr.startsWith(WmiOntology.namespaces_url_prefix)) {
+                    throw new RuntimeException("Anonymous WMI subjects are not allowed yet.");
+                }
+            }
+
+            ObjectPattern refPattern;
+            if (!patternsMap.containsKey(subjectName)) {
+                refPattern = new ObjectPattern(subjectName);
+                patternsMap.put(subjectName, refPattern);
+            } else {
+                refPattern = patternsMap.get(subjectName);
+            }
+            if (!predicateStr.equals(RDF.TYPE.stringValue())) {
+                if (object.isConstant()) {
+                    if (!object.isAnonymous()) {
+                        throw new RuntimeException("isConstant and not isAnonymous");
+                    }
+                    refPattern.AddPredicateObjectPair(predicateStr, false, object.getValue().stringValue());
+                } else {
+                    // If it is a variable.
+                    if (object.isAnonymous()) {
+                        throw new RuntimeException("not isConstant and isAnonymous");
+                    }
+                    refPattern.AddPredicateObjectPair(predicateStr, true, object.getName());
+                }
+            } else {
+                refPattern.ClassName = object.getValue().stringValue();
+            }
+        }
+        logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
+        return patternsMap;
+    }
 }
