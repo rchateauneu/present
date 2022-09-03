@@ -22,6 +22,14 @@ import java.util.stream.Stream;
 /*
 Consider: https://spark.apache.org/docs/1.6.1/api/java/index.html?org/apache/spark/sql/DataFrame.html
 "A distributed collection of data organized into named columns. "
+
+The header will contain the name of each column, and possibly the type.
+Columns can be moved around to construct new Solution objects when doing a Projection.
+These columns have the same number of elements.
+
+To ease the transition:
+- Adding the first row creates the header, which is checked at subsequent rows additions.
+- A row is only a transient type used for insertion.
 */
 
 public class Solution implements Iterable<Solution.Row> {
@@ -139,7 +147,6 @@ public class Solution implements Iterable<Solution.Row> {
         INT_TYPE,
         FLOAT_TYPE,
         NODE_TYPE
-        //XML_TYPE
     }
 
     /**
