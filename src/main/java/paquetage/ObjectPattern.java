@@ -4,6 +4,7 @@ import com.github.jsonldjava.utils.Obj;
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Var;
 
@@ -209,7 +210,18 @@ public class ObjectPattern {
             } else {
                 refPattern = patternsMap.get(subjectName);
             }
-            if (!predicateStr.equals(RDF.TYPE.stringValue())) {
+
+            // TODO: Make this comparison faster and simpler.
+            if (predicateStr.equals(RDF.TYPE.stringValue())) {
+                refPattern.ClassName = object.getValue().stringValue();
+            }
+            else if (predicateStr.equals(RDFS.SEEALSO.stringValue())) {
+                logger.debug("""
+                        Add SeeAlso scripts: They cannot be created with WMI.
+                        To start with, any static RDF file is correct.
+                        """);
+            }
+            else {
                 if (object.isConstant()) {
                     if (!object.isAnonymous()) {
                         throw new RuntimeException("isConstant and not isAnonymous");
@@ -222,11 +234,9 @@ public class ObjectPattern {
                     }
                     refPattern.AddPredicateObjectPair(predicateStr, true, object.getName());
                 }
-            } else {
-                refPattern.ClassName = object.getValue().stringValue();
             }
         }
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
         return patternsMap;
-    }
+    } // for
 }
