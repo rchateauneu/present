@@ -45,7 +45,10 @@ public class Solution implements Iterable<Solution.Row> {
 
     /** This takes a BGP as parsed from the original Sparql query, and replace the variables with the ones calculated
      * from WMI.
-     * The resulting triples will be inserted in a RDF repository.
+     * The resulting triples will be inserted in an RDF repository.
+     *
+     * TODO: When adding a predicate value in a statement, consider RDF.VALUE (rdf:value) to add more information
+     * TODO: such as the unit for a numerical type. Units are sometimes available from WMI.
      *
      * @param generatedTriples
      * @param myPattern
