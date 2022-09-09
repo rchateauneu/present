@@ -20,7 +20,43 @@ abstract class BaseSelecter {
     // TODO: Estimate cost.
 }
 
-// TODO: Test separately these providers.
+// TODO: Put these providers into different files ?.
+
+/** This class is exclusively used for testing. */
+class BaseSelecter_DummyClass_Caption extends BaseSelecter {
+    public boolean MatchProvider(QueryData queryData)
+    {
+        // In this selecter, the column "Name" must be provided.
+        return queryData.CompatibleQuery(
+                "DummyClass",
+                Set.of("DummyProperty"),
+                BaseGetter_CIM_DataFile_Name.columnsMap.keySet());
+    }
+
+    /** This returns test data given an attribute.
+     *
+     * @param queryData
+     * @return
+     * @throws Exception
+     */
+    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+        Solution result = new Solution();
+        String dummyValue = queryData.GetWhereValue("DummyProperty");
+        String[] splitValue = dummyValue.split("\\.");
+        // Convention for this test data.
+        if(splitValue.length != 2 || ! splitValue[0].equals("DummyKey_is")) {
+            throw new RuntimeException("Unexpected value:" + dummyValue + ":" + splitValue);
+        }
+
+        String pathDummy = ObjectPath.BuildPathWbem("DummyClass", Map.of("DummyKey", splitValue[1]));
+        Solution.Row singleRow = new Solution.Row();
+
+        singleRow.PutNode(queryData.mainVariable, pathDummy);
+
+        result.add(singleRow);
+        return result;
+    }
+}
 
 class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
@@ -445,6 +481,7 @@ public class GenericProvider {
     static private WmiProvider WmiProvider = new WmiProvider();
 
     static private BaseSelecter[] baseSelecters = {
+        new BaseSelecter_DummyClass_Caption(),
         new BaseSelecter_CIM_DataFile_Name(),
         new BaseSelecter_CIM_DirectoryContainsFile_PartComponent(),
         new BaseSelecter_CIM_DirectoryContainsFile_GroupComponent(),
