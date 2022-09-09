@@ -12,12 +12,15 @@ public class SparqlTranslation {
     private DependenciesBuilder dependencies;
     private Solution solution;
     private GenericProvider genericSelecter = new GenericProvider();
-    private Set<String> bindings;
+    //private Set<String> bindings;
 
     public SparqlTranslation(SparqlBGPExtractor input_extractor) throws Exception {
+        this(input_extractor.patternsAsArray());
+    }
+
+    public SparqlTranslation(List<ObjectPattern> patterns) throws Exception {
         // TODO: Optimize QueryData list here. Providers are necessary.
-        List<ObjectPattern> patterns = input_extractor.patternsAsArray();
-        bindings = input_extractor.bindings;
+        //bindings = inputBindings;
 
         dependencies = new DependenciesBuilder(patterns);
     }
@@ -40,10 +43,10 @@ public class SparqlTranslation {
         solution.add(new_row);
     }
 
-    void RowToContext(Solution.Row singleRow) throws Exception {
+    void RowToContext(Solution.Row singleRow) {
         for(String variableName : singleRow.KeySet()) {
             if(!dependencies.variablesContext.containsKey(variableName)){
-                throw new Exception("Variable " + variableName + " from selection not in context");
+                throw new RuntimeException("Variable " + variableName + " from selection not in context");
             }
             // Or generates new statements for all BGP triples depending on this variable.
             dependencies.variablesContext.put(variableName, singleRow.GetValueType(variableName));
@@ -120,7 +123,7 @@ public class SparqlTranslation {
                 for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
                     logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
                 }
-                throw new Exception("Where clauses must be empty if main variable is available:" + queryData.mainVariable);
+                throw new RuntimeException("Where clauses must be empty if main variable is available:" + queryData.mainVariable);
             }
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
@@ -176,7 +179,7 @@ public class SparqlTranslation {
                     This is a hint that the values of some required variables were not found.
                     TODO: Do this once only, the result set should separately contain the header.
                     */
-                    throw new Exception("Inconsistent size between returned results " + row.ElementsSize()
+                    throw new RuntimeException("Inconsistent size between returned results " + row.ElementsSize()
                             + " and columns:" + numColumns);
                 }
                 RowToContext(row);
