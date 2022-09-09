@@ -1,6 +1,5 @@
 package paquetage;
 
-import com.github.jsonldjava.utils.Obj;
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -164,7 +163,7 @@ public class ObjectPattern {
      * @param visitorPatternsRaw
      * @return
      */
-    public static Map<String, ObjectPattern> Partition(List<StatementPattern> visitorPatternsRaw) {
+    public static Map<String, ObjectPattern> PartitionBySubject(List<StatementPattern> visitorPatternsRaw) {
         HashMap<String, ObjectPattern> patternsMap = new HashMap<>();
         for (StatementPattern myPattern : visitorPatternsRaw) {
             Var subject = myPattern.getSubjectVar();

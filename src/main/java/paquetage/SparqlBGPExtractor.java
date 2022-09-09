@@ -7,9 +7,6 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.Triple;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
@@ -67,7 +64,7 @@ public class SparqlBGPExtractor {
         PatternsVisitor myVisitor = new PatternsVisitor();
         tupleExpr.visit(myVisitor);
         visitorPatternsRaw = myVisitor.patterns();
-        patternsMap = ObjectPattern.Partition(visitorPatternsRaw);
+        patternsMap = ObjectPattern.PartitionBySubject(visitorPatternsRaw);
         logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
 
