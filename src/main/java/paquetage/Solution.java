@@ -9,6 +9,7 @@ import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Var;
 
+import javax.lang.model.util.Elements;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.time.Instant;
@@ -37,9 +38,6 @@ public class Solution implements Iterable<Solution.Row> {
 
     public List<String> Header; // Not used yet.
 
-     Solution GetProjection(List<String> binding) {
-        return null;
-    }
 
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
@@ -138,6 +136,12 @@ public class Solution implements Iterable<Solution.Row> {
                             resourceObject));
                 }
             }
+        }
+    }
+
+    void Append(Solution solution) {
+        for(Row row: solution) {
+            add(row);
         }
     }
 
@@ -446,5 +450,13 @@ public class Solution implements Iterable<Solution.Row> {
 
     Row get(int index) {
         return Rows.get(index);
+    }
+
+    public String toString() {
+        String result = "Elements:" + Rows.size() + "\n";
+        for(Row row : Rows) {
+            result += "\t" + row.toString() + "\n";
+        }
+        return result;
     }
 }
