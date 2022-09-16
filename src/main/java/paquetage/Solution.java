@@ -38,7 +38,6 @@ public class Solution implements Iterable<Solution.Row> {
 
     public List<String> Header; // Not used yet.
 
-
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
     /** This takes a BGP as parsed from the original Sparql query, and replace the variables with the ones calculated
@@ -139,9 +138,36 @@ public class Solution implements Iterable<Solution.Row> {
         }
     }
 
+    /** TODO: This should be faster. */
+    /** TODO: Maybe not necessary, because ultimately, Solutions which just be created in "Join" nodes. */
     void Append(Solution solution) {
+        if(solution.Rows.isEmpty()) {
+            return;
+        }
+        if(Rows.isEmpty()) {
+            for(Row row: solution) {
+                // TODO: Maybe just point to the solution, which normally should not change.
+                add(row);
+            }
+            return;
+        }
+
+        Set<String> oldBindings = Rows.isEmpty() ? null : Rows.get(0).KeySet();
+        Set<String> newBindings = solution.Rows.get(0).KeySet();
+
+        Set<String> newColumns = new HashSet<String>(newBindings);
+        newColumns.removeAll(oldBindings);
+        Set<String> oldColumns = new HashSet<String>(oldBindings);
+        oldColumns.removeAll(newBindings);
+
+        for(Solution.Row oldRow : Rows) {
+            oldRow.ExtendColumns(newColumns);
+        }
         for(Row row: solution) {
-            add(row);
+            // TODO: Find a faster way to compare bindings.
+            Row newRow = row.ShallowCopy();
+            newRow.ExtendColumns(oldColumns);
+            add(newRow);
         }
     }
 
@@ -422,6 +448,22 @@ public class Solution implements Iterable<Solution.Row> {
 
         public String toString() {
             return Elements.toString();
+        }
+
+        void ExtendColumns(Set<String> newBindings) {
+            for(String newColumn: newBindings) {
+                if(Elements.containsKey(newColumn)) {
+                    throw new RuntimeException(("Row should not contain column:" + newColumn));
+                }
+                Elements.put(newColumn, null);
+            }
+        }
+
+        /** The elements are not copied, only the map is. */
+        Row ShallowCopy() {
+            Row newRow = new Row();
+            newRow.Elements = new HashMap<>(Elements);
+            return newRow;
         }
     }
 

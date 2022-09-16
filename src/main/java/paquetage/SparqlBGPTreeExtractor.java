@@ -55,9 +55,10 @@ abstract class BaseExpressionNode implements InterfaceExpressionNode {
 class JoinExpressionNode extends BaseExpressionNode {
     JoinExpressionNode(BaseExpressionNode parent) {
         super(parent);
+        logger.debug("JoinExpressionNode. Parent type=" + parent.getClass().getName());
     }
 
-    public Map<String, ObjectPattern> patternsMap;
+    public Map<String, ObjectPattern> patternsMap = null;
 
     // These are the raw patterns extracted from the query. They may contain variables which are not defined
     // in the WMI evaluation. In this case, they are copied as is.
@@ -66,20 +67,27 @@ class JoinExpressionNode extends BaseExpressionNode {
     private List<StatementPattern> visitorPatternsRaw = new ArrayList<>();
 
     void AddPattern(StatementPattern statementPattern) {
+        logger.debug("Add one pattern to " + visitorPatternsRaw.size());
         visitorPatternsRaw.add(statementPattern);
-        logger.debug("Poorly implemented yet");
     }
 
     // Must be called after parsing and before evaluation.
-    void FinalizeStuff() {
+    void JoinBGPPartition() {
+        if(patternsMap != null) {
+            throw new RuntimeException("patternsMap should not be set twice.");
+        }
         patternsMap = ObjectPattern.PartitionBySubject(visitorPatternsRaw);
+        logger.debug("Pattern keys:" + patternsMap.keySet());
     }
+
+    Solution localSolution = null;
+
     public Solution Evaluate() {
         try {
             SparqlTranslation patternSparql = new SparqlTranslation(patternsAsArray());
-            Solution solution = patternSparql.ExecuteToRows();
-            logger.debug("Solution:" + solution.size());
-            return solution;
+            localSolution = patternSparql.ExecuteToRows();
+            logger.debug("Solution:" + localSolution.size());
+            return localSolution;
         }
         catch(Exception exc) {
             throw new RuntimeException(exc);
@@ -99,8 +107,11 @@ class JoinExpressionNode extends BaseExpressionNode {
     void GenerateStatements(List<Statement> generatedStatements, Solution rows) throws Exception {
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
         logger.debug("Rows number:" + rows.size());
-        for(StatementPattern myPattern : visitorPatternsRaw) {
-            rows.PatternToStatements(generatedStatements, myPattern);
+        logger.debug("Generated statements number before:" + generatedStatements.size());
+        for(StatementPattern statementPattern : visitorPatternsRaw) {
+            // rows.PatternToStatements(generatedStatements, statementPattern);
+            localSolution.PatternToStatements(generatedStatements, statementPattern);
+            logger.debug("Generated statements number after:" + generatedStatements.size());
         }
 
         logger.debug("Generated statements number:" + generatedStatements.size());
@@ -115,25 +126,30 @@ class JoinExpressionNode extends BaseExpressionNode {
         patternsArray.sort(Comparator.comparing(s -> s.VariableName));
         return patternsArray;
     }
-}
+} // JoinExpressionNode
 
-// TODO: Il faudra aussi ajouter LeftJoin, Intersection
+// TODO: Also add LeftJoin, Intersection
 
-// FIXME: Ca fait filtrage et join: C'est idiot.
+// TODO: Binding: Rename some columns in Solution ?
+
 class ProjectionExpressionNode extends BaseExpressionNode {
     Projection projectionNode;
     ProjectionExpressionNode(BaseExpressionNode parent, Projection visitedProjection) {
         super(parent);
+        //logger.debug("ProjectionExpressionNode. Parent type=" + parent.getClass().getName());
         projectionNode = visitedProjection;
     }
 
     public Solution Evaluate() {
         projectionNode.getBindingNames();
         if(children.size() != 1) {
-            throw new RuntimeException("Filtrer : Il ne doit y avoir qu'un seul child:" + children.size());
+            throw new RuntimeException("There must be one child only:" + children.size());
         }
         Solution solution = children.get(0).Evaluate();
         logger.debug("Solution:" + solution.size());
+        /*
+        TODO: Keep only some columns.
+         */
         return solution;
     }
 
@@ -142,8 +158,6 @@ class ProjectionExpressionNode extends BaseExpressionNode {
     }
 };
 
-/** Several unions together : No need to nest them.
- * On les evalue separement et on met les resultats a la file dans une Solution. */
 class UnionExpressionNode extends BaseExpressionNode {
     private Union unionNode;
     UnionExpressionNode(BaseExpressionNode parent, Union visitedUnionNode) {
@@ -154,6 +168,13 @@ class UnionExpressionNode extends BaseExpressionNode {
         Solution solution = new Solution();
         for(BaseExpressionNode expressionNode: children) {
             Solution childSolution = expressionNode.Evaluate();
+            logger.debug("childSolution:" + childSolution.size());
+            /* TODO: Instead of creating a new solution, why not pass a visitor to immediately generate triples ?
+            TODO: On the other hand, it would be less clear.
+            */
+
+            // FIXME: What about bindings, i.e. renaming of columns ?
+
             solution.Append(childSolution);
         }
         logger.debug("Solution:" + solution.size());
@@ -208,7 +229,13 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         BaseExpressionNode previousParent = parent;
         boolean isParentJoin = parent instanceof JoinExpressionNode;
         JoinExpressionNode nextParent;
+        // If the ancestor is also a join, reuse it instead of creating a new one.
         if(isParentJoin) {
+            /*
+            if(parent.children.isEmpty()) {
+                throw new RuntimeException("Parent should not be empty");
+            }
+            */
             nextParent = (JoinExpressionNode)parent;
         } else {
             nextParent = new JoinExpressionNode(parent);
@@ -238,10 +265,8 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
             */
         logger.debug("StatementPattern=" + statementPatternNode);
         GenericReport(statementPatternNode);
-        // visitedStatementPatterns.add(statementPatternNode.clone());
 
-        /* Le parent courant est Projection ou Join.
-        * Si c est une projection, il faut creer un Join. */
+        // If the parent is not a join, create a join child.
         if(parent instanceof ProjectionExpressionNode) {
             JoinExpressionNode joinParent = new JoinExpressionNode(parent);
             parent = joinParent;
@@ -276,50 +301,53 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         return visitedStatementPatterns;
     }
 
-    void FinalizeStuffAux(BaseExpressionNode node) {
+    private void PartitionBGPAux(BaseExpressionNode node) {
+        logger.debug("Class:" + node.getClass().getName() + " Node:" + node.children.size() + " children");
         if(node instanceof JoinExpressionNode) {
+            JoinExpressionNode joinNode = (JoinExpressionNode)node;
+            if(!node.children.isEmpty()) {
+                logger.warn("Join has children - if projection, it can be optimised.");
+            }
             for(BaseExpressionNode child : node.children) {
                 if (!(child instanceof ProjectionExpressionNode)) {
                     throw new RuntimeException("Join node should have only Projection as children.");
                 }
             }
-            JoinExpressionNode joinNode = (JoinExpressionNode)node;
-            joinNode.FinalizeStuff();
+            joinNode.JoinBGPPartition();
             return;
         }
         for(BaseExpressionNode child : node.children) {
-            FinalizeStuffAux(child);
+            PartitionBGPAux(child);
         }
     }
 
-    void FinalizeStuff() {
-        FinalizeStuffAux(parent);
+    void PartitionBGP() {
+        logger.debug("PartitionBGP Class:" + getClass().getName());
+        PartitionBGPAux(parent);
     }
 
     private void GenerateStatementsFromTreeAux(Solution rows, List<Statement> generatedStatements, BaseExpressionNode node) throws Exception {
-        logger.debug("rows:" + rows.size());
+        logger.debug("Node:" + node.getClass().getName() + " Solution:" + rows.size() + " rows. generatedStatements:" + generatedStatements.size() + " statements.");
         if(node instanceof JoinExpressionNode) {
             if(!node.children.isEmpty()) {
-                throw new RuntimeException("Join node should not have children");
+                logger.warn("Join has children - if projection, it can be optimised.");
             }
             JoinExpressionNode joinNode = (JoinExpressionNode)node;
             joinNode.GenerateStatements(generatedStatements, rows);
-            joinNode.FinalizeStuff();
-            return;
         }
         logger.debug("node.children:" + node.children.size());
         for(BaseExpressionNode child : node.children) {
-            FinalizeStuffAux(child);
+            GenerateStatementsFromTreeAux(rows, generatedStatements,child);
         }
     }
 
     List<Statement> GenerateStatementsFromTree(Solution rows) throws Exception {
-        logger.debug("rows:" + rows.size());
+        logger.debug("Solution:" + rows.size() + " rows.");
         List<Statement> generatedStatements = new ArrayList<>();
         GenerateStatementsFromTreeAux(rows, generatedStatements, parent);
         return generatedStatements;
     }
-}
+} // PatternsVisitor
 
 
 /**
@@ -340,7 +368,7 @@ public class SparqlBGPTreeExtractor {
         ParseQuery(input_query);
         String extractorString = patternsVisitor.toString();
         System.out.println("Extractor:\n" + extractorString);
-        patternsVisitor.FinalizeStuff();
+        patternsVisitor.PartitionBGP();
     }
 
     private PatternsVisitor patternsVisitor = new PatternsVisitor();
@@ -362,9 +390,6 @@ public class SparqlBGPTreeExtractor {
         System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
         System.out.println(tupleExpr);
         System.out.println("=============================================================================");
-        //visitorPatternsRaw = patternsVisitor.patterns();
-        //patternsMap = ObjectPattern.PartitionBySubject(visitorPatternsRaw);
-        //logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
     }
 
     Solution EvaluateSolution() {
@@ -374,6 +399,7 @@ public class SparqlBGPTreeExtractor {
     }
 
     List<Statement> SolutionToStatements(Solution rows) throws Exception {
+        logger.debug("Solution:" + rows.size() + " rows.");
         return patternsVisitor.GenerateStatementsFromTree(rows);
     }
 
