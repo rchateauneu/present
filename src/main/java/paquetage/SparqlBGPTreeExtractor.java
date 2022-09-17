@@ -53,6 +53,7 @@ abstract class BaseExpressionNode implements InterfaceExpressionNode {
 
 /** For the nodes which might contain one or several StatementPattern. */
 class JoinExpressionNode extends BaseExpressionNode {
+    final static protected Logger logger = Logger.getLogger(JoinExpressionNode.class);
     JoinExpressionNode(BaseExpressionNode parent) {
         super(parent);
         logger.debug("JoinExpressionNode. Parent type=" + parent.getClass().getName());
@@ -83,12 +84,28 @@ class JoinExpressionNode extends BaseExpressionNode {
     Solution localSolution = null;
 
     public Solution Evaluate() {
+        logger.debug("children.size()=" + children.size() + " visitorPatternsRaw.size()=" + visitorPatternsRaw.size());
         try {
             SparqlTranslation patternSparql = new SparqlTranslation(patternsAsArray());
             localSolution = patternSparql.ExecuteToRows();
-            logger.debug("Solution:" + localSolution.size());
+            logger.debug("Solution:" + localSolution.size() + " Header=" + localSolution.header());
+            /*
+            TODO: On ne renvoie une "Solution" que pour tester et debugger.
+            TODO: On pourra s'en passer et ne garder une Solution que dans les nodes qui ont des BGP.
+             */
+
+            // Now proceed just like what ?
+            for(BaseExpressionNode child : children){
+                Solution subSolution = child.Evaluate();
+                Solution cartesianProduct = localSolution.CartesianProduct(subSolution);
+                localSolution = cartesianProduct;
+                // TOOD: Ce n'est pas une Union : Il faut faire un produit cartesien.
+                // Mais il aurait fallu "remonter" les joins en dessous. Mais quid des Projection ??
+                // Pour le moment, on s'en fout, on n'optimise pas.
+            }
             return localSolution;
         }
+
         catch(Exception exc) {
             throw new RuntimeException(exc);
         }
@@ -122,6 +139,9 @@ class JoinExpressionNode extends BaseExpressionNode {
      * @return
      */
     List<ObjectPattern> patternsAsArray() {
+        if(patternsMap == null) {
+            throw new RuntimeException("patternsMap is null");
+        }
         ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(patternsMap.values());
         patternsArray.sort(Comparator.comparing(s -> s.VariableName));
         return patternsArray;
@@ -133,6 +153,7 @@ class JoinExpressionNode extends BaseExpressionNode {
 // TODO: Binding: Rename some columns in Solution ?
 
 class ProjectionExpressionNode extends BaseExpressionNode {
+    final static protected Logger logger = Logger.getLogger(ProjectionExpressionNode.class);
     Projection projectionNode;
     ProjectionExpressionNode(BaseExpressionNode parent, Projection visitedProjection) {
         super(parent);
@@ -142,11 +163,13 @@ class ProjectionExpressionNode extends BaseExpressionNode {
 
     public Solution Evaluate() {
         projectionNode.getBindingNames();
+        logger.debug("projectionNode.getBindingNames():" + projectionNode.getBindingNames());
         if(children.size() != 1) {
             throw new RuntimeException("There must be one child only:" + children.size());
         }
+        logger.debug("children.size():" + children.size());
         Solution solution = children.get(0).Evaluate();
-        logger.debug("Solution:" + solution.size());
+        logger.debug("Solution:" + solution.size() + " Header=" + solution.header());
         /*
         TODO: Keep only some columns.
          */
@@ -159,16 +182,18 @@ class ProjectionExpressionNode extends BaseExpressionNode {
 };
 
 class UnionExpressionNode extends BaseExpressionNode {
+    final static protected Logger logger = Logger.getLogger(UnionExpressionNode.class);
     private Union unionNode;
     UnionExpressionNode(BaseExpressionNode parent, Union visitedUnionNode) {
         super(parent);
         unionNode = visitedUnionNode;
     }
     public Solution Evaluate() {
+        logger.debug("Children:" + children.size());
         Solution solution = new Solution();
         for(BaseExpressionNode expressionNode: children) {
             Solution childSolution = expressionNode.Evaluate();
-            logger.debug("childSolution:" + childSolution.size());
+            logger.debug("childSolution:" + childSolution.size() + " Header=" + childSolution.header());
             /* TODO: Instead of creating a new solution, why not pass a visitor to immediately generate triples ?
             TODO: On the other hand, it would be less clear.
             */
@@ -177,7 +202,7 @@ class UnionExpressionNode extends BaseExpressionNode {
 
             solution.Append(childSolution);
         }
-        logger.debug("Solution:" + solution.size());
+        logger.debug("Solution:" + solution.size() + " Header=" + solution.header());
         return solution;
     }
 };
@@ -195,13 +220,6 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
     }
 
     void GenericReport(QueryModelNode queryModelNode) {
-            /*
-            if(queryModelNode.getParentNode() == null) {
-                logger.debug("Parent is null");
-            } else {
-                logger.debug("Parent is:" + queryModelNode.getParentNode());
-            }
-            */
         System.out.println("-----------------------------------------------------------------------------");
     }
 
@@ -314,7 +332,8 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
                 }
             }
             joinNode.JoinBGPPartition();
-            return;
+
+            // return;
         }
         for(BaseExpressionNode child : node.children) {
             PartitionBGPAux(child);

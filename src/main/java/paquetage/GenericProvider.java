@@ -30,7 +30,7 @@ class BaseSelecter_DummyClass_Caption extends BaseSelecter {
         return queryData.CompatibleQuery(
                 "DummyClass",
                 Set.of("DummyProperty"),
-                BaseGetter_CIM_DataFile_Name.columnsMap.keySet());
+                new HashSet<>());
     }
 
     /** This returns test data given an attribute.

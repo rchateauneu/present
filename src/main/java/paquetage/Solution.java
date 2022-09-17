@@ -4,12 +4,9 @@ import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
-import org.eclipse.rdf4j.query.Binding;
-import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Var;
 
-import javax.lang.model.util.Elements;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.time.Instant;
@@ -35,8 +32,6 @@ To ease the transition:
 
 public class Solution implements Iterable<Solution.Row> {
     final static private Logger logger = Logger.getLogger(Solution.class);
-
-    public List<String> Header; // Not used yet.
 
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
@@ -161,12 +156,12 @@ public class Solution implements Iterable<Solution.Row> {
         oldColumns.removeAll(newBindings);
 
         for(Solution.Row oldRow : Rows) {
-            oldRow.ExtendColumns(newColumns);
+            oldRow.ExtendColumnsWithNull(newColumns);
         }
         for(Row row: solution) {
             // TODO: Find a faster way to compare bindings.
             Row newRow = row.ShallowCopy();
-            newRow.ExtendColumns(oldColumns);
+            newRow.ExtendColumnsWithNull(oldColumns);
             add(newRow);
         }
     }
@@ -450,7 +445,7 @@ public class Solution implements Iterable<Solution.Row> {
             return Elements.toString();
         }
 
-        void ExtendColumns(Set<String> newBindings) {
+        void ExtendColumnsWithNull(Set<String> newBindings) {
             for(String newColumn: newBindings) {
                 if(Elements.containsKey(newColumn)) {
                     throw new RuntimeException(("Row should not contain column:" + newColumn));
@@ -465,12 +460,48 @@ public class Solution implements Iterable<Solution.Row> {
             newRow.Elements = new HashMap<>(Elements);
             return newRow;
         }
+
+        /** TODO: This is not very efficient and it would be better to merge all BGPs.
+         * This happens when several joins and projections are not merged into a single join.
+         * @param otherRow
+         * @return
+         */
+        Row Merge(Row otherRow) {
+            Row newRow = ShallowCopy();
+
+            for(Map.Entry<String, ValueTypePair> entry : otherRow.Elements.entrySet()) {
+                String newKey = entry.getKey();
+                ValueTypePair newValue = entry.getValue();
+                ValueTypePair previousValue = newRow.Elements.get(newKey);
+                if(previousValue == null) {
+                    // The existing row does not have this key.
+                    newRow.Elements.put(newKey, newValue);
+                } else {
+                    if(previousValue.m_Type == newValue.m_Type && previousValue.m_Value.equals(newValue.m_Value)) {
+                        logger.debug("Identical values for key:" + newKey);
+                    } else {
+                        // Duplicate key with different values.
+                        logger.debug("Different values for key:" + newKey);
+                        return null;
+                    }
+                }
+            }
+            return newRow;
+        }
     }
 
     List<Row> Rows;
 
+    /** TODO: This will change with the implementation of Solution. */
+    Set<String> header() {
+        if(Rows.isEmpty()) {
+            return new HashSet<>();
+        } else {
+            return Rows.get(0).KeySet();
+        }
+    }
+
     Solution( /*List<String> header */ ) {
-        //Header = header;
         Rows = new ArrayList<>();
     }
 
@@ -500,5 +531,19 @@ public class Solution implements Iterable<Solution.Row> {
             result += "\t" + row.toString() + "\n";
         }
         return result;
+    }
+
+    public Solution CartesianProduct(Solution otherSolution) {
+        Solution resultSolution = new Solution();
+        for(Row row : Rows) {
+            for(Row otherRow : otherSolution.Rows) {
+                Row mergedRow = row.Merge(otherRow);
+                if(mergedRow != null) {
+                    // It returns null if there is a common key with different values.
+                    resultSolution.add(mergedRow);
+                }
+            }
+        }
+        return resultSolution;
     }
 }

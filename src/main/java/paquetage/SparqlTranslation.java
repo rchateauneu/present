@@ -208,7 +208,7 @@ public class SparqlTranslation {
             queryData.DisplayStatistics();
         }
         logger.debug("Rows generated:" + solution.size());
-        logger.debug("Header:" + solution.Header);
+        logger.debug("Header:" + solution.header());
         logger.debug("Context keys:" + dependencies.variablesContext.keySet());
 
     return solution;
