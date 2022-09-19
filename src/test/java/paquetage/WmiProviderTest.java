@@ -172,7 +172,7 @@ public class WmiProviderTest {
     //  \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"
     @Test
     public void TestCIM_ProcessExecutableAntecedent() throws Exception {
-        String antecedentString = PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"");
+        String antecedentString = PresentUtils.PrefixCimv2Path("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"");
 
         GenericProvider genericProvider = new GenericProvider();
         Solution listResults = genericProvider.SelectVariablesFromWhere(
@@ -421,7 +421,7 @@ public class WmiProviderTest {
     @Test
     public void TestGetObject_CIM_DataFile() throws Exception {
         // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"";
-        String objectPath = PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"");
+        String objectPath = PresentUtils.PrefixCimv2Path("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"");
         WmiGetter wmiGetter = new WmiGetter();
         Wbemcli.IWbemClassObject obj = wmiGetter.GetObjectNode(objectPath);
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
@@ -439,7 +439,7 @@ public class WmiProviderTest {
     public void TestGetObject_Win32_Process() throws Exception {
         long pid = ProcessHandle.current().pid();
         // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"" + pid + "\"";
-        String objectPath = PresentUtils.PrefixPath("Win32_Process.Handle=\"" + pid + "\"");
+        String objectPath = PresentUtils.PrefixCimv2Path("Win32_Process.Handle=\"" + pid + "\"");
         WmiGetter wmiGetter = new WmiGetter();
         Wbemcli.IWbemClassObject obj = wmiGetter.GetObjectNode(objectPath);
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();

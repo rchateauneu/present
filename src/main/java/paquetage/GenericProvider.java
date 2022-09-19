@@ -46,7 +46,8 @@ class BaseSelecter_DummyClass_Caption extends BaseSelecter {
         // The key must be an integer.
         Long.parseLong(dummyValue);
 
-        String pathDummy = ObjectPath.BuildPathWbem("DummyClass", Map.of("DummyKey", dummyValue));
+        // This assumes that this dummy class is in the namespace "Root/Cimv2"
+        String pathDummy = ObjectPath.BuildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyValue));
         Solution.Row singleRow = new Solution.Row();
 
         singleRow.PutNode(queryData.mainVariable, pathDummy);
@@ -75,7 +76,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
         String fileName = queryData.GetWhereValue("Name");
-        String pathFile = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", fileName));
+        String pathFile = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
         Solution.Row singleRow = new Solution.Row();
 
         BaseGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData, fileName);
@@ -102,14 +103,14 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
         String filePath = properties.get("Name");
         File file = new File(filePath);
         String parentPath = file.getAbsoluteFile().getParent();
-        String pathDirectory = ObjectPath.BuildPathWbem("Win32_Directory", Map.of("Name", parentPath));
+        String pathDirectory = ObjectPath.BuildCimv2PathWbem("Win32_Directory", Map.of("Name", parentPath));
 
         Solution.Row singleRow = new Solution.Row();
         String variableName = queryData.ColumnToVariable("GroupComponent");
         singleRow.PutNode(variableName, pathDirectory);
 
         // It must also the path of the associator row, even if it will probably not be used.
-        String pathAssoc = ObjectPath.BuildPathWbem(
+        String pathAssoc = ObjectPath.BuildCimv2PathWbem(
                 "CIM_DirectoryContainsFile", Map.of(
                         "PartComponent", valuePartComponent,
                         "GroupComponent", pathDirectory));
@@ -131,7 +132,7 @@ class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter
         String valueGroupComponent = queryData.GetWhereValue("GroupComponent");
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
         String dirPath = properties.get("Name");
-        String pathGroupComponent = ObjectPath.BuildPathWbem("Win32_Directory", Map.of("Name", dirPath));
+        String pathGroupComponent = ObjectPath.BuildCimv2PathWbem("Win32_Directory", Map.of("Name", dirPath));
 
         String variableName = queryData.ColumnToVariable("PartComponent");
 
@@ -146,13 +147,13 @@ class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter
 
             Solution.Row singleRow = new Solution.Row();
 
-            String valuePartComponent = ObjectPath.BuildPathWbem(
+            String valuePartComponent = ObjectPath.BuildCimv2PathWbem(
                     "CIM_DataFile", Map.of(
                             "Name", fileName));
             singleRow.PutNode(variableName, valuePartComponent);
 
             // It must also the path of the associator row, even if it will probably not be used.
-            String pathAssoc = ObjectPath.BuildPathWbem(
+            String pathAssoc = ObjectPath.BuildCimv2PathWbem(
                     "CIM_DirectoryContainsFile", Map.of(
                             "PartComponent", valuePartComponent,
                             "GroupComponent", pathGroupComponent));
@@ -185,11 +186,11 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
         String variableName = queryData.ColumnToVariable("Dependent");
         for(String onePid : listPids) {
             Solution.Row singleRow = new Solution.Row();
-            String pathDependent = ObjectPath.BuildPathWbem("Win32_Process", Map.of("Handle", onePid));
+            String pathDependent = ObjectPath.BuildCimv2PathWbem("Win32_Process", Map.of("Handle", onePid));
             singleRow.PutNode(variableName, pathDependent);
 
             // It must also the path of the associator row, even if it will probably not be used.
-            String pathAssoc = ObjectPath.BuildPathWbem(
+            String pathAssoc = ObjectPath.BuildCimv2PathWbem(
                     "CIM_ProcessExecutable", Map.of(
                             "Dependent", pathDependent,
                             "Antecedent", valueAntecedent));
@@ -225,11 +226,11 @@ class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
         String variableName = queryData.ColumnToVariable("Antecedent");
         for(String oneFile : listModules) {
             Solution.Row singleRow = new Solution.Row();
-            String pathAntecedent = ObjectPath.BuildPathWbem("CIM_DataFile", Map.of("Name", oneFile));
+            String pathAntecedent = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", oneFile));
             singleRow.PutNode(variableName, pathAntecedent);
 
             // It must also the path of the associator row, even if it will probably not be used.
-            String pathAssoc = ObjectPath.BuildPathWbem(
+            String pathAssoc = ObjectPath.BuildCimv2PathWbem(
                     "CIM_ProcessExecutable", Map.of(
                             "Dependent", valueDependent,
                             "Antecedent", pathAntecedent));
@@ -349,7 +350,7 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
         FillRowFromQueryAndFilename(singleRow, queryData, fileName);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
-        String pathFile = ObjectPath.BuildPathWbem(
+        String pathFile = ObjectPath.BuildCimv2PathWbem(
                 "CIM_DataFile", Map.of(
                         "Name", fileName));
         singleRow.PutNode(queryData.mainVariable, pathFile);
@@ -464,7 +465,7 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
         FillRowFromQueryAndPid(singleRow, queryData, processId);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
-        String pathFile = ObjectPath.BuildPathWbem(
+        String pathFile = ObjectPath.BuildCimv2PathWbem(
                 "Win32_Process", Map.of(
                         "Handle", processId));
         singleRow.PutNode(queryData.mainVariable, pathFile);

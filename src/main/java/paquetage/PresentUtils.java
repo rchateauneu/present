@@ -2,7 +2,6 @@ package paquetage;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -34,7 +33,7 @@ public class PresentUtils {
      * @param shortPath : A Wbem path without the hostname and the namespace.
      * @return The complete path as usable by WMI.
      */
-    public static String PrefixPath(String shortPath) {
+    public static String PrefixCimv2Path(String shortPath) {
         return prefixComputer + "\\ROOT\\CIMV2:" + shortPath;
     }
 

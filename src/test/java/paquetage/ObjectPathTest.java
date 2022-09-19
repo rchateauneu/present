@@ -56,29 +56,29 @@ public class ObjectPathTest {
 
     @Test
     public void BuildPathWbem_1() throws Exception {
-        String createdPath = ObjectPath.BuildPathWbem(
+        String createdPath = ObjectPath.BuildCimv2PathWbem(
                 "Win32_Process",
                 Map.of("Handle", "1234"));
         Assert.assertEquals(
-                PresentUtils.PrefixPath("Win32_Process.Handle=\"1234\""),
+                PresentUtils.PrefixCimv2Path("Win32_Process.Handle=\"1234\""),
                 createdPath
         );
     }
 
     @Test
     public void BuildPathWbem_2() throws Exception {
-        String createdPath = ObjectPath.BuildPathWbem(
+        String createdPath = ObjectPath.BuildCimv2PathWbem(
                 "CIM_DataFile",
                 Map.of("Name", "C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll"));
         Assert.assertEquals(
-                PresentUtils.PrefixPath("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\""),
+                PresentUtils.PrefixCimv2Path("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\""),
                 createdPath
         );
     }
 
     @Test
     public void BuildPathWbem_3() throws Exception {
-        String createdPath = ObjectPath.BuildPathWbem(
+        String createdPath = ObjectPath.BuildCimv2PathWbem(
                 "CIM_ProcessExecutable",
                 Map.of(
                         "Antecedent", "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\msvcp_win.dll\"",

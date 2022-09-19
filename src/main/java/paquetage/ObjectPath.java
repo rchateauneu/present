@@ -78,7 +78,11 @@ public class ObjectPath {
         return propertiesMap;
     }
 
-    public static String BuildPathWbem(String className, Map<String, String> propertiesMap)
+    /** This is used only for classes in namespace Root/Cimv2",
+     * to create an object and its path mimicking an object created by WMI.
+     * "Pseudo WMI objects" are created by providers classes similar to WMI ones but much faster,
+     * */
+    public static String BuildCimv2PathWbem(String className, Map<String, String> propertiesMap)
     {
         Vector<CIMProperty> propertyArray = new Vector<CIMProperty>(propertiesMap.size());
         for(Map.Entry<String, String> entry: propertiesMap.entrySet()) {
@@ -88,6 +92,6 @@ public class ObjectPath {
         }
         CIMObjectPath wbemPath = new CIMObjectPath(className, propertyArray);
         // This adds the host name and the namespace.
-        return PresentUtils.PrefixPath(wbemPath.toString());
+        return PresentUtils.PrefixCimv2Path(wbemPath.toString());
     }
 }
