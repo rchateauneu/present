@@ -27,19 +27,19 @@ public class SparqlBGPTreeExtractorTest {
     }
 
 
-    static Set<String> solutionToStringSet(Solution solution) {
-        Set<String> asStrings = solution.stream().map(row -> row.toString()).collect(Collectors.toSet());
+    static SortedSet<String> solutionToStringSet(Solution solution) {
+        SortedSet<String> asStrings = new TreeSet<>(solution.stream().map(row -> row.toString()).collect(Collectors.toSet()));
         return asStrings;
     }
     static void HelperCheck(String sparqlQuery, String[] expectedSolution, String[] expectedStatements) throws Exception{
         SparqlBGPTreeExtractor extractor = new SparqlBGPTreeExtractor(sparqlQuery);
         Solution actualSolution = extractor.EvaluateSolution();
 
-        Set<String> actualSolutionStr = solutionToStringSet(actualSolution);
+        SortedSet<String> actualSolutionStr = solutionToStringSet(actualSolution);
         System.out.println("Actual solution:");
         System.out.println(actualSolutionStr);
 
-        Set<String> expectedSetStr = Arrays.stream(expectedSolution).collect(Collectors.toSet());
+        Set<String> expectedSetStr = new TreeSet<>(Arrays.stream(expectedSolution).collect(Collectors.toSet()));
         System.out.println("Expected solution:");
         System.out.println(expectedSetStr);
 
@@ -73,27 +73,27 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
                         {
-                            select ?process1
+                            select ?dummy1
                             where {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
                             }
                         }
                         union
                         {
-                            select ?process2
+                            select ?dummy2
                             where {
-                                ?process2 cimv2:DummyClass.DummyKey "2" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "2" .
                             }
                         }
                     }
                     
         """;
         String[] expectedSolution = {
-                "{process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2=null}",
-                "{process1=null, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2=null}",
+                "{dummy1=null, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -107,34 +107,34 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                            select ?process where 
+                            select ?dummy where 
                             {
                                 {
-                                    select ?process1
+                                    select ?dummy1
                                     where {
-                                        ?process1 cimv2:DummyClass.DummyKey "1" .
+                                        ?dummy1 cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
                                 {
-                                    select ?process2
+                                    select ?dummy2
                                     where {
-                                        ?process2 cimv2:DummyClass.DummyKey "2" .
+                                        ?dummy2 cimv2:DummyClass.DummyKey "2" .
                                     }
                                 }
                                 union
                                 {
-                                    select ?process3
+                                    select ?dummy3
                                     where {
-                                        ?process3 cimv2:DummyClass.DummyKey "3" .
+                                        ?dummy3 cimv2:DummyClass.DummyKey "3" .
                                     }
                                 }
                             }
                 """;
         String[] expectedSolution = {
-                "{process3=null, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2=null}",
-                "{process1=null, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process3=null}",
-                "{process1=null, process2=null, process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
+                "{dummy1=null, dummy2=null, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}",
+                "{dummy1=null, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy3=null}",
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2=null, dummy3=null}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -152,13 +152,13 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?process10 cimv2:DummyClass.DummyKey "10" .
-                                ?process20 cimv2:DummyClass.DummyKey "20" .
-                                ?process30 cimv2:DummyClass.DummyKey "30" .
+                                ?dummy10 cimv2:DummyClass.DummyKey "10" .
+                                ?dummy20 cimv2:DummyClass.DummyKey "20" .
+                                ?dummy30 cimv2:DummyClass.DummyKey "30" .
                             }
                 """;
         String[] expectedSolution = {
-                "{process10={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"10\" -> NODE_TYPE}, process20={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"20\" -> NODE_TYPE}, process30={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"30\" -> NODE_TYPE}}"
+                "{dummy30={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"30\" -> NODE_TYPE}, dummy10={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"10\" -> NODE_TYPE}, dummy20={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"20\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2210%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"10\")",
@@ -173,29 +173,29 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                            select ?process where 
+                            select ?dummy where 
                             {
                                 {
-                                    select ?process1
+                                    select ?dummy1
                                     where {
-                                        ?process1 cimv2:DummyClass.DummyKey "1" .
+                                        ?dummy1 cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
                                 {
-                                    select ?process2 where 
+                                    select ?dummy2 where 
                                     {
                                         {
-                                            select ?process21
+                                            select ?dummy21
                                             where {
-                                                ?process1 cimv2:DummyClass.DummyKey "21" .
+                                                ?dummy1 cimv2:DummyClass.DummyKey "21" .
                                             }
                                         }
                                         union
                                         {
-                                            select ?process22
+                                            select ?dummy22
                                             where {
-                                                ?process2 cimv2:DummyClass.DummyKey "22" .
+                                                ?dummy2 cimv2:DummyClass.DummyKey "22" .
                                             }
                                         }
                                     }
@@ -203,9 +203,9 @@ public class SparqlBGPTreeExtractorTest {
                             }
                 """;
         String[] expectedSolution = {
-                "{process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2=null}",
-                "{process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process2=null}",
-                "{process1=null, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}}"
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2=null}",
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, dummy2=null}",
+                "{dummy1=null, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -223,11 +223,11 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?process10 cimv2:DummyClass.DummyKey "10" .
+                                ?dummy10 cimv2:DummyClass.DummyKey "10" .
                             }
                 """;
         String[] expectedSolution = {
-                "{process10={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"10\" -> NODE_TYPE}}"
+                "{dummy10={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"10\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2210%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"10\")"
@@ -242,17 +242,17 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
                                 {
                                     select *
                                     where {
-                                        ?process2 cimv2:DummyClass.DummyKey "2" .
+                                        ?dummy2 cimv2:DummyClass.DummyKey "2" .
                                     }
                                 }
                             }
                 """;
         String[] expectedSolution = {
-                "{process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -268,20 +268,20 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
                                 {
                                     select *
                                     where {
-                                        ?process21 cimv2:DummyClass.DummyKey "21" .
-                                        ?process22 cimv2:DummyClass.DummyKey "22" .
-                                        ?process23 cimv2:DummyClass.DummyKey "23" .
+                                        ?dummy21 cimv2:DummyClass.DummyKey "21" .
+                                        ?dummy22 cimv2:DummyClass.DummyKey "22" .
+                                        ?dummy23 cimv2:DummyClass.DummyKey "23" .
                                     }
                                 }
-                                ?process2 cimv2:DummyClass.DummyKey "2" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "2" .
                             }
                 """;
         String[] expectedSolution = {
-                "{process22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}}"
+                "{dummy23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -300,28 +300,28 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?processX cimv2:DummyClass.DummyKey "1" .
+                                ?dummyX cimv2:DummyClass.DummyKey "1" .
                                 {
                                     select *
                                     where {
-                                        ?process21 cimv2:DummyClass.DummyKey "21" .
-                                        ?process22 cimv2:DummyClass.DummyKey "22" .
-                                        ?process23 cimv2:DummyClass.DummyKey "23" .
+                                        ?dummy21 cimv2:DummyClass.DummyKey "21" .
+                                        ?dummy22 cimv2:DummyClass.DummyKey "22" .
+                                        ?dummy23 cimv2:DummyClass.DummyKey "23" .
                                     }
                                 }
-                                ?process2 cimv2:DummyClass.DummyKey "2" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "2" .
                                 {
                                     select *
                                     where {
-                                        ?process31 cimv2:DummyClass.DummyKey "31" .
-                                        ?process32 cimv2:DummyClass.DummyKey "32" .
-                                        ?process33 cimv2:DummyClass.DummyKey "33" .
+                                        ?dummy31 cimv2:DummyClass.DummyKey "31" .
+                                        ?dummy32 cimv2:DummyClass.DummyKey "32" .
+                                        ?dummy33 cimv2:DummyClass.DummyKey "33" .
                                     }
                                 }
                             }
                 """;
         String[] expectedSolution = {
-                "{process22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process33={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}, process21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process32={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}, process31={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, processX={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}}"
+                "{dummy23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, dummy22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, dummy33={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummyX={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, dummy32={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}, dummy31={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -341,41 +341,41 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
                         {
-                            select ?process1
+                            select ?dummy1
                             where {
-                                ?process11 cimv2:DummyClass.DummyKey "11" .
-                                ?process12 cimv2:DummyClass.DummyKey "12" .
-                                ?process13 cimv2:DummyClass.DummyKey "13" .
+                                ?dummy11 cimv2:DummyClass.DummyKey "11" .
+                                ?dummy12 cimv2:DummyClass.DummyKey "12" .
+                                ?dummy13 cimv2:DummyClass.DummyKey "13" .
                             }
                         }
                         union
                         {
-                            select ?process2
+                            select ?dummy2
                             where {
-                                ?process21 cimv2:DummyClass.DummyKey "21" .
-                                ?process22 cimv2:DummyClass.DummyKey "22" .
-                                ?process23 cimv2:DummyClass.DummyKey "23" .
+                                ?dummy21 cimv2:DummyClass.DummyKey "21" .
+                                ?dummy22 cimv2:DummyClass.DummyKey "22" .
+                                ?dummy23 cimv2:DummyClass.DummyKey "23" .
                             }
                         }
                         union
                         {
-                            select ?process3
+                            select ?dummy3
                             where {
-                                ?process31 cimv2:DummyClass.DummyKey "31" .
-                                ?process32 cimv2:DummyClass.DummyKey "32" .
-                                ?process33 cimv2:DummyClass.DummyKey "33" .
+                                ?dummy31 cimv2:DummyClass.DummyKey "31" .
+                                ?dummy32 cimv2:DummyClass.DummyKey "32" .
+                                ?dummy33 cimv2:DummyClass.DummyKey "33" .
                             }
                         }
                     }
                     
         """;
         String[] expectedSolution = {
-                "{process33={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}, process22=null, process11=null, process32={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}, process21=null, process31={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}, process13=null, process23=null, process12=null}",
-                "{process11={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}, process22=null, process33=null, process21=null, process32=null, process31=null, process13={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"13\" -> NODE_TYPE}, process12={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}, process23=null}",
-                "{process22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process33=null, process11=null, process21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process32=null, process31=null, process13=null, process23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, process12=null}"
+                "{dummy12={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}, dummy23=null, dummy11={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}, dummy22=null, dummy33=null, dummy13={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"13\" -> NODE_TYPE}, dummy21=null, dummy32=null, dummy31=null}",
+                "{dummy23=null, dummy12=null, dummy33={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}, dummy22=null, dummy11=null, dummy13=null, dummy32={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}, dummy21=null, dummy31={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}}",
+                "{dummy23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, dummy12=null, dummy22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, dummy33=null, dummy11=null, dummy13=null, dummy21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, dummy32=null, dummy31=null}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"11\")",
@@ -403,20 +403,20 @@ public class SparqlBGPTreeExtractorTest {
                                     select *
                                     where {
                                         {
-                                            select ?process1
+                                            select ?dummy1
                                             where {
-                                                ?process11 cimv2:DummyClass.DummyKey "11" .
-                                                ?process12 cimv2:DummyClass.DummyKey "12" .
-                                                ?process13 cimv2:DummyClass.DummyKey "13" .
+                                                ?dummy11 cimv2:DummyClass.DummyKey "11" .
+                                                ?dummy12 cimv2:DummyClass.DummyKey "12" .
+                                                ?dummy13 cimv2:DummyClass.DummyKey "13" .
                                             }
                                         }
                                         union
                                         {
-                                            select ?process2
+                                            select ?dummy2
                                             where {
-                                                ?process21 cimv2:DummyClass.DummyKey "21" .
-                                                ?process22 cimv2:DummyClass.DummyKey "22" .
-                                                ?process23 cimv2:DummyClass.DummyKey "23" .
+                                                ?dummy21 cimv2:DummyClass.DummyKey "21" .
+                                                ?dummy22 cimv2:DummyClass.DummyKey "22" .
+                                                ?dummy23 cimv2:DummyClass.DummyKey "23" .
                                             }
                                         }
                                     }
@@ -424,8 +424,8 @@ public class SparqlBGPTreeExtractorTest {
                             }
                 """;
         String[] expectedSolution = {
-                "{process22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process11=null, process21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process13=null, process23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, process12=null}",
-                "{process11={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}, process22=null, process21=null, process13={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"13\" -> NODE_TYPE}, process12={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}, process23=null}"
+                "{dummy12={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}, dummy23=null, dummy11={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}, dummy22=null, dummy13={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"13\" -> NODE_TYPE}, dummy21=null}",
+                "{dummy23={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, dummy12=null, dummy22={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, dummy11=null, dummy13=null, dummy21={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"11\")",
@@ -443,22 +443,22 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
                         {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
-                                ?process2 cimv2:DummyClass.DummyKey "2" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "2" .
                         }
                         union
                         {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
-                                ?process3 cimv2:DummyClass.DummyKey "3" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy3 cimv2:DummyClass.DummyKey "3" .
                         }
                     }
                 """;
         String[] expectedSolution = {
-                "{process3=null, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
-                "{process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2=null, process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}",
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2=null, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}",
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy3=null}",
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -474,24 +474,24 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
-                                ?process0 cimv2:DummyClass.DummyKey "0" .
+                                ?dummy0 cimv2:DummyClass.DummyKey "0" .
                         {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
-                                ?process2 cimv2:DummyClass.DummyKey "2" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "2" .
                         }
                         union
                         {
-                                ?process3 cimv2:DummyClass.DummyKey "3" .
+                                ?dummy3 cimv2:DummyClass.DummyKey "3" .
                         }
                     }
                 """;
         String[] expectedSolution = {
-                "{process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process0={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}}"
+                "{dummy0={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}, dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"0\")",
@@ -507,27 +507,27 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
                         {
-                            select ?process
+                            select ?dummy
                             where {
-                                ?process cimv2:DummyClass.DummyKey "1" .
+                                ?dummy cimv2:DummyClass.DummyKey "1" .
                             }
                         }
                         union
                         {
-                            select ?process
+                            select ?dummy
                             where {
-                                ?process cimv2:DummyClass.DummyKey "2" .
+                                ?dummy cimv2:DummyClass.DummyKey "2" .
                             }
                         }
                     }
                     
         """;
         String[] expectedSolution = {
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -541,34 +541,34 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                            select ?process where 
+                            select ?dummy where 
                             {
                                 {
-                                    select ?process
+                                    select ?dummy
                                     where {
-                                        ?process cimv2:DummyClass.DummyKey "1" .
+                                        ?dummy cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
                                 {
-                                    select ?process
+                                    select ?dummy
                                     where {
-                                        ?process cimv2:DummyClass.DummyKey "2" .
+                                        ?dummy cimv2:DummyClass.DummyKey "2" .
                                     }
                                 }
                                 union
                                 {
-                                    select ?process
+                                    select ?dummy
                                     where {
-                                        ?process cimv2:DummyClass.DummyKey "3" .
+                                        ?dummy cimv2:DummyClass.DummyKey "3" .
                                     }
                                 }
                             }
                 """;
         String[] expectedSolution = {
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -583,29 +583,29 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                            select ?process where 
+                            select ?dummy where 
                             {
                                 {
-                                    select ?process
+                                    select ?dummy
                                     where {
-                                        ?process cimv2:DummyClass.DummyKey "1" .
+                                        ?dummy cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
                                 {
-                                    select ?process where 
+                                    select ?dummy where 
                                     {
                                         {
-                                            select ?process
+                                            select ?dummy
                                             where {
-                                                ?process cimv2:DummyClass.DummyKey "11" .
+                                                ?dummy cimv2:DummyClass.DummyKey "11" .
                                             }
                                         }
                                         union
                                         {
-                                            select ?process
+                                            select ?dummy
                                             where {
-                                                ?process cimv2:DummyClass.DummyKey "12" .
+                                                ?dummy cimv2:DummyClass.DummyKey "12" .
                                             }
                                         }
                                     }
@@ -613,9 +613,9 @@ public class SparqlBGPTreeExtractorTest {
                             }
                 """;
         String[] expectedSolution = {
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}}",
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
-                "{process={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}}"
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}}",
+                "{dummy={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
                 "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -630,41 +630,41 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process1 ?process2 ?process3 where 
+                    select ?dummy1 ?dummy2 ?dummy3 where 
                     {
                         {
-                            select ?process1 ?process2 ?process3
+                            select ?dummy1 ?dummy2 ?dummy3
                             where {
-                                ?process1 cimv2:DummyClass.DummyKey "11" .
-                                ?process2 cimv2:DummyClass.DummyKey "12" .
-                                ?process3 cimv2:DummyClass.DummyKey "13" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "11" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "12" .
+                                ?dummy3 cimv2:DummyClass.DummyKey "13" .
                             }
                         }
                         union
                         {
-                            select ?process1 ?process2 ?process3
+                            select ?dummy1 ?dummy2 ?dummy3
                             where {
-                                ?process1 cimv2:DummyClass.DummyKey "21" .
-                                ?process2 cimv2:DummyClass.DummyKey "22" .
-                                ?process3 cimv2:DummyClass.DummyKey "23" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "21" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "22" .
+                                ?dummy3 cimv2:DummyClass.DummyKey "23" .
                             }
                         }
                         union
                         {
-                            select ?process1 ?process2 ?process3
+                            select ?dummy1 ?dummy2 ?dummy3
                             where {
-                                ?process1 cimv2:DummyClass.DummyKey "31" .
-                                ?process2 cimv2:DummyClass.DummyKey "32" .
-                                ?process3 cimv2:DummyClass.DummyKey "33" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "31" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "32" .
+                                ?dummy3 cimv2:DummyClass.DummyKey "33" .
                             }
                         }
                     }
                     
         """;
         String[] expectedSolution = {
-            "{process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}}",
-            "{process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"13\" -> NODE_TYPE}, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}}",
-            "{process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}}",
+            "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"13\" -> NODE_TYPE}}",
+            "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}}",
+            "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}}",
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"11\")",
@@ -685,19 +685,19 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
                         {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
-                                ?process2 cimv2:DummyClass.DummyKey "2" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "2" .
                         }
                     }
                 """;
         String[] expectedSolution = {
-                "{process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
@@ -711,21 +711,21 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
-                                ?process0 cimv2:DummyClass.DummyKey "0" .
+                                ?dummy0 cimv2:DummyClass.DummyKey "0" .
                         {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
-                                ?process2 cimv2:DummyClass.DummyKey "2" .
+                                ?dummy2 cimv2:DummyClass.DummyKey "2" .
                         }
-                                ?process3 cimv2:DummyClass.DummyKey "3" .
+                                ?dummy3 cimv2:DummyClass.DummyKey "3" .
                     }
                 """;
         String[] expectedSolution = {
-                "{process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}, process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process0={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}}"
+                "{dummy0={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}, dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
             "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"0\")",
@@ -741,30 +741,51 @@ public class SparqlBGPTreeExtractorTest {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?process where 
+                    select ?dummy where 
                     {
                         {
-                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?dummy1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
                             {
-                                    ?process2 cimv2:DummyClass.DummyKey "2" .
+                                    ?dummy2 cimv2:DummyClass.DummyKey "2" .
                             }
                             union
                             {
-                                    ?process3 cimv2:DummyClass.DummyKey "3" .
+                                    ?dummy3 cimv2:DummyClass.DummyKey "3" .
                             }
                         }
                     }
                 """;
         String[] expectedSolution = {
-                "{process1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
+        };
+        HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
+    }
+
+    //@Test
+    public void Parse_Check_20() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?dummy_key where 
+                    {
+                        ?dummy cimv2:DummyClass.DummyKey ?dummy_key .
+                    }
+                """;
+        String[] expectedSolution = {
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
+        };
+        String[] expectedStatements = {
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
