@@ -26,14 +26,14 @@ abstract class BaseSelecter {
 class BaseSelecter_DummyClass_Caption extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
     {
-        // In this selecter, the column "Name" must be provided.
         return queryData.CompatibleQuery(
                 "DummyClass",
-                Set.of("DummyProperty"),
+                Set.of("DummyKey"),
                 new HashSet<>());
     }
 
     /** This returns test data given an attribute.
+     * It creates on the fly objects matching the query.
      *
      * @param queryData
      * @return
@@ -41,14 +41,12 @@ class BaseSelecter_DummyClass_Caption extends BaseSelecter {
      */
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String dummyValue = queryData.GetWhereValue("DummyProperty");
-        String[] splitValue = dummyValue.split("\\.");
-        // Convention for this test data.
-        if(splitValue.length != 2 || ! splitValue[0].equals("DummyKey_is")) {
-            throw new RuntimeException("Unexpected value:" + dummyValue + ":" + splitValue);
-        }
+        String dummyValue = queryData.GetWhereValue("DummyKey");
 
-        String pathDummy = ObjectPath.BuildPathWbem("DummyClass", Map.of("DummyKey", splitValue[1]));
+        // The key must be an integer.
+        Long.parseLong(dummyValue);
+
+        String pathDummy = ObjectPath.BuildPathWbem("DummyClass", Map.of("DummyKey", dummyValue));
         Solution.Row singleRow = new Solution.Row();
 
         singleRow.PutNode(queryData.mainVariable, pathDummy);

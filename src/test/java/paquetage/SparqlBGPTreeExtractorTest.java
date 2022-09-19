@@ -1,7 +1,9 @@
 package paquetage;
 
 import org.eclipse.rdf4j.model.Statement;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
@@ -10,6 +12,18 @@ import java.util.stream.Collectors;
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 public class SparqlBGPTreeExtractorTest {
+    @Before
+    public void setUp() throws Exception {
+        repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
+    }
+
+    //@Override
+    @After
+    public void tearDown() throws Exception {
+        repositoryWrapper = null;
+    }
+
+
     static Set<String> solutionToStringSet(Solution solution) {
         Set<String> asStrings = solution.stream().map(row -> row.toString()).collect(Collectors.toSet());
         return asStrings;
@@ -61,14 +75,14 @@ public class SparqlBGPTreeExtractorTest {
                         {
                             select ?process1
                             where {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
                             }
                         }
                         union
                         {
                             select ?process2
                             where {
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                ?process2 cimv2:DummyClass.DummyKey "2" .
                             }
                         }
                     }
@@ -79,8 +93,8 @@ public class SparqlBGPTreeExtractorTest {
                 "{process1=null, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -95,21 +109,21 @@ public class SparqlBGPTreeExtractorTest {
                                 {
                                     select ?process1
                                     where {
-                                        ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                        ?process1 cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
                                 {
                                     select ?process2
                                     where {
-                                        ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                        ?process2 cimv2:DummyClass.DummyKey "2" .
                                     }
                                 }
                                 union
                                 {
                                     select ?process3
                                     where {
-                                        ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                                        ?process3 cimv2:DummyClass.DummyKey "3" .
                                     }
                                 }
                             }
@@ -120,9 +134,9 @@ public class SparqlBGPTreeExtractorTest {
                 "{process1=null, process2=null, process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -135,18 +149,18 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?processX cimv2:DummyClass.DummyProperty "DummyKey_is.X" .
-                                ?processY cimv2:DummyClass.DummyProperty "DummyKey_is.Y" .
-                                ?processZ cimv2:DummyClass.DummyProperty "DummyKey_is.Z" .
+                                ?process10 cimv2:DummyClass.DummyKey "10" .
+                                ?process20 cimv2:DummyClass.DummyKey "20" .
+                                ?process30 cimv2:DummyClass.DummyKey "30" .
                             }
                 """;
         String[] expectedSolution = {
-                "{processY={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y\" -> NODE_TYPE}, processZ={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Z\" -> NODE_TYPE}, processX={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"X\" -> NODE_TYPE}}"
+                "{process10={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"10\" -> NODE_TYPE}, process20={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"20\" -> NODE_TYPE}, process30={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"30\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22X%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.X\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Z%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Z\")"
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2210%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"10\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"20\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2230%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"30\")"
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -161,7 +175,7 @@ public class SparqlBGPTreeExtractorTest {
                                 {
                                     select ?process1
                                     where {
-                                        ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                        ?process1 cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
@@ -171,14 +185,14 @@ public class SparqlBGPTreeExtractorTest {
                                         {
                                             select ?process21
                                             where {
-                                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.21" .
+                                                ?process1 cimv2:DummyClass.DummyKey "21" .
                                             }
                                         }
                                         union
                                         {
                                             select ?process22
                                             where {
-                                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.22" .
+                                                ?process2 cimv2:DummyClass.DummyKey "22" .
                                             }
                                         }
                                     }
@@ -191,9 +205,9 @@ public class SparqlBGPTreeExtractorTest {
                 "{process1=null, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.21\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.22\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"21\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"22\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -206,14 +220,14 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?processX cimv2:DummyClass.DummyProperty "DummyKey_is.X" .
+                                ?process10 cimv2:DummyClass.DummyKey "10" .
                             }
                 """;
         String[] expectedSolution = {
-                "{processX={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"X\" -> NODE_TYPE}}"
+                "{process10={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"10\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22X%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.X\")"
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2210%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"10\")"
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -225,21 +239,21 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?processX cimv2:DummyClass.DummyProperty "DummyKey_is.X" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
                                 {
                                     select *
                                     where {
-                                        ?processY cimv2:DummyClass.DummyProperty "DummyKey_is.Y" .
+                                        ?process2 cimv2:DummyClass.DummyKey "2" .
                                     }
                                 }
                             }
                 """;
         String[] expectedSolution = {
-                "{processY={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y\" -> NODE_TYPE}, processX={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"X\" -> NODE_TYPE}}"
+                "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22X%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.X\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -251,31 +265,27 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?processX cimv2:DummyClass.DummyProperty "DummyKey_is.X" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
                                 {
                                     select *
                                     where {
-                                        ?processY1 cimv2:DummyClass.DummyProperty "DummyKey_is.Y1" .
-                                        ?processY2 cimv2:DummyClass.DummyProperty "DummyKey_is.Y2" .
-                                        ?processY3 cimv2:DummyClass.DummyProperty "DummyKey_is.Y3" .
+                                        ?process21 cimv2:DummyClass.DummyKey "21" .
+                                        ?process22 cimv2:DummyClass.DummyKey "22" .
+                                        ?process23 cimv2:DummyClass.DummyKey "23" .
                                     }
                                 }
-                                ?processY cimv2:DummyClass.DummyProperty "DummyKey_is.Y" .
+                                ?process2 cimv2:DummyClass.DummyKey "2" .
                             }
                 """;
         String[] expectedSolution = {
-                "{processY1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y1\" -> NODE_TYPE}, "
-                +"processY={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y\" -> NODE_TYPE}, "
-                +"processY3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y3\" -> NODE_TYPE}, "
-                +"processX={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"X\" -> NODE_TYPE}, "
-                +"processY2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y2\" -> NODE_TYPE}}"
+                "{process22={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process21={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process23={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22X%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.X\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y1%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y1\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y2%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y2\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y3%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y3\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"21\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"22\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"23\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -287,38 +297,38 @@ public class SparqlBGPTreeExtractorTest {
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                             select *
                             where {
-                                ?processX cimv2:DummyClass.DummyProperty "DummyKey_is.X" .
+                                ?processX cimv2:DummyClass.DummyKey "1" .
                                 {
                                     select *
                                     where {
-                                        ?processY1 cimv2:DummyClass.DummyProperty "DummyKey_is.Y1" .
-                                        ?processY2 cimv2:DummyClass.DummyProperty "DummyKey_is.Y2" .
-                                        ?processY3 cimv2:DummyClass.DummyProperty "DummyKey_is.Y3" .
+                                        ?process21 cimv2:DummyClass.DummyKey "21" .
+                                        ?process22 cimv2:DummyClass.DummyKey "22" .
+                                        ?process23 cimv2:DummyClass.DummyKey "23" .
                                     }
                                 }
-                                ?processY cimv2:DummyClass.DummyProperty "DummyKey_is.Y" .
+                                ?process2 cimv2:DummyClass.DummyKey "2" .
                                 {
                                     select *
                                     where {
-                                        ?processZ1 cimv2:DummyClass.DummyProperty "DummyKey_is.Z1" .
-                                        ?processZ2 cimv2:DummyClass.DummyProperty "DummyKey_is.Z2" .
-                                        ?processZ3 cimv2:DummyClass.DummyProperty "DummyKey_is.Z3" .
+                                        ?process31 cimv2:DummyClass.DummyKey "31" .
+                                        ?process32 cimv2:DummyClass.DummyKey "32" .
+                                        ?process33 cimv2:DummyClass.DummyKey "33" .
                                     }
                                 }
                             }
                 """;
         String[] expectedSolution = {
-                "{processY3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y3\" -> NODE_TYPE}, processY2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y2\" -> NODE_TYPE}, processZ3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Z3\" -> NODE_TYPE}, processY1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y1\" -> NODE_TYPE}, processZ2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Z2\" -> NODE_TYPE}, processZ1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Z1\" -> NODE_TYPE}, processY={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"Y\" -> NODE_TYPE}, processX={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"X\" -> NODE_TYPE}}"
+                "{process22={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process33={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}, process21={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process32={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}, process31={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, processX={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process23={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22X%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.X\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y1%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y2%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y2\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Y3%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Y3\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Z1%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Z1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Z2%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Z2\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22Z3%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.Z3\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"21\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"22\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"23\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2231%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"31\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2232%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"32\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2233%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"33\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -333,27 +343,27 @@ public class SparqlBGPTreeExtractorTest {
                         {
                             select ?process1
                             where {
-                                ?process11 cimv2:DummyClass.DummyProperty "DummyKey_is.11" .
-                                ?process12 cimv2:DummyClass.DummyProperty "DummyKey_is.12" .
-                                ?process13 cimv2:DummyClass.DummyProperty "DummyKey_is.13" .
+                                ?process11 cimv2:DummyClass.DummyKey "11" .
+                                ?process12 cimv2:DummyClass.DummyKey "12" .
+                                ?process13 cimv2:DummyClass.DummyKey "13" .
                             }
                         }
                         union
                         {
                             select ?process2
                             where {
-                                ?process21 cimv2:DummyClass.DummyProperty "DummyKey_is.21" .
-                                ?process22 cimv2:DummyClass.DummyProperty "DummyKey_is.22" .
-                                ?process23 cimv2:DummyClass.DummyProperty "DummyKey_is.23" .
+                                ?process21 cimv2:DummyClass.DummyKey "21" .
+                                ?process22 cimv2:DummyClass.DummyKey "22" .
+                                ?process23 cimv2:DummyClass.DummyKey "23" .
                             }
                         }
                         union
                         {
                             select ?process3
                             where {
-                                ?process31 cimv2:DummyClass.DummyProperty "DummyKey_is.31" .
-                                ?process32 cimv2:DummyClass.DummyProperty "DummyKey_is.32" .
-                                ?process33 cimv2:DummyClass.DummyProperty "DummyKey_is.33" .
+                                ?process31 cimv2:DummyClass.DummyKey "31" .
+                                ?process32 cimv2:DummyClass.DummyKey "32" .
+                                ?process33 cimv2:DummyClass.DummyKey "33" .
                             }
                         }
                     }
@@ -365,15 +375,15 @@ public class SparqlBGPTreeExtractorTest {
                 "{process22={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process33=null, process11=null, process21={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process32=null, process31=null, process13=null, process23={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, process12=null}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.11\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2212%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.12\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2213%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.13\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.21\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.22\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.23\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2231%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.31\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2232%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.32\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2233%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.33\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"11\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2212%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"12\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2213%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"13\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"21\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"22\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"23\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2231%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"31\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2232%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"32\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2233%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"33\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -390,20 +400,20 @@ public class SparqlBGPTreeExtractorTest {
                                     select *
                                     where {
                                         {
-                                            select ?process_a
+                                            select ?process1
                                             where {
-                                                ?process_aa cimv2:DummyClass.DummyProperty "DummyKey_is.aa" .
-                                                ?process_ab cimv2:DummyClass.DummyProperty "DummyKey_is.ab" .
-                                                ?process_ac cimv2:DummyClass.DummyProperty "DummyKey_is.ac" .
+                                                ?process11 cimv2:DummyClass.DummyKey "11" .
+                                                ?process12 cimv2:DummyClass.DummyKey "12" .
+                                                ?process13 cimv2:DummyClass.DummyKey "13" .
                                             }
                                         }
                                         union
                                         {
-                                            select ?process_b
+                                            select ?process2
                                             where {
-                                                ?process_ba cimv2:DummyClass.DummyProperty "DummyKey_is.ba" .
-                                                ?process_bb cimv2:DummyClass.DummyProperty "DummyKey_is.bb" .
-                                                ?process_bc cimv2:DummyClass.DummyProperty "DummyKey_is.bc" .
+                                                ?process21 cimv2:DummyClass.DummyKey "21" .
+                                                ?process22 cimv2:DummyClass.DummyKey "22" .
+                                                ?process23 cimv2:DummyClass.DummyKey "23" .
                                             }
                                         }
                                     }
@@ -411,16 +421,16 @@ public class SparqlBGPTreeExtractorTest {
                             }
                 """;
         String[] expectedSolution = {
-                "{process_ba=null, process_ac={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"ac\" -> NODE_TYPE}, process_aa={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"aa\" -> NODE_TYPE}, process_bb=null, process_ab={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"ab\" -> NODE_TYPE}, process_bc=null}",
-                "{process_ac=null, process_bb={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"bb\" -> NODE_TYPE}, process_aa=null, process_bc={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"bc\" -> NODE_TYPE}, process_ab=null, process_ba={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"ba\" -> NODE_TYPE}}"
+                "{process22={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"22\" -> NODE_TYPE}, process11=null, process21={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"21\" -> NODE_TYPE}, process13=null, process23={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"23\" -> NODE_TYPE}, process12=null}",
+                "{process11={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}, process22=null, process21=null, process13={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"13\" -> NODE_TYPE}, process12={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}, process23=null}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22aa%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.aa\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22ab%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.ab\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22ac%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.ac\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22ba%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.ba\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22bb%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.bb\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22bc%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.bc\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"11\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2212%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"12\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2213%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"13\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"21\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"22\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"23\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -433,13 +443,13 @@ public class SparqlBGPTreeExtractorTest {
                     select ?process where 
                     {
                         {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?process2 cimv2:DummyClass.DummyKey "2" .
                         }
                         union
                         {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
-                                ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
+                                ?process3 cimv2:DummyClass.DummyKey "3" .
                         }
                     }
                 """;
@@ -448,10 +458,10 @@ public class SparqlBGPTreeExtractorTest {
                 "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2=null, process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}",
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -463,17 +473,17 @@ public class SparqlBGPTreeExtractorTest {
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?process where 
                     {
-                                ?process0 cimv2:DummyClass.DummyProperty "DummyKey_is.0" .
+                                ?process0 cimv2:DummyClass.DummyKey "0" .
                         {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                ?process2 cimv2:DummyClass.DummyKey "2" .
                         }
                         union
                         {
-                                ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                                ?process3 cimv2:DummyClass.DummyKey "3" .
                         }
                     }
                 """;
@@ -481,10 +491,10 @@ public class SparqlBGPTreeExtractorTest {
                 "{process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}, process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process0={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.0\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"0\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -499,14 +509,14 @@ public class SparqlBGPTreeExtractorTest {
                         {
                             select ?process
                             where {
-                                ?process cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                ?process cimv2:DummyClass.DummyKey "1" .
                             }
                         }
                         union
                         {
                             select ?process
                             where {
-                                ?process cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                ?process cimv2:DummyClass.DummyKey "2" .
                             }
                         }
                     }
@@ -517,8 +527,8 @@ public class SparqlBGPTreeExtractorTest {
                 "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -533,21 +543,21 @@ public class SparqlBGPTreeExtractorTest {
                                 {
                                     select ?process
                                     where {
-                                        ?process cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                        ?process cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
                                 {
                                     select ?process
                                     where {
-                                        ?process cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                        ?process cimv2:DummyClass.DummyKey "2" .
                                     }
                                 }
                                 union
                                 {
                                     select ?process
                                     where {
-                                        ?process cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                                        ?process cimv2:DummyClass.DummyKey "3" .
                                     }
                                 }
                             }
@@ -558,9 +568,9 @@ public class SparqlBGPTreeExtractorTest {
                 "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -575,7 +585,7 @@ public class SparqlBGPTreeExtractorTest {
                                 {
                                     select ?process
                                     where {
-                                        ?process cimv2:DummyClass.DummyProperty "DummyKey_is.a" .
+                                        ?process cimv2:DummyClass.DummyKey "1" .
                                     }
                                 }
                                 union
@@ -585,14 +595,14 @@ public class SparqlBGPTreeExtractorTest {
                                         {
                                             select ?process
                                             where {
-                                                ?process cimv2:DummyClass.DummyProperty "DummyKey_is.aa" .
+                                                ?process cimv2:DummyClass.DummyKey "11" .
                                             }
                                         }
                                         union
                                         {
                                             select ?process
                                             where {
-                                                ?process cimv2:DummyClass.DummyProperty "DummyKey_is.ab" .
+                                                ?process cimv2:DummyClass.DummyKey "12" .
                                             }
                                         }
                                     }
@@ -600,14 +610,14 @@ public class SparqlBGPTreeExtractorTest {
                             }
                 """;
         String[] expectedSolution = {
-                "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"a\" -> NODE_TYPE}}",
-                "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"aa\" -> NODE_TYPE}}",
-                "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"ab\" -> NODE_TYPE}}"
+                "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"12\" -> NODE_TYPE}}",
+                "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
+                "{process={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"11\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22a%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.a\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22aa%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.aa\")",
-                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%22ab%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.ab\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"11\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2212%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"12\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -622,27 +632,27 @@ public class SparqlBGPTreeExtractorTest {
                         {
                             select ?process1 ?process2 ?process3
                             where {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.11" .
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.12" .
-                                ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.13" .
+                                ?process1 cimv2:DummyClass.DummyKey "11" .
+                                ?process2 cimv2:DummyClass.DummyKey "12" .
+                                ?process3 cimv2:DummyClass.DummyKey "13" .
                             }
                         }
                         union
                         {
                             select ?process1 ?process2 ?process3
                             where {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.21" .
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.22" .
-                                ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.23" .
+                                ?process1 cimv2:DummyClass.DummyKey "21" .
+                                ?process2 cimv2:DummyClass.DummyKey "22" .
+                                ?process3 cimv2:DummyClass.DummyKey "23" .
                             }
                         }
                         union
                         {
                             select ?process1 ?process2 ?process3
                             where {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.31" .
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.32" .
-                                ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.33" .
+                                ?process1 cimv2:DummyClass.DummyKey "31" .
+                                ?process2 cimv2:DummyClass.DummyKey "32" .
+                                ?process3 cimv2:DummyClass.DummyKey "33" .
                             }
                         }
                     }
@@ -654,15 +664,15 @@ public class SparqlBGPTreeExtractorTest {
             "{process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"33\" -> NODE_TYPE}, process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"31\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"32\" -> NODE_TYPE}}",
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.11\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2212%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.12\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2213%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.13\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.21\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.22\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.23\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2231%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.31\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2232%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.32\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2233%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.33\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2211%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"11\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2212%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"12\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2213%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"13\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"21\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"22\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"23\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2231%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"31\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2232%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"32\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%2233%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"33\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -675,11 +685,11 @@ public class SparqlBGPTreeExtractorTest {
                     select ?process where 
                     {
                         {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                ?process2 cimv2:DummyClass.DummyKey "2" .
                         }
                     }
                 """;
@@ -687,8 +697,8 @@ public class SparqlBGPTreeExtractorTest {
                 "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -700,25 +710,25 @@ public class SparqlBGPTreeExtractorTest {
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?process where 
                     {
-                                ?process0 cimv2:DummyClass.DummyProperty "DummyKey_is.0" .
+                                ?process0 cimv2:DummyClass.DummyKey "0" .
                         {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
-                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                ?process2 cimv2:DummyClass.DummyKey "2" .
                         }
-                                ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                                ?process3 cimv2:DummyClass.DummyKey "3" .
                     }
                 """;
         String[] expectedSolution = {
                 "{process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}, process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process0={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.0\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"0\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -731,16 +741,16 @@ public class SparqlBGPTreeExtractorTest {
                     select ?process where 
                     {
                         {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                                ?process1 cimv2:DummyClass.DummyKey "1" .
                         }
                         union
                         {
                             {
-                                    ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                                    ?process2 cimv2:DummyClass.DummyKey "2" .
                             }
                             union
                             {
-                                    ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                                    ?process3 cimv2:DummyClass.DummyKey "3" .
                             }
                         }
                     }
@@ -749,9 +759,9 @@ public class SparqlBGPTreeExtractorTest {
                 "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
-            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
