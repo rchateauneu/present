@@ -25,9 +25,9 @@ abstract class BaseExpressionNode implements InterfaceExpressionNode {
     BaseExpressionNode parent = null;
     BaseExpressionNode(BaseExpressionNode parent) {
         if((parent != null) && (parent instanceof JoinExpressionNode)) {
-            if(!(this instanceof ProjectionExpressionNode)) {
-                throw new RuntimeException("Join must not have children except Projection:" + this.getClass().getName());
-            }
+            //if(!(this instanceof ProjectionExpressionNode)) {
+            //    throw new RuntimeException("Join must not have children except Projection:" + this.getClass().getName());
+            //}
         }
         this.parent = parent;
         if(parent != null)
@@ -285,7 +285,7 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         GenericReport(statementPatternNode);
 
         // If the parent is not a join, create a join child.
-        if(parent instanceof ProjectionExpressionNode) {
+        if(parent instanceof ProjectionExpressionNode || parent instanceof UnionExpressionNode) {
             JoinExpressionNode joinParent = new JoinExpressionNode(parent);
             parent = joinParent;
         } else if(! (parent instanceof JoinExpressionNode)) {
@@ -328,7 +328,8 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
             }
             for(BaseExpressionNode child : node.children) {
                 if (!(child instanceof ProjectionExpressionNode)) {
-                    throw new RuntimeException("Join node should have only Projection as children.");
+                    // throw new RuntimeException("Join node should have only Projection as children, not:" + child.getClass().getName());
+                    logger.warn("Join node should have only Projection as children, not:" + child.getClass().getName());
                 }
             }
             joinNode.JoinBGPPartition();

@@ -432,23 +432,26 @@ public class SparqlBGPTreeExtractorTest {
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?process where 
                     {
-                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
-                        union
                         {
+                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
                                 ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
                         }
                         union
                         {
+                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
                                 ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
                         }
                     }
                 """;
         String[] expectedSolution = {
-                "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
-                "{process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
-                "{process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
+                "{process3=null, process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
+                "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2=null, process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}",
         };
         String[] expectedStatements = {
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
@@ -475,15 +478,16 @@ public class SparqlBGPTreeExtractorTest {
                     }
                 """;
         String[] expectedSolution = {
-                "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}}",
-                "{process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
-                "{process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
+                "{process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}, process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process0={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}}"
         };
         String[] expectedStatements = {
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.0\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
-    // Ajouter SubQuery et Intersection et LeftJoin etc...
 
     @Test
     public void Parse_Check_13() throws Exception {
@@ -662,6 +666,98 @@ public class SparqlBGPTreeExtractorTest {
         };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
+
+    @Test
+    public void Parse_Check_17() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?process where 
+                    {
+                        {
+                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                        }
+                        union
+                        {
+                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                        }
+                    }
+                """;
+        String[] expectedSolution = {
+                "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
+        };
+        String[] expectedStatements = {
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+        };
+        HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
+    }
+
+    @Test
+    public void Parse_Check_18() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?process where 
+                    {
+                                ?process0 cimv2:DummyClass.DummyProperty "DummyKey_is.0" .
+                        {
+                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                        }
+                        union
+                        {
+                                ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                        }
+                                ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                    }
+                """;
+        String[] expectedSolution = {
+                "{process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}, process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process0={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"0\" -> NODE_TYPE}}"
+        };
+        String[] expectedStatements = {
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%220%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.0\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+        };
+        HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
+    }
+
+    @Test
+    public void Parse_Check_19() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?process where 
+                    {
+                        {
+                                ?process1 cimv2:DummyClass.DummyProperty "DummyKey_is.1" .
+                        }
+                        union
+                        {
+                            {
+                                    ?process2 cimv2:DummyClass.DummyProperty "DummyKey_is.2" .
+                            }
+                            union
+                            {
+                                    ?process3 cimv2:DummyClass.DummyProperty "DummyKey_is.3" .
+                            }
+                        }
+                    }
+                """;
+        String[] expectedSolution = {
+                "{process1={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, process2={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, process3={\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}"
+        };
+        String[] expectedStatements = {
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.1\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.2\")",
+            "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyProperty, \"DummyKey_is.3\")",
+        };
+        HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
+    }
+
+
+    // Ajouter SubQuery et Intersection et LeftJoin etc...
 
 }
 
