@@ -25,7 +25,6 @@ public class SparqlBGPExtractor {
     public Set<String> bindings;
 
     // This should be private except for tests.
-    // Ca va etre un expressionTree
     public Map<String, ObjectPattern> patternsMap;
 
     // These are the raw patterns extracted from the query. They may contain variables which are not defined
@@ -94,16 +93,7 @@ public class SparqlBGPExtractor {
 
         private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
 
-        // @Override
-        /*
-        public void meet(TripleRef node) {
-            // FIXME: Why is it disabled and not overriden ?
-            logger.warn("TripleRef=" + node);
-        }
-        */
-
         @Override
-        // public void meet(org.eclipse.rdf4j.query.algebra.Namespace namespaceNode) throws Exception {
         public void meet(Namespace namespaceNode) throws Exception {
             // FIXME: Why is it disabled and not overriden ?
             logger.debug("Namespace=" + namespaceNode);

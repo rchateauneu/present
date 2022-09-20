@@ -25,9 +25,6 @@ abstract class BaseExpressionNode implements InterfaceExpressionNode {
     BaseExpressionNode parent = null;
     BaseExpressionNode(BaseExpressionNode parent) {
         if((parent != null) && (parent instanceof JoinExpressionNode)) {
-            //if(!(this instanceof ProjectionExpressionNode)) {
-            //    throw new RuntimeException("Join must not have children except Projection:" + this.getClass().getName());
-            //}
         }
         this.parent = parent;
         if(parent != null)
@@ -87,21 +84,18 @@ class JoinExpressionNode extends BaseExpressionNode {
         logger.debug("children.size()=" + children.size() + " visitorPatternsRaw.size()=" + visitorPatternsRaw.size());
         try {
             SparqlTranslation patternSparql = new SparqlTranslation(patternsAsArray());
+            /*
+            TODO: This solution is returned only for testing.
+            TODO: It is possible to get rid of it and keep only the solutions in nodes which have a BGP.
+             */
             localSolution = patternSparql.ExecuteToRows();
             logger.debug("Solution:" + localSolution.size() + " Header=" + localSolution.header());
-            /*
-            TODO: On ne renvoie une "Solution" que pour tester et debugger.
-            TODO: On pourra s'en passer et ne garder une Solution que dans les nodes qui ont des BGP.
-             */
 
-            // Now proceed just like what ?
+            // TODO: Avoid this cartesian product by merging BGPs in lower nodes.
             for(BaseExpressionNode child : children){
                 Solution subSolution = child.Evaluate();
                 Solution cartesianProduct = localSolution.CartesianProduct(subSolution);
                 localSolution = cartesianProduct;
-                // TOOD: Ce n'est pas une Union : Il faut faire un produit cartesien.
-                // Mais il aurait fallu "remonter" les joins en dessous. Mais quid des Projection ??
-                // Pour le moment, on s'en fout, on n'optimise pas.
             }
             return localSolution;
         }
@@ -194,7 +188,7 @@ class UnionExpressionNode extends BaseExpressionNode {
             Solution childSolution = expressionNode.Evaluate();
             logger.debug("childSolution:" + childSolution.size() + " Header=" + childSolution.header());
             /* TODO: Instead of creating a new solution, why not pass a visitor to immediately generate triples ?
-            TODO: On the other hand, it would be less clear.
+            TODO: On the other hand, it is more difficult to test.
             */
 
             // FIXME: What about bindings, i.e. renaming of columns ?
@@ -248,11 +242,6 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         JoinExpressionNode nextParent;
         // If the ancestor is also a join, reuse it instead of creating a new one.
         if(isParentJoin) {
-            /*
-            if(parent.children.isEmpty()) {
-                throw new RuntimeException("Parent should not be empty");
-            }
-            */
             nextParent = (JoinExpressionNode)parent;
         } else {
             nextParent = new JoinExpressionNode(parent);
@@ -277,16 +266,21 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
 
     @Override
     public void meet(StatementPattern statementPatternNode) {
-            /* Store this statement. At the end, they are grouped by subject, and the associated WMI instances
-            are loaded then inserted in the repository, and then the original Sparql query is run.
-            */
+        /* Store this statement. At the end, they are grouped by subject, and the associated WMI instances
+        are loaded then inserted in the repository, and then the original Sparql query is run.
+
+        This correctly parses paths like:
+        "?service1 ^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent ?service2"
+        and creates anonymous nodes, but this is not allowed yet.
+        However, anonymous nodes in fixed-length paths should be processed by creating an anonymous variable.
+        */
         logger.debug("StatementPattern=" + statementPatternNode);
         GenericReport(statementPatternNode);
 
         // If the parent is not a join, create a join child.
         if(parent instanceof ProjectionExpressionNode) {
             JoinExpressionNode joinParent = new JoinExpressionNode(parent);
-            // NOT SURE ??? WHY CHANGING THE PARENT ?
+            // TODO: Is it really necessary to change the parent ?
             parent = joinParent;
             JoinExpressionNode realJoin = (JoinExpressionNode)parent;
             realJoin.AddPattern(statementPatternNode);
@@ -304,11 +298,11 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
 
     @Override
     public void meet(ArbitraryLengthPath arbitraryLengthPathNode) {
-            /* This correctly parses paths like:
-            "?service1 (^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent)+ ?service2"
-            and creates anonymous nodes, but this is not allowed yet. Arbitrary length paths need
-            a special exploration of WMI instances.
-            */
+        /* This correctly parses paths like:
+        "?service1 (^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent)+ ?service2"
+        and creates anonymous nodes, but this is not allowed yet. Arbitrary length paths need
+        a special exploration of WMI instances.
+        */
         logger.debug("ArbitraryLengthPath=" + arbitraryLengthPathNode);
         throw new RuntimeException("ArbitraryLengthPath are not allowed yet.");
     }
@@ -317,8 +311,6 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
     public void meet(Service serviceNode) {
         // Do not store the statements of the serviceNode,
         // because it does not make sense to preload its content with WMI.
-        // J'imagine que l'impementation par defaut va visiter les noeuds inferieurs,
-        // ce qu'on ne veut pas faire.
         logger.debug("Service=" + serviceNode);
     }
 
@@ -340,8 +332,6 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
                 }
             }
             joinNode.JoinBGPPartition();
-
-            // return;
         }
         for(BaseExpressionNode child : node.children) {
             PartitionBGPAux(child);
