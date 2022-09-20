@@ -105,7 +105,6 @@ class JoinExpressionNode extends BaseExpressionNode {
             }
             return localSolution;
         }
-
         catch(Exception exc) {
             throw new RuntimeException(exc);
         }
@@ -285,14 +284,22 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         GenericReport(statementPatternNode);
 
         // If the parent is not a join, create a join child.
-        if(parent instanceof ProjectionExpressionNode || parent instanceof UnionExpressionNode) {
+        if(parent instanceof ProjectionExpressionNode) {
             JoinExpressionNode joinParent = new JoinExpressionNode(parent);
+            // NOT SURE ??? WHY CHANGING THE PARENT ?
             parent = joinParent;
+            JoinExpressionNode realJoin = (JoinExpressionNode)parent;
+            realJoin.AddPattern(statementPatternNode);
+        } else if(parent instanceof UnionExpressionNode) {
+            // Do not change the parent. This creates a single "Join" node for a single pattern.
+            JoinExpressionNode joinParent = new JoinExpressionNode(parent);
+            joinParent.AddPattern(statementPatternNode);
         } else if(! (parent instanceof JoinExpressionNode)) {
             throw new RuntimeException("Invalid parent type:" + parent.getClass().getName());
+        } else {
+            JoinExpressionNode realJoin = (JoinExpressionNode)parent;
+            realJoin.AddPattern(statementPatternNode);
         }
-        JoinExpressionNode realJoin = (JoinExpressionNode)parent;
-        realJoin.AddPattern(statementPatternNode);
     }
 
     @Override

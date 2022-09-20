@@ -22,8 +22,12 @@ abstract class BaseSelecter {
 
 // TODO: Put these providers into different files ?.
 
+class DummyClass {
+    static public int MaxElements = 10;
+}
+
 /** This class is exclusively used for testing. */
-class BaseSelecter_DummyClass_Caption extends BaseSelecter {
+class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
     {
         return queryData.CompatibleQuery(
@@ -44,15 +48,53 @@ class BaseSelecter_DummyClass_Caption extends BaseSelecter {
         String dummyValue = queryData.GetWhereValue("DummyKey");
 
         // The key must be an integer.
-        Long.parseLong(dummyValue);
+        long intDummyValue = Long.parseLong(dummyValue);
 
-        // This assumes that this dummy class is in the namespace "Root/Cimv2"
-        String pathDummy = ObjectPath.BuildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyValue));
-        Solution.Row singleRow = new Solution.Row();
+        if(intDummyValue >= 0 || intDummyValue < DummyClass.MaxElements) {
+            // This assumes that this dummy class is in the namespace "Root/Cimv2"
+            String pathDummy = ObjectPath.BuildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyValue));
+            Solution.Row singleRow = new Solution.Row();
 
-        singleRow.PutNode(queryData.mainVariable, pathDummy);
+            singleRow.PutNode(queryData.mainVariable, pathDummy);
 
-        result.add(singleRow);
+            result.add(singleRow);
+        }
+        return result;
+    }
+}
+
+/** This class is exclusively used for testing. */
+class BaseSelecter_DummyClass_All extends BaseSelecter {
+    public boolean MatchProvider(QueryData queryData)
+    {
+        return queryData.CompatibleQuery(
+                "DummyClass",
+                Set.of(),
+                Set.of("DummyKey"));
+    }
+
+    /** This returns test data given an attribute.
+     * It creates 100 objects used for testing.
+     *
+     * @param queryData
+     * @return
+     * @throws Exception
+     */
+    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+        Solution result = new Solution();
+
+        for(int key = 0; key < DummyClass.MaxElements; ++key) {
+            String dummyKey = Long.toString(key);
+            // This assumes that this dummy class is in the namespace "Root/Cimv2"
+            String pathDummy = ObjectPath.BuildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyKey));
+            Solution.Row singleRow = new Solution.Row();
+
+            singleRow.PutNode(queryData.mainVariable, pathDummy);
+            String variableName = queryData.ColumnToVariable("DummyKey");
+            singleRow.PutString(variableName, dummyKey);
+
+            result.add(singleRow);
+        }
         return result;
     }
 }
@@ -480,7 +522,8 @@ public class GenericProvider {
     static private WmiProvider WmiProvider = new WmiProvider();
 
     static private BaseSelecter[] baseSelecters = {
-        new BaseSelecter_DummyClass_Caption(),
+        new BaseSelecter_DummyClass_DummyKey(),
+        new BaseSelecter_DummyClass_All(),
         new BaseSelecter_CIM_DataFile_Name(),
         new BaseSelecter_CIM_DirectoryContainsFile_PartComponent(),
         new BaseSelecter_CIM_DirectoryContainsFile_GroupComponent(),
