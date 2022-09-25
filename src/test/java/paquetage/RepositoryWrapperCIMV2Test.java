@@ -1317,17 +1317,22 @@ public class RepositoryWrapperCIMV2Test {
 
             RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-            Set<String> actualDirNames = PresentUtils.StringValuesSet(listRows,"dir_name");
-            System.out.println("actualDirNames=" + actualDirNames);
+            Set<String> actualDirNames = PresentUtils.StringValuesSet(listRows,"dir_name").stream().map(s -> s.toUpperCase()).collect(Collectors.toSet());
+            ArrayList<String> actualDirNamesArray = new ArrayList<>(actualDirNames);
+            Collections.sort(actualDirNamesArray);
+            System.out.println("actualDirNamesArray=" + actualDirNamesArray);
 
             Path directory = Paths.get("C:\\WINDOWS");
 
             Set<String> expectedDirNames = Files.walk(directory, 1).filter(entry -> !entry.equals(directory))
-                    .filter(Files::isDirectory).map(p -> p.getFileName().toString()).collect(Collectors.toSet());
+                    .filter(Files::isDirectory)
+                    .map(p -> "\"" + p.getFileName().toString().toUpperCase() + "\"")
+                    .collect(Collectors.toSet());
+            ArrayList<String> expectedDirNamesArray = new ArrayList<>(expectedDirNames);
+            Collections.sort(expectedDirNamesArray);
+            System.out.println("expectedDirNamesArray=" + expectedDirNamesArray);
 
-            System.out.println("expectedDirNames=" + expectedDirNames);
-
-            Assert.assertEquals(expectedDirNames, actualDirNames);
+            Assert.assertEquals(expectedDirNamesArray, actualDirNamesArray);
         }
 
 
