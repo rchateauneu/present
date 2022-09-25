@@ -28,13 +28,6 @@ import java.util.*;
 public class StatementsGenerationTest {
     ValueFactory factory = SimpleValueFactory.getInstance();
 
-    static ObjectPattern FindObjectPattern(SparqlBGPExtractor extractor, String variable) {
-        ObjectPattern pattern = extractor.patternsMap.get(variable);
-        Assert.assertNotEquals(null, pattern);
-        Assert.assertEquals(variable, pattern.VariableName);
-        return pattern;
-    }
-
     static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
         Assert.assertEquals(predicate, a.Predicate);
         Assert.assertEquals(isVariable, a.IsVariableObject);
@@ -55,13 +48,14 @@ public class StatementsGenerationTest {
                 ?my_dir cimv2:Name ?dir_name .
             }
         """;
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery, false);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 1);
 
         // Check the exact content of the BGP.
-        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
+        ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
         Assert.assertEquals(patternWin32_Directory.ClassName, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
@@ -104,13 +98,14 @@ public class StatementsGenerationTest {
                 ?my_dir cimv2:Name ?dir_name .
             }
         """;
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery, false);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 1);
 
         // Check the exact content of the BGP.
-        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
+        ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
         Assert.assertEquals(patternWin32_Directory.ClassName, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 1);
         CompareKeyValue(patternWin32_Directory.Members.get(0), PresentUtils.toCIMV2("Name"), true, "dir_name");
@@ -176,13 +171,14 @@ public class StatementsGenerationTest {
                 ?my_dir cimv2:Caption ?dir_caption .
             }
         """;
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery, false);
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_caption", "dir_name"));
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 1);
 
         // Check the exact content of the BGP.
-        ObjectPattern patternWin32_Directory = FindObjectPattern(extractor, "my_dir");
+        ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
         Assert.assertEquals(patternWin32_Directory.ClassName, PresentUtils.toCIMV2("Win32_Directory"));
         Assert.assertEquals(patternWin32_Directory.Members.size(), 2);
         CompareKeyValue(patternWin32_Directory.Members.get(1), PresentUtils.toCIMV2("Caption"), true, "dir_caption");

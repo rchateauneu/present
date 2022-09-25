@@ -72,7 +72,7 @@ public class RepositoryWrapperStandardCimv2Test {
      * or it is faster to select from processes than from sockets.
      *
      * TODO: Optimisation: Si deux requetes successives ne dependent pas l'une de l'autre,
-     * ne faire la seconde qu'une seule fois. Soit on garde le resultat en cache, soit etc...
+     * TODO: ne faire la seconde qu'une seule fois. Soit on garde le resultat en cache, soit etc...
      *
      * @throws Exception
      */
@@ -133,7 +133,6 @@ public class RepositoryWrapperStandardCimv2Test {
         Assert.assertTrue(namesProcesses.contains("\"System\""));
     }
 
-
     /**
      * Select TCP connections of the Microsoft TCP/IP WMI v2 provider, and the names of the parent
      * processes of the processes holding these connections.
@@ -161,12 +160,9 @@ public class RepositoryWrapperStandardCimv2Test {
         System.out.println("namesProcesses=" + namesProcesses);
         // The parents of the processes which opened local socket connections.
         Assert.assertTrue(namesProcesses.contains("\"System Idle Process\""));
-        //Assert.assertTrue(namesProcesses.contains("\"svchost.exe\""));
         Assert.assertTrue(namesProcesses.contains("\"services.exe\""));
-        //Assert.assertTrue(namesProcesses.contains("\"UpdaterService.exe\""));
         Assert.assertTrue(namesProcesses.contains("\"explorer.exe\""));
         Assert.assertTrue(namesProcesses.contains("\"wininit.exe\""));
-        //.assertTrue(namesProcesses.contains("\"wfcrun32.exe\""));
     }
 
     /**

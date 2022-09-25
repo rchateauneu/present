@@ -214,8 +214,4 @@ public class SparqlTranslation {
     return solution;
     }
 
-    public Solution ExecuteToRowsOptimized() throws Exception {
-        return null;
-    }
-
 }

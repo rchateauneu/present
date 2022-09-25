@@ -321,6 +321,15 @@ public class Solution implements Iterable<Solution.Row> {
                 }
                 throw new RuntimeException("Data type not handled:" + valueType);
             }
+
+            static boolean identical(ValueTypePair one, ValueTypePair other) {
+                if (one == null && other == null) return true;
+                if (one == null || other == null) return false;
+                if (one.m_Type != other.m_Type) return false;
+                if(one.m_Value == null && other.m_Value == null) return true;
+                if(one.m_Value == null || other.m_Value == null) return false;
+                return one.m_Value.equals(other.m_Value);
+            }
         };
 
         private Map<String, ValueTypePair> Elements;
@@ -477,7 +486,7 @@ public class Solution implements Iterable<Solution.Row> {
                     // The existing row does not have this key.
                     newRow.Elements.put(newKey, newValue);
                 } else {
-                    if(previousValue.m_Type == newValue.m_Type && previousValue.m_Value.equals(newValue.m_Value)) {
+                    if( ValueTypePair.identical(previousValue, newValue) ) {
                         logger.debug("Identical values for key:" + newKey);
                     } else {
                         // Duplicate key with different values.

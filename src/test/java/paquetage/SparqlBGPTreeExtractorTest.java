@@ -49,7 +49,7 @@ public class SparqlBGPTreeExtractorTest {
             Assert.assertEquals(expectedSolution[index], actualSolutionStr.get(index));
         }
 
-        List<Statement> statements = extractor.SolutionToStatements(actualSolution);
+        List<Statement> statements = extractor.SolutionToStatements(/*actualSolution*/);
         List<String> actualStatementsStr = statements.stream().map(st -> st.toString()).collect(Collectors.toList());
         Collections.sort(actualStatementsStr);
 
@@ -884,6 +884,48 @@ public class SparqlBGPTreeExtractorTest {
         for(int indexPattern = 0; indexPattern < DummyClass.MaxElements * DummyClass.MaxElements; indexPattern++) {
             expectedStatements[DummyClass.MaxElements * DummyClass.MaxElements + indexPattern] = expectedStatements[indexPattern];
         }
+        HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
+    }
+
+    @Test
+    public void Parse_Check_24() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select * where {
+                            ?dummy1 cimv2:DummyClass.DummyKey "1" .
+                            OPTIONAL { ?dummy2 cimv2:DummyClass.DummyKey "2" . } .
+                    }
+                """;
+        String[] expectedSolution = {
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}}",
+        };
+        String[] expectedStatements = {
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+        };
+        HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
+    }
+
+    @Test
+    public void Parse_Check_25() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select * where {
+                            ?dummy1 cimv2:DummyClass.DummyKey "1" .
+                            ?dummy2 cimv2:DummyClass.DummyKey "2" .
+                            OPTIONAL { ?dummy3 cimv2:DummyClass.DummyKey "3" . } .
+                    }
+                """;
+        String[] expectedSolution = {
+                "{dummy1={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"1\" -> NODE_TYPE}, dummy2={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"2\" -> NODE_TYPE}, dummy3={\\\\DUMMY_HOST\\ROOT\\CIMV2:DummyClass.DummyKey=\"3\" -> NODE_TYPE}}",
+        };
+        String[] expectedStatements = {
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%221%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"1\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%222%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"2\")",
+                "(http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CDUMMY_HOST%5CROOT%5CCIMV2%3ADummyClass.DummyKey%3D%223%22, http://www.primhillcomputers.com/ontology/ROOT/CIMV2#DummyClass.DummyKey, \"3\")",
+        };
         HelperCheck(sparqlQuery, expectedSolution, expectedStatements);
     }
 

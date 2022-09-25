@@ -110,14 +110,16 @@ class JoinExpressionNode extends BaseExpressionNode {
 
     /** This generates the triples from substituting the variables of the patterns by their values.
      *
-     * @param rows List of a map of variables to values, and these are the variables of the patterns.
      * @return Triples ready to be inserted in a repository.
      * @throws Exception
      */
-    void GenerateStatements(List<Statement> generatedStatements, Solution rows) throws Exception {
+    void GenerateStatements(List<Statement> generatedStatements /*, Solution rows*/ ) throws Exception {
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
-        logger.debug("Rows number:" + rows.size());
+        // logger.debug("Rows number:" + rows.size());
         logger.debug("Generated statements number before:" + generatedStatements.size());
+        if(localSolution == null) {
+            throw new RuntimeException("localSolution not set");
+        }
         for(StatementPattern statementPattern : visitorPatternsRaw) {
             // rows.PatternToStatements(generatedStatements, statementPattern);
             localSolution.PatternToStatements(generatedStatements, statementPattern);
@@ -206,7 +208,7 @@ class UnionExpressionNode extends BaseExpressionNode {
 class PatternsVisitor extends AbstractQueryModelVisitor {
     final static private Logger logger = Logger.getLogger(PatternsVisitor.class);
 
-    private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
+    //private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
 
     public String toString() {
         return parent.toStringRecursive("");
@@ -231,7 +233,12 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
             parent = previousParent;
     }
 
-    /*** This flattens the joins. */
+    /** Joins are flattened : A Join of a Join is a Join. This creates bigger lists of StatementPatterns.
+     * It is of upmost importance to process StatementPatterns as a whole and especially gather all predicates
+     * related to the same subject, because the generated WQL queries are more selective.
+     * @param joinNode
+     * @throws Exception
+     */
     @Override
     public void meet(Join joinNode) throws Exception {
         logger.debug("Join=\n" + joinNode);
@@ -239,19 +246,34 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
 
         BaseExpressionNode previousParent = parent;
         boolean isParentJoin = parent instanceof JoinExpressionNode;
-        JoinExpressionNode nextParent;
         // If the ancestor is also a join, reuse it instead of creating a new one.
-        if(isParentJoin) {
-            nextParent = (JoinExpressionNode)parent;
-        } else {
-            nextParent = new JoinExpressionNode(parent);
-        }
-        parent = nextParent;
+        parent = isParentJoin ? (JoinExpressionNode)parent : new JoinExpressionNode(parent);
         super.meet(joinNode);
         if(previousParent != null)
             parent = previousParent;
     }
 
+    /** Left joins are processed like joins.
+     * The rule about gathering StatementPatterns is the same for Join and LeftJoin. */
+    @Override
+    public void meet(LeftJoin leftJoinNode) throws Exception {
+        logger.debug("LeftJoin=\n" + leftJoinNode);
+        GenericReport(leftJoinNode);
+
+        BaseExpressionNode previousParent = parent;
+        boolean isParentJoin = parent instanceof JoinExpressionNode;
+        // If the ancestor is also a join, reuse it instead of creating a new one.
+        parent = isParentJoin ? (JoinExpressionNode)parent : new JoinExpressionNode(parent);
+        super.meet(leftJoinNode);
+        if(previousParent != null)
+            parent = previousParent;
+    }
+
+    /** TODO: Consider doing nothing for Projection.
+     *
+     * @param projectionNode
+     * @throws Exception
+     */
     @Override
     public void meet(Projection projectionNode) throws Exception {
         logger.debug("Projection=\n" + projectionNode);
@@ -314,8 +336,22 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         logger.debug("Service=" + serviceNode);
     }
 
-    public List<StatementPattern> patterns() {
-        return visitedStatementPatterns;
+    private JoinExpressionNode FindTopLevelJoin(BaseExpressionNode node) {
+        if(node instanceof JoinExpressionNode) {
+            return (JoinExpressionNode)node;
+        }
+        for(BaseExpressionNode child: node.children) {
+            JoinExpressionNode join = FindTopLevelJoin(child);
+            if(join != null) {
+                return join;
+            }
+        }
+        return null;
+    }
+
+    public Map<String, ObjectPattern> patterns() {
+        JoinExpressionNode join = FindTopLevelJoin(parent);
+        return join.patternsMap;
     }
 
     private void PartitionBGPAux(BaseExpressionNode node) {
@@ -343,25 +379,25 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         PartitionBGPAux(parent);
     }
 
-    private void GenerateStatementsFromTreeAux(Solution rows, List<Statement> generatedStatements, BaseExpressionNode node) throws Exception {
-        logger.debug("Node:" + node.getClass().getName() + " Solution:" + rows.size() + " rows. generatedStatements:" + generatedStatements.size() + " statements.");
+    private void GenerateStatementsFromTreeAux(/* Solution rows, */ List<Statement> generatedStatements, BaseExpressionNode node) throws Exception {
+        logger.debug("Node:" + node.getClass().getName() + /* " Solution:" + rows.size() + */ " rows. generatedStatements:" + generatedStatements.size() + " statements.");
         if(node instanceof JoinExpressionNode) {
             if(!node.children.isEmpty()) {
                 logger.warn("Join has children - if projection, it can be optimised.");
             }
             JoinExpressionNode joinNode = (JoinExpressionNode)node;
-            joinNode.GenerateStatements(generatedStatements, rows);
+            joinNode.GenerateStatements(generatedStatements /*, rows*/);
         }
         logger.debug("node.children:" + node.children.size());
         for(BaseExpressionNode child : node.children) {
-            GenerateStatementsFromTreeAux(rows, generatedStatements,child);
+            GenerateStatementsFromTreeAux(/*rows, */generatedStatements,child);
         }
     }
 
-    List<Statement> GenerateStatementsFromTree(Solution rows) throws Exception {
-        logger.debug("Solution:" + rows.size() + " rows.");
+    List<Statement> GenerateStatementsFromTree(/*Solution rows*/) throws Exception {
+        //logger.debug("Solution:" + rows.size() + " rows.");
         List<Statement> generatedStatements = new ArrayList<>();
-        GenerateStatementsFromTreeAux(rows, generatedStatements, parent);
+        GenerateStatementsFromTreeAux(/*rows, */ generatedStatements, parent);
         return generatedStatements;
     }
 } // PatternsVisitor
@@ -415,10 +451,39 @@ public class SparqlBGPTreeExtractor {
         return solution;
     }
 
-    List<Statement> SolutionToStatements(Solution rows) throws Exception {
-        logger.debug("Solution:" + rows.size() + " rows.");
-        return patternsVisitor.GenerateStatementsFromTree(rows);
+    List<Statement> SolutionToStatements(/*Solution rows*/) throws Exception {
+        //logger.debug("Solution:" + rows.size() + " rows.");
+        return patternsVisitor.GenerateStatementsFromTree(/*rows*/);
     }
 
+    /** This is just a helper for flat Sparql queries, and for testing only,
+     * with an expression tree like, for example:
+     *
+     * class paquetage.ProjectionExpressionNode Binding=[dir_name]
+     * 	class paquetage.JoinExpressionNode 2 statement(s)
+     *
+     * @param testSolution
+     */
+    void SetTopLevelSolutionTestHelper(Solution testSolution) {
+        BaseExpressionNode node = patternsVisitor.parent;
+        if(! (node instanceof ProjectionExpressionNode)) {
+            throw new RuntimeException("This test helper assumes a top-level Projection node, not:" + node.getClass().getName());
+        }
+        if(node.children.size() != 1) {
+            throw new RuntimeException("Top-level node must have one child only, not:" + node.children.size());
+        }
+        BaseExpressionNode child = node.children.get(0);
+        if(! (child instanceof JoinExpressionNode)) {
+            throw new RuntimeException("This test helper assumes a top-level Join node, not:" + child.getClass().getName());
+        }
+        JoinExpressionNode joinNode = (JoinExpressionNode) child;
+        joinNode.localSolution = testSolution;
+    }
+
+    // This is just a helper for flat Sparql queries, and for testing only.
+    Map<String, ObjectPattern> TopLevelPatternsTestHelper() {
+        Map<String, ObjectPattern> patternsMap = patternsVisitor.patterns();
+        return patternsMap;
+    }
 
 }

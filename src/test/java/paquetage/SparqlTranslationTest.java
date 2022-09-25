@@ -759,6 +759,34 @@ public class SparqlTranslationTest {
         Assert.assertTrue(threadsSet.contains(null));
     }
 
+    @Test
+    public void Execution_Forced_Win32_Thread_Optionl_Priority() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_thread_name ?my_thread_priority
+                    where {
+                        ?my_thread rdf:type cimv2:Win32_Thread .
+                        ?my_thread cimv2:Name ?my_thread_name .
+                        optional { ?my_thread cimv2:Priority ?my_thread_priority . } .
+                    }
+                """;
+
+        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
+        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name", "my_thread_priority"));
+
+        SparqlTranslation patternSparql = new SparqlTranslation(extractor);
+        Solution listRows = patternSparql.ExecuteToRows();
+
+        Set<String> threadsSet = RowColumnAsSet(listRows, "my_thread_name");
+        for(String threadName: threadsSet) {
+            if((threadName != null) && ! threadName.equals(""))
+                System.out.println("Thread=" + threadName);
+        }
+        // Most threads have no name.
+        Assert.assertTrue(threadsSet.contains(null));
+    }
+
     /** The type of the instances are deduced from the property names */
     @Test
     public void Execution_Forced_Win32_Thread_NoType() throws Exception {

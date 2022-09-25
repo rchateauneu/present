@@ -33,7 +33,7 @@ public class RepositoryWrapper {
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {
                 BindingSet bindingSet = result.next();
-                bindingSet.getBindingNames();
+                //bindingSet.getBindingNames();
                 RdfSolution.Tuple newTuple = new RdfSolution.Tuple(bindingSet);
                 if(!checkedBindingsExecution) {
                     logger.debug("Selected row:" + newTuple);
@@ -60,38 +60,18 @@ public class RepositoryWrapper {
      */
     public RdfSolution ExecuteQuery(String sparqlQuery) throws Exception
     {
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        logger.debug("bindings=" + extractor.bindings);
+        SparqlBGPTreeExtractor treeExtractor = new SparqlBGPTreeExtractor(sparqlQuery);
+        logger.debug("bindings=" + treeExtractor.bindings);
 
-        SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
-
-        Solution translatedRows = sparqlTranslator.ExecuteToRows();
+        Solution translatedRows = treeExtractor.EvaluateSolution();
         logger.debug("Translated rows:" + translatedRows.size());
 
-        List<Statement> statements = extractor.GenerateStatements(translatedRows);
+        List<Statement> statements = treeExtractor.SolutionToStatements(/*translatedRows*/);
 
         localRepositoryConnection.add(statements);
 
-        RdfSolution listRows = ExecuteQueryWithStatements(sparqlQuery, extractor.bindings);
+        RdfSolution listRows = ExecuteQueryWithStatements(sparqlQuery, treeExtractor.bindings);
         return listRows;
     }
-
-    public RdfSolution ExecuteQueryOptimized(String sparqlQuery) throws Exception {
-        SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        logger.debug("bindings=" + extractor.bindings);
-
-        SparqlTranslation sparqlTranslator = new SparqlTranslation(extractor);
-
-        Solution translatedRows = sparqlTranslator.ExecuteToRowsOptimized();
-        logger.debug("Translated rows:" + translatedRows.size());
-
-        List<Statement> statements = extractor.GenerateStatements(translatedRows);
-
-        localRepositoryConnection.add(statements);
-
-        RdfSolution listRows = ExecuteQueryWithStatements(sparqlQuery, extractor.bindings);
-        return listRows;
-    }
-
 
 }
