@@ -16,8 +16,7 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
         }
 
         public String TryValueType(String key) {
-            String vtp = KeyValuePairs.get(key);
-            return vtp;
+            return KeyValuePairs.get(key);
         }
 
         public String GetValueType(String key) {
@@ -42,12 +41,13 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
                 Value bindingValue = binding.getValue();
                 // TODO: If the value is a literal, it is formatted as in XML,
                 // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>"
-
-                //Solution.ValueType valueType = Solution.ValueType.XML_TYPE;
                 KeyValuePairs.put(binding.getName(), bindingValue.toString());
             }
         }
 
+        public String toString() {
+            return KeyValuePairs.toString();
+        }
     }
 
     private List<Tuple> tuplesList = new ArrayList<>();

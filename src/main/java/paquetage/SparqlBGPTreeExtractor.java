@@ -113,15 +113,13 @@ class JoinExpressionNode extends BaseExpressionNode {
      * @return Triples ready to be inserted in a repository.
      * @throws Exception
      */
-    void GenerateStatements(List<Statement> generatedStatements /*, Solution rows*/ ) throws Exception {
+    void GenerateStatements(List<Statement> generatedStatements) throws Exception {
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
-        // logger.debug("Rows number:" + rows.size());
         logger.debug("Generated statements number before:" + generatedStatements.size());
         if(localSolution == null) {
             throw new RuntimeException("localSolution not set");
         }
         for(StatementPattern statementPattern : visitorPatternsRaw) {
-            // rows.PatternToStatements(generatedStatements, statementPattern);
             localSolution.PatternToStatements(generatedStatements, statementPattern);
             logger.debug("Generated statements number after:" + generatedStatements.size());
         }
@@ -137,7 +135,7 @@ class JoinExpressionNode extends BaseExpressionNode {
         if(patternsMap == null) {
             throw new RuntimeException("patternsMap is null");
         }
-        ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(patternsMap.values());
+        ArrayList<ObjectPattern> patternsArray = new ArrayList<>(patternsMap.values());
         patternsArray.sort(Comparator.comparing(s -> s.VariableName));
         return patternsArray;
     }
@@ -208,8 +206,6 @@ class UnionExpressionNode extends BaseExpressionNode {
 class PatternsVisitor extends AbstractQueryModelVisitor {
     final static private Logger logger = Logger.getLogger(PatternsVisitor.class);
 
-    //private List<StatementPattern> visitedStatementPatterns = new ArrayList<StatementPattern>();
-
     public String toString() {
         return parent.toStringRecursive("");
     }
@@ -225,7 +221,6 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         logger.debug("Union=\n" + unionNode);
         GenericReport(unionNode);
         BaseExpressionNode previousParent = parent;
-        // currentStatementsGatherer = new UnionExpressionNode(parent, unionNode);
         UnionExpressionNode currentUnion = new UnionExpressionNode(parent, unionNode);
         parent = currentUnion;
         super.meet(unionNode);
@@ -379,25 +374,25 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         PartitionBGPAux(parent);
     }
 
-    private void GenerateStatementsFromTreeAux(/* Solution rows, */ List<Statement> generatedStatements, BaseExpressionNode node) throws Exception {
-        logger.debug("Node:" + node.getClass().getName() + /* " Solution:" + rows.size() + */ " rows. generatedStatements:" + generatedStatements.size() + " statements.");
+    private void GenerateStatementsFromTreeAux(List<Statement> generatedStatements, BaseExpressionNode node) throws Exception {
+        logger.debug("Node:" + node.getClass().getName() + " rows. generatedStatements:" + generatedStatements.size() + " statements.");
         if(node instanceof JoinExpressionNode) {
             if(!node.children.isEmpty()) {
                 logger.warn("Join has children - if projection, it can be optimised.");
             }
             JoinExpressionNode joinNode = (JoinExpressionNode)node;
-            joinNode.GenerateStatements(generatedStatements /*, rows*/);
+            joinNode.GenerateStatements(generatedStatements);
         }
         logger.debug("node.children:" + node.children.size());
         for(BaseExpressionNode child : node.children) {
-            GenerateStatementsFromTreeAux(/*rows, */generatedStatements,child);
+            GenerateStatementsFromTreeAux(generatedStatements,child);
         }
     }
 
-    List<Statement> GenerateStatementsFromTree(/*Solution rows*/) throws Exception {
+    List<Statement> GenerateStatementsFromTree() throws Exception {
         //logger.debug("Solution:" + rows.size() + " rows.");
         List<Statement> generatedStatements = new ArrayList<>();
-        GenerateStatementsFromTreeAux(/*rows, */ generatedStatements, parent);
+        GenerateStatementsFromTreeAux(generatedStatements, parent);
         return generatedStatements;
     }
 } // PatternsVisitor

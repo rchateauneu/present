@@ -590,6 +590,11 @@ public class WmiProvider {
                     rowValue = dateValue;
                     rowType = Solution.ValueType.DATE_TYPE;
                     break;
+                case Wbemcli.CIM_BOOLEAN:
+                    // True is a non-zero value.
+                    rowValue = pVal.booleanValue() ? "1" : "0";
+                    rowType = Solution.ValueType.BOOL_TYPE;
+                    break;
                 default:
                     String valStringValue = pVal.stringValue();
                     if (valStringValue == null) {
