@@ -72,7 +72,7 @@ public class RepositoryWrapperStandardCimv2Test {
      * or it is faster to select from processes than from sockets.
      *
      * TODO: Optimisation: Si deux requetes successives ne dependent pas l'une de l'autre,
-     * ne faire la seconde qu'une seule fois. Soit on garde le resultat en cache, soit etc...
+     * TODO: ne faire la seconde qu'une seule fois. Soit on garde le resultat en cache, soit etc...
      *
      * @throws Exception
      */
@@ -133,7 +133,6 @@ public class RepositoryWrapperStandardCimv2Test {
         Assert.assertTrue(namesProcesses.contains("\"System\""));
     }
 
-
     /**
      * Select TCP connections of the Microsoft TCP/IP WMI v2 provider, and the names of the parent
      * processes of the processes holding these connections.
@@ -161,12 +160,9 @@ public class RepositoryWrapperStandardCimv2Test {
         System.out.println("namesProcesses=" + namesProcesses);
         // The parents of the processes which opened local socket connections.
         Assert.assertTrue(namesProcesses.contains("\"System Idle Process\""));
-        //Assert.assertTrue(namesProcesses.contains("\"svchost.exe\""));
         Assert.assertTrue(namesProcesses.contains("\"services.exe\""));
-        //Assert.assertTrue(namesProcesses.contains("\"UpdaterService.exe\""));
         Assert.assertTrue(namesProcesses.contains("\"explorer.exe\""));
         Assert.assertTrue(namesProcesses.contains("\"wininit.exe\""));
-        //.assertTrue(namesProcesses.contains("\"wfcrun32.exe\""));
     }
 
     /**
@@ -197,9 +193,7 @@ public class RepositoryWrapperStandardCimv2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         int countPresentProcess = 0;
-        Iterator<RdfSolution.Tuple> iteratorTuple = listRows.iterator();
-        while(iteratorTuple.hasNext()) {
-            RdfSolution.Tuple oneRow = iteratorTuple.next();
+        for(RdfSolution.Tuple oneRow : listRows) {
             Long pid1 = PresentUtils.XmlToLong(oneRow.GetStringValue("owning_process1"));
             // This test might fail if it is too slow.
             Optional<ProcessHandle> processHandle1 = ProcessHandle.of(pid1);
@@ -233,9 +227,7 @@ public class RepositoryWrapperStandardCimv2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         HashMap<String, List<Long>> mapServiceToPort = new HashMap<>();
-        Iterator<RdfSolution.Tuple> iteratorTuple = listRows.iterator();
-        while(iteratorTuple.hasNext()) {
-            RdfSolution.Tuple oneRow = iteratorTuple.next();
+        for(RdfSolution.Tuple oneRow : listRows ) {
             Long portNumber = PresentUtils.XmlToLong(oneRow.GetStringValue("local_port"));
             String serviceName = oneRow.GetStringValue("service_name");
             System.out.println("portNumber=" + portNumber + " serviceName=" + serviceName);
@@ -293,9 +285,7 @@ public class RepositoryWrapperStandardCimv2Test {
         name1="Tomcat9.exe" name2="Tomcat9.exe"
         */
         Set<String> setProcessNamesPairs = new HashSet<>();
-        Iterator<RdfSolution.Tuple> iteratorTuple = listRows.iterator();
-        while(iteratorTuple.hasNext()) {
-            RdfSolution.Tuple oneRow = iteratorTuple.next();
+        for(RdfSolution.Tuple oneRow : listRows) {
             String name1 = oneRow.GetStringValue("process_name1");
             String name2 = oneRow.GetStringValue("process_name2");
             System.out.println("name1=" + name1 + " name2=" + name2);

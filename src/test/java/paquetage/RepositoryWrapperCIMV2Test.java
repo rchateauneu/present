@@ -7,6 +7,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.*;
 import java.util.*;
@@ -383,10 +384,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         // One service only with this name.
         Assert.assertTrue(listRows.size() > 0);
-        Iterator<RdfSolution.Tuple> iteratorTuples = listRows.iterator();
-        while(iteratorTuples.hasNext())
-        {
-            RdfSolution.Tuple singleRow = iteratorTuples.next();
+        for(RdfSolution.Tuple singleRow : listRows) {
             System.out.println("Antecedent service:" + singleRow);
         }
         Set<String> setAntecedents = PresentUtils.StringValuesSet(listRows,"display_name");
@@ -971,7 +969,7 @@ public class RepositoryWrapperCIMV2Test {
                     select ?creation_date
                     where {
                         ?my_file cimv2:CIM_DataFile.CreationDate ?creation_date .
-                        ?my_file cimv2:Name ?"%s" .
+                        ?my_file cimv2:Name "%s" .
                     }
                 """, PresentUtils.CurrentJavaBinary().replace("\\", "\\\\"));
 
@@ -986,11 +984,45 @@ public class RepositoryWrapperCIMV2Test {
 
         XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(actualCreationDate);
         System.out.println("xmlDate=" + xmlDate);
-        //ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
-        //LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
-        //Instant asInstantActual = zonedDateTimeActual.toInstant();
 
         FileTime expectedCreationTimeXml = (FileTime) Files.getAttribute( Path.of(PresentUtils.CurrentJavaBinary()), "creationTime");
+        System.out.println("expectedCreationTimeXml=" + expectedCreationTimeXml);
+
+        // Expected :2022-02-11T00:44:44.7305199Z
+        // Actual   :2022-02-11T00:44:44.730519
+        // Truncate the expected date because of different format.
+        Assert.assertEquals(expectedCreationTimeXml.toString().substring(0, 26), xmlDate.toString());
+    }
+
+    /** Creation date of a Win32_Directory. Here, "C:/Windows".
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Directory_CreationDate() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?creation_date
+                    where {
+                        ?my_file cimv2:Win32_Directory.CreationDate ?creation_date .
+                        ?my_file cimv2:Win32_Directory.Name "C:\\\\Windows" .
+                    }
+                """;
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertEquals(1, listRows.size());
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
+
+        String actualCreationDate = singleRow.GetStringValue("creation_date");
+        System.out.println("actualCreationDate=" + actualCreationDate);
+
+        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(actualCreationDate);
+        System.out.println("xmlDate=" + xmlDate);
+
+        FileTime expectedCreationTimeXml = (FileTime) Files.getAttribute( Path.of("C:\\Windows"), "creationTime");
         System.out.println("expectedCreationTimeXml=" + expectedCreationTimeXml);
 
         // Expected :2022-02-11T00:44:44.7305199Z
@@ -1212,30 +1244,30 @@ public class RepositoryWrapperCIMV2Test {
     }
 
     /** Union of processes with pid multiple of 2 and pids multiple of 3.
-     * This is arbitrary but the result is easy to check.
+     * This is an arbitrary test but the result is easy to check.
+     * The intention is to check that union works.
      * @throws Exception
      */
-    @Ignore("Union not fixed yet")
     @Test
-    public void testSelect__Win32_Process_Filter_Union() throws Exception {
+    public void testSelect_Win32_Process_Filter_Union() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?handle where 
                     {
                         {
-                            select ?handle1
+                            select ?handle
                             where {
-                                ?process1 rdf:type cimv2:Win32_Process.ProcessId ?handle1 .
-                                filter(?handle1 % 3 = 0) 
+                                ?process1 cimv2:Win32_Process.ProcessId ?handle .
+                                filter( (?handle / 2) * 2 = ?handle) 
                             }
                         }
                         union
                         {
-                            select ?handle2
+                            select ?handle
                             where {
-                                ?process2 rdf:type cimv2:Win32_Process.ProcessId ?handle2 .
-                                filter(?handle1 % 3 = 0) 
+                                ?process2 cimv2:Win32_Process.ProcessId ?handle .
+                                filter( (?handle / 3) * 3 = ?handle) 
                             }
                         }
                     }
@@ -1245,27 +1277,79 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         Set<Long> setPids = PresentUtils.LongValuesSet(listRows,"handle");
-        Assert.assertTrue(setPids.contains(0));
+        System.out.println("setPids=" + setPids);
+        // Pids 0 is always present, divisible by 2 ad 3.
+        Assert.assertTrue(setPids.contains(0L));
         for(Long onePid: setPids) {
             Assert.assertTrue(onePid % 2 == 0 || onePid % 3 == 0);
         }
     }
 
-
-
-
-
-
-
-
-
-
-    // Win32_Service.ProcessId
-
-    /*
-    TODO: Recursive search of files and sub-directories.
-    TODO: Size of the dlls of the current process.
-    TODO: Sum of the CPU of processes running a specific program.
-    TODO: Sum of the CPU of processes using a specific DLL.
+    /** Union of directories in C:\Windows.
+     * Some dirs are always present: C:\Windows\System, C:\Windows\System32 etc...
+     * processes with pid multiple of 2 and pids multiple of 3.
+     * This is an arbitrary test but the result is easy to check.
+     * The intention is to check that union works.
+     * @throws Exception
      */
-}
+    @Test
+    public void testSelect_Win32_Directory_Filter_Union() throws Exception {
+        String sparqlQuery = """
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                select ?dir_name where
+                {
+                    {
+                        select ?dir_name where
+                        {
+                            ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
+                            ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
+                            ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
+                            ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
+                        }
+                    }
+                    union
+                    {
+                        select ?dir_name where
+                        {
+                            ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
+                            ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
+                            ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
+                            ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
+                        }
+                    }
+                }
+                """;
+
+            RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+            Set<String> actualDirNames = PresentUtils.StringValuesSet(listRows,"dir_name");
+            System.out.println("actualDirNames=" + actualDirNames);
+
+            Path directory = Paths.get("C:\\WINDOWS");
+
+            Set<String> expectedDirNames = Files.walk(directory, 1).filter(entry -> !entry.equals(directory))
+                    .filter(Files::isDirectory).map(p -> p.getFileName().toString()).collect(Collectors.toSet());
+
+            System.out.println("expectedDirNames=" + expectedDirNames);
+
+            Assert.assertEquals(expectedDirNames, actualDirNames);
+        }
+
+
+
+
+
+
+
+
+
+        // Win32_Service.ProcessId
+
+        /*
+        TODO: Recursive search of files and sub-directories.
+        TODO: Size of the dlls of the current process.
+        TODO: Sum of the CPU of processes running a specific program.
+        TODO: Sum of the CPU of processes using a specific DLL.
+         */
+    }

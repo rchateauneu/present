@@ -6,8 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="ef269f1f-ff28-4f68-8628-beed4a904068" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/COM/Wbemcli.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/COM/Wbemcli.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/Solution.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/Solution.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPTreeExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPTreeExtractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,6 +59,12 @@
       <recent name="junit.framework.TestCase" />
       <recent name="" />
     </key>
+    <key name="MoveMembersDialog.RECENTS_KEY">
+      <recent name="paquetage.Solution" />
+      <recent name="paquetage.Solution.Row.ValueTypePair" />
+      <recent name="paquetage.Solution.Row" />
+      <recent name="paquetage.WmiOntology" />
+    </key>
     <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
       <recent name="paquetage" />
       <recent name="" />
@@ -78,7 +85,7 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlToWmiTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SparqlBGPTreeExtractorTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -87,14 +94,13 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlToWmiTest" />
-      <option name="METHOD_NAME" value="Plan2_1Test" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlToWmiTest.Execution_Forced_CIM_DirectoryContainsFile_1" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SparqlBGPTreeExtractorTest.Parse_Check_01" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -103,14 +109,14 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlToWmiTest" />
-      <option name="METHOD_NAME" value="Execution_Forced_CIM_DirectoryContainsFile_1" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
+      <option name="METHOD_NAME" value="Parse_Check_01" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlToWmiTest.Execution_Forced_CIM_DirectoryContainsFile_2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SparqlBGPTreeExtractorTest.Parse_Check_03" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -119,14 +125,14 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlToWmiTest" />
-      <option name="METHOD_NAME" value="Execution_Forced_CIM_DirectoryContainsFile_2" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
+      <option name="METHOD_NAME" value="Parse_Check_03" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlToWmiTest.Execution_Forced_CIM_ProcessExecutable_2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SparqlBGPTreeExtractorTest.Parse_Check_13" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -135,8 +141,8 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlToWmiTest" />
-      <option name="METHOD_NAME" value="Execution_Forced_CIM_ProcessExecutable_2" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
+      <option name="METHOD_NAME" value="Parse_Check_13" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -145,10 +151,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="JUnit.All in present" />
-        <item itemvalue="JUnit.SparqlToWmiTest.Execution_Forced_CIM_DirectoryContainsFile_2" />
-        <item itemvalue="JUnit.SparqlToWmiTest" />
-        <item itemvalue="JUnit.SparqlToWmiTest.Execution_Forced_CIM_ProcessExecutable_2" />
-        <item itemvalue="JUnit.SparqlToWmiTest.Execution_Forced_CIM_DirectoryContainsFile_1" />
+        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest" />
+        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest.Parse_Check_13" />
+        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest.Parse_Check_03" />
+        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest.Parse_Check_01" />
       </list>
     </recent_temporary>
   </component>
@@ -189,7 +195,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>65</line>
+          <line>61</line>
           <option name="timeStamp" value="12" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
@@ -253,9 +259,9 @@
           <option name="timeStamp" value="63" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java</url>
-          <line>320</line>
-          <option name="timeStamp" value="72" />
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/GenericProvider.java</url>
+          <line>47</line>
+          <option name="timeStamp" value="73" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

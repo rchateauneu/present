@@ -2,7 +2,6 @@ package paquetage;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -26,13 +25,16 @@ public class PresentUtils {
             return "Unknown Computer";
     }
 
+    // This is changed  only for tests.
+    public static String prefixComputer = "\\\\" + getComputerName();
+
     /** This can apply to Windows only: It prefixes a path and assumes that the namespace is ROOT/CIMv2.
      *
      * @param shortPath : A Wbem path without the hostname and the namespace.
      * @return The complete path as usable by WMI.
      */
-    public static String PrefixPath(String shortPath) {
-        return "\\\\" + getComputerName() + "\\ROOT\\CIMV2:" + shortPath;
+    public static String PrefixCimv2Path(String shortPath) {
+        return prefixComputer + "\\ROOT\\CIMV2:" + shortPath;
     }
 
     /** This is used in tests, to check that the current binary of the current process is detected.

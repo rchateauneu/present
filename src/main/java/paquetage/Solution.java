@@ -4,8 +4,6 @@ import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
-import org.eclipse.rdf4j.query.Binding;
-import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Var;
 
@@ -19,16 +17,30 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class Solution {
-    final static private Logger logger = Logger.getLogger(Solution.class);
+/*
+Consider: https://spark.apache.org/docs/1.6.1/api/java/index.html?org/apache/spark/sql/DataFrame.html
+"A distributed collection of data organized into named columns. "
 
-    public List<String> Header; // Not used yet.
+The header will contain the name of each column, and possibly the type.
+Columns can be moved around to construct new Solution objects when doing a Projection.
+These columns have the same number of elements.
+
+To ease the transition:
+- Adding the first row creates the header, which is checked at subsequent rows additions.
+- A row is only a transient type used for insertion.
+*/
+
+public class Solution implements Iterable<Solution.Row> {
+    final static private Logger logger = Logger.getLogger(Solution.class);
 
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
     /** This takes a BGP as parsed from the original Sparql query, and replace the variables with the ones calculated
      * from WMI.
-     * The resulting triples will be inserted in a RDF repository.
+     * The resulting triples will be inserted in an RDF repository.
+     *
+     * TODO: When adding a predicate value in a statement, consider RDF.VALUE (rdf:value) to add more information
+     * TODO: such as the unit for a numerical type. Units are sometimes available from WMI.
      *
      * @param generatedTriples
      * @param myPattern
@@ -61,9 +73,7 @@ public class Solution {
                         resourceObject));
             } else {
                 // Only the object changes for each row.
-                Iterator<Row> rowIterator = iterator();
-                while(rowIterator.hasNext()) {
-                    Row row = rowIterator.next();
+                for(Row row : Rows) {
                     Row.ValueTypePair objectWmiValueType = row.TryValueType(objectName);
                     if(objectWmiValueType == null) {
                         // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
@@ -90,9 +100,7 @@ public class Solution {
                         ? Values.iri(objectString)
                         : objectValue; // Keep the original type of the constant.
 
-                Iterator<Row> rowIterator = iterator();
-                while (rowIterator.hasNext()) {
-                    Row row = rowIterator.next();
+                for(Row row : Rows) {
                     Resource resourceSubject = row.AsIRI(subjectName);
 
                     generatedTriples.add(factory.createStatement(
@@ -102,10 +110,7 @@ public class Solution {
                 }
             } else {
                 // The subject and the object change for each row.
-                Iterator<Row> rowIterator = iterator();
-                while (rowIterator.hasNext()) {
-                    Row row = rowIterator.next();
-
+                for(Row row: Rows) {
                     Resource resourceSubject = row.AsIRI(subjectName);
                     Row.ValueTypePair objectWmiValue = row.GetValueType(objectName);
                     Value resourceObject;
@@ -128,6 +133,39 @@ public class Solution {
         }
     }
 
+    /** TODO: This should be faster. */
+    /** TODO: Maybe not necessary, because ultimately, Solutions which just be created in "Join" nodes. */
+    void Append(Solution solution) {
+        if(solution.Rows.isEmpty()) {
+            return;
+        }
+        if(Rows.isEmpty()) {
+            for(Row row: solution) {
+                // TODO: Maybe just point to the solution, which normally should not change.
+                add(row);
+            }
+            return;
+        }
+
+        Set<String> oldBindings = Rows.isEmpty() ? null : Rows.get(0).KeySet();
+        Set<String> newBindings = solution.Rows.get(0).KeySet();
+
+        Set<String> newColumns = new HashSet<String>(newBindings);
+        newColumns.removeAll(oldBindings);
+        Set<String> oldColumns = new HashSet<String>(oldBindings);
+        oldColumns.removeAll(newBindings);
+
+        for(Solution.Row oldRow : Rows) {
+            oldRow.ExtendColumnsWithNull(newColumns);
+        }
+        for(Row row: solution) {
+            // TODO: Find a faster way to compare bindings.
+            Row newRow = row.ShallowCopy();
+            newRow.ExtendColumnsWithNull(oldColumns);
+            add(newRow);
+        }
+    }
+
     /** This is a special value type for this software, to bridge data types between WMI/WBEM and RDF.
      * The most important feature is NODE_TYPE which models a WBEM path and an IRI.
      */
@@ -137,7 +175,6 @@ public class Solution {
         INT_TYPE,
         FLOAT_TYPE,
         NODE_TYPE
-        //XML_TYPE
     }
 
     /**
@@ -284,6 +321,15 @@ public class Solution {
                 }
                 throw new RuntimeException("Data type not handled:" + valueType);
             }
+
+            static boolean identical(ValueTypePair one, ValueTypePair other) {
+                if (one == null && other == null) return true;
+                if (one == null || other == null) return false;
+                if (one.m_Type != other.m_Type) return false;
+                if(one.m_Value == null && other.m_Value == null) return true;
+                if(one.m_Value == null || other.m_Value == null) return false;
+                return one.m_Value.equals(other.m_Value);
+            }
         };
 
         private Map<String, ValueTypePair> Elements;
@@ -407,16 +453,68 @@ public class Solution {
         public String toString() {
             return Elements.toString();
         }
+
+        void ExtendColumnsWithNull(Set<String> newBindings) {
+            for(String newColumn: newBindings) {
+                if(Elements.containsKey(newColumn)) {
+                    throw new RuntimeException(("Row should not contain column:" + newColumn));
+                }
+                Elements.put(newColumn, null);
+            }
+        }
+
+        /** The elements are not copied, only the map is. */
+        Row ShallowCopy() {
+            Row newRow = new Row();
+            newRow.Elements = new HashMap<>(Elements);
+            return newRow;
+        }
+
+        /** TODO: This is not very efficient and it would be better to merge all BGPs.
+         * This happens when several joins and projections are not merged into a single join.
+         * @param otherRow
+         * @return
+         */
+        Row Merge(Row otherRow) {
+            Row newRow = ShallowCopy();
+
+            for(Map.Entry<String, ValueTypePair> entry : otherRow.Elements.entrySet()) {
+                String newKey = entry.getKey();
+                ValueTypePair newValue = entry.getValue();
+                ValueTypePair previousValue = newRow.Elements.get(newKey);
+                if(previousValue == null) {
+                    // The existing row does not have this key.
+                    newRow.Elements.put(newKey, newValue);
+                } else {
+                    if( ValueTypePair.identical(previousValue, newValue) ) {
+                        logger.debug("Identical values for key:" + newKey);
+                    } else {
+                        // Duplicate key with different values.
+                        logger.debug("Different values for key:" + newKey);
+                        return null;
+                    }
+                }
+            }
+            return newRow;
+        }
     }
 
     List<Row> Rows;
 
+    /** TODO: This will change with the implementation of Solution. */
+    Set<String> header() {
+        if(Rows.isEmpty()) {
+            return new HashSet<>();
+        } else {
+            return Rows.get(0).KeySet();
+        }
+    }
+
     Solution( /*List<String> header */ ) {
-        //Header = header;
         Rows = new ArrayList<>();
     }
 
-    Iterator<Row> iterator() {
+    public Iterator<Row> iterator() {
         return Rows.iterator();
     }
 
@@ -434,5 +532,27 @@ public class Solution {
 
     Row get(int index) {
         return Rows.get(index);
+    }
+
+    public String toString() {
+        String result = "Elements:" + Rows.size() + "\n";
+        for(Row row : Rows) {
+            result += "\t" + row.toString() + "\n";
+        }
+        return result;
+    }
+
+    public Solution CartesianProduct(Solution otherSolution) {
+        Solution resultSolution = new Solution();
+        for(Row row : Rows) {
+            for(Row otherRow : otherSolution.Rows) {
+                Row mergedRow = row.Merge(otherRow);
+                if(mergedRow != null) {
+                    // It returns null if there is a common key with different values.
+                    resultSolution.add(mergedRow);
+                }
+            }
+        }
+        return resultSolution;
     }
 }

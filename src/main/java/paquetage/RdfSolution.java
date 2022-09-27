@@ -7,7 +7,7 @@ import org.eclipse.rdf4j.query.BindingSet;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class RdfSolution {
+public class RdfSolution implements Iterable<RdfSolution.Tuple> {
     public static class Tuple {
         private Map<String, String> KeyValuePairs = new HashMap<>();
 
@@ -38,8 +38,7 @@ public class RdfSolution {
          * @param bindingSet
          */
         public Tuple(BindingSet bindingSet) {
-            for (Iterator<Binding> it = bindingSet.iterator(); it.hasNext(); ) {
-                Binding binding = it.next();
+            for(Binding binding : bindingSet) {
                 Value bindingValue = binding.getValue();
                 // TODO: If the value is a literal, it is formatted as in XML,
                 // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>"
@@ -69,7 +68,7 @@ public class RdfSolution {
         tuplesList.add(tuple);
     }
 
-    Iterator<Tuple> iterator() {
+    public Iterator<Tuple> iterator() {
         return tuplesList.iterator();
     }
 }
