@@ -619,7 +619,7 @@ public class GenericProvider {
     /**
      * @param objectPath
      * @param queryData
-     * @param withCustom
+     * @param withCustom If custom providers and getters can be used. This might not be the case when testing.
      * @return
      * @throws Exception
      */
