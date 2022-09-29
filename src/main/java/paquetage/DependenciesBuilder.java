@@ -8,6 +8,8 @@ public class DependenciesBuilder {
     final static private Logger logger = Logger.getLogger(DependenciesBuilder.class);
     /**
      * This never changes whatever the order of input BGPs is.
+     * It is used in the recursive execution of WQL queries, to store the values of variables evaluated
+     * in the lowest levels.
      */
     public HashMap<String, Solution.Row.ValueTypePair> variablesContext;
 
@@ -19,8 +21,9 @@ public class DependenciesBuilder {
 
     /** This takes as input a list of object patterns, and assumes that each of them represents a WQL query,
      * the queries being nested into one another (top-level first).
-     * The execution of WQL queries is optimised be changing the order of the patterns list.
      * Each ObjectPattern instances contains all the triples related to the same RDF subject.
+     *
+     * TODO: The execution of WQL queries could be optimised be changing the order of the patterns list.
      * @param patterns
      * @throws Exception
      */
