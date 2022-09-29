@@ -410,7 +410,6 @@ public class SparqlBGPTreeExtractor {
     // in the WMI evaluation. In this case, they are copied as is.
     // They might contain one variable defined by WMI, and another one, defined by the second Sparql evaluation.
     // In this case, they are replicated for each value found by WMI.
-    // private List<StatementPattern> visitorPatternsRaw;
 
     public SparqlBGPTreeExtractor(String input_query) throws Exception {
         ParseQuery(input_query);
