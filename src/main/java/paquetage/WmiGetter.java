@@ -166,13 +166,6 @@ public class WmiGetter extends BaseGetter {
                 singleRow.PutString(variableName, "Object " + objectPath + " is null");
             else
                 singleRow.PutValueType(variableName, GetObjectProperty(objectNode, entry.getKey()));
-            /*
-            String objectProperty = objectNode == null
-                    ? "Object " + objectPath + " is null"
-                    : GetObjectProperty(objectNode, entry.getKey());
-            // PresentUtils.WbemPathToIri( ?? Et le type ??
-            singleRow.Elements.put(variableName, objectProperty);
-            */
         }
         // We are sure this is a node.
         Solution.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
