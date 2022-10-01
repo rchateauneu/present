@@ -68,11 +68,16 @@ public class QueryData {
         public String predicate;
 
         // This is the value or a variable name, compared with a WMI class member in a WQL query.
+        // Ici, on aurait un ValuePair si c'est une constante.
+        // FIXME: Confusion dangereuse: Si variable, ca conient un nom de variable.
         public String value;
 
         // Tells if this is a Sparql variable (which must be evaluated in the nesting WQL queries) or a constant.
         boolean isVariable;
 
+        /*
+        Confusion dangereuse: Il faut remplacer par un TypeValuePair si constante.
+         */
         public WhereEquality(String predicateArg, String valueStr, boolean isVariableArg) throws Exception {
             if(predicateArg.contains("#")) {
                 // This ensures that the IRI of the RDF node is stripped of its prefix.
@@ -261,6 +266,11 @@ public class QueryData {
             classBaseSelecter = GenericProvider.FindSelecter(this);
     }
 
+    /** This is used for initialising when adding the WHERE tests without values,
+     * and later when calculting a QueryData for a specific context.
+     * @param wheres
+     * @return
+     */
     List<QueryData.WhereEquality> SwapWheres(List<QueryData.WhereEquality> wheres) {
         List<QueryData.WhereEquality> oldWheres = whereTests;
         if(wheres == null)

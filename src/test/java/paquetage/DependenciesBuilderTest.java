@@ -359,7 +359,7 @@ public class DependenciesBuilderTest {
                 "Win32_Process",
                 "my2_process",
                 true,
-                null,
+                Map.of("Handle", "Win32_Process.Handle.2.internal"),
                 Arrays.asList(
                         new QueryData.WhereEquality("Handle", "123", false)
                 )
@@ -408,7 +408,7 @@ public class DependenciesBuilderTest {
                 "Win32_Process",
                 "my1_process",
                 true,
-                null,
+                Map.of("Handle", "Win32_Process.Handle.1.internal"),
                 Arrays.asList(
                         new QueryData.WhereEquality("Handle", "123", false)
                 )

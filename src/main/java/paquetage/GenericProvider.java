@@ -601,6 +601,15 @@ public class GenericProvider {
 
     static public BaseGetter FindCustomGetter(QueryData queryData) {
         logger.debug("Finding getter for:" + queryData.toString());
+
+        // The columns in the "where" tests must be gettable from the object.
+        // This is used when filtering getting an object.
+        for(QueryData.WhereEquality whereTest : queryData.whereTests) {
+            if(! queryData.queryColumns.containsKey(whereTest.predicate)) {
+                logger.debug("Where column:" + whereTest.predicate + " missing from " + queryData.queryColumns.keySet());
+            }
+        }
+
         for(BaseGetter getter: baseGetters) {
             if (getter.MatchGetter(queryData)) {
                 logger.debug("Found provider" + getter.getClass().getName() + " for " + queryData);
@@ -615,6 +624,32 @@ public class GenericProvider {
         return  (getter == null) ? wmiGetter : getter;
     }
 
+    // Extra filtering if "where" test when getting an object.
+    boolean ExtraFiltering(QueryData queryData, Solution.Row returnRow)
+    {
+        for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
+            logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
+            String variableName = queryData.ColumnToVariable(oneWhere.predicate);
+            if(variableName == null) {
+                throw new RuntimeException("Variable is null for column:" + oneWhere.predicate);
+            }
+
+            // Beware of performance waste if the same value is read twice from the object,
+            // if the column is in the where  expression and also in the selected column.
+            Solution.Row.ValueTypePair vtp = returnRow.GetValueType(variableName);
+            if (oneWhere.isVariable) {
+                throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context");
+            }
+            if (vtp.Type() != Solution.ValueType.STRING_TYPE) {
+                throw new RuntimeException("Non-string handled yet:" + vtp.Type() + ". Should not be difficult.");
+            }
+            if (!vtp.Value().equals(oneWhere.value)) {
+                logger.debug("Different column value:" + vtp.Value());
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * @param objectPath
@@ -627,10 +662,18 @@ public class GenericProvider {
         if(queryData.classGetter == null) {
             throw new RuntimeException("Getter is not set");
         }
+        Solution.Row returnRow;
         if(withCustom) {
-            return queryData.classGetter.GetSingleObject(objectPath, queryData);
+            returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData);
         } else {
-            return wmiGetter.GetSingleObject(objectPath, queryData);
+            returnRow = wmiGetter.GetSingleObject(objectPath, queryData);
+        }
+        // Now, apply the extra filtering if needed.
+        if(ExtraFiltering(queryData, returnRow)) {
+            return returnRow;
+        } else {
+            logger.debug("Filtered row");
+            return null;
         }
     }
 }

@@ -66,6 +66,9 @@ public class Solution implements Iterable<Solution.Row> {
                 // One insertion only. Variables are not needed.
                 String objectString = objectValue.stringValue();
                 Resource resourceObject = Values.iri(objectString);
+                // Maybe this value was not used in a "where" clause, so how can we return it ?
+                // FIXME: And if the constant object was not found, we should not insert it.
+                logger.error("CONST_OBJECT1: If the constant subject is not found, it must not be inserted:" + objectString);
 
                 generatedTriples.add(factory.createStatement(
                         resourceSubject,
@@ -94,7 +97,9 @@ public class Solution implements Iterable<Solution.Row> {
             if (object.isConstant()) {
                 // Only the subject changes for each row.
                 String objectString = objectValue.stringValue();
+                // Maybe this value was not used in a "where" clause, so how can we return it ?
                 logger.debug("objectString=" + objectString + " isIRI=" + objectValue.isIRI());
+
                 // TODO: Maybe this is already an IRI ? So, should not transform it again !
                 Value resourceObject = objectValue.isIRI()
                         ? Values.iri(objectString)
@@ -174,6 +179,7 @@ public class Solution implements Iterable<Solution.Row> {
         DATE_TYPE,
         INT_TYPE,
         FLOAT_TYPE,
+        BOOL_TYPE,
         NODE_TYPE
     }
 
@@ -279,6 +285,10 @@ public class Solution implements Iterable<Solution.Row> {
                     return Values.literal("Unexpected null value. Type=\" + valueType");
                 }
                 switch(valueType) {
+                    case BOOL_TYPE:
+                        Long longBool = Long.parseLong(strValue);
+                        boolean valueBool = longBool != 0L;
+                        return Values.literal(valueBool);
                     case INT_TYPE:
                         return Values.literal(Long.parseLong(strValue));
                     case FLOAT_TYPE:
@@ -373,6 +383,9 @@ public class Solution implements Iterable<Solution.Row> {
         }
 
         public ValueTypePair GetValueType(String key) {
+            if(key == null) {
+                throw new RuntimeException("Input variable is null");
+            }
             ValueTypePair value = TryValueType(key);
             if(value == null) {
                 throw new RuntimeException("Unknown variable " + key + ". Vars=" + KeySet());

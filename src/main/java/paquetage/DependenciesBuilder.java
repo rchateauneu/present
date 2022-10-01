@@ -3,6 +3,7 @@ package paquetage;
 import org.apache.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DependenciesBuilder {
     final static private Logger logger = Logger.getLogger(DependenciesBuilder.class);
@@ -43,8 +44,10 @@ public class DependenciesBuilder {
         * If the class is not null, they must be equal.
         * If the class is not given, it can implicitly be deduced from the predicates prefixes.
         */
-        for(ObjectPattern pattern: patterns)
+
+        for(int patternCounter = 0;patternCounter < patterns.size(); ++patternCounter)
         {
+            ObjectPattern pattern = patterns.get(patternCounter);
             pattern.PreparePattern();
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
@@ -82,6 +85,20 @@ public class DependenciesBuilder {
             boolean isMainVariableAvailable = variablesContext.containsKey(pattern.VariableName);
             if(!isMainVariableAvailable) {
                 variablesContext.put(pattern.VariableName, null);
+            }
+
+            if(isMainVariableAvailable) {
+                // If the main variable is known, it will use a getter. However, if there are "where" tests,
+                // the values of the columns must be known for extra filtering.
+                // Therefore, they must be fetched.
+                Set<String> nonSelectedColumns = wheres.stream().map(w->w.predicate).collect(Collectors.toSet());
+                nonSelectedColumns.removeAll(selected_variables.keySet());
+                for(String nonSelectedColumn: nonSelectedColumns) {
+                    // The counter is used o avoid n ambiguity if the same class and the same column are used
+                    // several times in this Sparql query.
+                    String internalVariable = pattern.ShortClassName + "." + nonSelectedColumn + "." + patternCounter + ".internal";
+                    selected_variables.put(nonSelectedColumn, internalVariable);
+                }
             }
 
             if(pattern.ShortClassName != null) {

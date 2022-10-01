@@ -115,24 +115,27 @@ public class SparqlTranslation {
         QueryData queryData = dependencies.prepared_queries.get(index);
         queryData.StartSampling();
         if(queryData.isMainVariableAvailable) {
+            // NO NEED TO CHECK IT EACH TIME.
             if(! queryData.whereTests.isEmpty()) {
-                // This error happens if this query aims at evaluating a variable whose value is already available,
-                // but the presence "Where" clauses implies that there is a constraint on this variable.
-                // This cannot work and indicates that the patterns are not executed in the right order.
-                logger.debug("Index=" + Integer.toString(index) + " QueryData=" + queryData.toString());
+                // This happens if this query aims at evaluating a variable whose value is already available,
+                // but the "Where" clauses implies that there is a constraint on this variable.
+                // This translates into an extra filtering.
+                logger.debug("Index=" + index + " QueryData=" + queryData);
                 for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
                     logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
                 }
-                throw new RuntimeException("Where clauses must be empty if main variable is available:" + queryData.mainVariable);
+                logger.debug("CONST_OBJECT:" + queryData.mainVariable);
             }
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
             Solution.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
+
             queryData.FinishSampling(objectPath);
 
             if(singleRow == null)
             {
-                // Object does not exist: Maybe a CIM_FataFile is protected, or a CIM_Process exited ?
+                // Object does not exist or maybe a CIM_FataFile is protected, or a CIM_Process exited ?
+                // FIXME: Maybe this is not an error but a normal behaviour, so should not display an error.
                 logger.error("Cannot get row for objectPath=" + objectPath);
             }
             else {

@@ -19,14 +19,16 @@ public class GenericProviderTest extends TestCase {
         genericProvider = null;
     }
 
-    private void CheckProvider(QueryData queryData, String nameSelecterExpected, String nameGetterExpected) {
-        BaseSelecter baseSelecter = genericProvider.FindCustomSelecter(queryData);
-        String nameSelecterActual = (baseSelecter == null) ? null : baseSelecter.getClass().getCanonicalName();
-        Assert.assertEquals(nameSelecterActual, nameSelecterExpected);
-
+    private void CheckGetter(QueryData queryData, String nameGetterExpected) {
         BaseGetter baseGetter = genericProvider.FindCustomGetter(queryData);
         String nameGetterActual = (baseGetter == null) ? null : baseGetter.getClass().getCanonicalName();
-        Assert.assertEquals(nameGetterActual, nameGetterExpected);
+        Assert.assertEquals(nameGetterExpected, nameGetterActual);
+    }
+
+    private void CheckSelecter(QueryData queryData, String nameSelecterExpected) {
+        BaseSelecter baseSelecter = genericProvider.FindCustomSelecter(queryData);
+        String nameSelecterActual = (baseSelecter == null) ? null : baseSelecter.getClass().getCanonicalName();
+        Assert.assertEquals(nameSelecterExpected, nameSelecterActual);
     }
 
     static void CompareRows(Solution.Row row1, Solution.Row row2) {
@@ -56,7 +58,8 @@ public class GenericProviderTest extends TestCase {
                 Arrays.asList(new QueryData.WhereEquality("Caption", "the_caption")));
 
         // Checks that the custom provider cannot be found.
-        CheckProvider(queryData, null, "paquetage.BaseGetter_Win32_Process_Handle");
+        CheckGetter(queryData, "paquetage.BaseGetter_Win32_Process_Handle");
+        CheckSelecter(queryData, null);
     }
 
     /** Checks that there is a provider for the attribute Handle and class Win32_Process.
@@ -74,7 +77,8 @@ public class GenericProviderTest extends TestCase {
                         "Handle", "the_handle"),
                 Arrays.asList(new QueryData.WhereEquality("Handle", currentPidStr)));
 
-        CheckProvider(queryData, null, "paquetage.BaseGetter_Win32_Process_Handle");
+        CheckGetter(queryData, "paquetage.BaseGetter_Win32_Process_Handle");
+        CheckSelecter(queryData, null);
     }
 
     /** This tests the results of files object associated to a file, loaded via Sparql mechanism, by two ways:
@@ -99,7 +103,8 @@ public class GenericProviderTest extends TestCase {
                         "Path", "var_path"),
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
-        CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name", "paquetage.BaseGetter_CIM_DataFile_Name");
+        CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
+        CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name");
 
         Solution rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
         Solution rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
@@ -124,7 +129,8 @@ public class GenericProviderTest extends TestCase {
                         "Name", "var_name"),
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
-        CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name", "paquetage.BaseGetter_CIM_DataFile_Name");
+        CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
+        CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name");
 
         Solution rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
         Solution rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
@@ -152,7 +158,8 @@ public class GenericProviderTest extends TestCase {
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
         // Checks that there is a custom provider for the attribute "CreationDate".
-        CheckProvider(queryData, null, null);
+        CheckGetter(queryData, null);
+        CheckSelecter(queryData, null);
     }
 
     /** Checks that there is no provider for the attribute InUseCount and class CIM_DataFile.
@@ -175,7 +182,8 @@ public class GenericProviderTest extends TestCase {
                 Arrays.asList(new QueryData.WhereEquality("Name", "C:\\WINDOWS\\SYSTEM32\\ntdll.dll")));
 
         // Checks that there are no custom providers.
-        CheckProvider(queryData, null, null);
+        CheckGetter(queryData, null);
+        CheckSelecter(queryData, null);
     }
 
     /** This checks the presence of a custom provider emulating a WMI query similar to:
@@ -192,7 +200,8 @@ public class GenericProviderTest extends TestCase {
                 Map.of("GroupComponent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("PartComponent", "abc")));
 
-        CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DirectoryContainsFile_PartComponent", null);
+        CheckGetter(queryData, null);
+        CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DirectoryContainsFile_PartComponent");
     }
 
     /** This checks the presence of a custom provider emulating a WMI query similar to:
@@ -210,7 +219,8 @@ public class GenericProviderTest extends TestCase {
                 Map.of("PartComponent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("GroupComponent", "abc")));
 
-        CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DirectoryContainsFile_GroupComponent", null);
+        CheckGetter(queryData, null);
+        CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DirectoryContainsFile_GroupComponent");
     }
 
     @Test
@@ -223,7 +233,8 @@ public class GenericProviderTest extends TestCase {
                 Map.of("Antecedent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("Dependent", "abc")));
 
-        CheckProvider(queryData, "paquetage.BaseSelecter_CIM_ProcessExecutable_Dependent", null);
+        CheckGetter(queryData, null);
+        CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_ProcessExecutable_Dependent");
     }
 
     @Test
@@ -236,7 +247,8 @@ public class GenericProviderTest extends TestCase {
                 Map.of("Dependent", "xyz"),
                 Arrays.asList(new QueryData.WhereEquality("Antecedent", "abc")));
 
-        CheckProvider(queryData, "paquetage.BaseSelecter_CIM_ProcessExecutable_Antecedent", null);
+        CheckGetter(queryData, null);
+        CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_ProcessExecutable_Antecedent");
     }
 
     /** This instantiates object associated to a file, by two ways:
@@ -246,7 +258,7 @@ public class GenericProviderTest extends TestCase {
      * @throws Exception
      */
     @Test
-    public void testCompareGetter_CIM_DataFile() throws Exception {
+    public void testCheckSelecter_CIM_DataFile() throws Exception {
         String filePath = "C:\\WINDOWS\\SYSTEM32\\ntdll.dll";
         QueryData queryData = new QueryData(
                 "ROOT\\CIMV2",
@@ -260,7 +272,25 @@ public class GenericProviderTest extends TestCase {
                         "Path", "var_path"),
                 Arrays.asList(new QueryData.WhereEquality("Name", filePath)));
 
-        CheckProvider(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name", "paquetage.BaseGetter_CIM_DataFile_Name");
+        CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name");
+    }
+
+    @Test
+    public void testCompareGetter_CIM_DataFile() throws Exception {
+        String filePath = "C:\\WINDOWS\\SYSTEM32\\ntdll.dll";
+        QueryData queryData = new QueryData(
+                "ROOT\\CIMV2",
+                "CIM_DataFile",
+                "the_file",
+                true,
+                Map.of(
+                        "Caption", "var_caption",
+                        "FileName", "var_filename",
+                        "FileSize", "var_filesize",
+                        "Path", "var_path"),
+                null);
+
+        CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
 
         String objectPath = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", filePath));
         Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
@@ -288,7 +318,8 @@ public class GenericProviderTest extends TestCase {
                         "WindowsVersion", "var_windowsversion"),
                 Arrays.asList(new QueryData.WhereEquality("Handle", currentPidStr)));
 
-        CheckProvider(queryData, null, "paquetage.BaseGetter_Win32_Process_Handle");
+        CheckGetter(queryData, "paquetage.BaseGetter_Win32_Process_Handle");
+        CheckSelecter(queryData, null);
 
         String objectPath = ObjectPath.BuildCimv2PathWbem("Win32_Process", Map.of("Handle", currentPidStr));
         Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
