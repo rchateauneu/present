@@ -35,7 +35,7 @@ public class SparqlTranslation {
         Solution.Row new_row = new Solution.Row();
         // It does not return only the variables in bindings, but all of them because they are
         // needed to generate the statements for further Sparql execution
-        for(Map.Entry<String, Solution.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
+        for(Map.Entry<String, ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
         {
             // PresentUtils.WbemPathToIri( ? The type should not be lost, especially for IRIs
             new_row.PutValueType(pairKeyValue.getKey(), pairKeyValue.getValue());
@@ -151,7 +151,7 @@ public class SparqlTranslation {
                 // - or the context value of this variable, theoretically of any type.
                 if(kv.variableName != null) {
                     // Only the value representation is needed.
-                    Solution.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.variableName);
+                    ValueTypePair pairValue = dependencies.variablesContext.get(kv.variableName);
                     if(pairValue == null) {
                         throw new RuntimeException("Null value for:" + kv.variableName);
                     }

@@ -12,7 +12,7 @@ public class DependenciesBuilder {
      * It is used in the recursive execution of WQL queries, to store the values of variables evaluated
      * in the lowest levels.
      */
-    public HashMap<String, Solution.Row.ValueTypePair> variablesContext;
+    public HashMap<String, ValueTypePair> variablesContext;
 
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.

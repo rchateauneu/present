@@ -68,13 +68,13 @@ public class QueryData {
         public String predicate;
 
         // This is the value or a variable name, compared with a WMI class member in a WQL query.
-        public Solution.Row.ValueTypePair value;
+        public ValueTypePair value;
 
         // Tells if this is a Sparql variable (which must be evaluated in the nesting WQL queries) or a constant.
         // boolean isVariable;
         String variableName; // null if constant,
 
-        public WhereEquality(String predicateArg, Solution.Row.ValueTypePair pairValueType, String variable) throws Exception {
+        public WhereEquality(String predicateArg, ValueTypePair pairValueType, String variable) throws Exception {
             if(predicateArg.contains("#")) {
                 // This ensures that the IRI of the RDF node is stripped of its prefix.
                 throw new Exception("Invalid class:" + predicateArg);
@@ -92,12 +92,12 @@ public class QueryData {
         // This is a helper for tests.
         /*
         public WhereEquality(String predicateArg, String valueStr, String variable) throws Exception {
-            this(predicateArg, new Solution.Row.ValueTypePair(valueStr, Solution.ValueType.STRING_TYPE), variable);
+            this(predicateArg, new ValueTypePair(valueStr, Solution.ValueType.STRING_TYPE), variable);
         }
         */
 
         public WhereEquality(String predicateArg, String variable) throws Exception {
-            this(predicateArg, (Solution.Row.ValueTypePair)null, variable);
+            this(predicateArg, (ValueTypePair)null, variable);
         }
 
         /**
@@ -152,7 +152,7 @@ public class QueryData {
      * @param columnName "Handle", "Name", "PartComponent" etc...
      * @return
      */
-    public Solution.Row.ValueTypePair GetWhereValue(String columnName) {
+    public ValueTypePair GetWhereValue(String columnName) {
         for(WhereEquality whereElement : whereTests) {
             if(whereElement.predicate.equals(columnName)) {
                 return whereElement.value;

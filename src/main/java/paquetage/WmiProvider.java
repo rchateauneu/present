@@ -439,7 +439,7 @@ public class WmiProvider {
             entry(Wbemcli.CIM_FLAG_ARRAY, "CIM_FLAG_ARRAY")
     );
 
-    static Solution.Row.ValueTypePair VariantToValueTypePair(
+    static ValueTypePair VariantToValueTypePair(
             String lambda_column,
             String lambda_variable,
             IntByReference pType,
@@ -464,7 +464,7 @@ public class WmiProvider {
         }
 
         String rowValue;
-        Solution.ValueType rowType;
+        ValueTypePair.ValueType rowType;
         if(lambda_column.equals("__PATH")) {
             // Not consistent for Win32_Product.
             if(valueType != Wbemcli.CIM_STRING) {
@@ -474,13 +474,13 @@ public class WmiProvider {
                                 + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
             }
             rowValue = pVal.stringValue();
-            rowType = Solution.ValueType.NODE_TYPE;
+            rowType = ValueTypePair.ValueType.NODE_TYPE;
         }
         else {
             switch(valueType) {
                 case Wbemcli.CIM_REFERENCE:
                     rowValue = pVal.stringValue();
-                    rowType = Solution.ValueType.NODE_TYPE;
+                    rowType = ValueTypePair.ValueType.NODE_TYPE;
                     if(rowValue != null) {
                         /*
                             Here, "?my3_dir" is a reference but it does not have the syntax.
@@ -514,7 +514,7 @@ public class WmiProvider {
                                     + " lambda_variable=" + lambda_variable + "  cannot be a string:" + rowValue);
                         }
                     }
-                    rowType = Solution.ValueType.STRING_TYPE;
+                    rowType = ValueTypePair.ValueType.STRING_TYPE;
                     // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
                     break;
                 case Wbemcli.CIM_SINT8:
@@ -532,9 +532,9 @@ public class WmiProvider {
                         // This is temporarily indicated with a special string for later debugging.
                         // TODO: Some values are null. Why ?
                         longValue = lambda_column + "_IS_NULL";
-                        rowType = Solution.ValueType.STRING_TYPE;
+                        rowType = ValueTypePair.ValueType.STRING_TYPE;
                     } else {
-                        rowType = Solution.ValueType.INT_TYPE;
+                        rowType = ValueTypePair.ValueType.INT_TYPE;
                         if(valueType == valueTypeUnknown) {
                             // This should work because no contradiction.
                             longValue = Long.toString(pVal.longValue());
@@ -574,7 +574,7 @@ public class WmiProvider {
                 case Wbemcli.CIM_REAL32:
                 case Wbemcli.CIM_REAL64:
                     rowValue = Double.toString(pVal.doubleValue());
-                    rowType = Solution.ValueType.FLOAT_TYPE;
+                    rowType = ValueTypePair.ValueType.FLOAT_TYPE;
                     break;
                 case Wbemcli.CIM_DATETIME:
                     if(false) {
@@ -588,12 +588,12 @@ public class WmiProvider {
                     String dateValue = pVal.stringValue();
                     logger.debug("dateValue=" + dateValue);
                     rowValue = dateValue;
-                    rowType = Solution.ValueType.DATE_TYPE;
+                    rowType = ValueTypePair.ValueType.DATE_TYPE;
                     break;
                 case Wbemcli.CIM_BOOLEAN:
                     // True is a non-zero value.
                     rowValue = pVal.booleanValue() ? "1" : "0";
-                    rowType = Solution.ValueType.BOOL_TYPE;
+                    rowType = ValueTypePair.ValueType.BOOL_TYPE;
                     break;
                 default:
                     String valStringValue = pVal.stringValue();
@@ -602,11 +602,11 @@ public class WmiProvider {
                                 + " lambda_variable=" + lambda_variable + " type=" + valueType);
                     }
                     rowValue = valStringValue;
-                    rowType = Solution.ValueType.STRING_TYPE;
+                    rowType = ValueTypePair.ValueType.STRING_TYPE;
                     break;
             } // switch
         }
-        Solution.Row.ValueTypePair rowValueType = new Solution.Row.ValueTypePair(rowValue, rowType);
+        ValueTypePair rowValueType = new ValueTypePair(rowValue, rowType);
         return rowValueType;
     }
 

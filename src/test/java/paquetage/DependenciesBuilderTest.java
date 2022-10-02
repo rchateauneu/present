@@ -39,7 +39,7 @@ public class DependenciesBuilderTest {
     public void SymbolicQuery1Test() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process", PresentUtils.toCIMV2("Win32_Process"));
-        objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Handle"), new Solution.Row.ValueTypePair("123", Solution.ValueType.STRING_TYPE));
+        objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Handle"), new ValueTypePair("123", ValueTypePair.ValueType.STRING_TYPE));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -52,7 +52,7 @@ public class DependenciesBuilderTest {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process",
                 PresentUtils.toCIMV2("CIM_DataFile"));
-        objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Name"), new Solution.Row.ValueTypePair("C:", Solution.ValueType.STRING_TYPE));
+        objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Name"), new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE));
         objectPattern.AddPredicateObjectPairVariable(PresentUtils.toCIMV2("Caption"), "any_variable");
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
@@ -65,12 +65,12 @@ public class DependenciesBuilderTest {
         ObjectPattern objectPattern0 = new ObjectPattern(
                 "my_process",
                 PresentUtils.toCIMV2("Win32_Process"));
-        objectPattern0.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Name"), new Solution.Row.ValueTypePair("C:", Solution.ValueType.STRING_TYPE));
+        objectPattern0.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Name"), new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE));
 
         ObjectPattern objectPattern1 = new ObjectPattern(
                 "my_assoc",
                 PresentUtils.toCIMV2("CIM_ProcessExecutable"));
-        objectPattern1.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Dependent"), new Solution.Row.ValueTypePair("my_process", Solution.ValueType.STRING_TYPE));
+        objectPattern1.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Dependent"), new ValueTypePair("my_process", ValueTypePair.ValueType.STRING_TYPE));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern0, objectPattern1));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -88,7 +88,7 @@ public class DependenciesBuilderTest {
      */
     public void InternalQueryDataTest() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern("my_process", PresentUtils.toCIMV2("Win32_Process"));
-        objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Handle"), new Solution.Row.ValueTypePair("123", Solution.ValueType.STRING_TYPE));
+        objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Handle"), new ValueTypePair("123", ValueTypePair.ValueType.STRING_TYPE));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
 
@@ -98,7 +98,7 @@ public class DependenciesBuilderTest {
                 "my_process",
                 false,
                 null,
-                Arrays.asList(new QueryData.WhereEquality("Handle", Solution.Row.ValueTypePair.FromString("123"), null))
+                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"), null))
         );
 
         List<QueryData> preparedQueries = patternSparql.prepared_queries;
@@ -131,7 +131,7 @@ public class DependenciesBuilderTest {
                 "my_directory",
                 false,
                 null,
-                Arrays.asList(new QueryData.WhereEquality("Name", Solution.Row.ValueTypePair.FromString("C:"), null))
+                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:"), null))
         );
 
         List<QueryData> preparedQueries = patternSparql.prepared_queries;
@@ -194,7 +194,7 @@ public class DependenciesBuilderTest {
                 false,
                 Map.of("Name", "my_process_name"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", Solution.Row.ValueTypePair.FromString("12345"), null)
+                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("12345"), null)
                 )
         );
 
@@ -236,7 +236,7 @@ public class DependenciesBuilderTest {
                 false,
                 null,
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", Solution.Row.ValueTypePair.FromString("123"), null)
+                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"), null)
                 )
         );
 
@@ -360,7 +360,7 @@ public class DependenciesBuilderTest {
                 true,
                 Map.of("Handle", "Win32_Process.Handle.2.internal"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", Solution.Row.ValueTypePair.FromString("123"), null)
+                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"), null)
                 )
         );
 
@@ -409,7 +409,7 @@ public class DependenciesBuilderTest {
                 true,
                 Map.of("Handle", "Win32_Process.Handle.1.internal"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", Solution.Row.ValueTypePair.FromString("123"), null)
+                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"), null)
                 )
         );
 
@@ -457,7 +457,7 @@ public class DependenciesBuilderTest {
                 false,
                 null,
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", Solution.Row.ValueTypePair.FromString("123"), null)
+                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"), null)
                 )
         );
 
@@ -468,7 +468,7 @@ public class DependenciesBuilderTest {
                 false,
                 Map.of("Antecedent", "my2_file"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Dependent", (Solution.Row.ValueTypePair)null, "my0_process")
+                        new QueryData.WhereEquality("Dependent", (ValueTypePair)null, "my0_process")
                 )
         );
 
@@ -519,7 +519,7 @@ public class DependenciesBuilderTest {
                 false,
                 null,
                 Arrays.asList(
-                        new QueryData.WhereEquality("Name", Solution.Row.ValueTypePair.FromString("C:"), null)
+                        new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:"), null)
                 )
         );
 
@@ -576,7 +576,7 @@ public class DependenciesBuilderTest {
                 false,
                 Map.of("Caption", "caption"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", Solution.Row.ValueTypePair.FromString("12345"), null)
+                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("12345"), null)
                 )
         );
 

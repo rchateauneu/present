@@ -51,10 +51,10 @@ public class ObjectPattern {
     public static class PredicateObjectPair{
         public String Predicate;
         public String variableName;
-        public Solution.Row.ValueTypePair ObjectContent;
+        public ValueTypePair ObjectContent;
         public String ShortPredicate;
 
-        PredicateObjectPair(String predicate, String variable, Solution.Row.ValueTypePair objectContent) {
+        PredicateObjectPair(String predicate, String variable, ValueTypePair objectContent) {
             if(!(variable == null ^ objectContent == null)) {
                 throw new RuntimeException("The variable or the value must be null");
             }
@@ -70,7 +70,7 @@ public class ObjectPattern {
         Members.add(predicateObjectPair);
     }
 
-    public void AddPredicateObjectPairValue(String predicate, Solution.Row.ValueTypePair objectContent)
+    public void AddPredicateObjectPairValue(String predicate, ValueTypePair objectContent)
     {
         PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicate, null, objectContent);
         Members.add(predicateObjectPair);
@@ -267,13 +267,13 @@ Examples of literal syntax in SPARQL include:
                     */
                     //object.getValue().
                     Value objectValue = object.getValue();
-                    Solution.ValueType dataType = ValueToType(objectValue);
+                    ValueTypePair.ValueType dataType = ValueToType(objectValue);
 
 
                     // java.lang.ClassCastException: class org.eclipse.rdf4j.model.impl.SimpleIRI cannot be cast
                     // to class org.eclipse.rdf4j.model.impl.SimpleLiteral
                     // (org.eclipse.rdf4j.model.impl.SimpleIRI and org.eclipse.rdf4j.model.impl.SimpleLiteral are in unnamed module of loader 'app')
-                    Solution.Row.ValueTypePair vtp = new Solution.Row.ValueTypePair(objectValue.stringValue(), dataType);
+                    ValueTypePair vtp = new ValueTypePair(objectValue.stringValue(), dataType);
                     refPattern.AddPredicateObjectPairValue(predicateStr, vtp);
                 } else {
                     // If it is a variable.
@@ -291,27 +291,27 @@ Examples of literal syntax in SPARQL include:
     /** This is used to transform a constant value parsed from a Sparql query, to a value compatible with WMI.
      * Specifically, this extracts the data type.
      * */
-    static private Solution.ValueType ValueToType(Value objectValue) {
+    static private ValueTypePair.ValueType ValueToType(Value objectValue) {
         if (objectValue instanceof SimpleLiteral) {
             SimpleLiteral objectLiteral = (SimpleLiteral) objectValue;
 
             // NODE_TYPE is intentionaly not in this map.
-            Map<String, Solution.ValueType> mapXmlToSolution = Map.of(
-                    "string", Solution.ValueType.STRING_TYPE,
-                    "dateTime", Solution.ValueType.DATE_TYPE,
-                    "integer", Solution.ValueType.INT_TYPE,
-                    "float", Solution.ValueType.FLOAT_TYPE,
-                    "double", Solution.ValueType.FLOAT_TYPE,
-                    "boolean", Solution.ValueType.BOOL_TYPE);
+            Map<String, ValueTypePair.ValueType> mapXmlToSolution = Map.of(
+                    "string", ValueTypePair.ValueType.STRING_TYPE,
+                    "dateTime", ValueTypePair.ValueType.DATE_TYPE,
+                    "integer", ValueTypePair.ValueType.INT_TYPE,
+                    "float", ValueTypePair.ValueType.FLOAT_TYPE,
+                    "double", ValueTypePair.ValueType.FLOAT_TYPE,
+                    "boolean", ValueTypePair.ValueType.BOOL_TYPE);
             IRI datatype = objectLiteral.getDatatype();
-            Solution.ValueType valueType = mapXmlToSolution.get(datatype.getLocalName());
+            ValueTypePair.ValueType valueType = mapXmlToSolution.get(datatype.getLocalName());
             if(valueType == null) {
                 throw new RuntimeException("Cannot map type:" + datatype);
             }
             return valueType;
         } else {
             SimpleIRI objectIRI = (SimpleIRI) objectValue;
-            return Solution.ValueType.NODE_TYPE;
+            return ValueTypePair.ValueType.NODE_TYPE;
         }
         //return Solution.ValueType.STRING_TYPE;
     }
