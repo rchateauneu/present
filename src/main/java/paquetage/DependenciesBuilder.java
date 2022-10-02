@@ -60,14 +60,14 @@ public class DependenciesBuilder {
                 QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(
                         predicateObjectPair.ShortPredicate,
                         predicateObjectPair.ObjectContent,
-                        predicateObjectPair.IsVariableObject);
+                        predicateObjectPair.variableName);
 
-                if(predicateObjectPair.IsVariableObject) {
-                    if(variablesContext.containsKey(predicateObjectPair.ObjectContent))  {
+                if(predicateObjectPair.variableName != null) {
+                    if(variablesContext.containsKey(predicateObjectPair.variableName))  {
                         // If it is a variable calculated in the previous queries, its value is known when executing.
                         wheres.add(wmiKeyValue);
                     } else {
-                        selected_variables.put(predicateObjectPair.ShortPredicate, predicateObjectPair.ObjectContent);
+                        selected_variables.put(predicateObjectPair.ShortPredicate, predicateObjectPair.variableName);
                     }
                 } else {
                     // If the value of the predicate is known because it is a constant.
@@ -89,8 +89,7 @@ public class DependenciesBuilder {
 
             if(isMainVariableAvailable) {
                 // If the main variable is known, it will use a getter. However, if there are "where" tests,
-                // the values of the columns must be known for extra filtering.
-                // Therefore, they must be fetched.
+                // the values of the columns must be known for extra filtering. Therefore, they must be fetched.
                 Set<String> nonSelectedColumns = wheres.stream().map(w->w.predicate).collect(Collectors.toSet());
                 nonSelectedColumns.removeAll(selected_variables.keySet());
                 for(String nonSelectedColumn: nonSelectedColumns) {
@@ -98,6 +97,7 @@ public class DependenciesBuilder {
                     // several times in this Sparql query.
                     String internalVariable = pattern.ShortClassName + "." + nonSelectedColumn + "." + patternCounter + ".internal";
                     selected_variables.put(nonSelectedColumn, internalVariable);
+                    variablesContext.put(internalVariable, null);
                 }
             }
 

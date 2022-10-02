@@ -50,20 +50,29 @@ public class ObjectPattern {
     // TODO: ObjectName must be a Variable or Value. See rdf4j
     public static class PredicateObjectPair{
         public String Predicate;
-        public boolean IsVariableObject;
-        public String ObjectContent;
+        public String variableName;
+        public Solution.Row.ValueTypePair ObjectContent;
         public String ShortPredicate;
 
-        PredicateObjectPair(String predicate, boolean isVariableObject, String objectContent) {
+        PredicateObjectPair(String predicate, String variable, Solution.Row.ValueTypePair objectContent) {
+            if(!(variable == null ^ objectContent == null)) {
+                throw new RuntimeException("The variable or the value must be null");
+            }
             Predicate = predicate;
-            IsVariableObject = isVariableObject;
+            variableName = variable;
             ObjectContent = objectContent;
         }
     }
 
-    public void AddPredicateObjectPair(String predicate, boolean isVariableObject, String objectContent)
+    public void AddPredicateObjectPairVariable(String predicate, String variable)
     {
-        PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicate, isVariableObject, objectContent);
+        PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicate, variable, null);
+        Members.add(predicateObjectPair);
+    }
+
+    public void AddPredicateObjectPairValue(String predicate, Solution.Row.ValueTypePair objectContent)
+    {
+        PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicate, null, objectContent);
         Members.add(predicateObjectPair);
     }
 
@@ -264,13 +273,14 @@ Examples of literal syntax in SPARQL include:
                     // java.lang.ClassCastException: class org.eclipse.rdf4j.model.impl.SimpleIRI cannot be cast
                     // to class org.eclipse.rdf4j.model.impl.SimpleLiteral
                     // (org.eclipse.rdf4j.model.impl.SimpleIRI and org.eclipse.rdf4j.model.impl.SimpleLiteral are in unnamed module of loader 'app')
-                    refPattern.AddPredicateObjectPair(predicateStr, false, objectValue.stringValue());
+                    Solution.Row.ValueTypePair vtp = new Solution.Row.ValueTypePair(objectValue.stringValue(), dataType);
+                    refPattern.AddPredicateObjectPairValue(predicateStr, vtp);
                 } else {
                     // If it is a variable.
                     if (object.isAnonymous()) {
                         throw new RuntimeException("not isConstant and isAnonymous");
                     }
-                    refPattern.AddPredicateObjectPair(predicateStr, true, object.getName());
+                    refPattern.AddPredicateObjectPairVariable(predicateStr, object.getName());
                 }
             }
         }
@@ -285,18 +295,24 @@ Examples of literal syntax in SPARQL include:
         if (objectValue instanceof SimpleLiteral) {
             SimpleLiteral objectLiteral = (SimpleLiteral) objectValue;
 
+            // NODE_TYPE is intentionaly not in this map.
             Map<String, Solution.ValueType> mapXmlToSolution = Map.of(
-                    "a", Solution.ValueType.STRING_TYPE,
-                    "b", Solution.ValueType.DATE_TYPE,
-                    "c", Solution.ValueType.INT_TYPE,
-                    "d", Solution.ValueType.FLOAT_TYPE,
-                    "e", Solution.ValueType.BOOL_TYPE,
-                    "f", Solution.ValueType.NODE_TYPE);
-
+                    "string", Solution.ValueType.STRING_TYPE,
+                    "dateTime", Solution.ValueType.DATE_TYPE,
+                    "integer", Solution.ValueType.INT_TYPE,
+                    "float", Solution.ValueType.FLOAT_TYPE,
+                    "double", Solution.ValueType.FLOAT_TYPE,
+                    "boolean", Solution.ValueType.BOOL_TYPE);
             IRI datatype = objectLiteral.getDatatype();
+            Solution.ValueType valueType = mapXmlToSolution.get(datatype.getLocalName());
+            if(valueType == null) {
+                throw new RuntimeException("Cannot map type:" + datatype);
+            }
+            return valueType;
         } else {
             SimpleIRI objectIRI = (SimpleIRI) objectValue;
+            return Solution.ValueType.NODE_TYPE;
         }
-        return Solution.ValueType.STRING_TYPE;
+        //return Solution.ValueType.STRING_TYPE;
     }
 }

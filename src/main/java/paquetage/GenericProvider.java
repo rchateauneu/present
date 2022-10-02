@@ -45,7 +45,7 @@ class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
      */
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String dummyValue = queryData.GetWhereValue("DummyKey");
+        String dummyValue = queryData.GetWhereValue("DummyKey").toValueString();
 
         // The key must be an integer.
         long intDummyValue = Long.parseLong(dummyValue);
@@ -117,7 +117,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
      */
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String fileName = queryData.GetWhereValue("Name");
+        String fileName = queryData.GetWhereValue("Name").toValueString();
         String pathFile = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
         Solution.Row singleRow = new Solution.Row();
 
@@ -140,7 +140,7 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valuePartComponent = queryData.GetWhereValue("PartComponent");
+        String valuePartComponent = queryData.GetWhereValue("PartComponent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valuePartComponent);
         String filePath = properties.get("Name");
         File file = new File(filePath);
@@ -171,7 +171,7 @@ class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valueGroupComponent = queryData.GetWhereValue("GroupComponent");
+        String valueGroupComponent = queryData.GetWhereValue("GroupComponent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
         String dirPath = properties.get("Name");
         String pathGroupComponent = ObjectPath.BuildCimv2PathWbem("Win32_Directory", Map.of("Name", dirPath));
@@ -220,7 +220,7 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valueAntecedent = queryData.GetWhereValue("Antecedent");
+        String valueAntecedent = queryData.GetWhereValue("Antecedent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
         String filePath = properties.get("Name");
         List<String> listPids = processModules.GetFromModule(filePath);
@@ -260,7 +260,7 @@ class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valueDependent = queryData.GetWhereValue("Dependent");
+        String valueDependent = queryData.GetWhereValue("Dependent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
         String pidStr = properties.get("Handle");
         List<String> listModules = processModules.GetFromPid(pidStr);
@@ -628,7 +628,7 @@ public class GenericProvider {
     boolean ExtraFiltering(QueryData queryData, Solution.Row returnRow)
     {
         for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
-            logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
+            logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
             String variableName = queryData.ColumnToVariable(oneWhere.predicate);
             if(variableName == null) {
                 throw new RuntimeException("Variable is null for column:" + oneWhere.predicate);
@@ -637,14 +637,14 @@ public class GenericProvider {
             // Beware of performance waste if the same value is read twice from the object,
             // if the column is in the where  expression and also in the selected column.
             Solution.Row.ValueTypePair vtp = returnRow.GetValueType(variableName);
-            if (oneWhere.isVariable) {
-                throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context");
+            if (oneWhere.variableName != null) {
+                throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context:" + oneWhere.variableName);
             }
-            if (vtp.Type() != Solution.ValueType.STRING_TYPE) {
-                throw new RuntimeException("Non-string handled yet:" + vtp.Type() + ". Should not be difficult.");
-            }
-            if (!vtp.Value().equals(oneWhere.value)) {
-                logger.debug("Different column value:" + vtp.Value());
+            //if (vtp.Type() != Solution.ValueType.STRING_TYPE) {
+            //    throw new RuntimeException("Non-string handled yet:" + vtp.Type() + ". Should not be difficult.");
+            //}
+            if (!vtp.equals(oneWhere.value)) {
+                logger.debug("Different column value:" + vtp.toDisplayString() + "!=" + oneWhere.value.toDisplayString());
                 return false;
             }
         }

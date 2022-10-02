@@ -28,10 +28,17 @@ import java.util.*;
 public class StatementsGenerationTest {
     ValueFactory factory = SimpleValueFactory.getInstance();
 
+    static void CompareVariable(ObjectPattern.PredicateObjectPair a, String predicate, String variable) {
+        Assert.assertEquals(predicate, a.Predicate);
+        Assert.assertEquals(variable, a.variableName);
+        Assert.assertEquals(null, a.ObjectContent);
+    }
+
     static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
         Assert.assertEquals(predicate, a.Predicate);
-        Assert.assertEquals(isVariable, a.IsVariableObject);
-        Assert.assertEquals(content, a.ObjectContent);
+        Assert.assertEquals(a.variableName, a.variableName);
+        if(a.variableName == null)
+            Assert.assertEquals(new Solution.Row.ValueTypePair(content, Solution.ValueType.STRING_TYPE), a.ObjectContent);
     }
 
     @Test

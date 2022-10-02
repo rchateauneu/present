@@ -15,6 +15,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /*
@@ -213,6 +215,15 @@ public class Solution implements Iterable<Solution.Row> {
                 return m_Type;
             }
 
+            public boolean equals(Object otherObject) {
+                ValueTypePair other = (ValueTypePair)otherObject;
+                return m_Value.equals(other.m_Value) && m_Type == other.m_Type;
+            }
+
+            /** This checks if the type is correlated with the value. There might be false positive,
+             * if a plain string has the same syntax as a node, or contains an integer.
+             * @return
+             */
             boolean IsValid()
             {
                 if(m_Value == null) {
@@ -220,7 +231,8 @@ public class Solution implements Iterable<Solution.Row> {
                 }
                 switch(m_Type) {
                     case NODE_TYPE:
-                        return PresentUtils.hasWmiReferenceSyntax(m_Value);
+                        // It could be "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process"
+                        return PresentUtils.hasWmiReferenceSyntax(m_Value) || PresentUtils.hasUrlSyntax(m_Value);
                     case INT_TYPE:
                         try {
                             Long l = Long.parseLong(m_Value);
@@ -243,8 +255,25 @@ public class Solution implements Iterable<Solution.Row> {
                 }
             }
 
-            public String toString() {
+            // Very common usage in tests/
+            static public ValueTypePair FromString(String value) {
+                return new ValueTypePair(value, ValueType.STRING_TYPE);
+            }
+
+            public String toDisplayString() {
                 return "{" + m_Value + " -> " + m_Type + "}";
+            }
+
+            public String toValueString() {
+                return m_Value;
+            }
+
+            /** This should be disabled because there is an ambiguity between display the content for informational
+             * purpose, when debugging, and processing the value as a string.
+             * @return
+             */
+            public String toString() {
+                throw new RuntimeException("Should not happen");
             }
 
             private static final DatatypeFactory datatypeFactory ;
@@ -360,7 +389,7 @@ public class Solution implements Iterable<Solution.Row> {
         Resource AsIRI(String varName) throws Exception {
             ValueTypePair pairValueType = GetValueType(varName);
             if(pairValueType.Type() != ValueType.NODE_TYPE) {
-                throw new Exception("This should be a NODE:" + varName + "=" + pairValueType);
+                throw new Exception("This should be a NODE:" + varName + "=" + pairValueType.toDisplayString());
             }
             String valueString = pairValueType.Value();
 
@@ -432,7 +461,7 @@ public class Solution implements Iterable<Solution.Row> {
             // It also checks for "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\" which is not a path.
             if(pairValueType != null) {
                 if (!pairValueType.IsValid()) {
-                    throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType);
+                    throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType.toDisplayString());
                 }
             }
             Elements.put(key, pairValueType);
@@ -462,9 +491,23 @@ public class Solution implements Iterable<Solution.Row> {
             Elements = elements;
         }
 
-
         public String toString() {
             return Elements.toString();
+        }
+
+        /** It needs a special function to serialize the value. */
+        public String toValueString() {
+            Function<Map.Entry<String, ValueTypePair>, String> converter = (Map.Entry<String, ValueTypePair> entry)
+            -> {
+                ValueTypePair entryValue = entry.getValue();
+                return entry.getKey() + "=" + (entryValue == null ? "null" : entryValue.toDisplayString());
+            };
+
+            String result = "{" + Elements.entrySet()
+                    .stream()
+                    .map(entry -> converter.apply(entry))
+                    .collect(Collectors.joining(", ")) + "}";
+            return result;
         }
 
         void ExtendColumnsWithNull(Set<String> newBindings) {

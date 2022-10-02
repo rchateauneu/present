@@ -68,29 +68,36 @@ public class QueryData {
         public String predicate;
 
         // This is the value or a variable name, compared with a WMI class member in a WQL query.
-        // Ici, on aurait un ValuePair si c'est une constante.
-        // FIXME: Confusion dangereuse: Si variable, ca conient un nom de variable.
-        public String value;
+        public Solution.Row.ValueTypePair value;
 
         // Tells if this is a Sparql variable (which must be evaluated in the nesting WQL queries) or a constant.
-        boolean isVariable;
+        // boolean isVariable;
+        String variableName; // null if constant,
 
-        /*
-        Confusion dangereuse: Il faut remplacer par un TypeValuePair si constante.
-         */
-        public WhereEquality(String predicateArg, String valueStr, boolean isVariableArg) throws Exception {
+        public WhereEquality(String predicateArg, Solution.Row.ValueTypePair pairValueType, String variable) throws Exception {
             if(predicateArg.contains("#")) {
                 // This ensures that the IRI of the RDF node is stripped of its prefix.
                 throw new Exception("Invalid class:" + predicateArg);
             }
+            if((variable != null) && !PresentUtils.ValidSparqlVariable(variable)) {
+                throw new Exception("Invalid Sparql variable:" + variable);
+            }
 
             predicate = predicateArg;
-            value = valueStr;
-            isVariable = isVariableArg;
+            value = pairValueType;
+            // isVariable = isVariableArg;
+            variableName = variable;
         }
 
-        public WhereEquality(String predicateArg, String valueStr) throws Exception {
-            this(predicateArg, valueStr, false);
+        // This is a helper for tests.
+        /*
+        public WhereEquality(String predicateArg, String valueStr, String variable) throws Exception {
+            this(predicateArg, new Solution.Row.ValueTypePair(valueStr, Solution.ValueType.STRING_TYPE), variable);
+        }
+        */
+
+        public WhereEquality(String predicateArg, String variable) throws Exception {
+            this(predicateArg, (Solution.Row.ValueTypePair)null, variable);
         }
 
         /**
@@ -107,7 +114,7 @@ public class QueryData {
                 // This should not happen.
                 logger.debug("Value of " + predicate + " is null");
             }
-            String escapedValue = value.replace("\\", "\\\\").replace("\"", "\\\"");
+            String escapedValue = value.toValueString().replace("\\", "\\\\").replace("\"", "\\\"");
             return "" + predicate + "" + " = \"" + escapedValue + "\"";
         }
     };
@@ -145,7 +152,7 @@ public class QueryData {
      * @param columnName "Handle", "Name", "PartComponent" etc...
      * @return
      */
-    public String GetWhereValue(String columnName) {
+    public Solution.Row.ValueTypePair GetWhereValue(String columnName) {
         for(WhereEquality whereElement : whereTests) {
             if(whereElement.predicate.equals(columnName)) {
                 return whereElement.value;
@@ -297,7 +304,7 @@ public class QueryData {
 
         if( (whereTests != null) && (! whereTests.isEmpty())) {
             wqlQuery += " where ";
-            String whereClause = (String) whereTests.stream()
+            String whereClause = whereTests.stream()
                     .map(QueryData.WhereEquality::ToEqualComparison)
                     .collect(Collectors.joining(" and "));
             wqlQuery += whereClause;

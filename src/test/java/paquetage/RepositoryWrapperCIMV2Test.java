@@ -1364,7 +1364,7 @@ public class RepositoryWrapperCIMV2Test {
                     ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                     ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                     ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
-                    ?_3_subdir cimv2:Win32_Directory.System "Tralala" .
+                    ?_3_subdir cimv2:Win32_Directory.System "1"^^xsd:boolean .
                 }
                 """;
 
@@ -1407,7 +1407,7 @@ public class RepositoryWrapperCIMV2Test {
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                             ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
-                            ?_3_subdir cimv2:Win32_Directory.System "Tralala" .
+                            ?_3_subdir cimv2:Win32_Directory.System "0"^^xsd:boolean .
                         }
                     }
                     union
@@ -1418,7 +1418,7 @@ public class RepositoryWrapperCIMV2Test {
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                             ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
-                            ?_3_subdir cimv2:Win32_Directory.System "Tralala" .
+                            ?_3_subdir cimv2:Win32_Directory.System "1"^^xsd:boolean .
                         }
                     }
                 }
@@ -1443,18 +1443,7 @@ public class RepositoryWrapperCIMV2Test {
 
             Assert.assertTrue(actualDirNamesArray.contains("SYSTEM"));
             Assert.assertEquals(expectedDirNamesArray, actualDirNamesArray);
-
-            // Temp because we want to add a filter to separare in two the list fo directories.
-            Assert.assertTrue(false);
         }
-
-
-
-
-
-
-
-
 
         // Win32_Service.ProcessId
 

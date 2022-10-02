@@ -122,7 +122,7 @@ public class SparqlTranslation {
                 // This translates into an extra filtering.
                 logger.debug("Index=" + index + " QueryData=" + queryData);
                 for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
-                    logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
+                    logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
                 }
                 logger.debug("CONST_OBJECT:" + queryData.mainVariable);
             }
@@ -149,18 +149,13 @@ public class SparqlTranslation {
                 // This is not strictly the same type because the value of KeyValue is:
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
-                if(kv.isVariable) {
+                if(kv.variableName != null) {
                     // Only the value representation is needed.
-                    Solution.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.value);
+                    Solution.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.variableName);
                     if(pairValue == null) {
-                        throw new RuntimeException("Null value for:" + kv.value);
+                        throw new RuntimeException("Null value for:" + kv.variableName);
                     }
-                    String variableValue = pairValue.Value();
-                    if (variableValue == null) {
-                        // This should not happen.
-                        logger.error("Value of " + kv.predicate + " variable=" + kv.value + " is null");
-                    }
-                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, variableValue));
+                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, pairValue, null));
                 } else {
                     // No change because the "where" value is not a variable.
                     substitutedWheres.add(kv);

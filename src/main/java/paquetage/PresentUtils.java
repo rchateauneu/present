@@ -159,8 +159,21 @@ public class PresentUtils {
         return false;
     }
 
+    static boolean hasUrlSyntax(String url) {
+        return url.startsWith("http://") || url.startsWith("https://");
+    }
+
     static public String trimQuotes(String inString) {
         return inString.substring(1, inString.length() - 1);
     }
 
+    static private Pattern patternVariableName = Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9]*$", Pattern.CASE_INSENSITIVE);
+
+    static boolean ValidSparqlVariable(String variableName) {
+        if(variableName == null) {
+            throw new RuntimeException("Cannot test validity of null variable name.");
+        }
+        Matcher matcher = patternVariableName.matcher(variableName);
+        return matcher.find();
+    }
 }
