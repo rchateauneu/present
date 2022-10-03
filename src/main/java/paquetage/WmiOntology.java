@@ -325,7 +325,7 @@ public class WmiOntology {
         {
             throw new RuntimeException(exc);
         }
-        if(repositoryConnection.size() == 0) {
+        if(repositoryConnection.isEmpty()) {
             throw new RuntimeException("Ontology is empty");
         }
         return repositoryConnection;
