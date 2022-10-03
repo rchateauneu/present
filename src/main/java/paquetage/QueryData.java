@@ -71,7 +71,6 @@ public class QueryData {
         public ValueTypePair value;
 
         // Tells if this is a Sparql variable (which must be evaluated in the nesting WQL queries) or a constant.
-        // boolean isVariable;
         String variableName; // null if constant,
 
         public WhereEquality(String predicateArg, ValueTypePair pairValueType, String variable) throws Exception {
@@ -85,12 +84,11 @@ public class QueryData {
 
             predicate = predicateArg;
             value = pairValueType;
-            // isVariable = isVariableArg;
             variableName = variable;
         }
 
         public WhereEquality(String predicateArg, String variable) throws Exception {
-            this(predicateArg, (ValueTypePair)null, variable);
+            this(predicateArg, null, variable);
         }
 
         public WhereEquality(String predicateArg, ValueTypePair pairValueType) throws Exception {
@@ -161,7 +159,6 @@ public class QueryData {
     public String ColumnToVariable(String columnName) {
         return queryColumns.get(columnName);
     }
-
 
     /** This is used to evaluate the cost of accessing a single object given its path.
      * The keys are the class name and the fetched columns, because this information can be used

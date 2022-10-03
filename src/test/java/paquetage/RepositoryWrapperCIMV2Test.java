@@ -441,7 +441,6 @@ public class RepositoryWrapperCIMV2Test {
         Set<Long> setLogonTypes = PresentUtils.LongValuesSet(listRows, "logon_type");
         System.out.println("setLogonTypes=" + setLogonTypes);
         // Interactive (2)
-        // Assert.assertEquals(Set.of(PresentUtils.LongToXml(2)), setLogonTypes);
         Assert.assertEquals(Set.of(2L), setLogonTypes);
     }
 
@@ -477,7 +476,7 @@ public class RepositoryWrapperCIMV2Test {
      *
      * @throws Exception
      */
-    @Ignore("The service forbid to access its logon session")
+    @Ignore("The service forbids accessing its logon session")
     @Test
     public void testSelect_Win32_Service_Win32_LogonSession() throws Exception {
         String sparqlQuery = """
@@ -597,7 +596,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(expectedBin, singleRow.GetStringValue("file_name"));
     }
 
-    /** Only gets the node of the associated instances.
+    /** This fetches processes running Java, and return only the node of the associated files.
      *
      * @throws Exception
      */
@@ -608,8 +607,7 @@ public class RepositoryWrapperCIMV2Test {
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?_3_file
                     where {
-                        ?_1_process cimv2:Handle "%s" .
-                        ?_1_process cimv2:Win32_Process.Caption ?caption .
+                        ?_1_process cimv2:Win32_Process.Handle "%s" .
                         ?_2_assoc cimv2:CIM_ProcessExecutable.Dependent ?_1_process .
                         ?_2_assoc cimv2:CIM_ProcessExecutable.Antecedent ?_3_file .
                         ?_3_file cimv2:CIM_DataFile.Name ?file_name .
@@ -649,6 +647,7 @@ public class RepositoryWrapperCIMV2Test {
         Set<String> setNames = PresentUtils.StringValuesSet(listRows,"name");
         String currentUser = System.getProperty("user.name");
         System.out.println("setNames=" + setNames);
+        // These groups are defined on all Windows machines.
         Assert.assertTrue(setNames.contains("Administrator"));
         Assert.assertTrue(setNames.contains("Guest"));
         Assert.assertTrue(setNames.contains(currentUser));
@@ -752,7 +751,7 @@ public class RepositoryWrapperCIMV2Test {
         Set<String> setDirs = PresentUtils.StringValuesSet(listRows,"my_dir_name");
         System.out.println("setDirs=" + setDirs);
         Assert.assertEquals(1, setDirs.size());
-        // Conversion to uppercase due to different behaviour depending on the Windows version.
+        // Conversion to uppercase due to different behaviour depending on the Windows version, 7 or 10.
         Assert.assertEquals("C:\\", setDirs.stream().findFirst().orElse("xyz").toUpperCase());
     }
 
@@ -762,7 +761,6 @@ public class RepositoryWrapperCIMV2Test {
      * This is because CIM_DirectoryContainsFile.PartComponent point to CIM_DataFile only.
      *
      * @throws Exception
-    ?my2_file rdf:type cimv2:CIM_DataFile .
      */
     @Test
     public void testSelect_CIM_DataFile_Count() throws Exception {
@@ -801,14 +799,12 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(countStr, countActual);
     }
 
-
     /** Minimum, maximum and file sizes in a directory.
      * The internal results must be of long type.
      * TODO: Beware that SUM() function returns a xsd:int : Therefore it is converted to xsd:long.
      * TODO: Beware that it might not work with files bigger that 2^32, but it is because of Sparql.
      * @throws Exception
      */
-
     @Test
     public void testSelect_CIM_DataFile_SizeMinMaxSum() throws Exception {
         String sparqlQuery = """
@@ -900,7 +896,6 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(dateExpected, localDateTimeActual);
         Assert.assertEquals(asInstantActual.toEpochMilli() / 10000, startExpected.toEpochMilli() / 10000);
     }
-
 
     /** Oldest running process.
      *
@@ -1034,14 +1029,14 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(expectedCreationTimeXml.toString().substring(0, 26), xmlDate.toString());
     }
 
-
     /** Most used modules of the current process.
      * This takes the list of all modules used by the current process and find the one which is the most shared
-     * by other processes. It uses a subquery.
+     * by other processes.
+     * This cannot work yet: https://www.techtalkz.com/threads/re-bug-with-cim_datafile.132215/
      *
      * @throws Exception
      */
-    @Ignore("This does not work for some obscure reason")
+    @Ignore("This does not work because InUseCount is always NULL")
     @Test
     public void testSelect_MostUsedModule() throws Exception {
         String sparqlQuery = String.format("""
@@ -1068,6 +1063,32 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("maxInUseCount=" + maxInUseCount);
 
         Assert.assertTrue(false);
+    }
+
+    /** The intention is to test the XSD type "long".
+     * "1179817" is "1200A9" in hexadecimal.
+     * */
+    @Test
+    public void testSelect_AccessMask() throws Exception {
+        String sparqlQuery = """
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                select ?my_name 
+                where {
+                    ?my1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
+                    ?my2_assoc cimv2:GroupComponent ?my1_dir .
+                    ?my2_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my3_file .
+                    ?my3_file  cimv2:CIM_DataFile.Name ?my_name .
+                    ?my3_file  cimv2:CIM_DataFile.AccessMask "1179817"^^<http://www.w3.org/2001/XMLSchema#long> .
+                }
+                """;
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        for(RdfSolution.Tuple tuple: listRows) {
+            System.out.println("tuple=" + tuple);
+        }
+
+        Assert.assertTrue(listRows.size() > 0);
     }
 
     /** Average number of threads in the current process.

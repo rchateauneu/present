@@ -299,6 +299,7 @@ Examples of literal syntax in SPARQL include:
             Map<String, ValueTypePair.ValueType> mapXmlToSolution = Map.of(
                     "string", ValueTypePair.ValueType.STRING_TYPE,
                     "dateTime", ValueTypePair.ValueType.DATE_TYPE,
+                    "long", ValueTypePair.ValueType.INT_TYPE,
                     "integer", ValueTypePair.ValueType.INT_TYPE,
                     "float", ValueTypePair.ValueType.FLOAT_TYPE,
                     "double", ValueTypePair.ValueType.FLOAT_TYPE,
@@ -313,6 +314,5 @@ Examples of literal syntax in SPARQL include:
             SimpleIRI objectIRI = (SimpleIRI) objectValue;
             return ValueTypePair.ValueType.NODE_TYPE;
         }
-        //return Solution.ValueType.STRING_TYPE;
     }
 }
