@@ -94,11 +94,11 @@ public class RepositoryWrapperStandardCimv2Test {
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // These processes open local socket connections.
-        Assert.assertTrue(namesProcesses.contains("\"System Idle Process\""));
-        Assert.assertTrue(namesProcesses.contains("\"lsass.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"svchost.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"services.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"System\""));
+        Assert.assertTrue(namesProcesses.contains("System Idle Process"));
+        Assert.assertTrue(namesProcesses.contains("lsass.exe"));
+        Assert.assertTrue(namesProcesses.contains("svchost.exe"));
+        Assert.assertTrue(namesProcesses.contains("services.exe"));
+        Assert.assertTrue(namesProcesses.contains("System"));
     }
 
     /**
@@ -126,11 +126,11 @@ public class RepositoryWrapperStandardCimv2Test {
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // These processes open local socket connections.
-        Assert.assertTrue(namesProcesses.contains("\"System Idle Process\""));
-        Assert.assertTrue(namesProcesses.contains("\"lsass.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"svchost.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"services.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"System\""));
+        Assert.assertTrue(namesProcesses.contains("System Idle Process"));
+        Assert.assertTrue(namesProcesses.contains("lsass.exe"));
+        Assert.assertTrue(namesProcesses.contains("svchost.exe"));
+        Assert.assertTrue(namesProcesses.contains("services.exe"));
+        Assert.assertTrue(namesProcesses.contains("System"));
     }
 
     /**
@@ -159,10 +159,10 @@ public class RepositoryWrapperStandardCimv2Test {
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // The parents of the processes which opened local socket connections.
-        Assert.assertTrue(namesProcesses.contains("\"System Idle Process\""));
-        Assert.assertTrue(namesProcesses.contains("\"services.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"explorer.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"wininit.exe\""));
+        Assert.assertTrue(namesProcesses.contains("System Idle Process"));
+        Assert.assertTrue(namesProcesses.contains("services.exe"));
+        Assert.assertTrue(namesProcesses.contains("explorer.exe"));
+        Assert.assertTrue(namesProcesses.contains("wininit.exe"));
     }
 
     /**
@@ -319,8 +319,8 @@ public class RepositoryWrapperStandardCimv2Test {
 
         Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
         System.out.println("namesProcesses=" + namesProcesses);
-        Assert.assertTrue(namesProcesses.contains("\"svchost.exe\""));
-        Assert.assertTrue(namesProcesses.contains("\"System\""));
+        Assert.assertTrue(namesProcesses.contains("svchost.exe"));
+        Assert.assertTrue(namesProcesses.contains("System"));
     }
 
 }

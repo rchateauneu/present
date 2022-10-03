@@ -28,10 +28,17 @@ import java.util.*;
 public class StatementsGenerationTest {
     ValueFactory factory = SimpleValueFactory.getInstance();
 
+    static void CompareVariable(ObjectPattern.PredicateObjectPair a, String predicate, String variable) {
+        Assert.assertEquals(predicate, a.Predicate);
+        Assert.assertEquals(variable, a.variableName);
+        Assert.assertEquals(null, a.ObjectContent);
+    }
+
     static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
         Assert.assertEquals(predicate, a.Predicate);
-        Assert.assertEquals(isVariable, a.IsVariableObject);
-        Assert.assertEquals(content, a.ObjectContent);
+        Assert.assertEquals(a.variableName, a.variableName);
+        if(a.variableName == null)
+            Assert.assertEquals(ValueTypePair.FromString(content), a.ObjectContent);
     }
 
     @Test
@@ -64,8 +71,8 @@ public class StatementsGenerationTest {
         String dirIri = "\\\\ANY_MACHINE\\ArbitraryIri";
         Solution rows = new Solution();
         rows.add(new Solution.Row(Map.of(
-                "my_dir", new Solution.Row.ValueTypePair(dirIri, Solution.ValueType.NODE_TYPE),
-                "dir_name", new Solution.Row.ValueTypePair("C:", Solution.ValueType.STRING_TYPE))));
+                "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
+                "dir_name", new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE))));
 
         List<Statement> statements = extractor.GenerateStatements(rows);
 
@@ -116,12 +123,12 @@ public class StatementsGenerationTest {
         Solution rows = new Solution();
         rows.add(
                 new Solution.Row(Map.of(
-                        "my_dir", new Solution.Row.ValueTypePair(dirIriC, Solution.ValueType.NODE_TYPE),
-                        "dir_name", new Solution.Row.ValueTypePair("C:", Solution.ValueType.STRING_TYPE))));
+                        "my_dir", new ValueTypePair(dirIriC, ValueTypePair.ValueType.NODE_TYPE),
+                        "dir_name", new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE))));
         rows.add(
                 new Solution.Row(Map.of(
-                        "my_dir", new Solution.Row.ValueTypePair(dirIriD, Solution.ValueType.NODE_TYPE),
-                        "dir_name", new Solution.Row.ValueTypePair("D:", Solution.ValueType.STRING_TYPE))));
+                        "my_dir", new ValueTypePair(dirIriD, ValueTypePair.ValueType.NODE_TYPE),
+                        "dir_name", new ValueTypePair("D:", ValueTypePair.ValueType.STRING_TYPE))));
 
         List<Statement> statements = extractor.GenerateStatements(rows);
 
@@ -189,9 +196,9 @@ public class StatementsGenerationTest {
         Solution rows = new Solution();
         rows.add(
             new Solution.Row(Map.of(
-                "my_dir", new Solution.Row.ValueTypePair(dirIri, Solution.ValueType.NODE_TYPE),
-                "dir_name", new Solution.Row.ValueTypePair("C:", Solution.ValueType.STRING_TYPE),
-                "dir_caption", new Solution.Row.ValueTypePair("This is a text", Solution.ValueType.STRING_TYPE))));
+                "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
+                "dir_name", new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE),
+                "dir_caption", new ValueTypePair("This is a text", ValueTypePair.ValueType.STRING_TYPE))));
 
         List<Statement> statements = extractor.GenerateStatements(rows);
 

@@ -3,13 +3,16 @@ package paquetage;
 import org.apache.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DependenciesBuilder {
     final static private Logger logger = Logger.getLogger(DependenciesBuilder.class);
     /**
      * This never changes whatever the order of input BGPs is.
+     * It is used in the recursive execution of WQL queries, to store the values of variables evaluated
+     * in the lowest levels.
      */
-    public HashMap<String, Solution.Row.ValueTypePair> variablesContext;
+    public HashMap<String, ValueTypePair> variablesContext;
 
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.
@@ -19,8 +22,9 @@ public class DependenciesBuilder {
 
     /** This takes as input a list of object patterns, and assumes that each of them represents a WQL query,
      * the queries being nested into one another (top-level first).
-     * The execution of WQL queries is optimised be changing the order of the patterns list.
      * Each ObjectPattern instances contains all the triples related to the same RDF subject.
+     *
+     * TODO: The execution of WQL queries could be optimised be changing the order of the patterns list.
      * @param patterns
      * @throws Exception
      */
@@ -40,8 +44,10 @@ public class DependenciesBuilder {
         * If the class is not null, they must be equal.
         * If the class is not given, it can implicitly be deduced from the predicates prefixes.
         */
-        for(ObjectPattern pattern: patterns)
+
+        for(int patternCounter = 0;patternCounter < patterns.size(); ++patternCounter)
         {
+            ObjectPattern pattern = patterns.get(patternCounter);
             pattern.PreparePattern();
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
@@ -54,14 +60,14 @@ public class DependenciesBuilder {
                 QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(
                         predicateObjectPair.ShortPredicate,
                         predicateObjectPair.ObjectContent,
-                        predicateObjectPair.IsVariableObject);
+                        predicateObjectPair.variableName);
 
-                if(predicateObjectPair.IsVariableObject) {
-                    if(variablesContext.containsKey(predicateObjectPair.ObjectContent))  {
+                if(predicateObjectPair.variableName != null) {
+                    if(variablesContext.containsKey(predicateObjectPair.variableName))  {
                         // If it is a variable calculated in the previous queries, its value is known when executing.
                         wheres.add(wmiKeyValue);
                     } else {
-                        selected_variables.put(predicateObjectPair.ShortPredicate, predicateObjectPair.ObjectContent);
+                        selected_variables.put(predicateObjectPair.ShortPredicate, predicateObjectPair.variableName);
                     }
                 } else {
                     // If the value of the predicate is known because it is a constant.
@@ -79,6 +85,20 @@ public class DependenciesBuilder {
             boolean isMainVariableAvailable = variablesContext.containsKey(pattern.VariableName);
             if(!isMainVariableAvailable) {
                 variablesContext.put(pattern.VariableName, null);
+            }
+
+            if(isMainVariableAvailable) {
+                // If the main variable is known, it will use a getter. However, if there are "where" tests,
+                // the values of the columns must be known for extra filtering. Therefore, they must be fetched.
+                Set<String> nonSelectedColumns = wheres.stream().map(w->w.predicate).collect(Collectors.toSet());
+                nonSelectedColumns.removeAll(selected_variables.keySet());
+                for(String nonSelectedColumn: nonSelectedColumns) {
+                    // The counter is used o avoid n ambiguity if the same class and the same column are used
+                    // several times in this Sparql query.
+                    String internalVariable = pattern.ShortClassName + "." + nonSelectedColumn + "." + patternCounter + ".internal";
+                    selected_variables.put(nonSelectedColumn, internalVariable);
+                    variablesContext.put(internalVariable, null);
+                }
             }
 
             if(pattern.ShortClassName != null) {

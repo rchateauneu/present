@@ -35,7 +35,7 @@ public class SparqlTranslation {
         Solution.Row new_row = new Solution.Row();
         // It does not return only the variables in bindings, but all of them because they are
         // needed to generate the statements for further Sparql execution
-        for(Map.Entry<String, Solution.Row.ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
+        for(Map.Entry<String, ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
         {
             // PresentUtils.WbemPathToIri( ? The type should not be lost, especially for IRIs
             new_row.PutValueType(pairKeyValue.getKey(), pairKeyValue.getValue());
@@ -115,24 +115,27 @@ public class SparqlTranslation {
         QueryData queryData = dependencies.prepared_queries.get(index);
         queryData.StartSampling();
         if(queryData.isMainVariableAvailable) {
+            // NO NEED TO CHECK IT EACH TIME.
             if(! queryData.whereTests.isEmpty()) {
-                // This error happens if this query aims at evaluating a variable whose value is already available,
-                // but the presence "Where" clauses implies that there is a constraint on this variable.
-                // This cannot work and indicates that the patterns are not executed in the right order.
-                logger.debug("Index=" + Integer.toString(index) + " QueryData=" + queryData.toString());
+                // This happens if this query aims at evaluating a variable whose value is already available,
+                // but the "Where" clauses implies that there is a constraint on this variable.
+                // This translates into an extra filtering.
+                logger.debug("Index=" + index + " QueryData=" + queryData);
                 for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
-                    logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value + " isvar=" + oneWhere.isVariable);
+                    logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
                 }
-                throw new RuntimeException("Where clauses must be empty if main variable is available:" + queryData.mainVariable);
+                logger.debug("CONST_OBJECT:" + queryData.mainVariable);
             }
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
             Solution.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
+
             queryData.FinishSampling(objectPath);
 
             if(singleRow == null)
             {
-                // Object does not exist: Maybe a CIM_FataFile is protected, or a CIM_Process exited ?
+                // Object does not exist or maybe a CIM_FataFile is protected, or a CIM_Process exited ?
+                // FIXME: Maybe this is not an error but a normal behaviour, so should not display an error.
                 logger.error("Cannot get row for objectPath=" + objectPath);
             }
             else {
@@ -146,18 +149,13 @@ public class SparqlTranslation {
                 // This is not strictly the same type because the value of KeyValue is:
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
-                if(kv.isVariable) {
+                if(kv.variableName != null) {
                     // Only the value representation is needed.
-                    Solution.Row.ValueTypePair pairValue = dependencies.variablesContext.get(kv.value);
+                    ValueTypePair pairValue = dependencies.variablesContext.get(kv.variableName);
                     if(pairValue == null) {
-                        throw new RuntimeException("Null value for:" + kv.value);
+                        throw new RuntimeException("Null value for:" + kv.variableName);
                     }
-                    String variableValue = pairValue.Value();
-                    if (variableValue == null) {
-                        // This should not happen.
-                        logger.error("Value of " + kv.predicate + " variable=" + kv.value + " is null");
-                    }
-                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, variableValue));
+                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, pairValue, null));
                 } else {
                     // No change because the "where" value is not a variable.
                     substitutedWheres.add(kv);

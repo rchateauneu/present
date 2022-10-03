@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
@@ -131,7 +132,7 @@ public class RepositoryWrapperCIMV2Test {
         Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
         System.out.println("currentPidStr=" + currentPidStr);
         System.out.println("setHandles=" + setHandles);
-        Assert.assertTrue(setHandles.contains("\"" + currentPidStr + "\""));
+        Assert.assertTrue(setHandles.contains(currentPidStr));
 
         // Executables are all identical.
         Set<String> setExecutables = PresentUtils.StringValuesSet(listRows,"executablepath");
@@ -241,7 +242,7 @@ public class RepositoryWrapperCIMV2Test {
                 .map(property -> CaseUtils.toCamelCase(property, false))
                         .collect(Collectors.toSet());
         // This is not selected because used as an input.
-        // Do not remove it from the oroginal keys set !
+        // Do not remove it from the original keys set !
         propertiesCamelCase.remove("handle");
 
         // All these values must be set.
@@ -270,11 +271,12 @@ public class RepositoryWrapperCIMV2Test {
         Set<String> setLabels = PresentUtils.StringValuesSet(listRows,"property_label");
         // Checks the presence of an arbitrary property.
         System.out.println("setLabels=" + setLabels);
-        Assert.assertTrue(setLabels.contains("\"Win32_Process.VirtualSize\""));
+        Assert.assertTrue(setLabels.contains("Win32_Process.VirtualSize"));
 
         // Transforms '"Win32_Process.VirtualSize"' into 'VirtualSize'
         Set<String> shortLabels = setLabels.stream()
-                .map(fullProperty -> fullProperty.substring(1,fullProperty.length()-1).split("\\.")[1])
+                // .map(fullProperty -> fullProperty.substring(1,fullProperty.length()-1).split("\\.")[1])
+                .map(fullProperty -> fullProperty.split("\\.")[1])
                 .collect(Collectors.toSet());
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
@@ -327,7 +329,7 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("currentPidStr=" + currentPidStr);
         System.out.println("setHandles=" + setHandles);
         // The current process must be here.
-        Assert.assertTrue(setHandles.contains("\"" + currentPidStr + "\""));
+        Assert.assertTrue(setHandles.contains( currentPidStr));
     }
 
     /** This gets the caption of the process running the service "Windows Search".
@@ -392,11 +394,11 @@ public class RepositoryWrapperCIMV2Test {
         String windowsVersion = System.getProperty("os.name");
         if(windowsVersion.equals("Windows 10")) {
             Assert.assertEquals(
-                    Set.of("\"Remote Procedure Call (RPC)\"", "\"Background Tasks Infrastructure Service\""),
+                    Set.of("Remote Procedure Call (RPC)", "Background Tasks Infrastructure Service"),
                     setAntecedents);
         } else if(windowsVersion.equals("Windows 7")) {
             Assert.assertEquals(
-                    Set.of("\"Remote Procedure Call (RPC)\""),
+                    Set.of("Remote Procedure Call (RPC)"),
                     setAntecedents);
         } else {
             throw new RuntimeException("Unidentified Windows version:" + windowsVersion);
@@ -436,10 +438,11 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("listRows=" + listRows);
 
         // It might contain several sessions.
-        Set<String> setLogonTypes = PresentUtils.StringValuesSet(listRows, "logon_type");
+        Set<Long> setLogonTypes = PresentUtils.LongValuesSet(listRows, "logon_type");
         System.out.println("setLogonTypes=" + setLogonTypes);
         // Interactive (2)
-        Assert.assertEquals(Set.of(PresentUtils.LongToXml(2)), setLogonTypes);
+        // Assert.assertEquals(Set.of(PresentUtils.LongToXml(2)), setLogonTypes);
+        Assert.assertEquals(Set.of(2L), setLogonTypes);
     }
 
     /** Executables of the process running the service "Windows Search".
@@ -467,7 +470,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Set<String> listExecutables = PresentUtils.StringValuesSet(listRows, "executable_name");
         System.out.println("listExecutables=" + listExecutables);
-        Assert.assertTrue(listExecutables.contains("\"SearchIndexer.exe\""));
+        Assert.assertTrue(listExecutables.contains("SearchIndexer.exe"));
     }
 
     /** Logon type of the process running the service "Windows Search".
@@ -646,9 +649,9 @@ public class RepositoryWrapperCIMV2Test {
         Set<String> setNames = PresentUtils.StringValuesSet(listRows,"name");
         String currentUser = System.getProperty("user.name");
         System.out.println("setNames=" + setNames);
-        Assert.assertTrue(setNames.contains("\"Administrator\""));
-        Assert.assertTrue(setNames.contains("\"Guest\""));
-        Assert.assertTrue(setNames.contains("\"" + currentUser + "\""));
+        Assert.assertTrue(setNames.contains("Administrator"));
+        Assert.assertTrue(setNames.contains("Guest"));
+        Assert.assertTrue(setNames.contains(currentUser));
     }
 
     /** This selects the groups of the current user.
@@ -684,7 +687,7 @@ public class RepositoryWrapperCIMV2Test {
         // setGroups=["HomeUsers", "TelnetClients", "Administrators", "Performance Log Users", "ORA_DBA"]
         // On Windows 10, "HomeUsers" becomes "Users".
         // Assert.assertTrue(setGroups.contains("\"Users\""));
-        Assert.assertTrue(setGroups.contains("\"Performance Log Users\""));
+        Assert.assertTrue(setGroups.contains("Performance Log Users"));
     }
 
     /***
@@ -716,7 +719,7 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("setDevices=" + setDevices);
         Assert.assertEquals(1, setDevices.size());
         // For example: "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\"
-        Assert.assertTrue(setDevices.stream().findFirst().orElse("xyz").startsWith("\"\\\\?\\Volume{"));
+        Assert.assertTrue(setDevices.stream().findFirst().orElse("xyz").startsWith("\\\\?\\Volume{"));
     }
 
     /***
@@ -750,7 +753,7 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("setDirs=" + setDirs);
         Assert.assertEquals(1, setDirs.size());
         // Conversion to uppercase due to different behaviour depending on the Windows version.
-        Assert.assertEquals("\"C:\\\"", setDirs.stream().findFirst().orElse("xyz").toUpperCase());
+        Assert.assertEquals("C:\\", setDirs.stream().findFirst().orElse("xyz").toUpperCase());
     }
 
     /** Number of files in a directory.
@@ -1285,9 +1288,113 @@ public class RepositoryWrapperCIMV2Test {
         }
     }
 
-    /** Union of directories in C:\Windows.
-     * Some dirs are always present: C:\Windows\System, C:\Windows\System32 etc...
-     * processes with pid multiple of 2 and pids multiple of 3.
+    /* this trims the first and last characters of a string, and is used when Sparql returns strings
+    between quotes.
+     */
+
+    /** Read boolean values. */
+    @Test
+    public void testSelect_Win32_Directory_Boolean() throws Exception {
+        String sparqlQuery = """
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                select ?dir_name ?dir_archive ?dir_compressed ?dir_encrypted ?dir_hidden ?dir_readable ?dir_system ?dir_writeable
+                where
+                {
+                    ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
+                    ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
+                    ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
+                    ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
+                    ?_3_subdir cimv2:Win32_Directory.Archive ?dir_archive .
+                    ?_3_subdir cimv2:Win32_Directory.Compressed ?dir_compressed .
+                    ?_3_subdir cimv2:Win32_Directory.Encrypted ?dir_encrypted .
+                    ?_3_subdir cimv2:Win32_Directory.Hidden ?dir_hidden .
+                    ?_3_subdir cimv2:Win32_Directory.Readable ?dir_readable .
+                    ?_3_subdir cimv2:Win32_Directory.System ?dir_system .
+                    ?_3_subdir cimv2:Win32_Directory.Writeable ?dir_writeable .
+                }
+                """;
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        for(RdfSolution.Tuple tuple : listRows) {
+            System.out.println(tuple);
+        }
+
+        Function<String, Map<String, Boolean>> ToMapToBool = (String booleanAttribute) ->
+                listRows.stream()
+                        .collect(
+                                Collectors
+                                        .toMap(
+                                                tp -> PresentUtils.trimQuotes(tp.GetStringValue("dir_name")),
+                                                tp -> PresentUtils.XmlToBoolean(tp.GetStringValue(booleanAttribute))));
+
+        Map<String, Boolean> mapNameToSystem = ToMapToBool.apply("dir_system");
+        System.out.println("mapNameToSystem=" + mapNameToSystem);
+
+        Assert.assertFalse(mapNameToSystem.get("SystemTemp"));
+        Assert.assertFalse(mapNameToSystem.get("logs"));
+        Assert.assertFalse(mapNameToSystem.get("syswow64"));
+        Assert.assertFalse(mapNameToSystem.get("system32"));
+
+        Assert.assertTrue(mapNameToSystem.get("downloaded program files"));
+        Assert.assertTrue(mapNameToSystem.get("fonts"));
+        Assert.assertTrue(mapNameToSystem.get("media"));
+        Assert.assertTrue(mapNameToSystem.get("installer"));
+
+        Map<String, Boolean> mapNameToWritable = ToMapToBool.apply("dir_writeable");
+        System.out.println("mapNameToWritable=" + mapNameToWritable);
+
+        Assert.assertFalse(mapNameToWritable.get("media"));
+        Assert.assertFalse(mapNameToWritable.get("printdialog"));
+        Assert.assertFalse(mapNameToWritable.get("fonts"));
+        Assert.assertFalse(mapNameToWritable.get("microsoft.net"));
+
+        Assert.assertTrue(mapNameToWritable.get("syswow64"));
+        Assert.assertTrue(mapNameToWritable.get("system"));
+        Assert.assertTrue(mapNameToWritable.get("winsxs"));
+        Assert.assertTrue(mapNameToWritable.get("system32"));
+    }
+
+
+    /** Select system directories.
+     * */
+    @Test
+    public void testSelect_Win32_Directory_SelectSystem() throws Exception {
+        String sparqlQuery = """
+                prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                select ?dir_name
+                where
+                {
+                    ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
+                    ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
+                    ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
+                    ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
+                    ?_3_subdir cimv2:Win32_Directory.System "1"^^xsd:boolean .
+                }
+                """;
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        for(RdfSolution.Tuple tuple : listRows) {
+            System.out.println(tuple);
+        }
+
+        Set<String> setDirs = PresentUtils.StringValuesSet(listRows,"dir_name");
+        System.out.println("setDirs=" + setDirs);
+
+        Assert.assertFalse(setDirs.contains("SystemTemp"));
+        Assert.assertFalse(setDirs.contains("logs"));
+        Assert.assertFalse(setDirs.contains("syswow64"));
+        Assert.assertFalse(setDirs.contains("system32"));
+
+        Assert.assertTrue(setDirs.contains("downloaded program files"));
+        Assert.assertTrue(setDirs.contains("fonts"));
+        Assert.assertTrue(setDirs.contains("media"));
+        Assert.assertTrue(setDirs.contains("installer"));
+    }
+
+    /** Union of directories in C:\Windows, system dirs and non-system ones.
+     * The union must be the whole list of directories there.
      * This is an arbitrary test but the result is easy to check.
      * The intention is to check that union works.
      * @throws Exception
@@ -1306,6 +1413,7 @@ public class RepositoryWrapperCIMV2Test {
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                             ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
+                            ?_3_subdir cimv2:Win32_Directory.System "0"^^xsd:boolean .
                         }
                     }
                     union
@@ -1316,6 +1424,7 @@ public class RepositoryWrapperCIMV2Test {
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                             ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                             ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
+                            ?_3_subdir cimv2:Win32_Directory.System "1"^^xsd:boolean .
                         }
                     }
                 }
@@ -1323,26 +1432,24 @@ public class RepositoryWrapperCIMV2Test {
 
             RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-            Set<String> actualDirNames = PresentUtils.StringValuesSet(listRows,"dir_name");
-            System.out.println("actualDirNames=" + actualDirNames);
+            Set<String> actualDirNames = PresentUtils.StringValuesSet(listRows,"dir_name").stream().map(s -> s.toUpperCase()).collect(Collectors.toSet());
+            ArrayList<String> actualDirNamesArray = new ArrayList<>(actualDirNames);
+            Collections.sort(actualDirNamesArray);
+            System.out.println("actualDirNamesArray=" + actualDirNamesArray);
 
             Path directory = Paths.get("C:\\WINDOWS");
 
             Set<String> expectedDirNames = Files.walk(directory, 1).filter(entry -> !entry.equals(directory))
-                    .filter(Files::isDirectory).map(p -> p.getFileName().toString()).collect(Collectors.toSet());
+                    .filter(Files::isDirectory)
+                    .map(p -> p.getFileName().toString().toUpperCase())
+                    .collect(Collectors.toSet());
+            ArrayList<String> expectedDirNamesArray = new ArrayList<>(expectedDirNames);
+            Collections.sort(expectedDirNamesArray);
+            System.out.println("expectedDirNamesArray=" + expectedDirNamesArray);
 
-            System.out.println("expectedDirNames=" + expectedDirNames);
-
-            Assert.assertEquals(expectedDirNames, actualDirNames);
+            Assert.assertTrue(actualDirNamesArray.contains("SYSTEM"));
+            Assert.assertEquals(expectedDirNamesArray, actualDirNamesArray);
         }
-
-
-
-
-
-
-
-
 
         // Win32_Service.ProcessId
 

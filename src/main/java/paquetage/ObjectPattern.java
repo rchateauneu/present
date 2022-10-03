@@ -1,7 +1,10 @@
 package paquetage;
 
 import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.impl.SimpleIRI;
+import org.eclipse.rdf4j.model.impl.SimpleLiteral;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
@@ -47,20 +50,29 @@ public class ObjectPattern {
     // TODO: ObjectName must be a Variable or Value. See rdf4j
     public static class PredicateObjectPair{
         public String Predicate;
-        public boolean IsVariableObject;
-        public String ObjectContent;
+        public String variableName;
+        public ValueTypePair ObjectContent;
         public String ShortPredicate;
 
-        PredicateObjectPair(String predicate, boolean isVariableObject, String objectContent) {
+        PredicateObjectPair(String predicate, String variable, ValueTypePair objectContent) {
+            if(!(variable == null ^ objectContent == null)) {
+                throw new RuntimeException("The variable or the value must be null");
+            }
             Predicate = predicate;
-            IsVariableObject = isVariableObject;
+            variableName = variable;
             ObjectContent = objectContent;
         }
     }
 
-    public void AddPredicateObjectPair(String predicate, boolean isVariableObject, String objectContent)
+    public void AddPredicateObjectPairVariable(String predicate, String variable)
     {
-        PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicate, isVariableObject, objectContent);
+        PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicate, variable, null);
+        Members.add(predicateObjectPair);
+    }
+
+    public void AddPredicateObjectPairValue(String predicate, ValueTypePair objectContent)
+    {
+        PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicate, null, objectContent);
         Members.add(predicateObjectPair);
     }
 
@@ -194,7 +206,7 @@ public class ObjectPattern {
                     or, on top of an ArbitraryLengthPath:
                     "?service1 (^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent)+ ?service2"
 
-                    However, with triples whose instance are unrelated to WMI, this is OK. Like:
+                    However, with triples whose predicate is unrelated to WMI, this is OK. Like:
                     "cimv2:Win32_Process.Handle rdfs:label ?label"
                     */
                 if (predicateStr.startsWith(WmiOntology.namespaces_url_prefix)) {
@@ -210,7 +222,7 @@ public class ObjectPattern {
                 refPattern = patternsMap.get(subjectName);
             }
 
-            // TODO: Make this comparison faster and simpler.
+            // TODO: Make this comparison faster than a string comparison.
             if (predicateStr.equals(RDF.TYPE.stringValue())) {
                 refPattern.ClassName = object.getValue().stringValue();
             }
@@ -221,21 +233,86 @@ public class ObjectPattern {
                         """);
             }
             else {
+                /*
+                Non, pas bon de melanger constante et variable.
+                Si constante, on cree une variable interne qui sera utilisee pour stocker la valeur
+                qui sera selectionnee pour de bon par WQL car:
+                - Parfois on ne peut pas ajouter un WHERE si on a deja l'objet, car ce serait faire nous-meme
+                ce qui doit etre fait par Sparql. Quoique ... a la reflexion, ca simplifierait beaucoup.
+
+https://www.w3.org/TR/sparql11-query/
+Examples of literal syntax in SPARQL include:
+
+    "chat"
+    'chat'@fr with language tag "fr"
+    "xyz"^^<http://example.org/ns/userDatatype>
+    "abc"^^appNS:appDataType
+    '''The librarian said, "Perhaps you would enjoy 'War and Peace'."'''
+    1, which is the same as "1"^^xsd:integer
+    1.3, which is the same as "1.3"^^xsd:decimal
+    1.300, which is the same as "1.300"^^xsd:decimal
+    1.0e6, which is the same as "1.0e6"^^xsd:double
+    true, which is the same as "true"^^xsd:boolean
+    false, which is the same as "false"^^xsd:boolean
+
+
+                 */
                 if (object.isConstant()) {
                     if (!object.isAnonymous()) {
                         throw new RuntimeException("isConstant and not isAnonymous");
                     }
-                    refPattern.AddPredicateObjectPair(predicateStr, false, object.getValue().stringValue());
+                    /*
+                    Ici, on pourrait donc fabriquer un GetValuePair qui ne sera jamais injecte dans WQL
+                    mais sera reconverti vers XML.
+                    */
+                    //object.getValue().
+                    Value objectValue = object.getValue();
+                    ValueTypePair.ValueType dataType = ValueToType(objectValue);
+
+
+                    // java.lang.ClassCastException: class org.eclipse.rdf4j.model.impl.SimpleIRI cannot be cast
+                    // to class org.eclipse.rdf4j.model.impl.SimpleLiteral
+                    // (org.eclipse.rdf4j.model.impl.SimpleIRI and org.eclipse.rdf4j.model.impl.SimpleLiteral are in unnamed module of loader 'app')
+                    ValueTypePair vtp = new ValueTypePair(objectValue.stringValue(), dataType);
+                    refPattern.AddPredicateObjectPairValue(predicateStr, vtp);
                 } else {
                     // If it is a variable.
                     if (object.isAnonymous()) {
                         throw new RuntimeException("not isConstant and isAnonymous");
                     }
-                    refPattern.AddPredicateObjectPair(predicateStr, true, object.getName());
+                    refPattern.AddPredicateObjectPairVariable(predicateStr, object.getName());
                 }
             }
         }
-        logger.debug("Generated patterns: " + Long.toString(patternsMap.size()));
+        logger.debug("Generated patterns: " + patternsMap.size());
         return patternsMap;
-    } // for
+    } // PartitionBySubject
+
+    /** This is used to transform a constant value parsed from a Sparql query, to a value compatible with WMI.
+     * Specifically, this extracts the data type.
+     * */
+    static private ValueTypePair.ValueType ValueToType(Value objectValue) {
+        if (objectValue instanceof SimpleLiteral) {
+            SimpleLiteral objectLiteral = (SimpleLiteral) objectValue;
+
+            // NODE_TYPE is intentionaly not in this map.
+            Map<String, ValueTypePair.ValueType> mapXmlToSolution = Map.of(
+                    "string", ValueTypePair.ValueType.STRING_TYPE,
+                    "dateTime", ValueTypePair.ValueType.DATE_TYPE,
+                    "integer", ValueTypePair.ValueType.INT_TYPE,
+                    "float", ValueTypePair.ValueType.FLOAT_TYPE,
+                    "double", ValueTypePair.ValueType.FLOAT_TYPE,
+                    "boolean", ValueTypePair.ValueType.BOOL_TYPE);
+            IRI datatype = objectLiteral.getDatatype();
+            ValueTypePair.ValueType valueType = mapXmlToSolution.get(datatype.getLocalName());
+            if(valueType == null) {
+                throw new RuntimeException("Cannot map type:" + datatype);
+            }
+            return valueType;
+        } else {
+            SimpleIRI objectIRI = (SimpleIRI) objectValue;
+            return ValueTypePair.ValueType.NODE_TYPE;
+        }
+        //return Solution.ValueType.STRING_TYPE;
+    }
 }

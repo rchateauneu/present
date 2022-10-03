@@ -169,7 +169,10 @@ public class ProcessModules {
 
         Map<String, ArrayList<String>> allProcess = GetAllProcessesModules();
         for(Map.Entry<String, ArrayList<String>> processEntry : allProcess.entrySet()) {
-            if(processEntry.getValue().contains(moduleName)) {
+            // Needed for Windows 7.
+            ArrayList<String> listModules = processEntry.getValue();
+            List<String> listModulesUppercase = listModules.stream().map(str -> str.toUpperCase()).toList();
+            if(listModulesUppercase.contains(moduleName.toUpperCase())) {
                 pidsList.add(processEntry.getKey());
             }
         }

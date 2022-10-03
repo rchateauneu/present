@@ -78,6 +78,16 @@ public class PresentUtils {
         return Double.parseDouble(doubleOnly);
     }
 
+    // Example: "false"^^<http://www.w3.org/2001/XMLSchema#boolean>
+    static public boolean XmlToBoolean(String booleanStr) {
+        String booleanOnly = extractStringXML(booleanStr);
+        if(booleanOnly.equals("true"))
+            return true;
+        if(booleanOnly.equals("false"))
+            return false;
+        throw new RuntimeException("Invalid boolean value:" + booleanOnly);
+    }
+
     /** Transforms a RDF date into a string.
      *
      * @param theDate Example: '"2022-02-11T00:44:44.730519"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
@@ -104,7 +114,7 @@ public class PresentUtils {
      * @return
      */
     static Set<String> StringValuesSet(RdfSolution listRows, String variable_name) {
-        return listRows.stream().map(row->row.GetStringValue(variable_name)).collect(Collectors.toSet());
+        return listRows.stream().map(row->trimQuotes(row.GetStringValue(variable_name))).collect(Collectors.toSet());
     }
 
     static Set<Long> LongValuesSet(RdfSolution listRows, String variable_name) {
@@ -149,4 +159,21 @@ public class PresentUtils {
         return false;
     }
 
+    static boolean hasUrlSyntax(String url) {
+        return url.startsWith("http://") || url.startsWith("https://");
+    }
+
+    static public String trimQuotes(String inString) {
+        return inString.substring(1, inString.length() - 1);
+    }
+
+    static private Pattern patternVariableName = Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9]*$", Pattern.CASE_INSENSITIVE);
+
+    static boolean ValidSparqlVariable(String variableName) {
+        if(variableName == null) {
+            throw new RuntimeException("Cannot test validity of null variable name.");
+        }
+        Matcher matcher = patternVariableName.matcher(variableName);
+        return matcher.find();
+    }
 }

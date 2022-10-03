@@ -45,7 +45,7 @@ class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
      */
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String dummyValue = queryData.GetWhereValue("DummyKey");
+        String dummyValue = queryData.GetWhereValue("DummyKey").toValueString();
 
         // The key must be an integer.
         long intDummyValue = Long.parseLong(dummyValue);
@@ -117,7 +117,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
      */
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String fileName = queryData.GetWhereValue("Name");
+        String fileName = queryData.GetWhereValue("Name").toValueString();
         String pathFile = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
         Solution.Row singleRow = new Solution.Row();
 
@@ -140,7 +140,7 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valuePartComponent = queryData.GetWhereValue("PartComponent");
+        String valuePartComponent = queryData.GetWhereValue("PartComponent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valuePartComponent);
         String filePath = properties.get("Name");
         File file = new File(filePath);
@@ -171,7 +171,7 @@ class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valueGroupComponent = queryData.GetWhereValue("GroupComponent");
+        String valueGroupComponent = queryData.GetWhereValue("GroupComponent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
         String dirPath = properties.get("Name");
         String pathGroupComponent = ObjectPath.BuildCimv2PathWbem("Win32_Directory", Map.of("Name", dirPath));
@@ -220,7 +220,7 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valueAntecedent = queryData.GetWhereValue("Antecedent");
+        String valueAntecedent = queryData.GetWhereValue("Antecedent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
         String filePath = properties.get("Name");
         List<String> listPids = processModules.GetFromModule(filePath);
@@ -260,7 +260,7 @@ class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
     }
     public Solution EffectiveSelect(QueryData queryData) throws Exception {
         Solution result = new Solution();
-        String valueDependent = queryData.GetWhereValue("Dependent");
+        String valueDependent = queryData.GetWhereValue("Dependent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
         String pidStr = properties.get("Handle");
         List<String> listModules = processModules.GetFromPid(pidStr);
@@ -338,36 +338,36 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
         return queryData.ColumnsSubsetOf("CIM_DataFile", columnsMap.keySet());
     }
 
-    static Solution.Row.ValueTypePair FileToDrive(String fileName) {
+    static ValueTypePair FileToDrive(String fileName) {
         Path p = Paths.get(fileName);
         String driveStrRaw = p.getRoot().toString();
-        return Solution.Row.ValueTypePair.Factory(driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1));
+        return ValueTypePair.Factory(driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1));
     }
 
-    static Solution.Row.ValueTypePair FileToName(String fileName) {
+    static ValueTypePair FileToName(String fileName) {
         Path p = Paths.get(fileName);
         String fileNameShort = p.getFileName().toString();
-        return Solution.Row.ValueTypePair.Factory(fileNameShort.substring(0, fileNameShort.lastIndexOf(".")));
+        return ValueTypePair.Factory(fileNameShort.substring(0, fileNameShort.lastIndexOf(".")));
     }
 
-    static Solution.Row.ValueTypePair FileToSize(String fileName) {
+    static ValueTypePair FileToSize(String fileName) {
         File f = new File(fileName);
         long fileSize = f.length();
         logger.debug("fileName=" + fileName + " size=" + fileSize);
-        return Solution.Row.ValueTypePair.Factory(fileSize);
+        return ValueTypePair.Factory(fileSize);
     }
 
-    static Solution.Row.ValueTypePair FileToPath(String fileName) {
+    static ValueTypePair FileToPath(String fileName) {
         Path p = Paths.get(fileName);
-        return Solution.Row.ValueTypePair.Factory(p.getParent().toString().toLowerCase().substring(2) + "\\");
+        return ValueTypePair.Factory(p.getParent().toString().toLowerCase().substring(2) + "\\");
     }
 
-    static Map<String, Function<String, Solution.Row.ValueTypePair>> columnsMap = Map.of(
-            "Caption", (String fileName) -> Solution.Row.ValueTypePair.Factory(fileName),
+    static Map<String, Function<String, ValueTypePair>> columnsMap = Map.of(
+            "Caption", (String fileName) -> ValueTypePair.Factory(fileName),
             "Drive", (String fileName) -> FileToDrive(fileName),
             "FileName", (String fileName) -> FileToName(fileName),
             "FileSize", (String fileName) -> FileToSize(fileName),
-            "Name", (String fileName) -> Solution.Row.ValueTypePair.Factory(fileName),
+            "Name", (String fileName) -> ValueTypePair.Factory(fileName),
             "Path", (String fileName) -> FileToPath(fileName)
             // "FileType", (String fileName) -> "Application Extension",
             );
@@ -375,12 +375,12 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
     public static void FillRowFromQueryAndFilename(Solution.Row singleRow, QueryData queryData, String fileName) {
         for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
             String columnKey = qCol.getKey();
-            Function<String, Solution.Row.ValueTypePair> lambda = columnsMap.get(columnKey);
+            Function<String, ValueTypePair> lambda = columnsMap.get(columnKey);
             if(lambda == null)
             {
                 throw new RuntimeException("No lambda for columnKey=" + columnKey + " fileName=" + fileName);
             }
-            Solution.Row.ValueTypePair variableValue = lambda.apply(fileName); // columnsMap.get)
+            ValueTypePair variableValue = lambda.apply(fileName); // columnsMap.get)
             singleRow.PutValueType(qCol.getValue(), variableValue);
         }
     }
@@ -456,16 +456,16 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
 
         static ProcessModules processModules = new ProcessModules();
 
-        static Solution.Row.ValueTypePair ProcessToName(String processId) {
+        static ValueTypePair ProcessToName(String processId) {
                 List<String> listModules = processModules.GetFromPid(processId);
                 String executablePath = listModules.get(0);
                 Path p = Paths.get(executablePath);
                 String fileNameShort = p.getFileName().toString();
-                return Solution.Row.ValueTypePair.Factory(fileNameShort);
+                return ValueTypePair.Factory(fileNameShort);
         }
 
         /** Windows version and build number. */
-        static Solution.Row.ValueTypePair WindowsVersion(String processId) {
+        static ValueTypePair WindowsVersion(String processId) {
             Kernel32 kernel = Kernel32.INSTANCE;
             WinNT.OSVERSIONINFOEX vex = new WinNT.OSVERSIONINFOEX();
             String result;
@@ -477,24 +477,24 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
             } else {
                 result = "Cannot get  Windows version";
             }
-            return Solution.Row.ValueTypePair.Factory(result);
+            return ValueTypePair.Factory(result);
         }
 
         /** This contains the columns that this class can calculate, plus the lambda available. */
-        static Map<String, Function<String, Solution.Row.ValueTypePair>> columnsMap = Map.of(
-                "Handle", (String processId) -> Solution.Row.ValueTypePair.Factory(processId),
+        static Map<String, Function<String, ValueTypePair>> columnsMap = Map.of(
+                "Handle", (String processId) -> ValueTypePair.Factory(processId),
                 "Name", (String processId) -> ProcessToName(processId),
-                "ProcessId", (String processId) -> Solution.Row.ValueTypePair.Factory(processId),
+                "ProcessId", (String processId) -> ValueTypePair.Factory(processId),
                 "WindowsVersion", (String processId) -> WindowsVersion(processId)
         );
 
         public static void FillRowFromQueryAndPid(Solution.Row singleRow, QueryData queryData, String processId) throws Exception {
             for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
-                Function<String, Solution.Row.ValueTypePair> lambda = columnsMap.get(qCol.getKey());
+                Function<String, ValueTypePair> lambda = columnsMap.get(qCol.getKey());
                 if(lambda == null) {
                     throw new Exception("Cannot find lambda for " + qCol.getKey());
                 }
-                Solution.Row.ValueTypePair variableValue = lambda.apply(processId);
+                ValueTypePair variableValue = lambda.apply(processId);
                 // These columns do not return a path, so a string is OK.
                 singleRow.PutValueType(qCol.getValue(), variableValue);
             }
@@ -601,6 +601,15 @@ public class GenericProvider {
 
     static public BaseGetter FindCustomGetter(QueryData queryData) {
         logger.debug("Finding getter for:" + queryData.toString());
+
+        // The columns in the "where" tests must be gettable from the object.
+        // This is used when filtering getting an object.
+        for(QueryData.WhereEquality whereTest : queryData.whereTests) {
+            if(! queryData.queryColumns.containsKey(whereTest.predicate)) {
+                logger.debug("Where column:" + whereTest.predicate + " missing from " + queryData.queryColumns.keySet());
+            }
+        }
+
         for(BaseGetter getter: baseGetters) {
             if (getter.MatchGetter(queryData)) {
                 logger.debug("Found provider" + getter.getClass().getName() + " for " + queryData);
@@ -615,11 +624,37 @@ public class GenericProvider {
         return  (getter == null) ? wmiGetter : getter;
     }
 
+    // Extra filtering if "where" test when getting an object.
+    boolean ExtraFiltering(QueryData queryData, Solution.Row returnRow)
+    {
+        for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
+            logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
+            String variableName = queryData.ColumnToVariable(oneWhere.predicate);
+            if(variableName == null) {
+                throw new RuntimeException("Variable is null for column:" + oneWhere.predicate);
+            }
+
+            // Beware of performance waste if the same value is read twice from the object,
+            // if the column is in the where  expression and also in the selected column.
+            ValueTypePair vtp = returnRow.GetValueType(variableName);
+            if (oneWhere.variableName != null) {
+                throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context:" + oneWhere.variableName);
+            }
+            //if (vtp.Type() != Solution.ValueType.STRING_TYPE) {
+            //    throw new RuntimeException("Non-string handled yet:" + vtp.Type() + ". Should not be difficult.");
+            //}
+            if (!vtp.equals(oneWhere.value)) {
+                logger.debug("Different column value:" + vtp.toDisplayString() + "!=" + oneWhere.value.toDisplayString());
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * @param objectPath
      * @param queryData
-     * @param withCustom
+     * @param withCustom If custom providers and getters can be used. This might not be the case when testing.
      * @return
      * @throws Exception
      */
@@ -627,10 +662,18 @@ public class GenericProvider {
         if(queryData.classGetter == null) {
             throw new RuntimeException("Getter is not set");
         }
+        Solution.Row returnRow;
         if(withCustom) {
-            return queryData.classGetter.GetSingleObject(objectPath, queryData);
+            returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData);
         } else {
-            return wmiGetter.GetSingleObject(objectPath, queryData);
+            returnRow = wmiGetter.GetSingleObject(objectPath, queryData);
+        }
+        // Now, apply the extra filtering if needed.
+        if(ExtraFiltering(queryData, returnRow)) {
+            return returnRow;
+        } else {
+            logger.debug("Filtered row");
+            return null;
         }
     }
 }

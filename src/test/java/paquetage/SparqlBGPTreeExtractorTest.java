@@ -30,7 +30,7 @@ public class SparqlBGPTreeExtractorTest {
         SparqlBGPTreeExtractor extractor = new SparqlBGPTreeExtractor(sparqlQuery);
         Solution actualSolution = extractor.EvaluateSolution();
 
-        List<String> actualSolutionStr = actualSolution.stream().map(row -> row.toString()).collect(Collectors.toList());
+        List<String> actualSolutionStr = actualSolution.stream().map(row -> row.toValueString()).collect(Collectors.toList());
         Collections.sort(actualSolutionStr);
         System.out.println("Actual solution:" + actualSolutionStr.size());
         for(int index=0; index < actualSolutionStr.size(); ++index) {

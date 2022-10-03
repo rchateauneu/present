@@ -96,7 +96,7 @@ public class WmiGetter extends BaseGetter {
         return wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
-    Solution.Row.ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
+    ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
         IntByReference plFlavor = new IntByReference(); //  Maybe this is not needed.
@@ -107,7 +107,7 @@ public class WmiGetter extends BaseGetter {
             throw exc;
         }
 
-        Solution.Row.ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, "n/a", pType, pVal);
+        ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, "n/a", pType, pVal);
         return rowValueType;
     }
 
@@ -166,17 +166,10 @@ public class WmiGetter extends BaseGetter {
                 singleRow.PutString(variableName, "Object " + objectPath + " is null");
             else
                 singleRow.PutValueType(variableName, GetObjectProperty(objectNode, entry.getKey()));
-            /*
-            String objectProperty = objectNode == null
-                    ? "Object " + objectPath + " is null"
-                    : GetObjectProperty(objectNode, entry.getKey());
-            // PresentUtils.WbemPathToIri( ?? Et le type ??
-            singleRow.Elements.put(variableName, objectProperty);
-            */
         }
         // We are sure this is a node.
-        Solution.Row.ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
-        if(wbemPath.Type() != Solution.ValueType.NODE_TYPE) {
+        ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
+        if(wbemPath.Type() != ValueTypePair.ValueType.NODE_TYPE) {
             throw new Exception("GetSingleObject objectPath should be a node:" + objectPath);
         }
         singleRow.PutValueType(queryData.mainVariable, wbemPath);
