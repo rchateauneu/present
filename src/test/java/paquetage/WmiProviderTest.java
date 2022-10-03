@@ -476,7 +476,6 @@ public class WmiProviderTest {
             System.out.println("class=" + className);
             Assert.assertTrue(classes.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /** Some basic checks about classes of the namespace "ROOT\\Microsoft".
@@ -487,6 +486,7 @@ public class WmiProviderTest {
         WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes("ROOT\\Microsoft");
 
+        System.out.println("classes=" + classes.keySet());
         Assert.assertTrue(classes.containsKey("CIM_InstModification"));
         Map<String, WmiProvider.WmiProperty> properties = classes.get("CIM_InstModification").Properties;
         System.out.println("Properties=" + properties.keySet());
