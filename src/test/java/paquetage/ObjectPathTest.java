@@ -78,15 +78,22 @@ public class ObjectPathTest {
 
     @Test
     public void BuildPathWbem_3() throws Exception {
+        String currentHost = PresentUtils.getComputerName();
         String createdPath = ObjectPath.BuildCimv2PathWbem(
                 "CIM_ProcessExecutable",
                 Map.of(
-                        "Antecedent", "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\msvcp_win.dll\"",
-                        "Dependent", "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"2088\""
+                        "Antecedent",
+                        String.format("\\\\%s\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\msvcp_win.dll\"", currentHost),
+                        "Dependent",
+                                String.format("\\\\%s\\root\\cimv2:Win32_Process.Handle=\"2088\"", currentHost)
                         )
                 );
         Assert.assertEquals(
-                "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:CIM_ProcessExecutable.Antecedent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:CIM_DataFile.Name=\\\"C:\\\\\\\\WINDOWS\\\\\\\\System32\\\\\\\\msvcp_win.dll\\\"\",Dependent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:Win32_Process.Handle=\\\"2088\\\"\"",
+                String.format(
+                        "\\\\%s\\ROOT\\CIMV2:CIM_ProcessExecutable.Antecedent=\"\\\\\\\\%s\\\\root\\\\cimv2:CIM_DataFile.Name=\\\"C:\\\\\\\\WINDOWS\\\\\\\\System32\\\\\\\\msvcp_win.dll\\\"\",Dependent=\"\\\\\\\\%s\\\\root\\\\cimv2:Win32_Process.Handle=\\\"2088\\\"\"",
+                        currentHost,
+                        currentHost,
+                        currentHost),
                 createdPath
         );
     }
