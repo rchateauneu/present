@@ -1445,7 +1445,47 @@ public class RepositoryWrapperCIMV2Test {
             Assert.assertEquals(expectedDirNamesArray, actualDirNamesArray);
         }
 
-        // Win32_Service.ProcessId
+        /** This selects the current process with an integer constant in ProcessId. */
+        @Test
+        public void testSelect_Win32_Process_Constant_ProcessId() throws Exception {
+            String sparqlQuery = String.format("""
+                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                        select ?handle
+                        where {
+                            ?process cimv2:Win32_Process.ProcessId "%s"^^xsd:integer .
+                            ?process cimv2:Win32_Process.Handle ?handle .
+                        }
+                    """, currentPidStr);
+            RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+            Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+            System.out.println("setHandles=" + setHandles);
+            Assert.assertEquals(Set.of(currentPidStr), setHandles);
+        }
+
+        /** This selects the current process with an integer constant in ParentProcessId. */
+        @Test
+        public void testSelect_Win32_Process_Constant_ParentProcessId() throws Exception {
+            String parentPid = PresentUtils.ParentProcessId();
+            String sparqlQuery = String.format("""
+                            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                            select ?handle
+                            where {
+                                ?process cimv2:Win32_Process.ParentProcessId "%s"^^xsd:integer .
+                                ?process cimv2:Win32_Process.Handle ?handle .
+                            }
+                        """, parentPid);
+            RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+            Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+            System.out.println("setHandles=" + setHandles);
+            Assert.assertTrue(setHandles.contains(currentPidStr));
+        }
+
+
+
 
         /*
         TODO: Recursive search of files and sub-directories.

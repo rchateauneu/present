@@ -89,15 +89,12 @@ public class QueryData {
             variableName = variable;
         }
 
-        // This is a helper for tests.
-        /*
-        public WhereEquality(String predicateArg, String valueStr, String variable) throws Exception {
-            this(predicateArg, new ValueTypePair(valueStr, Solution.ValueType.STRING_TYPE), variable);
-        }
-        */
-
         public WhereEquality(String predicateArg, String variable) throws Exception {
             this(predicateArg, (ValueTypePair)null, variable);
+        }
+
+        public WhereEquality(String predicateArg, ValueTypePair pairValueType) throws Exception {
+            this(predicateArg, pairValueType, null);
         }
 
         /**

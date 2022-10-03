@@ -110,7 +110,7 @@ class ValueTypePair {
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
     public static ValueTypePair Factory(String value) {
-        return new ValueTypePair(value, ValueType.STRING_TYPE);
+        return ValueTypePair.FromString(value);
     }
 
     public static ValueTypePair Factory(long value) {

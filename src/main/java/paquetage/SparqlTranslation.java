@@ -155,7 +155,7 @@ public class SparqlTranslation {
                     if(pairValue == null) {
                         throw new RuntimeException("Null value for:" + kv.variableName);
                     }
-                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, pairValue, null));
+                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, pairValue));
                 } else {
                     // No change because the "where" value is not a variable.
                     substitutedWheres.add(kv);

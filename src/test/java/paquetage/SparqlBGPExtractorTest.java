@@ -18,7 +18,7 @@ public class SparqlBGPExtractorTest {
     static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, String content) {
         Assert.assertEquals(predicate, a.Predicate);
         Assert.assertEquals(null, a.variableName);
-        Assert.assertEquals(new ValueTypePair(content, ValueTypePair.ValueType.STRING_TYPE), a.ObjectContent);
+        Assert.assertEquals(ValueTypePair.FromString(content), a.ObjectContent);
     }
 
     @Test

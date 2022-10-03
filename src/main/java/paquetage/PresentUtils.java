@@ -46,6 +46,12 @@ public class PresentUtils {
         return javaHome + "\\bin\\java.exe";
     }
 
+    public static String ParentProcessId() throws Exception
+    {
+            ProcessHandle parentHandle = ProcessHandle.current().parent().get();
+            return Long.toString(parentHandle.pid());
+    }
+
     static public String LongToXml(long longNumber) {
         return "\"" + longNumber + "\"^^<http://www.w3.org/2001/XMLSchema#long>";
     }

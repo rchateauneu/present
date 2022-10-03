@@ -22,7 +22,7 @@ public class WmiProviderTest {
                 "any_variable",
                 false,
                 Map.of("Handle", "var_handle"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"), null)));
+                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"))));
         String wqlQuery = queryData.BuildWqlQuery();
         Assert.assertEquals("Select Handle, __PATH from CIM_Process where Handle = \"123\"", wqlQuery);
     }
@@ -98,7 +98,7 @@ public class WmiProviderTest {
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString(currentPidStr),null)));
+                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString(currentPidStr))));
         String stringsResults = listResults.stream().map(Solution.Row::toValueString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
@@ -153,7 +153,7 @@ public class WmiProviderTest {
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
-                Arrays.asList(new QueryData.WhereEquality("Dependent", ValueTypePair.FromString(dependentString), null)));
+                Arrays.asList(new QueryData.WhereEquality("Dependent", ValueTypePair.FromString(dependentString))));
         // Many libraries.
         Assert.assertTrue(listResults.size() > 5);
         for(Solution.Row row : listResults) {
@@ -180,7 +180,7 @@ public class WmiProviderTest {
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"),
-                Arrays.asList(new QueryData.WhereEquality("Antecedent", ValueTypePair.FromString(antecedentString), null)));
+                Arrays.asList(new QueryData.WhereEquality("Antecedent", ValueTypePair.FromString(antecedentString))));
         String stringsResults = (String) listResults.stream().map(Solution.Row::toValueString)
                 .collect(Collectors.joining(", "));
         System.out.println("stringsResults=" + stringsResults);

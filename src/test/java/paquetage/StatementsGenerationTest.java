@@ -72,7 +72,7 @@ public class StatementsGenerationTest {
         Solution rows = new Solution();
         rows.add(new Solution.Row(Map.of(
                 "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
-                "dir_name", new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE))));
+                "dir_name", ValueTypePair.FromString("C:"))));
 
         List<Statement> statements = extractor.GenerateStatements(rows);
 
@@ -124,11 +124,11 @@ public class StatementsGenerationTest {
         rows.add(
                 new Solution.Row(Map.of(
                         "my_dir", new ValueTypePair(dirIriC, ValueTypePair.ValueType.NODE_TYPE),
-                        "dir_name", new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE))));
+                        "dir_name", ValueTypePair.FromString("C:"))));
         rows.add(
                 new Solution.Row(Map.of(
                         "my_dir", new ValueTypePair(dirIriD, ValueTypePair.ValueType.NODE_TYPE),
-                        "dir_name", new ValueTypePair("D:", ValueTypePair.ValueType.STRING_TYPE))));
+                        "dir_name", ValueTypePair.FromString("D:"))));
 
         List<Statement> statements = extractor.GenerateStatements(rows);
 
@@ -197,8 +197,8 @@ public class StatementsGenerationTest {
         rows.add(
             new Solution.Row(Map.of(
                 "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
-                "dir_name", new ValueTypePair("C:", ValueTypePair.ValueType.STRING_TYPE),
-                "dir_caption", new ValueTypePair("This is a text", ValueTypePair.ValueType.STRING_TYPE))));
+                "dir_name", ValueTypePair.FromString("C:"),
+                "dir_caption", ValueTypePair.FromString("This is a text"))));
 
         List<Statement> statements = extractor.GenerateStatements(rows);
 
