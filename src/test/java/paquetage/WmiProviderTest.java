@@ -427,8 +427,13 @@ public class WmiProviderTest {
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
         Assert.assertTrue(namesList.contains("Name"));
         Assert.assertTrue(namesList.contains("FileName"));
-        Assert.assertEquals(wmiGetter.GetObjectProperty(obj, "Caption").Value(), "C:\\WINDOWS\\System32\\clb.dll");
-        Assert.assertEquals(wmiGetter.GetObjectProperty(obj, "CreationClassName").Value(), "CIM_LogicalFile");
+        // Conversion to uppercase due to different behaviour on Windows 7 wrt to string cases.
+        Assert.assertEquals(
+                wmiGetter.GetObjectProperty(obj, "Caption").Value().toUpperCase(),
+                "C:\\WINDOWS\\System32\\clb.dll".toUpperCase());
+        Assert.assertEquals(
+                wmiGetter.GetObjectProperty(obj, "CreationClassName").Value(),
+                "CIM_LogicalFile");
     }
 
     /**

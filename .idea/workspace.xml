@@ -6,9 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="ef269f1f-ff28-4f68-8628-beed4a904068" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/Solution.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/Solution.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPTreeExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPTreeExtractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ProcessModules.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ProcessModules.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/GenericProviderTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/GenericProviderTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlTranslationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlTranslationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiProviderTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiProviderTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,32 +41,35 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="useMavenConfig" value="true" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
   <component name="ProjectId" id="27ZWTljC1PC9L5UjZLJi2X6WKRl" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary" value="JUnit3" />
-    <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit3" value="junit.framework.TestCase" />
-    <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit5" value="" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
-  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Program Files/Apache Software Foundation/Tomcat 9.0&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.poratu.idea.plugins.tomcat.setting.TomcatSettingConfigurable&quot;
+  }
+}</component>
   <component name="RecentsManager">
     <key name="CreateTestDialog.Recents.Supers">
       <recent name="junit.framework.TestCase" />
       <recent name="" />
-    </key>
-    <key name="MoveMembersDialog.RECENTS_KEY">
-      <recent name="paquetage.Solution" />
-      <recent name="paquetage.Solution.Row.ValueTypePair" />
-      <recent name="paquetage.Solution.Row" />
-      <recent name="paquetage.WmiOntology" />
     </key>
     <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
       <recent name="paquetage" />
@@ -76,16 +82,8 @@
       <recent name="paquetage" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.All in present">
-    <configuration name="All in present" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="present" />
-      <option name="PACKAGE_NAME" value="" />
-      <option name="TEST_OBJECT" value="package" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="SparqlBGPTreeExtractorTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="JUnit.paquetage in present">
+    <configuration name="SparqlExecutionTest.Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -94,13 +92,61 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlExecutionTest" />
+      <option name="METHOD_NAME" value="Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SparqlExecutionTest.Execution_Forced_CIM_ProcessExecutable_3" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="present" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="paquetage.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="paquetage" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlExecutionTest" />
+      <option name="METHOD_NAME" value="Execution_Forced_CIM_ProcessExecutable_3" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SparqlTranslationTest.Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="present" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="paquetage.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="paquetage" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlTranslationTest" />
+      <option name="METHOD_NAME" value="Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WmiSelecterTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="present" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="paquetage.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="paquetage" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.WmiSelecterTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlBGPTreeExtractorTest.Parse_Check_01" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="paquetage in present" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -109,52 +155,59 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
-      <option name="METHOD_NAME" value="Parse_Check_01" />
-      <option name="TEST_OBJECT" value="method" />
+      <option name="TEST_OBJECT" value="package" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlBGPTreeExtractorTest.Parse_Check_03" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="present" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="paquetage.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
-      <option name="METHOD_NAME" value="Parse_Check_03" />
-      <option name="TEST_OBJECT" value="method" />
+    <configuration name="Tomcat 9.0" type="com.poratu.idea.plugins.tomcat" factoryName="SMART_TOMCAT_FACTORY">
+      <option name="adminPort" value="8005" />
+      <option name="contextPath" value="" />
+      <option name="docBase" value="" />
+      <option name="envOptions" />
+      <option name="passParentEnvironmentVariables" value="true" />
+      <option name="port" value="8080" />
+      <option name="tomcatInfo">
+        <TomcatInfo>
+          <option name="name" value="Apache Tomcat/9.0.64" />
+          <option name="number" value="0" />
+          <option name="path" value="C:\Program Files\Apache Software Foundation\Tomcat 9.0" />
+          <option name="version" value="9.0.64.0" />
+        </TomcatInfo>
+      </option>
+      <option name="vmOptions" value="" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlBGPTreeExtractorTest.Parse_Check_13" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="present" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="paquetage.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlBGPTreeExtractorTest" />
-      <option name="METHOD_NAME" value="Parse_Check_13" />
-      <option name="TEST_OBJECT" value="method" />
+    <configuration default="true" type="com.poratu.idea.plugins.tomcat" factoryName="SMART_TOMCAT_FACTORY">
+      <option name="adminPort" value="8005" />
+      <option name="contextPath" />
+      <option name="docBase" />
+      <option name="envOptions" />
+      <option name="passParentEnvironmentVariables" value="true" />
+      <option name="port" value="8080" />
+      <option name="tomcatInfo" />
+      <option name="vmOptions" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="JUnit.SparqlTranslationTest.Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" />
+      <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" />
+      <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_ProcessExecutable_3" />
+      <item itemvalue="JUnit.WmiSelecterTest" />
+      <item itemvalue="JUnit.paquetage in present" />
+      <item itemvalue="Smart Tomcat.Tomcat 9.0" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.All in present" />
-        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest" />
-        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest.Parse_Check_13" />
-        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest.Parse_Check_03" />
-        <item itemvalue="JUnit.SparqlBGPTreeExtractorTest.Parse_Check_01" />
+        <item itemvalue="JUnit.paquetage in present" />
+        <item itemvalue="JUnit.SparqlTranslationTest.Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" />
+        <item itemvalue="JUnit.WmiSelecterTest" />
+        <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_ProcessExecutable_3" />
+        <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" />
       </list>
     </recent_temporary>
   </component>
@@ -185,89 +238,29 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java</url>
-          <line>29</line>
+          <line>31</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java</url>
-          <line>56</line>
+          <line>58</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>61</line>
+          <line>71</line>
           <option name="timeStamp" value="12" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>64</line>
-          <option name="timeStamp" value="25" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>150</line>
-          <option name="timeStamp" value="27" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>192</line>
-          <option name="timeStamp" value="32" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/WmiSelecterTest.java</url>
-          <line>123</line>
-          <option name="timeStamp" value="38" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>276</line>
-          <option name="timeStamp" value="40" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>384</line>
-          <option name="timeStamp" value="44" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java</url>
-          <line>150</line>
-          <option name="timeStamp" value="45" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>578</line>
-          <option name="timeStamp" value="49" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/paquetage/SparqlToWmi.java</url>
-          <line>138</line>
-          <option name="timeStamp" value="52" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java</url>
-          <line>52</line>
-          <option name="timeStamp" value="55" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>48</line>
-          <option name="timeStamp" value="62" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlToWmiTest.java</url>
-          <line>786</line>
-          <option name="timeStamp" value="63" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/paquetage/GenericProvider.java</url>
-          <line>47</line>
-          <option name="timeStamp" value="73" />
+          <line>108</line>
+          <option name="timeStamp" value="72" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/present$All_in_present.ic" NAME="All in present Coverage Results" MODIFIED="1650910605590" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/present$MyClasse.ic" NAME="MyClasse Coverage Results" MODIFIED="1650910403645" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/present$All_in_present.ic" NAME="All in present Coverage Results" MODIFIED="1650910605590" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>
