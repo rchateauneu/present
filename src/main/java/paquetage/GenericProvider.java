@@ -503,6 +503,9 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
     public Solution.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String processId = properties.get("Handle");
+        if(processId == null) {
+            throw new Exception("Null pid for objectPath=" + objectPath);
+        }
         Solution.Row singleRow = new Solution.Row();
         FillRowFromQueryAndPid(singleRow, queryData, processId);
 
