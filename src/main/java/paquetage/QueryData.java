@@ -140,8 +140,6 @@ public class QueryData {
         return selectedColumns.containsAll(requiredColumns);
     }
 
-
-
     /** There should be a handful of elements so looping is OK.
      *
      * @param columnName "Handle", "Name", "PartComponent" etc...
@@ -229,7 +227,7 @@ public class QueryData {
                 Sample currentValue = entry.getValue();
                 if((currentValue.elapsed >= maxElapsed) || (currentValue.count >= maxCount)) {
                     logger.debug("Most expensive call:" + entry.getKey() + " " + (currentValue.elapsed / 1000.0) + " secs " + currentValue.count + " calls");
-                    // Writing one extreme performance issue is enough.
+                    // Warns just once of the worst performance issue.
                     break;
                 }
             }

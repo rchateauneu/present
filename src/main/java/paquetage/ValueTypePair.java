@@ -93,7 +93,7 @@ class ValueTypePair {
      * @return
      */
     public String toString() {
-        throw new RuntimeException("Should not happen");
+        return "DEBUG_ONLY:" + m_Value;
     }
 
     private static final DatatypeFactory datatypeFactory ;

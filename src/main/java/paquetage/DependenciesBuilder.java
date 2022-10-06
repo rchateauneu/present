@@ -48,7 +48,7 @@ public class DependenciesBuilder {
         for(int patternCounter = 0;patternCounter < patterns.size(); ++patternCounter)
         {
             ObjectPattern pattern = patterns.get(patternCounter);
-            pattern.PreparePattern();
+            //pattern.PreparePattern();
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
 
@@ -95,16 +95,16 @@ public class DependenciesBuilder {
                 for(String nonSelectedColumn: nonSelectedColumns) {
                     // The counter is used o avoid n ambiguity if the same class and the same column are used
                     // several times in this Sparql query.
-                    String internalVariable = pattern.ShortClassName + "." + nonSelectedColumn + "." + patternCounter + ".internal";
+                    String internalVariable = pattern.ClassName + "." + nonSelectedColumn + "." + patternCounter + ".internal";
                     selected_variables.put(nonSelectedColumn, internalVariable);
                     variablesContext.put(internalVariable, null);
                 }
             }
 
-            if(pattern.ShortClassName != null) {
-                // A class name is need to run WQL queries, and also its WMI namespace.
+            if(pattern.ClassName != null) {
+                // A class name is needed to run WQL queries, and also its WMI namespace.
                 WmiOntology.CheckValidNamespace(pattern.CurrentNamespace);
-                QueryData queryData = new QueryData(pattern.CurrentNamespace, pattern.ShortClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
+                QueryData queryData = new QueryData(pattern.CurrentNamespace, pattern.ClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
                 prepared_queries.add(queryData);
             }
         } // Next ObjectPattern

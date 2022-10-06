@@ -25,11 +25,11 @@ import java.util.Map;
 public class ObjectPattern {
     final static private Logger logger = Logger.getLogger(ObjectPattern.class);
 
-    public String ClassName;
+    private String RawClassName;
     public String VariableName;
 
-    String CurrentNamespace;
-    String ShortClassName;
+    String CurrentNamespace = null;
+    String ClassName = null;
 
     public ArrayList<PredicateObjectPair> Members = new ArrayList<>();
 
@@ -39,7 +39,7 @@ public class ObjectPattern {
      * @param className
      */
     ObjectPattern(String variableName, String className) {
-        ClassName = className;
+        RawClassName = className;
         VariableName = variableName;
     }
 
@@ -47,18 +47,25 @@ public class ObjectPattern {
         this(variableName, null);
     }
 
+    public boolean IsValid() {
+        if(ClassName == null) {
+            return false;
+        }
+        return true;
+    }
+
     // TODO: ObjectName must be a Variable or Value. See rdf4j
     public static class PredicateObjectPair{
-        public String Predicate;
+        private String RawPredicate;
         public String variableName;
         public ValueTypePair ObjectContent;
         public String ShortPredicate;
 
-        PredicateObjectPair(String predicate, String variable, ValueTypePair objectContent) {
+        PredicateObjectPair(String rawPredicate, String variable, ValueTypePair objectContent) {
             if(!(variable == null ^ objectContent == null)) {
                 throw new RuntimeException("The variable or the value must be null");
             }
-            Predicate = predicate;
+            RawPredicate = rawPredicate;
             variableName = variable;
             ObjectContent = objectContent;
         }
@@ -84,10 +91,16 @@ public class ObjectPattern {
      * and used to deduce the class of the instance if it is not given.
      * If the class name of the instance is given, then it must be identical to the deduced one.
      */
-    public void PreparePattern() throws Exception
+    public void PreparePattern() // throws Exception
     {
         // The namespace must be the same for all predicates and the class.
-        CurrentNamespace = null;
+        if(CurrentNamespace != null) {
+            throw new RuntimeException("CurrentNamespace should not have been set.");
+        }
+        if(ClassName != null) {
+            throw new RuntimeException("ClassName should not have been set.");
+        }
+
         // This will always be null if the properties are not prefixed with the class name.
         // This is OK of the type is given with a triple with rdf:type as predicate.
         String deducedClassName = null;
@@ -97,7 +110,11 @@ public class ObjectPattern {
         // - the variables which are not known yet, and returned by this WQL query.
         // The variable representing the object is selected anyway and contains the WMI relative path.
         for(ObjectPattern.PredicateObjectPair keyValue: Members) {
-            WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.SplitToken(keyValue.Predicate);
+            WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.SplitToken(keyValue.RawPredicate);
+            if(namespacedPredicate == null) {
+                logger.debug("Predicate:" + keyValue + "cannot be used for WMI");
+                continue;
+            }
             String shortPredicate = namespacedPredicate.Token;
             if(CurrentNamespace == null) {
                 CurrentNamespace = namespacedPredicate.nameSpace;
@@ -118,38 +135,38 @@ public class ObjectPattern {
                         deducedClassName = predicateDotPrefix;
                     else {
                         if(!deducedClassName.equals(predicateDotPrefix)) {
-                            throw new Exception("Different predicates prefixes:" + shortPredicate + "/" + deducedClassName);
+                            throw new RuntimeException("Different predicates prefixes:" + shortPredicate + "/" + deducedClassName);
                         }
                     }
                 } else {
-                    throw new Exception("Too many dots in invalid predicate:" + shortPredicate);
+                    throw new RuntimeException("Too many dots in invalid predicate:" + shortPredicate);
                 }
             }
             keyValue.ShortPredicate = shortPredicate;
         }
 
-        if(ClassName == null) {
+        if(RawClassName == null) {
             // Maybe the class is not given.
             if(deducedClassName == null) {
                 // This is acceptable because it might work in the further Sparql execution.
                 logger.debug("Class name is null and cannot be deduced.");
-                ShortClassName = null;
+                ClassName = null;
             } else {
                 logger.debug("Short class name deduced to " + deducedClassName);
-                ShortClassName = deducedClassName;
+                ClassName = deducedClassName;
             }
         }  else {
             // If the class is explicitly given, it must be correct.
-            if (!ClassName.contains("#")) {
-                throw new Exception("Invalid class name:" + ClassName);
+            if (!RawClassName.contains("#")) {
+                throw new RuntimeException("Invalid raw class name:" + RawClassName);
             }
             // Example: className = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Process"
-            WmiOntology.NamespaceTokenPair pairNamespaceToken = WmiOntology.SplitToken(ClassName);
-            ShortClassName = pairNamespaceToken.Token;
+            WmiOntology.NamespaceTokenPair pairNamespaceToken = WmiOntology.SplitToken(RawClassName);
+            ClassName = pairNamespaceToken.Token;
             if (deducedClassName != null) {
                 // If the class is explicitly given, and also is the prefix of some attributes.
-                if (!ShortClassName.equals(deducedClassName)) {
-                    throw new Exception("Different short class=" + ShortClassName + " and deduced=" + deducedClassName);
+                if (!ClassName.equals(deducedClassName)) {
+                    throw new RuntimeException("Different short class=" + ClassName + " and deduced=" + deducedClassName);
                 }
             }
             if (CurrentNamespace != null) {
@@ -167,6 +184,10 @@ public class ObjectPattern {
         } else {
             // Maybe this is not a WMI-style IRI, so there is no WMI namespace.
             logger.debug("The namespace could not be found in:" + ClassName);
+        }
+        if(ClassName == null && CurrentNamespace == null) {
+            logger.warn("ObjectPattern:" + VariableName + " CANNOT be used for WMI.");
+
         }
     }
 
@@ -210,12 +231,13 @@ public class ObjectPattern {
                     "cimv2:Win32_Process.Handle rdfs:label ?label"
                     */
                 if (predicateStr.startsWith(WmiOntology.namespaces_url_prefix)) {
-                    throw new RuntimeException("Anonymous WMI subjects are not allowed yet.");
+                    logger.debug("Anonymous WMI subjects are now allowed.");
                 }
             }
 
             ObjectPattern refPattern;
             if (!patternsMap.containsKey(subjectName)) {
+                // If a triple with this subject was already met.
                 refPattern = new ObjectPattern(subjectName);
                 patternsMap.put(subjectName, refPattern);
             } else {
@@ -224,72 +246,40 @@ public class ObjectPattern {
 
             // TODO: Make this comparison faster than a string comparison.
             if (predicateStr.equals(RDF.TYPE.stringValue())) {
-                refPattern.ClassName = object.getValue().stringValue();
+                refPattern.RawClassName = object.getValue().stringValue();
             }
             else if (predicateStr.equals(RDFS.SEEALSO.stringValue())) {
-                logger.debug("""
-                        Add SeeAlso scripts: They cannot be created with WMI.
-                        To start with, any static RDF file is correct.
-                        """);
+                logger.debug("TODO: Add SeeAlso scripts, any static RDF file is correct.");
             }
             else {
-                /*
-                Non, pas bon de melanger constante et variable.
-                Si constante, on cree une variable interne qui sera utilisee pour stocker la valeur
-                qui sera selectionnee pour de bon par WQL car:
-                - Parfois on ne peut pas ajouter un WHERE si on a deja l'objet, car ce serait faire nous-meme
-                ce qui doit etre fait par Sparql. Quoique ... a la reflexion, ca simplifierait beaucoup.
-
-https://www.w3.org/TR/sparql11-query/
-Examples of literal syntax in SPARQL include:
-
-    "chat"
-    'chat'@fr with language tag "fr"
-    "xyz"^^<http://example.org/ns/userDatatype>
-    "abc"^^appNS:appDataType
-    '''The librarian said, "Perhaps you would enjoy 'War and Peace'."'''
-    1, which is the same as "1"^^xsd:integer
-    1.3, which is the same as "1.3"^^xsd:decimal
-    1.300, which is the same as "1.300"^^xsd:decimal
-    1.0e6, which is the same as "1.0e6"^^xsd:double
-    true, which is the same as "true"^^xsd:boolean
-    false, which is the same as "false"^^xsd:boolean
-
-
-                 */
                 if (object.isConstant()) {
                     if (!object.isAnonymous()) {
                         throw new RuntimeException("isConstant and not isAnonymous");
                     }
-                    /*
-                    Ici, on pourrait donc fabriquer un GetValuePair qui ne sera jamais injecte dans WQL
-                    mais sera reconverti vers XML.
-                    */
-                    //object.getValue().
                     Value objectValue = object.getValue();
                     ValueTypePair.ValueType dataType = ValueToType(objectValue);
 
-
-                    // java.lang.ClassCastException: class org.eclipse.rdf4j.model.impl.SimpleIRI cannot be cast
-                    // to class org.eclipse.rdf4j.model.impl.SimpleLiteral
-                    // (org.eclipse.rdf4j.model.impl.SimpleIRI and org.eclipse.rdf4j.model.impl.SimpleLiteral are in unnamed module of loader 'app')
                     ValueTypePair vtp = new ValueTypePair(objectValue.stringValue(), dataType);
                     refPattern.AddPredicateObjectPairValue(predicateStr, vtp);
                 } else {
                     // If it is a variable.
                     if (object.isAnonymous()) {
-                        throw new RuntimeException("not isConstant and isAnonymous");
+                        logger.debug("object not isConstant and isAnonymous:" + object.getName());
+                        // throw new RuntimeException("object not isConstant and isAnonymous:" + object.getName());
                     }
                     refPattern.AddPredicateObjectPairVariable(predicateStr, object.getName());
                 }
             }
         }
         logger.debug("Generated patterns: " + patternsMap.size());
+        for(Map.Entry<String, ObjectPattern> entry : patternsMap.entrySet()) {
+            entry.getValue().PreparePattern();
+        }
         return patternsMap;
     } // PartitionBySubject
 
-    /** This is used to transform a constant value parsed from a Sparql query, to a value compatible with WMI.
-     * Specifically, this extracts the data type.
+    /** This is used to transform a constant value parsed from a Sparql query, into a value compatible with WMI.
+     * Specifically, this extracts the data type in XSD format, such as in ' "1"^^xsd:integer '.
      * */
     static private ValueTypePair.ValueType ValueToType(Value objectValue) {
         if (objectValue instanceof SimpleLiteral) {

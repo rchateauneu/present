@@ -40,6 +40,7 @@ public class DependenciesBuilderTest {
         ObjectPattern objectPattern = new ObjectPattern(
                 "my_process", PresentUtils.toCIMV2("Win32_Process"));
         objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Handle"), ValueTypePair.FromString("123"));
+        objectPattern.PreparePattern();
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -54,6 +55,7 @@ public class DependenciesBuilderTest {
                 PresentUtils.toCIMV2("CIM_DataFile"));
         objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Name"), ValueTypePair.FromString("C:"));
         objectPattern.AddPredicateObjectPairVariable(PresentUtils.toCIMV2("Caption"), "any_variable");
+        objectPattern.PreparePattern();
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -66,11 +68,13 @@ public class DependenciesBuilderTest {
                 "my_process",
                 PresentUtils.toCIMV2("Win32_Process"));
         objectPattern0.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Name"), ValueTypePair.FromString("C:"));
+        objectPattern0.PreparePattern();
 
         ObjectPattern objectPattern1 = new ObjectPattern(
                 "my_assoc",
                 PresentUtils.toCIMV2("CIM_ProcessExecutable"));
         objectPattern1.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Dependent"), ValueTypePair.FromString("my_process"));
+        objectPattern1.PreparePattern();
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern0, objectPattern1));
         String symbolicQuery = patternSparql.SymbolicQuery();
@@ -89,6 +93,7 @@ public class DependenciesBuilderTest {
     public void InternalQueryDataTest() throws Exception {
         ObjectPattern objectPattern = new ObjectPattern("my_process", PresentUtils.toCIMV2("Win32_Process"));
         objectPattern.AddPredicateObjectPairValue(PresentUtils.toCIMV2("Handle"), ValueTypePair.FromString("123"));
+        objectPattern.PreparePattern();
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(Arrays.asList(objectPattern));
 

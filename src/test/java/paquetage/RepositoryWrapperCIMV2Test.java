@@ -1154,20 +1154,38 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertTrue(average_count_threads >= 1.0);
     }
 
-    @Ignore("Property paths not implemented yet")
+    /** Services dependent of the service "Windows Search", at first level only.
+     *
+     * @throws Exception
+     */
     @Test
     public void testSelect_PropertyPath_Win32_DependentService_One() throws Exception {
+        /*
+        FIXME: The order of the WQL queries is not optimised yet, and there are executed in the alphabetical order
+        of the variable of the subject.
+        Therefore, the first subject to be calculated is prefixed to be executed first,
+        especially before the anonymous variables created by the Sparql query parser.
+        This trick will be necessary until the optimizer is added.
+        Anonymous variable names are like "_anon_ba92a16d_be71_4c7c_bb3b_3b7c9917466c.
+        Here, it forces the anonymous variable to be executed AFTER _1_service1 and BEFORE zzzzz_2_service2.
+        */
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
                     select ?service_name
                     where {
-                        ?service1 cimv2:Win32_Service.DisplayName "Windows Search" .
-                        ?service1 ^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent ?service2 .
-                        ?service2 cimv2:Win32_Service.DisplayName ?service_name .
+                        ?_1_service1 cimv2:Win32_Service.DisplayName "Windows Search" .
+                        ?_1_service1 ^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent ?zzzzz_2_service2 .
+                        ?zzzzz_2_service2 cimv2:Win32_Service.DisplayName ?service_name .
                     }
                 """;
-        Assert.fail("Not implemented yet");
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Set<String> setNames = PresentUtils.StringValuesSet(listRows,"service_name");
+        System.out.println("setNames=" + setNames);
+
+        // These might depend on Windows version.
+        Assert.assertTrue(setNames.contains("Remote Procedure Call (RPC)"));
+        Assert.assertTrue(setNames.contains("Background Tasks Infrastructure Service"));
     }
 
     @Ignore("Property paths not implemented yet")
@@ -1187,26 +1205,41 @@ public class RepositoryWrapperCIMV2Test {
     }
 
     /** Files in a directory.
-     * *
+     *
      * @throws Exception
      */
-    @Ignore("Property paths not implemented yet")
     @Test
     public void testSelect_PropertyPath_Win32_Directory_One() throws Exception {
+        /*
+        FIXME: The order of the WQL queries is not optimised yet, and there are executed in the alphabetical order
+        of the variable of the subject.
+        Therefore, the first subject to be calculated is prefixed to be executed first,
+        especially before the anonymous variables created by the Sparql query parser.
+        Anonymous variable names are like "_anon_ba92a16d_be71_4c7c_bb3b_3b7c9917466c.
+        This trick will be necessary until the optimizer is added.
+        */
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?service_name
+                    select ?file_name
                     where {
-                        ?dir cimv2:Win32_Directory.Name "dir_name" .
-                        ?dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?file .
-                        ?file cimv2:Win32_Service.Name ?file_name .
+                        ?_1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
+                        ?_1_dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?file .
+                        ?file cimv2:CIM_DataFile.Name ?file_name .
                     }
                 """;
-        Assert.fail("Not implemented yet");
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Set<String> setNames = PresentUtils.StringValuesSet(listRows,"file_name");
+        System.out.println("setNames=" + setNames);
+
+        // These files are always present.
+        Assert.assertTrue(setNames.contains("C:\\Windows\\notepad.exe"));
+        Assert.assertTrue(setNames.contains("C:\\Windows\\explorer.exe"));
+        Assert.assertTrue(setNames.contains("C:\\Windows\\win.ini"));
+        Assert.assertTrue(setNames.contains("C:\\Windows\\system.ini"));
     }
 
-    /** Files in a directory at any level.
+    /** Files in a directory at several levels with a property path.
      *
      * @throws Exception
      */
@@ -1216,35 +1249,76 @@ public class RepositoryWrapperCIMV2Test {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?service_name
+                    select ?file_name
                     where {
-                        ?dir cimv2:Win32_Directory.Name "dir_name" .
+                        ?dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                         ?dir (^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent)+ ?file .
-                        ?file cimv2:Win32_Service.Name ?file_name .
+                        ?file cimv2:CIM_DataFile.Name ?file_name .
                     }
                 """;
         Assert.fail("Not implemented yet");
     }
 
-
-    /** Subprocesses of a process.
-     * *
+    /** Pids of the subprocesses of the parent of the current process.
+     * This could be greatly simplified because Handle and ProcessId are the same (with different types).
+     * The point of this test is to check that the logic works.
+     *
+     * FIXME: Maybe a slash should not come before a caret ?
      * @throws Exception
      */
-    @Ignore("Property paths not implemented yet")
     @Test
     public void testSelect_PropertyPath_Win32_Process_One() throws Exception {
-        String sparqlQuery = """
+        String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?service_name
+                    select ?process_sub_pid
                     where {
-                        ?process_top cimv2:Win32_Process.Name "dir_name" .
-                        ?process_top ^cimv2:CIM_DirectoryContainsFile.Dependent/cimv2:CIM_DirectoryContainsFile.Antecedent ?process_sub .
-                        ?process_sub cimv2:Win32_Process.Name ?file_name .
+                        ?process_top cimv2:Win32_Process.Handle "%s" .
+                        ?process_sub cimv2:Win32_Process.ParentProcessId/^cimv2:Win32_Process.ProcessId ?process_top .
+                        ?process_sub cimv2:Win32_Process.Handle ?process_sub_pid
                     }
-                """;
-        Assert.fail("Not implemented yet");
+                """, PresentUtils.ParentProcessId());
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Set<String> setPids = PresentUtils.StringValuesSet(listRows,"process_sub_pid");
+        System.out.println("setPids=" + setPids);
+
+        Assert.assertTrue(setPids.contains(currentPidStr));
+    }
+
+    /** Command of the parent process.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_PropertyPath_Win32_Process_ParentName() throws Exception {
+        /*
+        The order of the WQL queries is not optimised yet, and there are executed in the alphabetical order
+        of the variable of the subject.
+        Therefore, the first subject to be calculated is prefixed to be executed first,
+        especially before the anonymous variables created by the Sparql query parser.
+        Anonymous variable names are like "_anon_ba92a16d_be71_4c7c_bb3b_3b7c9917466c.
+        This trick will be necessary until the optimizer is added.
+        */
+        String sparqlQuery = String.format("""
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?parent_process_command
+                    where {
+                        ?_1_process_sub cimv2:Win32_Process.Handle "%s" .
+                        ?parent_process_command ^cimv2:Win32_Process.CommandLine/cimv2:Win32_Process.ProcessId/^cimv2:Win32_Process.ParentProcessId  ?_1_process_sub .
+                    }
+                """, currentPidStr);
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Set<String> setCommands = PresentUtils.StringValuesSet(listRows,"parent_process_command");
+        System.out.println("setCommands=" + setCommands);
+
+        String commandParentProcess = PresentUtils.ParentProcessCommand();
+        System.out.println("Expected command=" + commandParentProcess);
+
+        // WMI wraps the command in double-quotes and adds a space at the end, for no reason.
+        Assert.assertEquals(Set.of("\"" + commandParentProcess + "\" "), setCommands);
     }
 
     /** Subprocesses of a process at any level.
@@ -1309,11 +1383,8 @@ public class RepositoryWrapperCIMV2Test {
         }
     }
 
-    /* this trims the first and last characters of a string, and is used when Sparql returns strings
-    between quotes.
-     */
 
-    /** Read boolean values. */
+    /** Read boolean members of class Win32_Directory. */
     @Test
     public void testSelect_Win32_Directory_Boolean() throws Exception {
         String sparqlQuery = """
@@ -1376,8 +1447,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertTrue(mapNameToWritable.get("system32"));
     }
 
-
-    /** Select system directories.
+    /** Select system directories, and checks that boolean constant values can be used in a query.
      * */
     @Test
     public void testSelect_Win32_Directory_SelectSystem() throws Exception {

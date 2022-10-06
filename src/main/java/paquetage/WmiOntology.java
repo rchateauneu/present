@@ -358,7 +358,8 @@ public class WmiOntology {
     // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessId"
     static NamespaceTokenPair SplitToken(String token) {
         if(! token.contains("#")) {
-            throw new RuntimeException("Invalid token:" + token);
+            logger.debug("Cannot split token:" + token);
+            return null;
         }
         String[] splitToken = token.split("#");
 
