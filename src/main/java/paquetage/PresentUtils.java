@@ -177,6 +177,9 @@ public class PresentUtils {
         return url.startsWith("http://") || url.startsWith("https://");
     }
 
+    /* this trims the first and last characters of a string, and is used when Sparql returns strings
+    between quotes.
+     */
     static public String trimQuotes(String inString) {
         return inString.substring(1, inString.length() - 1);
     }
