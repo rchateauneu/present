@@ -55,6 +55,12 @@ public class RepositoryWrapper {
     /** This transforms a Sparql query into a stack of WQL-like queries,
      * which are executed and their results inserted in the repository.
      *
+     * TODO: Add three execution modes for optimization:
+     * - Do not change the order of parsed ObjectPatterns which is the alphabetical order of subject variables.
+     * - Optimise the order of ObjectPatterns by changing this order.
+     * - Do not change the order but checks it is the same as the result of optimization:
+     *   This will be the default and will allow to reuse all existing tests for another purpose.
+     *
      * @param sparqlQuery
      * @throws Exception
      */
