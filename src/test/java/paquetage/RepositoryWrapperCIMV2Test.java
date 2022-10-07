@@ -46,9 +46,9 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(Set.of("x"), singleRow.KeySet());
     }
 
-    /** This tests the presence of element from the ontology. */
+    /** This tests the presence of a table from the ontology. */
     @Test
-    public void testSelectFromOntology() throws Exception {
+    public void testSelectWin32_ProcessFromOntology() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -62,6 +62,24 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("label"), singleRow.KeySet());
+    }
+
+    /** Checks the list of classes in the ontology. */
+    @Test
+    public void testSelectClassesFromOntology() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?class_label
+                    where {
+                        ?class rdf:type rdfs:Class .
+                        ?class rdfs:label ?class_label .
+                    }
+                """;
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Set<String> setLabels = PresentUtils.StringValuesSet(listRows,"class_label");
+        Assert.assertTrue(setLabels.contains("Win32_Process"));
+        Assert.assertTrue(setLabels.contains("Win32_DependentService"));
     }
 
     /** This selects the caption of the current process and does not use the ontology. */
@@ -275,7 +293,6 @@ public class RepositoryWrapperCIMV2Test {
 
         // Transforms '"Win32_Process.VirtualSize"' into 'VirtualSize'
         Set<String> shortLabels = setLabels.stream()
-                // .map(fullProperty -> fullProperty.substring(1,fullProperty.length()-1).split("\\.")[1])
                 .map(fullProperty -> fullProperty.split("\\.")[1])
                 .collect(Collectors.toSet());
 

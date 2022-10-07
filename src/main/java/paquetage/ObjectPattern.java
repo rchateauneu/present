@@ -10,10 +10,7 @@ import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Var;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This models an object and its properties extracted from a Sparql query.
@@ -193,6 +190,7 @@ public class ObjectPattern {
 
     /** This receives a list of StatementPattern taken from a SparqQuery and creates a map of ObjectPattern,
      * whose key is the variable name of the common subject of these statements.
+     * Only subjects belonging to a WMI class are kept.
      * @param visitorPatternsRaw
      * @return
      */
@@ -246,7 +244,13 @@ public class ObjectPattern {
 
             // TODO: Make this comparison faster than a string comparison.
             if (predicateStr.equals(RDF.TYPE.stringValue())) {
-                refPattern.RawClassName = object.getValue().stringValue();
+                Value objectValue = object.getValue();
+                if(objectValue != null) {
+                    refPattern.RawClassName = objectValue.stringValue();
+                } else {
+                    // Maybe the type is a variable. This is not processed yet.
+                    refPattern.RawClassName = null;
+                }
             }
             else if (predicateStr.equals(RDFS.SEEALSO.stringValue())) {
                 logger.debug("TODO: Add SeeAlso scripts, any static RDF file is correct.");
@@ -271,11 +275,21 @@ public class ObjectPattern {
                 }
             }
         }
-        logger.debug("Generated patterns: " + patternsMap.size());
         for(Map.Entry<String, ObjectPattern> entry : patternsMap.entrySet()) {
             entry.getValue().PreparePattern();
         }
-        return patternsMap;
+
+        logger.debug("Generated patterns before filtering: " + patternsMap.size());
+        HashMap<String, ObjectPattern> patternsMapFiltered = new HashMap<>();
+        for(Map.Entry<String, ObjectPattern> entry : patternsMap.entrySet()) {
+            if(entry.getValue().CurrentNamespace == null) {
+                logger.debug("Removing key:" + entry.getKey());
+            } else {
+                patternsMapFiltered.put(entry.getKey(), entry.getValue());
+            }
+        }
+        logger.debug("Generated patterns after filtering: " + patternsMapFiltered.size());
+        return patternsMapFiltered;
     } // PartitionBySubject
 
     /** This is used to transform a constant value parsed from a Sparql query, into a value compatible with WMI.

@@ -36,8 +36,7 @@ public class SparqlBGPExtractorTest {
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(Set.of("obs", "time", "lat"), extractor.bindings);
-        Assert.assertEquals(1, extractor.patternsAsArray().size());
-        Assert.assertNotEquals(null, extractor.FindObjectPattern("obs"));
+        Assert.assertTrue(extractor.patternsAsArray().isEmpty());
     }
 
     @Test
@@ -161,23 +160,7 @@ public class SparqlBGPExtractorTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(Set.of("subject_name"), extractor.bindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
-        Assert.assertEquals(2, patterns.size());
-
-        Assert.assertNotEquals(extractor.FindObjectPattern("about"), null);
-        ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.ClassName);
-        Assert.assertEquals("about", firstPattern.VariableName);
-
-        Assert.assertEquals(1, firstPattern.Members.size());
-        CompareVariable(firstPattern.Members.get(0), null, "subject_name");
-
-        Assert.assertNotEquals(extractor.FindObjectPattern("s"), null);
-        ObjectPattern secondPattern = patterns.get(1);
-        Assert.assertEquals(null, secondPattern.ClassName);
-        Assert.assertEquals("s", secondPattern.VariableName);
-
-        Assert.assertEquals(1, secondPattern.Members.size());
-        CompareVariable(secondPattern.Members.get(0), null, "about");
+        Assert.assertTrue(patterns.isEmpty());
     }
 
     @Test
@@ -266,27 +249,7 @@ public class SparqlBGPExtractorTest {
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
         Assert.assertEquals(Set.of("creator_name", "author_name"), extractor.bindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
-        Assert.assertEquals(3, patterns.size());
-
-        Assert.assertNotEquals(extractor.FindObjectPattern("author"), null);
-        ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.ClassName);
-        Assert.assertEquals("author", firstPattern.VariableName);
-        Assert.assertEquals(1, firstPattern.Members.size());
-        CompareVariable(firstPattern.Members.get(0), null, "author_name");
-
-        Assert.assertNotEquals(extractor.FindObjectPattern("creator"), null);
-        ObjectPattern secondPattern = patterns.get(1);
-        Assert.assertEquals(null, secondPattern.ClassName);
-        Assert.assertEquals("creator", secondPattern.VariableName);
-        CompareVariable(secondPattern.Members.get(0), null, "creator_name");
-
-        Assert.assertNotEquals(extractor.FindObjectPattern("s"), null);
-        ObjectPattern thirdPattern = patterns.get(2);
-        Assert.assertEquals(null, thirdPattern.ClassName);
-        Assert.assertEquals("s", thirdPattern.VariableName);
-        Assert.assertEquals(2, thirdPattern.Members.size());
-        CompareVariable(thirdPattern.Members.get(0), null, "creator");
+        Assert.assertTrue(patterns.isEmpty());
     }
 
     /***
