@@ -1,17 +1,8 @@
 package paquetage;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.text.CaseUtils;
 import org.junit.*;
 
-import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.time.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
  * This is only for the namespace StandardCimv2.
@@ -22,6 +13,7 @@ public class RepositoryWrapperStandardCimv2Test {
 
     @Before
     public void setUp() throws Exception {
+        // FIXME: Beware, only this ontology is loaded.
         repositoryWrapper = new RepositoryWrapper("ROOT\\StandardCimv2");
     }
 
@@ -73,6 +65,9 @@ public class RepositoryWrapperStandardCimv2Test {
      *
      * TODO: Optimisation: Si deux requetes successives ne dependent pas l'une de l'autre,
      * TODO: ne faire la seconde qu'une seule fois. Soit on garde le resultat en cache, soit etc...
+     *
+     * TODO: The ontology of "ROOT/CIMV2" is not loaded.
+     *
      *
      * @throws Exception
      */
