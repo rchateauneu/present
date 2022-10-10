@@ -31,7 +31,7 @@ public class WmiProviderTest {
      * Get the list of namespaces.
      */
     @Test
-    public void TestNamespaces() {
+    public void TestNamespaces() throws Exception {
         WmiProvider wmiProvider = new WmiProvider();
         Set<String> namespaces = wmiProvider.Namespaces();
         System.out.println("namespaces=" + new TreeSet<String>(namespaces));
@@ -524,7 +524,7 @@ public class WmiProviderTest {
      * Experimental: Looking for classes which are not in namespace CIMV2.
      * This is a helper function used to generate the map exclusiveClassesPerNamespace.
      */
-    public void TestNamespacesExclusiveClassesGenerate() {
+    public void TestNamespacesExclusiveClassesGenerate() throws Exception {
         WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.Classes("ROOT\\CIMV2");
         Set<String> setNamespaces = wmiProvider.Namespaces();

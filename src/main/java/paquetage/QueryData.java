@@ -244,7 +244,7 @@ public class QueryData {
             boolean mainVariableAvailable,
             Map<String, String> columns,
             List<QueryData.WhereEquality> wheres) throws Exception {
-        WmiOntology.CheckValidNamespace(wmiNamespace);
+        WmiProvider.CheckValidNamespace(wmiNamespace);
         mainVariable = variable;
         isMainVariableAvailable = mainVariableAvailable;
         if(wmiClassName.contains("#")) {

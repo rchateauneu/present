@@ -26,8 +26,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
@@ -38,29 +36,16 @@ public class WmiOntology {
     final static private Logger logger = Logger.getLogger(WmiOntology.class);
 
     /** Consider using a Model to store the triples of the ontology. */
-    RepositoryConnection repositoryConnection;
+
+    static private WmiProvider wmiProvider = new WmiProvider();
 
     public static String namespaces_url_prefix = "http://www.primhillcomputers.com/ontology/";
 
-    static private Pattern patternNamespace = Pattern.compile("^[\\\\_a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
-
-    static public void CheckValidNamespace(String namespace) {
-        if(!namespace.startsWith("ROOT")) {
-            throw new RuntimeException("Namespace must start with 'ROOT':" + namespace);
-        }
-        Matcher matcher = patternNamespace.matcher(namespace);
-        boolean matchFound = matcher.find();
-        if (!matchFound) {
-            throw new RuntimeException("Invalid namespace:" + namespace);
-        }
-    }
-
     static String NamespaceUrlPrefix(String namespace) {
-        CheckValidNamespace(namespace);
+        WmiProvider.CheckValidNamespace(namespace);
         // Backslashes could be replaced with "%5C" but a slash is clearer.
         return namespaces_url_prefix + namespace.replace("\\", "/") + "#";
     }
-    //public static String cimv2_url_prefix = NamespaceUrlPrefix("ROOT\\CIMV2");
 
     /** This maps WMI types to standard RDF types. */
     static final Map<String , IRI> wmi_type_to_xsd = new HashMap<>() {
@@ -82,9 +67,7 @@ public class WmiOntology {
 
     static Resource WbemPathToIri(String valueString) throws Exception {
         String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
-        //logger.debug("encodedValueString=" + encodedValueString);
         String iriValue = PresentUtils.toCIMV2(encodedValueString);
-        //logger.debug("iriValue=" + iriValue);
         Resource resourceValue = Values.iri(iriValue);
         return resourceValue;
     }
@@ -126,7 +109,6 @@ public class WmiOntology {
      */
     static private void CreateOntologyInRepository(String namespace, RepositoryConnection connection){
         logger.debug("Start namespace=" + namespace);
-        CheckValidNamespace(namespace);
         // We want to reuse this namespace when creating several building blocks.
 
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -161,11 +143,9 @@ public class WmiOntology {
             return classNode;
         };
 
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(namespace);
         for(Map.Entry<String, WmiProvider.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
-            //System.out.println("className=" + className);
 
             IRI classIri = lambdaClassToNode.apply(className);
 
@@ -173,6 +153,8 @@ public class WmiOntology {
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, factory.createLiteral(className));
             connection.add(classIri, RDFS.COMMENT, factory.createLiteral(wmiClass.Description));
+            // TODO: Add the namespace so it is not needed to filter on the IRI ?
+            // connection.add(classIri, "namespace", namespace);
 
             if (wmiClass.BaseName != null) {
                 IRI baseClassIri = lambdaClassToNode.apply(wmiClass.BaseName);
@@ -192,6 +174,8 @@ public class WmiOntology {
                 connection.add(uniquePropertyIri, RDFS.LABEL, factory.createLiteral(uniquePropertyName));
                 connection.add(uniquePropertyIri, RDFS.DOMAIN, classIri);
                 connection.add(uniquePropertyIri, RDFS.COMMENT, factory.createLiteral(wmiProperty.Description));
+                // TODO: Add the namespace so it is not needed to filter on the IRI ?
+                // connection.add(uniquePropertyIri, "namespace", namespace);
 
                 if(wmiProperty.Type.startsWith("ref:")) {
                     String domainName = wmiProperty.Type.substring(4);
@@ -239,25 +223,17 @@ public class WmiOntology {
         writer.endRDF();
     }
 
-
-    static private Path pathCache;
-    static {
-        String tempDir = System.getProperty("java.io.tmpdir");
-
-        // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-        pathCache = Paths.get(tempDir + "\\" + "Ontologies");
-    }
-
     // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-    static private Path PathNamespacePrefix(String namespace) throws Exception{
+    static private Path PathNamespacePrefix(String namespace) {
         // The namespace might contain backslashes, but this is OK on Windows.
-        return Paths.get(pathCache + "\\" + namespace);
+        return Paths.get(WmiProvider.ontologiesPathCache + "\\" + namespace);
     }
+
     static private File DirSailDump(String namespace) throws Exception{
         // The namespace might contain backslashes, but this is OK on Windows.
         Path pathNamespacePrefix = PathNamespacePrefix(namespace);
 
-        Files.createDirectories(pathCache);
+        Files.createDirectories(WmiProvider.ontologiesPathCache);
         File dirSaildump = new File(pathNamespacePrefix + ".SailDir");
         logger.debug("dirSaildump=" + dirSaildump);
         return dirSaildump;
@@ -267,24 +243,24 @@ public class WmiOntology {
      * so it is not necessary to read them several times from file.
      * They should never be modified but instead copied to a new repository.
      */
-    static private HashMap<String, RepositoryConnection> mapConnects = new HashMap<>();
+    static private HashMap<String, RepositoryConnection> mapNamespaceToConnects = new HashMap<>();
 
     static public RepositoryConnection ReadOnlyOntologyConnection(String namespace, boolean isCached) {
-        CheckValidNamespace(namespace);
-        RepositoryConnection repositoryConnection = mapConnects.get(namespace);
+        WmiProvider.CheckValidNamespace(namespace);
+        RepositoryConnection repositoryConnection = mapNamespaceToConnects.get(namespace);
         if (repositoryConnection != null) {
             logger.debug("Ontology connection in cache for namespace=" + namespace);
             return repositoryConnection;
         }
         repositoryConnection = ReadOnlyOntologyConnectionNoCache(namespace, isCached);
         if(isCached) {
-            mapConnects.put(namespace, repositoryConnection);
+            mapNamespaceToConnects.put(namespace, repositoryConnection);
         }
         return repositoryConnection;
     }
 
     static private RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace, boolean isCached) {
-        CheckValidNamespace(namespace);
+        WmiProvider.CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection;
 
         try {
@@ -331,26 +307,39 @@ public class WmiOntology {
         return repositoryConnection;
     }
 
-
-    /** This loads all triples of the ontology and inserts them in the repository.
-     * This is rather slow because an ontology contains thousands of triples.
-     * TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
-     */
-    public static RepositoryConnection CloneToMemoryConnection(String namespace) {
-        CheckValidNamespace(namespace);
-        // This is not persisted to a file.
-        Repository repo = new SailRepository(new MemoryStore());
-        RepositoryConnection repositoryConnection = repo.getConnection();
-
+    private static void InsertOntologyToConnection(String namespace, RepositoryConnection repositoryConnection) {
         long countInit = repositoryConnection.size();
-        logger.debug("Inserting ontology statements:" + countInit);
-        CheckValidNamespace(namespace);
+        logger.debug("Inserting " + namespace + " ontology statements:" + countInit);
         RepositoryConnection sourceConnection = ReadOnlyOntologyConnection(namespace, true);
         // TODO: Avoid this useless copy.
         RepositoryResult<Statement> result = sourceConnection.getStatements(null, null, null, true);
         repositoryConnection.add(result);
         long countEnd = repositoryConnection.size();
         logger.debug("Inserted " + (countEnd - countInit) + " statements from " + countInit);
+    }
+
+    /** This loads all triples of the ontology and inserts them in the repository.
+     * This is rather slow because an ontology contains thousands of triples.
+     * TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
+     */
+    public static RepositoryConnection CloneToMemoryConnection(String namespace) {
+        WmiProvider.CheckValidNamespace(namespace);
+        // This is not persisted to a file.
+        Repository repo = new SailRepository(new MemoryStore());
+        RepositoryConnection repositoryConnection = repo.getConnection();
+        InsertOntologyToConnection(namespace, repositoryConnection);
+        return repositoryConnection;
+    }
+
+    /** This returns a repository with ontologies of all namespaces. */
+    public static RepositoryConnection CloneToMemoryConnection() throws Exception {
+        Repository repo = new SailRepository(new MemoryStore());
+        RepositoryConnection repositoryConnection = repo.getConnection();
+
+        // mapNamespaceToConnects.keySet()
+        for(String namespace: wmiProvider.Namespaces()) {
+            InsertOntologyToConnection(namespace, repositoryConnection);
+        }
 
         return repositoryConnection;
     }
@@ -369,7 +358,7 @@ public class WmiOntology {
             String wmiNamespaceSlashes = prefixUrl.substring(namespaces_url_prefix.length());
             // In the URL, the backslash separator of namespaces is replaced with a slash.
             wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
-            CheckValidNamespace(wmiNamespace);
+            WmiProvider.CheckValidNamespace(wmiNamespace);
         } else {
             wmiNamespace = null;
         }
@@ -378,7 +367,7 @@ public class WmiOntology {
         return new NamespaceTokenPair(wmiNamespace, splitToken[1]);
     }
 
-    /** This contains a WMI namespace, and a class or property. */
+    /** This contains a WMI namespace, and a class name or a property name. */
     public static class NamespaceTokenPair {
         public String nameSpace;
         public String Token;

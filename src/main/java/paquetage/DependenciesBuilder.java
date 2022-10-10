@@ -103,7 +103,7 @@ public class DependenciesBuilder {
 
             if(pattern.ClassName != null) {
                 // A class name is needed to run WQL queries, and also its WMI namespace.
-                WmiOntology.CheckValidNamespace(pattern.CurrentNamespace);
+                WmiProvider.CheckValidNamespace(pattern.CurrentNamespace);
                 QueryData queryData = new QueryData(pattern.CurrentNamespace, pattern.ClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
                 prepared_queries.add(queryData);
             }

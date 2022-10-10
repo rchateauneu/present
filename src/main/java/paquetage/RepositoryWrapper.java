@@ -19,9 +19,21 @@ public class RepositoryWrapper {
     final static private Logger logger = Logger.getLogger(RepositoryWrapper.class);
     private RepositoryConnection localRepositoryConnection;
 
+    // Load the ontology of one namespace only.
     RepositoryWrapper(String namespace)
     {
         localRepositoryConnection = WmiOntology.CloneToMemoryConnection(namespace);
+    }
+
+    // Load all namespaces.
+    RepositoryWrapper()
+    {
+        try {
+            localRepositoryConnection = WmiOntology.CloneToMemoryConnection();
+        }
+        catch(Exception exc) {
+            throw new RuntimeException(exc);
+        }
     }
 
     private RdfSolution ExecuteQueryWithStatements(String sparqlQuery, Set<String> expectedBindings) throws Exception {
@@ -33,7 +45,6 @@ public class RepositoryWrapper {
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {
                 BindingSet bindingSet = result.next();
-                //bindingSet.getBindingNames();
                 RdfSolution.Tuple newTuple = new RdfSolution.Tuple(bindingSet);
                 if(!checkedBindingsExecution) {
                     logger.debug("Selected row:" + newTuple);
@@ -72,7 +83,7 @@ public class RepositoryWrapper {
         Solution translatedRows = treeExtractor.EvaluateSolution();
         logger.debug("Translated rows:" + translatedRows.size());
 
-        List<Statement> statements = treeExtractor.SolutionToStatements(/*translatedRows*/);
+        List<Statement> statements = treeExtractor.SolutionToStatements();
 
         localRepositoryConnection.add(statements);
 

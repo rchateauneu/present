@@ -177,7 +177,7 @@ public class ObjectPattern {
 
         if(CurrentNamespace != null) {
             // A class name is need to run WQL queries, and also its WMI namespace.
-            WmiOntology.CheckValidNamespace(CurrentNamespace);
+            WmiProvider.CheckValidNamespace(CurrentNamespace);
         } else {
             // Maybe this is not a WMI-style IRI, so there is no WMI namespace.
             logger.debug("The namespace could not be found in:" + ClassName);

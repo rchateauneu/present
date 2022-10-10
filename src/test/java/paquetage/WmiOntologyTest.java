@@ -94,7 +94,7 @@ public class WmiOntologyTest {
      *
      */
     @Test
-    public void CreateAllOntologies() {
+    public void CreateAllOntologies() throws Exception {
         WmiProvider wmiProvider = new WmiProvider();
         Set<String> setNamespaces = wmiProvider.Namespaces();
         for (String oneNamespace : setNamespaces) {

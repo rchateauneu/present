@@ -2,12 +2,17 @@ package paquetage;
 
 import COM.Wbemcli;
 import COM.WbemcliUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
 import com.sun.jna.ptr.IntByReference;
 import org.apache.log4j.Logger;
 
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +30,15 @@ public class WmiProvider {
     // These two variables are temporary.
     private static Wbemcli.IWbemServices wbemServiceRoot = null;
     public static Wbemcli.IWbemServices wbemServiceRootCimv2 = null;
+    static private Pattern patternNamespace = Pattern.compile("^[\\\\_a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
+    static Path ontologiesPathCache;
+    static {
+        String tempDir = System.getProperty("java.io.tmpdir");
+
+        // To cleanup the ontology, this entire directory must be deleted, and not only its content.
+        ontologiesPathCache = Paths.get(tempDir + "\\" + "Ontologies");
+    }
+
 
     static {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
@@ -60,7 +74,7 @@ public class WmiProvider {
     }
 
     static Wbemcli.IWbemServices GetWbemService(String namespace) {
-        WmiOntology.CheckValidNamespace(namespace);
+        CheckValidNamespace(namespace);
         Wbemcli.IWbemServices wbemService = wbemServices.get(namespace);
         if(wbemService == null) {
             try {
@@ -96,12 +110,24 @@ public class WmiProvider {
                 }
             }
             catch(Exception exception) {
+                // Might throw 80041003=wbemErrAccessDenied with 5 seconds delay.
                 logger.error("Caught:" + exception + " namespace=" + namespace);
                 wbemService = null;
             }
             wbemServices.put(namespace, wbemService);
         }
         return wbemService;
+    }
+
+    static public void CheckValidNamespace(String namespace) {
+        if(!namespace.startsWith("ROOT")) {
+            throw new RuntimeException("Namespace must start with 'ROOT':" + namespace);
+        }
+        Matcher matcher = patternNamespace.matcher(namespace);
+        boolean matchFound = matcher.find();
+        if (!matchFound) {
+            throw new RuntimeException("Invalid namespace:" + namespace);
+        }
     }
 
     /*
@@ -144,24 +170,20 @@ public class WmiProvider {
     // This will never change when a machine is running, so storing it in a cache makes tests faster.
     private static HashMap<String, Map<String, WmiClass>> cacheClassesMap = new HashMap<>();
 
-    // This will never change when a machine is running, so storing it in a cache makes tests faster.
-    private static HashSet<String> cacheNamespaces = null;
-
     /** Excluding Localization Namespaces : https://powershell.one/wmi/root
      * To find real namespaces with potentially interesting classes in them,
      * exclude any namespace name that starts with “ms_” followed by at least two numbers.
      */
     static private Pattern patternLocalizationNamespaces = Pattern.compile("^ms_\\d\\d", Pattern.CASE_INSENSITIVE);
 
-    private void Namespaces(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
-        logger.debug("namespace=" + namespace);
-        WmiOntology.CheckValidNamespace(namespace);
+    private Set<String> NamespacesFlat(Wbemcli.IWbemServices wbemService, String namespace) {
+        CheckValidNamespace(namespace);
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
-        "WQL",
+                "WQL",
                 "SELECT Name FROM __NAMESPACE",
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
-                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY, null);
-                // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+        // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY, null);
+        // Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
 
         Set<String> namespacesFlat = new HashSet<>();
         try {
@@ -195,6 +217,12 @@ public class WmiProvider {
         } finally {
             enumerator.Release();
         }
+        return namespacesFlat;
+    }
+
+    private void Namespaces(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
+
+        Set<String> namespacesFlat = NamespacesFlat(wbemService, namespace);
 
         for(String namespaceSub : namespacesFlat) {
             String namespaceFull = namespace + "\\" + namespaceSub;
@@ -205,24 +233,40 @@ public class WmiProvider {
             Wbemcli.IWbemServices wbemServiceSub = GetWbemService(namespaceFull);
             if(wbemServiceSub != null) {
                 // Strip string "ROOT\\" at the beginning.
-                // namespacesHierarchical.add(namespaceFull.substring(5));
                 namespacesHierarchical.add(namespaceFull);
                 Namespaces(namespacesHierarchical, wbemServiceSub, namespaceFull);
             }
         }
     }
 
-    public Set<String> Namespaces() {
-        if(cacheNamespaces == null) {
-            cacheNamespaces = new HashSet<>();
-            logger.debug("Filling namespaces cache");
-            Namespaces(cacheNamespaces, wbemServiceRoot, "ROOT");
-            logger.debug("End. Number of namespaces=" + cacheNamespaces.size());
+    /** This will never change when a machine is running, so storing it in a cache makes tests faster.
+     * There is no benefit multi-threading connections because it seems that the creation of WBEM connections
+     * is serialized.
+     */
+    private static HashSet<String> cacheNamespacesSingleThreaded = null;
+
+    public Set<String> Namespaces() throws Exception{
+        if(cacheNamespacesSingleThreaded == null) {
+            cacheNamespacesSingleThreaded = new HashSet<>();
+            Path pathCacheNamespaces = Paths.get(WmiProvider.ontologiesPathCache + "\\" + "namespaces.json");
+            boolean fileExists = Files.exists(pathCacheNamespaces);
+            ObjectMapper mapperObj = new ObjectMapper();
+            if(fileExists) {
+                logger.debug("Loading namespaces from:" + pathCacheNamespaces);
+                cacheNamespacesSingleThreaded = mapperObj.readValue(pathCacheNamespaces.toFile(), HashSet.class);
+                logger.debug("Number of namespaces=" + cacheNamespacesSingleThreaded.size());
+            } else {
+                logger.debug("Filling namespaces cache");
+                Namespaces(cacheNamespacesSingleThreaded, wbemServiceRoot, "ROOT");
+                logger.debug("End. Number of namespaces=" + cacheNamespacesSingleThreaded.size());
+                mapperObj.writeValue(pathCacheNamespaces.toFile(),cacheNamespacesSingleThreaded);
+                logger.debug("Written namespaces to:" + pathCacheNamespaces);
+            }
         }
-        return cacheNamespaces;
+        return cacheNamespacesSingleThreaded;
     }
 
-    // Very commonly used.
+    // Very commonly used for tests.
     public Map<String, WmiClass> ClassesCIMV2() {
         return Classes("ROOT\\CIMV2");
     }
