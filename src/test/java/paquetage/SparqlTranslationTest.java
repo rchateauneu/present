@@ -773,7 +773,7 @@ public class SparqlTranslationTest {
     }
 
     @Test
-    public void Execution_Forced_Win32_Thread_Optionl_Priority() throws Exception {
+    public void Execution_Forced_Win32_Thread_Optional_Priority() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
