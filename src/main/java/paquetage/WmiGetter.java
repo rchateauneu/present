@@ -107,7 +107,7 @@ public class WmiGetter extends BaseGetter {
             throw exc;
         }
 
-        ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, "n/a", pType, pVal);
+        ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, pType, pVal);
         return rowValueType;
     }
 

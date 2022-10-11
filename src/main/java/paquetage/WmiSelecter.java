@@ -87,7 +87,7 @@ public class WmiSelecter extends BaseSelecter {
                         WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, null);
                         COMUtils.checkRC(hr);
 
-                        ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, lambda_variable, pType, pVal);
+                        ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, pType, pVal);
                         oneRow.PutValueType(lambda_variable, rowValueType);
 
                         OleAuto.INSTANCE.VariantClear(pVal);

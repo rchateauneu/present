@@ -39,7 +39,6 @@ public class WmiProvider {
         ontologiesPathCache = Paths.get(tempDir + "\\" + "Ontologies");
     }
 
-
     static {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
         /*
@@ -140,7 +139,6 @@ public class WmiProvider {
         Ole32.INSTANCE.CoUninitialize();
     }
     */
-
 
     public class WmiProperty {
         public String Name;
@@ -285,7 +283,7 @@ public class WmiProvider {
     }
 
     /** This returns a map containing the WMI classes. This is calculated with a WQL query.
-     * This is rather task whose result does not often change, so it must be cached.
+     * This is rather a task whose result does not often change, so it must be cached.
      * */
     private Map<String, WmiClass> ClassesCached(Wbemcli.IWbemServices wbemService) {
         // Classes are indexed with their names.
@@ -316,11 +314,11 @@ public class WmiProvider {
 
                 COMUtils.checkRC(classObject.Get("__CLASS", 0, pVal, pType, plFlavor));
                 String className = pVal.stringValue();
-                WmiClass newClass = new WmiClass(className);
                 if(className.equals("__NAMESPACE")) {
                     logger.debug("Do not store className=" + className);
                     continue;
                 }
+                WmiClass newClass = new WmiClass(className);
                 if(className != newClass.Name) {
                     throw new RuntimeException("Error building class:" + className);
                 }
@@ -334,7 +332,6 @@ public class WmiProvider {
                 OleAuto.INSTANCE.VariantClear(pVal);
 
                 Wbemcli.IWbemQualifierSet classQualifiersSet = classObject.GetQualifierSet();
-
 
                 if(false) {
                     String[] classQualifiersNames = classQualifiersSet.GetNames();
@@ -405,7 +402,7 @@ public class WmiProvider {
         return resultClasses;
     }
 
-    static Map<Integer, String> mapVariantTypes = Map.ofEntries(
+    static private Map<Integer, String> mapVariantTypes = Map.ofEntries(
             entry(Variant.VT_EMPTY, "VT_EMPTY"),
             entry(Variant.VT_NULL, "VT_NULL"),
             entry(Variant.VT_I2, "VT_I2"),
@@ -460,8 +457,7 @@ public class WmiProvider {
             entry(Variant.VT_TYPEMASK, "VT_TYPEMASK")
             );
 
-
-    static Map<Integer, String> mapCimTypes = Map.ofEntries(
+    static private Map<Integer, String> mapCimTypes = Map.ofEntries(
             entry(Wbemcli.CIM_ILLEGAL, "CIM_ILLEGAL"),
             entry(Wbemcli.CIM_EMPTY, "CIM_EMPTY"),
             entry(Wbemcli.CIM_SINT8, "CIM_SINT8"),
@@ -483,9 +479,15 @@ public class WmiProvider {
             entry(Wbemcli.CIM_FLAG_ARRAY, "CIM_FLAG_ARRAY")
     );
 
+    /** Conversion of a WMI value to a string plus its type.
+     *
+     * @param lambda_column
+     * @param pType
+     * @param pVal
+     * @return
+     */
     static ValueTypePair VariantToValueTypePair(
             String lambda_column,
-            String lambda_variable,
             IntByReference pType,
             Variant.VARIANT.ByReference pVal) {
         /** TODO: If the value is a reference, get the object if possible ! Or is it simply a string ?
@@ -503,8 +505,7 @@ public class WmiProvider {
         Object valObject = pVal.getValue();
         if(valObject == null) {
             String valueTypeStr = mapCimTypes.get(valueType);
-            logger.debug("Value is null. lambda_column=" + lambda_column
-                    + " lambda_variable=" + lambda_variable + " type=" + valueType + "/" + valueTypeStr);
+            logger.debug("Value is null. lambda_column=" + lambda_column + " type=" + valueType + "/" + valueTypeStr);
         }
 
         String rowValue;
@@ -514,8 +515,7 @@ public class WmiProvider {
             if(valueType != Wbemcli.CIM_STRING) {
                 // FIXME: Theoretically, it should only be CIM_REFERENCE ...
                 throw new RuntimeException(
-                        "Should be CIM_STRING lambda_column=" + lambda_column
-                                + " lambda_variable=" + lambda_variable + " valueType=" + valueType);
+                        "Should be CIM_STRING lambda_column=" + lambda_column + " valueType=" + valueType);
             }
             rowValue = pVal.stringValue();
             rowType = ValueTypePair.ValueType.NODE_TYPE;
@@ -526,40 +526,20 @@ public class WmiProvider {
                     rowValue = pVal.stringValue();
                     rowType = ValueTypePair.ValueType.NODE_TYPE;
                     if(rowValue != null) {
-                        /*
-                            Here, "?my3_dir" is a reference but it does not have the syntax.
-
-                            select ?my_dir_name
-                            where {
-                                ?my3_dir cimv2:Win32_Directory.Name ?my_dir_name .
-                                ?my2_assoc cimv2:Win32_MountPoint.Volume ?my1_volume .
-                                ?my2_assoc cimv2:Directory ?my3_dir .
-                                ?my1_volume cimv2:Win32_Volume.DriveLetter ?my_drive .
-                                ?my1_volume cimv2:DeviceID ?device_id .
-                                ?my0_dir cimv2:Name "C:\\Program Files (x86)" .
-                                ?my0_dir cimv2:Win32_Directory.Drive ?my_drive .
-                            }
-
-                            valueType='Win32_Directory.Name="C:\\"'
-                         */
                         if(!PresentUtils.hasWmiReferenceSyntax(rowValue)) {
-                            logger.warn("lambda_column=" + lambda_column
-                                    + " lambda_variable=" + lambda_variable + "  cannot be a reference:" + rowValue);
+                            logger.warn("lambda_column=" + lambda_column + " has not reference syntax:" + rowValue);
                         }
                     }
-                    // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
                     break;
                 case Wbemcli.CIM_STRING:
                     rowValue = pVal.stringValue();
-                    // SAUF S'IL Y A UNE ERREUR DE WMI QUI PASSERAIT UN NODE COMME UNE STRING ??
+                    // FIXME: Maybe if a WMI error returning a node as a string ?
                     if(rowValue != null) {
                         if (rowValue.startsWith("\\\\") && !rowValue.startsWith("\\\\?\\")) {
-                            logger.warn("lambda_column=" + lambda_column
-                                    + " lambda_variable=" + lambda_variable + "  cannot be a string:" + rowValue);
+                            logger.warn("lambda_column=" + lambda_column + " cannot be a string:" + rowValue);
                         }
                     }
                     rowType = ValueTypePair.ValueType.STRING_TYPE;
-                    // logger.debug("pVal.stringValue()=" + pVal.stringValue() + " pType=" + pType);
                     break;
                 case Wbemcli.CIM_SINT8:
                 case Wbemcli.CIM_UINT8:
@@ -586,7 +566,9 @@ public class WmiProvider {
                             // Some corner cases do not work, i.e. Win32_Process.InstallDate
                             String valueTypeUnknownStr = mapVariantTypes.get(valueTypeUnknown);
                             String valueTypeStr = mapCimTypes.get(valueType);
-                            logger.warn("Different types:" + valueType + "/" + valueTypeStr + " [" + pType + "]" + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
+                            logger.warn("Different types:" + valueType + "/" + valueTypeStr
+                                    + " [" + pType + "]"
+                                    + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
 
                             // FIXME: Obscure behaviour in some corner cases ??
                             switch(valueTypeUnknown) {
@@ -642,8 +624,7 @@ public class WmiProvider {
                 default:
                     String valStringValue = pVal.stringValue();
                     if (valStringValue == null) {
-                        logger.error("Null when converting lambda_column=" + lambda_column
-                                + " lambda_variable=" + lambda_variable + " type=" + valueType);
+                        logger.error("Null when converting lambda_column=" + lambda_column + " type=" + valueType);
                     }
                     rowValue = valStringValue;
                     rowType = ValueTypePair.ValueType.STRING_TYPE;
