@@ -229,9 +229,8 @@ public interface Wbemcli {
         }
 
         public String[] GetNames() {
-            long lFlags = 0;
             PointerByReference pbr = new PointerByReference();
-            COMUtils.checkRC(GetNames(lFlags, pbr));
+            COMUtils.checkRC(GetNames(0, pbr));
             Object[] nameObjects = (Object[]) OaIdlUtil.toPrimitiveArray(new SAFEARRAY(pbr.getValue()), true);
             String[] qualifierNames = new String[nameObjects.length];
             for(int i = 0; i < nameObjects.length; i++) {
@@ -246,16 +245,12 @@ public interface Wbemcli {
      */
     class IEnumWbemClassObject extends Unknown {
 
-        //public IEnumWbemClassObject() {
-        //}
-
         public IEnumWbemClassObject(Pointer pvInstance) {
             super(pvInstance);
         }
 
         public HRESULT Next(int lTimeOut, int uCount, Pointer[] ppObjects, IntByReference puReturned) {
-            // Next is 5th method of IEnumWbemClassObjectVtbl in
-            // WbemCli.h
+            // Next is 5th method of IEnumWbemClassObjectVtbl in WbemCli.h
             return (HRESULT) _invokeNativeObject(4,
                     new Object[] { getPointer(), lTimeOut, uCount, ppObjects, puReturned }, HRESULT.class);
         }
@@ -282,9 +277,6 @@ public interface Wbemcli {
         public static final CLSID CLSID_WbemLocator = new CLSID("4590f811-1d3a-11d0-891f-00aa004b2e24");
         public static final GUID IID_IWbemLocator = new GUID("dc12a687-737f-11cf-884d-00aa004b2e24");
 
-        public IWbemLocator() {
-        }
-
         private IWbemLocator(Pointer pvInstance) {
             super(pvInstance);
         }
@@ -293,7 +285,6 @@ public interface Wbemcli {
             PointerByReference pbr = new PointerByReference();
 
             // Error 800401F0 in CoCreateInstance: CoInitialize has not been called.
-
             HRESULT hres = Ole32.INSTANCE.CoCreateInstance(CLSID_WbemLocator, null, WTypes.CLSCTX_INPROC_SERVER,
                     IID_IWbemLocator, pbr);
             if (COMUtils.FAILED(hres)) {
