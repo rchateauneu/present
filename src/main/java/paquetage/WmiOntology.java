@@ -108,7 +108,7 @@ public class WmiOntology {
      * @param connection
      */
     static private void CreateOntologyInRepository(String namespace, RepositoryConnection connection){
-        logger.debug("Start namespace=" + namespace);
+        logger.debug("CreateOntologyInRepository namespace=" + namespace);
         // We want to reuse this namespace when creating several building blocks.
 
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -212,6 +212,7 @@ public class WmiOntology {
     }
 
     static private void WriteRepository(RepositoryConnection repositoryConnection, String rdfFileName) throws Exception {
+        logger.debug("Storing RDF statements to:" + rdfFileName);
         FileOutputStream out = new FileOutputStream(rdfFileName);
         RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, out);
         writer.startRDF();
@@ -245,53 +246,66 @@ public class WmiOntology {
      */
     static private HashMap<String, RepositoryConnection> mapNamespaceToConnects = new HashMap<>();
 
-    static public RepositoryConnection ReadOnlyOntologyConnection(String namespace, boolean isCached) {
+    static public RepositoryConnection ReadOnlyOntologyConnection(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection = mapNamespaceToConnects.get(namespace);
         if (repositoryConnection != null) {
             logger.debug("Ontology connection in cache for namespace=" + namespace);
             return repositoryConnection;
         }
-        repositoryConnection = ReadOnlyOntologyConnectionNoCache(namespace, isCached);
-        if(isCached) {
-            mapNamespaceToConnects.put(namespace, repositoryConnection);
-        }
+        repositoryConnection = ReadOnlyOntologyConnectionNoCache(namespace);
+        mapNamespaceToConnects.put(namespace, repositoryConnection);
         return repositoryConnection;
     }
 
-    static private RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace, boolean isCached) {
+
+    /** This is only for tests. */
+    static public RepositoryConnection ReadOnlyOntologyConnectionNoCacheInMemory(String namespace) {
+        logger.debug("Memory-only ontology for namespace=" + namespace);
+        MemoryStore memStore = new MemoryStore();
+        Repository repo = new SailRepository(memStore);
+        RepositoryConnection repositoryConnection = repo.getConnection();
+        CreateOntologyInRepository(namespace, repositoryConnection);
+        logger.debug("Number of created statements=" + repositoryConnection.size());
+        return repositoryConnection;
+    }
+
+    static private RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection;
 
         try {
             File dirSaildump = DirSailDump(namespace);
-            logger.debug("dirSaildump=" + dirSaildump);
+            logger.debug("namespace=" + namespace + " dirSaildump=" + dirSaildump);
             boolean fileExists = Files.exists(dirSaildump.toPath());
 
             // TODO: Find a way to IMPORT this content into a new MemoryStore, later unconnected to the file.
-            // TODO: This will avoid a stupid copy.
+            // TODO: This will avoid a useless copy.
             // TODO: See MemoryStore.setPersist
 
-            if (isCached && fileExists) {
+            if (fileExists) {
                 // Load the existing ontology from the file and sets the repository connection to it.
-                logger.debug("Exists dirSaildump=" + dirSaildump);
+                logger.debug("File exists: dirSaildump=" + dirSaildump);
                 MemoryStore memStore = new MemoryStore(dirSaildump);
+                memStore.setSyncDelay(3600000L); // Practically no synchronization.
                 logger.debug("MemoryStore created");
                 Repository repo = new SailRepository(memStore);
                 repositoryConnection = repo.getConnection();
                 logger.debug("Cached statements=" + repositoryConnection.size());
             } else {
-                // Creates a file repository and creates the ontology into it.
-                logger.debug("Does not exist dirSaildump=" + dirSaildump);
+                // Creates a file repository and creates the ontology into it,
+                // or reuses an existing file (This case for testing only).
+                logger.debug("File does not exist: dirSaildump=" + dirSaildump);
                 MemoryStore memStore = new MemoryStore(dirSaildump);
-                memStore.setSyncDelay(1000L);
+                memStore.setSyncDelay(3600000L); // Practically no synchronization.
                 Repository repo = new SailRepository(memStore);
                 repositoryConnection = repo.getConnection();
-                logger.debug("Caching new statements before=" + repositoryConnection.size());
+                logger.debug("Caching new statements before=" + repositoryConnection.size() + " isActive=" + repositoryConnection.isActive());
+                repositoryConnection.begin();
                 CreateOntologyInRepository(namespace, repositoryConnection);
                 repositoryConnection.commit();
                 memStore.sync();
-                logger.debug("Caching new statements after=" + repositoryConnection.size());
+                logger.debug("Cached " + repositoryConnection.size() + " statements");
                 // Also saves the new ontology to a RDF file.
                 Path pathNamespacePrefix = PathNamespacePrefix(namespace);
                 WriteRepository(repositoryConnection, pathNamespacePrefix + ".rdf");
@@ -299,10 +313,11 @@ public class WmiOntology {
         }
         catch(Exception exc)
         {
+            logger.error("Namespace=" + namespace + " Caught:" + exc);
             throw new RuntimeException(exc);
         }
         if(repositoryConnection.isEmpty()) {
-            throw new RuntimeException("Ontology is empty");
+            throw new RuntimeException("Ontology is empty for namespace=" + namespace);
         }
         return repositoryConnection;
     }
@@ -310,7 +325,8 @@ public class WmiOntology {
     private static void InsertOntologyToConnection(String namespace, RepositoryConnection repositoryConnection) {
         long countInit = repositoryConnection.size();
         logger.debug("Inserting " + namespace + " ontology statements:" + countInit);
-        RepositoryConnection sourceConnection = ReadOnlyOntologyConnection(namespace, true);
+        logger.debug("isActive " + repositoryConnection.isActive());
+        RepositoryConnection sourceConnection = ReadOnlyOntologyConnection(namespace);
         // TODO: Avoid this useless copy.
         RepositoryResult<Statement> result = sourceConnection.getStatements(null, null, null, true);
         repositoryConnection.add(result);

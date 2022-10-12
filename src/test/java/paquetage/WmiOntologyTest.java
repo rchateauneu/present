@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class WmiOntologyTest {
     static private RepositoryConnection ontologyCIMV2 = WmiOntology.CloneToMemoryConnection("ROOT\\CIMV2");
@@ -27,46 +28,37 @@ public class WmiOntologyTest {
      * @param columnName
      * @return
      */
-    private static HashSet<String> selectColumnFromOntology(RepositoryConnection repositoryConnection, String sparqlQuery, String columnName){
-        HashSet<String> variablesSet = new HashSet<String>();
+    private static Set<String> selectColumnFromOntology(RepositoryConnection repositoryConnection, String sparqlQuery, String columnName){
         System.out.println("Repository size before=" + repositoryConnection.size());
         TupleQuery tupleQuery = repositoryConnection.prepareTupleQuery(sparqlQuery);
-        try (TupleQueryResult result = tupleQuery.evaluate()) {
-            while (result.hasNext()) {  // iterate over the result
-                BindingSet bindingSet = result.next();
-                Value valueOfX = bindingSet.getValue(columnName);
-                variablesSet.add(valueOfX.toString());
-            }
-        }
+
+        Set<String> variablesSet = tupleQuery.evaluate().stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
+
         System.out.println("Repository size after=" + repositoryConnection.size());
         return variablesSet;
     }
 
     /** This executes a Sparql query in the repository containing the CIMV2 ontology. */
-    private static HashSet<String> selectColumnCIMV2(String sparqlQuery, String columnName){
+    private static Set<String> selectColumnCIMV2(String sparqlQuery, String columnName){
         return selectColumnFromOntology(ontologyCIMV2, sparqlQuery, columnName);
     }
 
     /** This executes a Sparql query in the repository containing the StandardCIMV2 ontology. */
-    private static HashSet<String> selectColumnStandardCimv2(String sparqlQuery, String columnName){
+    private static Set<String> selectColumnStandardCimv2(String sparqlQuery, String columnName){
         return selectColumnFromOntology(ontologyStandardCimv2, sparqlQuery, columnName);
     }
 
-    private static void assertContainsItemCIMV2(HashSet<String> itemsSet, String shortItem) {
+    private static void assertContainsItemCIMV2(Set<String> itemsSet, String shortItem) {
         Assert.assertTrue(itemsSet.contains(PresentUtils.toCIMV2(shortItem)));
     }
 
-    private static void assertContainsItemInterop(HashSet<String> itemsSet, String shortItem) {
+    private static void assertContainsItemInterop(Set<String> itemsSet, String shortItem) {
         Assert.assertTrue(itemsSet.contains(PresentUtils.NamespaceTermToIRI("ROOT\\Interop", shortItem)));
-    }
-
-    private static void assertContainsItemStandardCimv2(HashSet<String> itemsSet, String shortItem) {
-        Assert.assertTrue(itemsSet.contains(PresentUtils.NamespaceTermToIRI("ROOT\\StandardCimv2", shortItem)));
     }
 
     @Test
     public void Interop_ClassesAll() {
-        HashSet<String> subjectsSet = selectColumnFromOntology(
+        Set<String> subjectsSet = selectColumnFromOntology(
                 ontologyInterop,
                 "SELECT ?x WHERE { ?x ?p ?y }",
                 "x");
@@ -80,13 +72,15 @@ public class WmiOntologyTest {
      * This compares the number of triples in both repositories, and this gives a good estimate.
      * TODO: Why does the ontology changes so often ?
      */
-    @Ignore("Frequently returns different numbers. No idea why.")
     @Test
-    public void CIMV2_Cached() {
-        RepositoryConnection ontologyNonCachedCIMV2 = WmiOntology.ReadOnlyOntologyConnection("ROOT\\CIMV2", false);
+    public void Compare_Ontology_Cached() {
+        String namespace = "ROOT\\Cli";
+        RepositoryConnection ontologyNonCached = WmiOntology.ReadOnlyOntologyConnectionNoCacheInMemory(namespace);
+        RepositoryConnection cachedOntology = WmiOntology.CloneToMemoryConnection(namespace);
+
         String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
-        HashSet<String> countFresh = selectColumnFromOntology(ontologyCIMV2, sparqlQuery, "count");
-        HashSet<String> countCache = selectColumnFromOntology(ontologyNonCachedCIMV2, sparqlQuery, "count");
+        Set<String> countFresh = selectColumnFromOntology(cachedOntology, sparqlQuery, "count");
+        Set<String> countCache = selectColumnFromOntology(ontologyNonCached, sparqlQuery, "count");
         Assert.assertEquals(countFresh, countCache);
     }
 
@@ -94,13 +88,13 @@ public class WmiOntologyTest {
      *
      */
     @Test
-    public void CreateAllOntologies() throws Exception {
+    public void LoadAllOntologies() throws Exception {
         WmiProvider wmiProvider = new WmiProvider();
         Set<String> setNamespaces = wmiProvider.Namespaces();
         for (String oneNamespace : setNamespaces) {
             RepositoryConnection ontologyNamespace = WmiOntology.CloneToMemoryConnection(oneNamespace);
             String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
-            HashSet<String> countTriples = selectColumnFromOntology(ontologyNamespace, sparqlQuery, "count");
+            Set<String> countTriples = selectColumnFromOntology(ontologyNamespace, sparqlQuery, "count");
             Assert.assertEquals(1, countTriples.size());
             String firstString = countTriples.iterator().next();
             long sizeLong = PresentUtils.XmlToLong(firstString);
@@ -111,7 +105,7 @@ public class WmiOntologyTest {
     /** This selects all triples, and detects that some classes are present. */
     @Test
     public void CIMV2_ClassesAll() {
-        HashSet<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
+        Set<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
         assertContainsItemCIMV2(subjectsSet, "Win32_Process");
         assertContainsItemCIMV2(subjectsSet, "CIM_DataFile");
         assertContainsItemCIMV2(subjectsSet, "CIM_ProcessExecutable");
@@ -123,7 +117,7 @@ public class WmiOntologyTest {
     /** This selects all definitions of RDF types and checks the presence of some classes. */
     @Test
     public void CIMV2_ClassesFilter() {
-        HashSet<String> typesSet = selectColumnCIMV2("SELECT ?x WHERE { ?x rdf:type rdfs:Class }", "x");
+        Set<String> typesSet = selectColumnCIMV2("SELECT ?x WHERE { ?x rdf:type rdfs:Class }", "x");
         assertContainsItemCIMV2(typesSet, "Win32_Process");
         assertContainsItemCIMV2(typesSet, "CIM_ProcessExecutable");
         assertContainsItemCIMV2(typesSet, "CIM_DirectoryContainsFile");
@@ -132,7 +126,7 @@ public class WmiOntologyTest {
     /** This selects all triples, and detects that some properties are present. */
     @Test
     public void CIMV2_PropertiesAll() {
-        HashSet<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
+        Set<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
         assertContainsItemCIMV2(subjectsSet, "Handle");
         assertContainsItemCIMV2(subjectsSet, "Name");
         assertContainsItemCIMV2(subjectsSet, "Antecedent");
@@ -142,7 +136,7 @@ public class WmiOntologyTest {
     /** This selects all definitions of RDF properties and checks the presence of some properties. */
     @Test
     public void CIMV2_PropertiesFilter() {
-        HashSet<String> propertiesSet = selectColumnCIMV2(
+        Set<String> propertiesSet = selectColumnCIMV2(
                 "SELECT ?y WHERE { ?y rdf:type rdf:Property }", "y");
         assertContainsItemCIMV2(propertiesSet, "Handle");
         assertContainsItemCIMV2(propertiesSet, "Dependent");
@@ -155,7 +149,7 @@ public class WmiOntologyTest {
     public void CIMV2_Handle_Domain_All() {
         String queryString = new Formatter().format(
                 "SELECT ?y WHERE { ?y rdfs:domain ?z }").toString();
-        HashSet<String> domainsSet = selectColumnCIMV2(queryString, "y");
+        Set<String> domainsSet = selectColumnCIMV2(queryString, "y");
         assertContainsItemCIMV2(domainsSet, "CIM_Process.Handle");
         assertContainsItemCIMV2(domainsSet, "Win32_UserAccount.Name");
         assertContainsItemCIMV2(domainsSet, "Win32_Process.Handle");
@@ -168,7 +162,7 @@ public class WmiOntologyTest {
     public void CIMV2_Win32_Process_Handle_Domain_Filter() {
         String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:domain ?x }", PresentUtils.toCIMV2("Win32_Process.Handle")).toString();
-        HashSet<String> domainsSet = selectColumnCIMV2(queryString, "x");
+        Set<String> domainsSet = selectColumnCIMV2(queryString, "x");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsItemCIMV2(domainsSet, "Win32_Process");
     }
@@ -184,7 +178,7 @@ public class WmiOntologyTest {
         String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:range ?x }",
                 PresentUtils.toCIMV2("CIM_Process.Handle")).toString( );
-        HashSet<String> rangesSet = selectColumnCIMV2(queryString, "x");
+        Set<String> rangesSet = selectColumnCIMV2(queryString, "x");
         Assert.assertTrue(rangesSet.contains("http://www.w3.org/2001/XMLSchema#string"));
     }
 
@@ -199,7 +193,7 @@ public class WmiOntologyTest {
                         cimv2:Win32_Process rdfs:comment ?my_class_description .
                     }
                 """;
-        HashSet<String> descriptionsSet = selectColumnCIMV2(queryString, "my_class_description");
+        Set<String> descriptionsSet = selectColumnCIMV2(queryString, "my_class_description");
         Assert.assertEquals(1, descriptionsSet.size());
         String expectedDescription = "\"The Win32_Process class represents a sequence of events on a Win32 system. Any sequence consisting of the interaction of one or more processors or interpreters, some executable code, and a set of inputs, is a descendent (or member) of this class.  Example: A client application running on a Win32 system.\"";
         String firstDescription = descriptionsSet.stream().findFirst().orElse("xyz");
@@ -219,7 +213,7 @@ public class WmiOntologyTest {
                         cimv2:Win32_Process rdfs:subClassOf ?my_base_class .
                     }
                 """;
-        HashSet<String> baseClassesSet = selectColumnCIMV2(queryString, "my_base_class");
+        Set<String> baseClassesSet = selectColumnCIMV2(queryString, "my_base_class");
         Assert.assertEquals(1, baseClassesSet.size());
         System.out.println(baseClassesSet);
         assertContainsItemCIMV2(baseClassesSet, "CIM_Process");
@@ -237,7 +231,7 @@ public class WmiOntologyTest {
                         ?my_derived_class rdfs:label ?my_caption .
                     }
                 """;
-        HashSet<String> derivedClassNamesSet = selectColumnCIMV2(queryString, "my_caption");
+        Set<String> derivedClassNamesSet = selectColumnCIMV2(queryString, "my_caption");
         System.out.println(derivedClassNamesSet);
         // Test the presence of some classes which derive of this one.
         Assert.assertTrue(derivedClassNamesSet.contains("\"Win32_Directory\""));
@@ -256,7 +250,7 @@ public class WmiOntologyTest {
                         cimv2:Win32_Process.Handle rdfs:domain cimv2:Win32_Process .
                     }
                 """;
-        HashSet<String> descriptionsSet = selectColumnCIMV2(queryString, "my_property_description");
+        Set<String> descriptionsSet = selectColumnCIMV2(queryString, "my_property_description");
         System.out.println("descriptionsSet=" + descriptionsSet.toString());
         Assert.assertEquals(1, descriptionsSet.size());
         Assert.assertEquals(
@@ -276,7 +270,7 @@ public class WmiOntologyTest {
                         cimv2:Win32_UserAccount.Name rdfs:domain cimv2:Win32_UserAccount .
                     }
                 """;
-        HashSet<String> descriptionsSet = selectColumnCIMV2(queryString, "my_property_description");
+        Set<String> descriptionsSet = selectColumnCIMV2(queryString, "my_property_description");
         System.out.println("descriptionsSet=" + descriptionsSet.toString());
         Assert.assertEquals(1, descriptionsSet.size());
         Assert.assertTrue(
@@ -293,7 +287,7 @@ public class WmiOntologyTest {
                         cimv2:Win32_ClassInfoAction.AppID rdfs:domain ?my_class_node .
                     }
                 """;
-        HashSet<String> domainsSet = selectColumnCIMV2(queryString, "my_class_node");
+        Set<String> domainsSet = selectColumnCIMV2(queryString, "my_class_node");
         Assert.assertEquals(1, domainsSet.size());
         assertContainsItemCIMV2(domainsSet, "Win32_ClassInfoAction");
     }
@@ -310,7 +304,7 @@ public class WmiOntologyTest {
                         ?my_property_node rdfs:subPropertyOf cimv2:AppID .
                     }
                 """;
-        HashSet<String> domainsSet = selectColumnCIMV2(queryString, "my_class_node");
+        Set<String> domainsSet = selectColumnCIMV2(queryString, "my_class_node");
         assertContainsItemCIMV2(domainsSet, "Win32_ClassInfoAction");
         assertContainsItemCIMV2(domainsSet, "Win32_DCOMApplication");
         assertContainsItemCIMV2(domainsSet, "Win32_ClassicCOMClassSetting");
@@ -331,7 +325,7 @@ public class WmiOntologyTest {
                     group by ?my_property_node
                     having (?total > 3)
                 """;
-        HashSet<String> propertiesSet = selectColumnCIMV2(queryString, "my_property_node");
+        Set<String> propertiesSet = selectColumnCIMV2(queryString, "my_property_node");
         System.out.println("propertiesSet=" + propertiesSet.toString());
         assertContainsItemCIMV2(propertiesSet, "CreationClassName");
         assertContainsItemCIMV2(propertiesSet, "Name");
@@ -351,7 +345,7 @@ public class WmiOntologyTest {
                     }
                 """;
         // Beware, there are several cimv2:Antecedent properties.
-        HashSet<String> domainsSet = selectColumnCIMV2(queryString, "my_domain");
+        Set<String> domainsSet = selectColumnCIMV2(queryString, "my_domain");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsItemCIMV2(domainsSet, "CIM_DataFile");
     }
@@ -368,7 +362,7 @@ public class WmiOntologyTest {
                 }
             """;
         // Beware, there are several cimv2:Dependent properties.
-        HashSet<String> domainsSet = selectColumnCIMV2(queryString, "my_domain");
+        Set<String> domainsSet = selectColumnCIMV2(queryString, "my_domain");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsItemCIMV2(domainsSet, "CIM_Process");
     }
@@ -384,7 +378,7 @@ public class WmiOntologyTest {
                             ?my_sub_property rdfs:subPropertyOf cimv2:Handle .
                         }
                     """;
-        HashSet<String> subPropertiesSet = selectColumnCIMV2(queryString, "my_sub_property");
+        Set<String> subPropertiesSet = selectColumnCIMV2(queryString, "my_sub_property");
         System.out.println("subPropertiesSet=" + subPropertiesSet.toString());
         assertContainsItemCIMV2(subPropertiesSet, "CIM_Process.Handle");
         assertContainsItemCIMV2(subPropertiesSet, "CIM_Thread.Handle");
@@ -405,13 +399,13 @@ public class WmiOntologyTest {
                             ?my_associator rdfs:comment ?my_description .
                         }
                     """;
-        HashSet<String> associatorsSet = selectColumnCIMV2(queryString, "my_associator");
+        Set<String> associatorsSet = selectColumnCIMV2(queryString, "my_associator");
         System.out.println("associatorsSet=" + associatorsSet.toString());
         assertContainsItemCIMV2(associatorsSet, "CIM_OSProcess");
         assertContainsItemCIMV2(associatorsSet, "CIM_ProcessThread");
         assertContainsItemCIMV2(associatorsSet, "CIM_ProcessExecutable");
 
-        HashSet<String> descriptionsSet = selectColumnCIMV2(queryString, "my_description");
+        Set<String> descriptionsSet = selectColumnCIMV2(queryString, "my_description");
         for(String oneDescription : descriptionsSet) {
             // For example: "A link between a process and the thread"
             System.out.println("    oneDescription=" + oneDescription);
@@ -431,7 +425,7 @@ public class WmiOntologyTest {
                             ?my_subproperty rdfs:domain ?my_associator .
                         }
                     """;
-        HashSet<String> associatorsSet = selectColumnCIMV2(queryString, "my_associator");
+        Set<String> associatorsSet = selectColumnCIMV2(queryString, "my_associator");
         System.out.println("associatorsSet=" + associatorsSet.toString());
         assertContainsItemCIMV2(associatorsSet, "Win32_SessionProcess");
         assertContainsItemCIMV2(associatorsSet, "Win32_SystemProcesses");
@@ -453,7 +447,7 @@ public class WmiOntologyTest {
                             ?my_associator rdfs:comment ?my_description .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
+        Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet.toString());
         Assert.assertTrue(labelsSet.contains("\"Dependent\""));
         Assert.assertTrue(labelsSet.contains("\"Member\""));
@@ -475,7 +469,7 @@ public class WmiOntologyTest {
                             ?my_class rdfs:label ?my_label .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
+        Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet.toString());
         Assert.assertTrue(labelsSet.contains("\"CIM_Directory\""));
         Assert.assertTrue(labelsSet.contains("\"Win32_PnPSignedDriver\""));
@@ -501,7 +495,7 @@ public class WmiOntologyTest {
                             ?my_class rdfs:label ?my_label .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
+        Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet);
         Assert.assertTrue(labelsSet.contains("\"Win32_LogonSession\""));
         Assert.assertTrue(labelsSet.contains("\"Win32_ComputerSystem\""));
@@ -523,7 +517,7 @@ public class WmiOntologyTest {
                             ?my_subproperty rdfs:label ?my_label .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumnStandardCimv2(queryString, "my_label");
+        Set<String> labelsSet = selectColumnStandardCimv2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet);
         // Checks the presence of arbitrary properties.
         Assert.assertTrue(labelsSet.contains("\"MSFT_NetUDPEndpoint.AggregationBehavior\""));
@@ -551,7 +545,7 @@ public class WmiOntologyTest {
                             FILTER regex(STR(?property_label), "Process").
                         }
                     """;
-        HashSet<String> labelsSet = selectColumnStandardCimv2(queryString, "property_label");
+        Set<String> labelsSet = selectColumnStandardCimv2(queryString, "property_label");
         System.out.println("labelsSet=" + labelsSet);
         Pattern patternNamespace = Pattern.compile("^.*Process.*$", Pattern.CASE_INSENSITIVE);
         for(String label: labelsSet ) {
@@ -582,7 +576,7 @@ public class WmiOntologyTest {
                             ?my_class_standard_cimv2 rdfs:label ?class_label .
                         }
                     """;
-        HashSet<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
+        Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet);
 
         Assert.assertTrue(false);
