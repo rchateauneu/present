@@ -3,10 +3,8 @@ package paquetage;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class PresentUtils {
 
@@ -25,10 +23,10 @@ public class PresentUtils {
             return "Unknown Computer";
     }
 
-    // This is changed  only for tests.
+    // This is temporarily changed by some tests.
     public static String prefixComputer = "\\\\" + getComputerName();
 
-    /** This can apply to Windows only: It prefixes a path and assumes that the namespace is ROOT/CIMv2.
+    /** It prefixes a path and assumes that the namespace is ROOT/CIMv2. Used for tests only.
      *
      * @param shortPath : A Wbem path without the hostname and the namespace.
      * @return The complete path as usable by WMI.
@@ -38,6 +36,7 @@ public class PresentUtils {
     }
 
     /** This is used in tests, to check that the current binary of the current process is detected.
+     * Otherwise it is not needed by objects from WMI, because their paths contain the host name and the namespace.
      *
      * @return The path name of the current binary, which can only be Java.
      */
@@ -119,20 +118,6 @@ public class PresentUtils {
 
         XMLGregorianCalendar xmlDate = dataTypeFactory.newXMLGregorianCalendar(dateOnly);
         return xmlDate;
-    }
-
-    /** This is used for testing.
-     *
-     * @param listRows
-     * @param variable_name
-     * @return
-     */
-    static Set<String> StringValuesSet(RdfSolution listRows, String variable_name) {
-        return listRows.stream().map(row->trimQuotes(row.GetStringValue(variable_name))).collect(Collectors.toSet());
-    }
-
-    static Set<Long> LongValuesSet(RdfSolution listRows, String variable_name) {
-        return listRows.stream().map(row->XmlToLong(row.GetStringValue(variable_name))).collect(Collectors.toSet());
     }
 
     static String toCIMV2(String term) {

@@ -5,9 +5,23 @@ import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RdfSolution implements Iterable<RdfSolution.Tuple> {
+    Set<Long> LongValuesSet(String variable) {
+        return stream().map(tuple-> PresentUtils.XmlToLong(tuple.GetStringValue(variable))).collect(Collectors.toSet());
+    }
+
+    /** This is used for testing.
+     *
+     * @param variable_name
+     * @return
+     */
+    Set<String> StringValuesSet(String variable) {
+        return stream().map(tuple-> PresentUtils.trimQuotes(tuple.GetStringValue(variable))).collect(Collectors.toSet());
+    }
+
     public static class Tuple {
         private Map<String, String> KeyValuePairs = new HashMap<>();
 

@@ -6,6 +6,8 @@ import java.util.*;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
  * This is only for the namespace StandardCimv2.
+ *
+ * Consider using RepositoryResult<Namespace> getNamespaces()
  * */
 
 public class RepositoryWrapperStandardCimv2Test {
@@ -14,6 +16,7 @@ public class RepositoryWrapperStandardCimv2Test {
     @Before
     public void setUp() throws Exception {
         // FIXME: Beware, only this ontology is loaded.
+        // Ajouter un test prenant en compte les deux ontologies.
         repositoryWrapper = new RepositoryWrapper("ROOT\\StandardCimv2");
     }
 
@@ -46,7 +49,7 @@ public class RepositoryWrapperStandardCimv2Test {
 
         // This checks that all processes are valid.
         // This test might fail if it is too slow.
-        Set<Long> owningProcesses = PresentUtils.LongValuesSet(listRows,"owning_process");
+        Set<Long> owningProcesses = listRows.LongValuesSet("owning_process");
         int countPresentProcess = 0;
         for(Long onePid : owningProcesses) {
             System.out.println("Pid=" + onePid);
@@ -86,7 +89,7 @@ public class RepositoryWrapperStandardCimv2Test {
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-        Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
+        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // These processes open local socket connections.
         Assert.assertTrue(namesProcesses.contains("System Idle Process"));
@@ -118,7 +121,7 @@ public class RepositoryWrapperStandardCimv2Test {
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-        Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
+        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // These processes open local socket connections.
         Assert.assertTrue(namesProcesses.contains("System Idle Process"));
@@ -151,7 +154,7 @@ public class RepositoryWrapperStandardCimv2Test {
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-        Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
+        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // The parents of the processes which opened local socket connections.
         Assert.assertTrue(namesProcesses.contains("System Idle Process"));
@@ -312,7 +315,7 @@ public class RepositoryWrapperStandardCimv2Test {
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-        Set<String> namesProcesses = PresentUtils.StringValuesSet(listRows,"process_name");
+        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         Assert.assertTrue(namesProcesses.contains("svchost.exe"));
         Assert.assertTrue(namesProcesses.contains("System"));

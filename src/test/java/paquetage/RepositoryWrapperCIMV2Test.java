@@ -77,7 +77,7 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setLabels = PresentUtils.StringValuesSet(listRows,"class_label");
+        Set<String> setLabels = listRows.StringValuesSet("class_label");
         Assert.assertTrue(setLabels.contains("Win32_Process"));
         Assert.assertTrue(setLabels.contains("Win32_DependentService"));
     }
@@ -147,13 +147,13 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // The current process must be here.
-        Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+        Set<String> setHandles = listRows.StringValuesSet("handle");
         System.out.println("currentPidStr=" + currentPidStr);
         System.out.println("setHandles=" + setHandles);
         Assert.assertTrue(setHandles.contains(currentPidStr));
 
         // Executables are all identical.
-        Set<String> setExecutables = PresentUtils.StringValuesSet(listRows,"executablepath");
+        Set<String> setExecutables = listRows.StringValuesSet("executablepath");
         Assert.assertEquals(1, setExecutables.size());
 
         // ... and have the correct value.
@@ -286,7 +286,7 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setLabels = PresentUtils.StringValuesSet(listRows,"property_label");
+        Set<String> setLabels = listRows.StringValuesSet("property_label");
         // Checks the presence of an arbitrary property.
         System.out.println("setLabels=" + setLabels);
         Assert.assertTrue(setLabels.contains("Win32_Process.VirtualSize"));
@@ -341,7 +341,7 @@ public class RepositoryWrapperCIMV2Test {
                 """, currentPidStr);
 
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+        Set<String> setHandles = listRows.StringValuesSet("handle");
 
         System.out.println("currentPidStr=" + currentPidStr);
         System.out.println("setHandles=" + setHandles);
@@ -406,7 +406,7 @@ public class RepositoryWrapperCIMV2Test {
         for(RdfSolution.Tuple singleRow : listRows) {
             System.out.println("Antecedent service:" + singleRow);
         }
-        Set<String> setAntecedents = PresentUtils.StringValuesSet(listRows,"display_name");
+        Set<String> setAntecedents = listRows.StringValuesSet("display_name");
         // These are the input dependencies of this service.
         String windowsVersion = System.getProperty("os.name");
         if(windowsVersion.equals("Windows 10")) {
@@ -455,7 +455,7 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("listRows=" + listRows);
 
         // It might contain several sessions.
-        Set<Long> setLogonTypes = PresentUtils.LongValuesSet(listRows, "logon_type");
+        Set<Long> setLogonTypes = listRows.LongValuesSet("logon_type");
         System.out.println("setLogonTypes=" + setLogonTypes);
         // Interactive (2)
         Assert.assertEquals(Set.of(2L), setLogonTypes);
@@ -484,7 +484,7 @@ public class RepositoryWrapperCIMV2Test {
                 """;
 
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> listExecutables = PresentUtils.StringValuesSet(listRows, "executable_name");
+        Set<String> listExecutables = listRows.StringValuesSet("executable_name");
         System.out.println("listExecutables=" + listExecutables);
         Assert.assertTrue(listExecutables.contains("SearchIndexer.exe"));
     }
@@ -661,7 +661,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("name", "domain"), singleRow.KeySet());
 
-        Set<String> setNames = PresentUtils.StringValuesSet(listRows,"name");
+        Set<String> setNames = listRows.StringValuesSet("name");
         String currentUser = System.getProperty("user.name");
         System.out.println("setNames=" + setNames);
         // These groups are defined on all Windows machines.
@@ -696,7 +696,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("group_name"), singleRow.KeySet());
 
-        Set<String> setGroups = PresentUtils.StringValuesSet(listRows,"group_name");
+        Set<String> setGroups = listRows.StringValuesSet("group_name");
         // A user is always in this group.
         System.out.println("setGroups=" + setGroups);
         // Windows 7.
@@ -731,7 +731,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("device_id"), singleRow.KeySet());
 
-        Set<String> setDevices = PresentUtils.StringValuesSet(listRows,"device_id");
+        Set<String> setDevices = listRows.StringValuesSet("device_id");
         System.out.println("setDevices=" + setDevices);
         Assert.assertEquals(1, setDevices.size());
         // For example: "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\"
@@ -765,7 +765,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("my_dir_name"), singleRow.KeySet());
 
-        Set<String> setDirs = PresentUtils.StringValuesSet(listRows,"my_dir_name");
+        Set<String> setDirs = listRows.StringValuesSet("my_dir_name");
         System.out.println("setDirs=" + setDirs);
         Assert.assertEquals(1, setDirs.size());
         // Conversion to uppercase due to different behaviour depending on the Windows version, 7 or 10.
@@ -1197,7 +1197,7 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setNames = PresentUtils.StringValuesSet(listRows,"service_name");
+        Set<String> setNames = listRows.StringValuesSet("service_name");
         System.out.println("setNames=" + setNames);
 
         // These might depend on Windows version.
@@ -1246,7 +1246,7 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setNames = PresentUtils.StringValuesSet(listRows,"file_name");
+        Set<String> setNames = listRows.StringValuesSet("file_name");
         System.out.println("setNames=" + setNames);
 
         // These files are always present.
@@ -1297,7 +1297,7 @@ public class RepositoryWrapperCIMV2Test {
                 """, PresentUtils.ParentProcessId());
 
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setPids = PresentUtils.StringValuesSet(listRows,"process_sub_pid");
+        Set<String> setPids = listRows.StringValuesSet("process_sub_pid");
         System.out.println("setPids=" + setPids);
 
         Assert.assertTrue(setPids.contains(currentPidStr));
@@ -1328,7 +1328,7 @@ public class RepositoryWrapperCIMV2Test {
                 """, currentPidStr);
 
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setCommands = PresentUtils.StringValuesSet(listRows,"parent_process_command");
+        Set<String> setCommands = listRows.StringValuesSet("parent_process_command");
         System.out.println("setCommands=" + setCommands);
 
         String commandParentProcess = PresentUtils.ParentProcessCommand();
@@ -1391,7 +1391,7 @@ public class RepositoryWrapperCIMV2Test {
 
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-        Set<Long> setPids = PresentUtils.LongValuesSet(listRows,"handle");
+        Set<Long> setPids = listRows.LongValuesSet("handle");
         System.out.println("setPids=" + setPids);
         // Pids 0 is always present, divisible by 2 ad 3.
         Assert.assertTrue(setPids.contains(0L));
@@ -1487,7 +1487,7 @@ public class RepositoryWrapperCIMV2Test {
             System.out.println(tuple);
         }
 
-        Set<String> setDirs = PresentUtils.StringValuesSet(listRows,"dir_name");
+        Set<String> setDirs = listRows.StringValuesSet("dir_name");
         System.out.println("setDirs=" + setDirs);
 
         Assert.assertFalse(setDirs.contains("SystemTemp"));
@@ -1540,7 +1540,7 @@ public class RepositoryWrapperCIMV2Test {
 
             RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-            Set<String> actualDirNames = PresentUtils.StringValuesSet(listRows,"dir_name").stream().map(s -> s.toUpperCase()).collect(Collectors.toSet());
+            Set<String> actualDirNames = listRows.StringValuesSet("dir_name").stream().map(s -> s.toUpperCase()).collect(Collectors.toSet());
             ArrayList<String> actualDirNamesArray = new ArrayList<>(actualDirNames);
             Collections.sort(actualDirNamesArray);
             System.out.println("actualDirNamesArray=" + actualDirNamesArray);
@@ -1573,7 +1573,7 @@ public class RepositoryWrapperCIMV2Test {
                     """, currentPidStr);
             RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-            Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+            Set<String> setHandles = listRows.StringValuesSet("handle");
             System.out.println("setHandles=" + setHandles);
             Assert.assertEquals(Set.of(currentPidStr), setHandles);
         }
@@ -1593,7 +1593,7 @@ public class RepositoryWrapperCIMV2Test {
                         """, parentPid);
             RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-            Set<String> setHandles = PresentUtils.StringValuesSet(listRows,"handle");
+            Set<String> setHandles = listRows.StringValuesSet("handle");
             System.out.println("setHandles=" + setHandles);
             Assert.assertTrue(setHandles.contains(currentPidStr));
         }
