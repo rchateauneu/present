@@ -12,7 +12,8 @@ public class PresentUtils {
      *
      * @return On Windows, for example "LAPTOP-R89KG6V1"
      */
-    public static String getComputerName()
+
+    private static String getComputerName()
     {
         Map<String, String> env = System.getenv();
         if (env.containsKey("COMPUTERNAME"))
@@ -22,6 +23,8 @@ public class PresentUtils {
         else
             return "Unknown Computer";
     }
+
+    public static String computerName = getComputerName();
 
     // This is temporarily changed by some tests.
     public static String prefixComputer = "\\\\" + getComputerName();
@@ -45,15 +48,19 @@ public class PresentUtils {
         return javaHome + "\\bin\\java.exe";
     }
 
+    /** This is used only for tests. */
     static private ProcessHandle currentProcessHandle = ProcessHandle.current();
 
+    /** This is used only for tests. */
     static private ProcessHandle parentProcess = currentProcessHandle.parent().get();
 
+    /** This is used only for tests. */
     public static String ParentProcessId() throws Exception
     {
         return Long.toString(parentProcess.pid());
     }
 
+    /** This is used only for tests. */
     public static String ParentProcessCommand() throws Exception
     {
         return parentProcess.info().command().orElse(null);
@@ -73,6 +80,7 @@ public class PresentUtils {
     static private String regexQuotes = "\"(.*)\".*";
     static private Pattern patternQuotesXML = Pattern.compile(regexQuotes);
 
+    /** This returns the string enclosed in quites in a XML-formatted value. */
     static private String extractStringXML(String xmlString) {
         Matcher matcher = patternQuotesXML.matcher(xmlString);
         matcher.find();
@@ -128,6 +136,7 @@ public class PresentUtils {
         return WmiOntology.NamespaceUrlPrefix(namespace) + term;
     }
 
+    /** This is used to check that a WMI value cannot be possibly a node. */
     static boolean hasWmiReferenceSyntax(String refString) {
         /*
             Here, "?my3_dir" is a reference but it does not have the syntax.

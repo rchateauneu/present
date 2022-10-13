@@ -78,7 +78,7 @@ public class ObjectPathTest {
 
     @Test
     public void BuildPathWbem_3() throws Exception {
-        String currentHost = PresentUtils.getComputerName();
+        String currentHost = PresentUtils.computerName;
         String createdPath = ObjectPath.BuildCimv2PathWbem(
                 "CIM_ProcessExecutable",
                 Map.of(

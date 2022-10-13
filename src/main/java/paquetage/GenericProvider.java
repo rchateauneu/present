@@ -565,22 +565,90 @@ public class GenericProvider {
         return  (baseSelecter == null) ? wmiSelecter : baseSelecter;
     }
 
+    class PSComputerNameHandler {
+        // The column PSComputerName does not exist for all classes but at least "Win32_Process".
+        // Like some other columns, it cannot be selected not used in a "where". The reason is not known.
+        // So, this class calculates it "by hand". Consequently, it is available for all instances.
+        // Therefore, it can be used to select instances based on the machine they are running on.
+
+        private QueryData m_queryData;
+        private String selectPSComputerNameVariable = null;
+        private QueryData.WhereEquality wherePSComputerName = null;
+        private String columnPSComputerName = "PSComputerName";
+        PSComputerNameHandler(QueryData queryData) {
+            m_queryData = queryData;
+
+            /* The column "PSComputerName" is not processed like the others in WMI:
+              - It cannot be selected.
+              - It cannot be used in a Where clause.
+              So, it is present in a QueryData, it must be handled, as it were a normal column.
+              For the moment, the only acceptable value is the current host.
+              TODO: Run this query on another host.
+            */
+            selectPSComputerNameVariable = queryData.queryColumns.get(columnPSComputerName);
+            if(selectPSComputerNameVariable != null) {
+                m_queryData.queryColumns.remove(columnPSComputerName);
+            }
+            // It is OK to loop because there are very few "where" clauses.
+            for(int whereIndex = 0; whereIndex < m_queryData.whereTests.size(); ++whereIndex) {
+                if(queryData.whereTests.get(whereIndex).predicate.equals(columnPSComputerName)) {
+                    wherePSComputerName = m_queryData.whereTests.get(whereIndex);
+                    m_queryData.whereTests.remove(whereIndex);
+                    break;
+                }
+            }
+        }
+
+        private void RestoreQueryData() {
+            if(selectPSComputerNameVariable != null) {
+                m_queryData.queryColumns.put(columnPSComputerName, selectPSComputerNameVariable);
+            }
+            if(wherePSComputerName != null) {
+                // Maybe it is not re-added at the same place but it does not matter.
+                m_queryData.whereTests.add(wherePSComputerName);
+            }
+        }
+
+        void Restore(Solution solution) {
+            RestoreQueryData();
+            if(selectPSComputerNameVariable != null) {
+                for(Solution.Row row: solution.Rows) {
+                    row.PutString(selectPSComputerNameVariable, PresentUtils.computerName);
+                }
+            }
+        }
+
+        void Restore(Solution.Row row) {
+            RestoreQueryData();
+            if(selectPSComputerNameVariable != null) {
+                row.PutString(selectPSComputerNameVariable, PresentUtils.computerName);
+            }
+        }
+    }
+
     static private WmiSelecter wmiSelecter = new WmiSelecter();
 
     public Solution SelectVariablesFromWhere(QueryData queryData, boolean withCustom) throws Exception {
         if(queryData.classBaseSelecter == null) {
             throw new RuntimeException("Provider is not set");
         }
+
+        PSComputerNameHandler handlerPSComputerNameHandler = new PSComputerNameHandler(queryData);
+
         /*
         * TODO: Results of a query could be stored if the "where" clause is identical for a given Sparql execution.
         * TODO: Also, if a QueryData is met with more restrictive "where" clauses, then reuse the result
         * TODO: with an extra filtering.
         */
+        Solution solution;
         if(withCustom) {
-            return queryData.classBaseSelecter.EffectiveSelect(queryData);
+            solution = queryData.classBaseSelecter.EffectiveSelect(queryData);
         } else {
-            return wmiSelecter.EffectiveSelect(queryData);
+            solution = wmiSelecter.EffectiveSelect(queryData);
         }
+        // This applies to all selecters, WMI or custom.
+        handlerPSComputerNameHandler.Restore(solution);
+        return solution;
     }
 
     public Solution SelectVariablesFromWhere(
@@ -627,8 +695,13 @@ public class GenericProvider {
         return  (getter == null) ? wmiGetter : getter;
     }
 
-    // Extra filtering if "where" test when getting an object.
-    boolean ExtraFiltering(QueryData queryData, Solution.Row returnRow)
+    /** Extra filtering if "where" test when getting an object.
+     * It chcks the value and if it does not match, then no object is found.
+     * @param queryData
+     * @param returnRow
+     * @return
+     */
+    static boolean ExtraFiltering(QueryData queryData, Solution.Row returnRow)
     {
         for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
             logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
@@ -643,9 +716,6 @@ public class GenericProvider {
             if (oneWhere.variableName != null) {
                 throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context:" + oneWhere.variableName);
             }
-            //if (vtp.Type() != Solution.ValueType.STRING_TYPE) {
-            //    throw new RuntimeException("Non-string handled yet:" + vtp.Type() + ". Should not be difficult.");
-            //}
             if (!vtp.equals(oneWhere.value)) {
                 logger.debug("Different column value:" + vtp.toDisplayString() + "!=" + oneWhere.value.toDisplayString());
                 return false;
@@ -665,12 +735,14 @@ public class GenericProvider {
         if(queryData.classGetter == null) {
             throw new RuntimeException("Getter is not set");
         }
+        PSComputerNameHandler handlerPSComputerNameHandler = new PSComputerNameHandler(queryData);
         Solution.Row returnRow;
         if(withCustom) {
             returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData);
         } else {
             returnRow = wmiGetter.GetSingleObject(objectPath, queryData);
         }
+        handlerPSComputerNameHandler.Restore(returnRow);
         // Now, apply the extra filtering if needed.
         if(ExtraFiltering(queryData, returnRow)) {
             return returnRow;

@@ -25,20 +25,32 @@ public class QueryData {
     // This sorted container guarantees the order to help comparison in tests.
     SortedMap<String, String> queryColumns;
 
-    // Patterns of the WHERE clause of a WMI query. The values are variables.
+    /** Patterns of the WHERE clause of a WMI query. The values are variables or constants at creation,
+    but are transformed into constants before building the query .
+    TODO: Consider a Map, instead of a List, for simplicity.
+    However, before this change, it must be clarified if it is allowed to have several triples with the same subject
+    and predicate, and if it should be allowed, like for example:
+         ?instance cimv2:Predicate "value1" .
+         ?instance cimv2:Predicate "value2" .
+     ... or:
+         ?instance cimv2:Predicate ?var1 .
+         ?instance cimv2:Predicate ?var2 .
+    */
     List<WhereEquality> whereTests;
 
-    // Provider class used to execute a query similar to WQL. Used to evaluate performance.
+    // Provider class used to execute a query similar to WQL.
+    // Such a selecter attempts to return the same result as a WQL query, but faster.
     BaseSelecter classBaseSelecter = null;
 
-    // Getter class used for a query similar to GetOebject. Used to evaluate performance.
+    // Getter class used for a query similar to GetObject.
+    // Such a getter attempts to return the same result as a WQL query, but faster.
     BaseGetter classGetter = null;
 
-    // Used only for WMI.
+    // Used only for WMI: This stores queries and their result.
     // The query must be stored because the values in the "where" clause change.
     // However, the main variable must not change.
-    // Consider a LRU cache to limit memory usage.
-    private HashMap<String, Solution > CacheQueries = null;
+    // TODO: Consider a LRU cache to limit memory usage.
+    private HashMap<String, Solution> CacheQueries = null;
 
     public Solution GetCachedQueryResults(String wqlQuery) {
         if(CacheQueries == null) {
@@ -60,8 +72,15 @@ public class QueryData {
         String wheres =  (String) whereTests.stream()
                 .map(w -> w.predicate)
                 .collect(Collectors.joining("/"));
-        return "C=" + className + " V=" + mainVariable + " Cols=" + cols + " W=" + wheres;
+        return String.format("C=%s V=%s Cols=%s W=%s", className, mainVariable, cols, wheres);
     }
+
+    // The column "ProcessName" does not exist for all classes but at least "Win32_Process".
+    // The role of these special columns is not clear: WMI cannot be selected nor used in "where".
+    // The column "PSComputerName" has a special processing in WMI, so it is accepted,
+    // but handled differently than plain columns.
+    // The column "Path" seems broken for Win32_Process only.
+    static private Set<String> specialColumns = Set.of("VM", "WS", "Handles", "ProcessName");
 
     static public class WhereEquality {
         // This is a member of WMI class and used to build the WHERE clause of a WQL query.
@@ -76,10 +95,13 @@ public class QueryData {
         public WhereEquality(String predicateArg, ValueTypePair pairValueType, String variable) throws Exception {
             if(predicateArg.contains("#")) {
                 // This ensures that the IRI of the RDF node is stripped of its prefix.
-                throw new Exception("Invalid class:" + predicateArg);
+                throw new Exception("Invalid class name:" + predicateArg);
+            }
+            if(specialColumns.contains(predicateArg)) {
+                throw new Exception("This special column is forbidden:" + predicateArg);
             }
             if((variable != null) && !PresentUtils.ValidSparqlVariable(variable)) {
-                throw new Exception("Invalid Sparql variable:" + variable);
+                throw new Exception("Invalid syntax for Sparql variable:" + variable);
             }
 
             predicate = predicateArg;
@@ -110,7 +132,7 @@ public class QueryData {
                 logger.debug("Value of " + predicate + " is null");
             }
             String escapedValue = value.toValueString().replace("\\", "\\\\").replace("\"", "\\\"");
-            return "" + predicate + "" + " = \"" + escapedValue + "\"";
+            return String.format("%s = \"%s\"", predicate, escapedValue);
         }
     };
 
@@ -252,11 +274,17 @@ public class QueryData {
         }
         namespace = wmiNamespace;
         className = wmiClassName;
-        // Uniform representation of no columns selected (except the path).
+        // Creates a map even if no columns are selected.
         if(columns == null)
             queryColumns = new TreeMap<>();
-        else
+        else {
+            for(String oneColumn: columns.keySet()) {
+                if (specialColumns.contains(oneColumn)) {
+                    throw new Exception("Selected column is forbidden:" + oneColumn);
+                }
+            }
             queryColumns = new TreeMap<>(columns);
+        }
         SwapWheres(wheres);
 
         if(isMainVariableAvailable)
@@ -266,7 +294,7 @@ public class QueryData {
     }
 
     /** This is used for initialising when adding the WHERE tests without values,
-     * and later when calculting a QueryData for a specific context.
+     * and later when calculating a QueryData for a specific context.
      * @param wheres
      * @return
      */
