@@ -41,10 +41,14 @@ public class WmiOntology {
 
     public static String namespaces_url_prefix = "http://www.primhillcomputers.com/ontology/";
 
+    private static IRI iriNamespaces = iri(namespaces_url_prefix, "NamespaceDefinition");
+
     static String NamespaceUrlPrefix(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
-        // Backslashes could be replaced with "%5C" but a slash is clearer.
-        return namespaces_url_prefix + namespace.replace("\\", "/") + "#";
+        // Backslashes in namespaces could be replaced with "%5C" but a slash is clearer.
+        // All characters in a namespace are otherwise admissible in a URL, so no encoding is needed.
+
+        return namespaces_url_prefix + namespace.replace("\\", "/") + "#" ; // + namespace;
     }
 
     /** This maps WMI types to standard RDF types. */
@@ -65,9 +69,9 @@ public class WmiOntology {
             put("real32", XSD.DOUBLE);
         }};
 
-    static Resource WbemPathToIri(String valueString) throws Exception {
+    static Resource WbemPathToIri(String namespace, String valueString) throws Exception {
         String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
-        String iriValue = PresentUtils.toCIMV2(encodedValueString);
+        String iriValue = WmiProvider.NamespaceTermToIRI(namespace, encodedValueString);
         Resource resourceValue = Values.iri(iriValue);
         return resourceValue;
     }
@@ -144,6 +148,8 @@ public class WmiOntology {
         };
 
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(namespace);
+        Literal literalNamespace = factory.createLiteral(namespace);
+
         for(Map.Entry<String, WmiProvider.WmiClass> entry_class : classes.entrySet()) {
             String className = entry_class.getKey();
 
@@ -153,8 +159,7 @@ public class WmiOntology {
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, factory.createLiteral(className));
             connection.add(classIri, RDFS.COMMENT, factory.createLiteral(wmiClass.Description));
-            // TODO: Add the namespace so it is not needed to filter on the IRI ?
-            // connection.add(classIri, "namespace", namespace);
+            connection.add(classIri, iriNamespaces, literalNamespace);
 
             if (wmiClass.BaseName != null) {
                 IRI baseClassIri = lambdaClassToNode.apply(wmiClass.BaseName);
@@ -174,8 +179,7 @@ public class WmiOntology {
                 connection.add(uniquePropertyIri, RDFS.LABEL, factory.createLiteral(uniquePropertyName));
                 connection.add(uniquePropertyIri, RDFS.DOMAIN, classIri);
                 connection.add(uniquePropertyIri, RDFS.COMMENT, factory.createLiteral(wmiProperty.Description));
-                // TODO: Add the namespace so it is not needed to filter on the IRI ?
-                // connection.add(uniquePropertyIri, "namespace", namespace);
+                connection.add(uniquePropertyIri, iriNamespaces, literalNamespace);
 
                 if(wmiProperty.Type.startsWith("ref:")) {
                     String domainName = wmiProperty.Type.substring(4);

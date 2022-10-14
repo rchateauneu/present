@@ -128,15 +128,10 @@ public class PresentUtils {
         return xmlDate;
     }
 
-    static String toCIMV2(String term) {
-        return NamespaceTermToIRI("ROOT\\CIMV2", term);
-    }
-
-    static String NamespaceTermToIRI(String namespace, String term) {
-        return WmiOntology.NamespaceUrlPrefix(namespace) + term;
-    }
-
-    /** This is used to check that a WMI value cannot be possibly a node. */
+    /** This is used to check that a WMI value cannot be possibly a node.
+     * Example:
+     * '\\LAPTOP-R89KG6V1\ROOT\StandardCimv2:MSFT_NetIPAddress.CreationClassName="",Name="poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;",SystemCreationClassName="",SystemName=""'
+    */
     static boolean hasWmiReferenceSyntax(String refString) {
         /*
             Here, "?my3_dir" is a reference but it does not have the syntax.
@@ -175,7 +170,11 @@ public class PresentUtils {
     between quotes.
      */
     static public String trimQuotes(String inString) {
-        return inString.substring(1, inString.length() - 1);
+        int lastOffset = inString.length() - 1;
+        if(inString.charAt(0) != '"' || inString.charAt(lastOffset) != '"') {
+            throw new RuntimeException("Invalid quoted string:" + inString);
+        }
+        return inString.substring(1, lastOffset);
     }
 
     static private Pattern patternVariableName = Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9]*$", Pattern.CASE_INSENSITIVE);

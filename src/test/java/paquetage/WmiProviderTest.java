@@ -11,6 +11,23 @@ import org.junit.Test;
 public class WmiProviderTest {
     static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
 
+    @Test
+    public void test_ExtractNamespaceFromRef() throws Exception {
+        String nodeStr = "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_NetIPAddress.CreationClassName=\"\",Name=\"poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;\",SystemCreationClassName=\"\",SystemName=\"\"";
+        String namespace = WmiProvider.ExtractNamespaceFromRef(nodeStr);
+        Assert.assertEquals("ROOT\\StandardCimv2", namespace);
+    }
+
+    @Test
+    public void test_CheckValidNamespace_NoThrow() throws Exception {
+        WmiProvider.CheckValidNamespace("ROOT\\StandardCimv2");
+    }
+
+    @Test (expected = RuntimeException.class)
+    public void test_CheckValidNamespace_Throw() throws Exception {
+        WmiProvider.CheckValidNamespace("this is not a namespace #><");
+    }
+
     /**
      * This checks that a simple query is properly built.
      */

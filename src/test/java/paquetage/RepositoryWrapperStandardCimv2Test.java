@@ -3,11 +3,12 @@ package paquetage;
 import org.junit.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
  * This is only for the namespace StandardCimv2.
  *
- * Consider using RepositoryResult<Namespace> getNamespaces()
+ *   Consider using RepositoryResult<Namespace> getNamespaces(), et charger les ontologies en fonction de ca.
  * */
 
 public class RepositoryWrapperStandardCimv2Test {
@@ -16,7 +17,7 @@ public class RepositoryWrapperStandardCimv2Test {
     @Before
     public void setUp() throws Exception {
         // FIXME: Beware, only this ontology is loaded.
-        // Ajouter un test prenant en compte les deux ontologies.
+        //   Ajouter un test prenant en compte les deux ontologies.
         repositoryWrapper = new RepositoryWrapper("ROOT\\StandardCimv2");
     }
 
@@ -48,7 +49,8 @@ public class RepositoryWrapperStandardCimv2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
         // This checks that all processes are valid.
-        // This test might fail if it is too slow.
+        // This test might fail if it is too slow because some processes might disappear,
+        // so it just counts a reasonable minimum number of processes still present.
         Set<Long> owningProcesses = listRows.LongValuesSet("owning_process");
         int countPresentProcess = 0;
         for(Long onePid : owningProcesses) {
@@ -321,4 +323,33 @@ public class RepositoryWrapperStandardCimv2Test {
         Assert.assertTrue(namesProcesses.contains("System"));
     }
 
+    /** Checks that the namespace is correct. */
+    @Test
+    public void testMSFT_NetIPAddress() throws Exception {
+        String sparqlQuery = """
+                    prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?net_ip_address ?interface_alias
+                    where {
+                        ?net_ip_address standard_cimv2:MSFT_NetIPAddress.InterfaceAlias ?interface_alias .
+                    }
+                """;
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        // One of these usual interface aliases should be present.
+        Set<String> usualAliases = Set.of("Loopback Pseudo-Interface 1", "Ethernet", "Local Area Connection", "WiFi", "Bluetooth Network Connection", "Local Area Connection* 1");
+        Set<String> setAliases = listRows.StringValuesSet("interface_alias");
+        Set intersectAlias = usualAliases.stream().filter(setAliases::contains).collect(Collectors.toSet());
+        Assert.assertFalse(intersectAlias.isEmpty());
+
+        Set<String> setIpAddresses = listRows.NodeValuesSet("net_ip_address");
+        System.out.println("setIpAddresses=" + setIpAddresses);
+        Assert.assertTrue(setIpAddresses.size() > 0);
+        String prefixIri = WmiOntology.NamespaceUrlPrefix("ROOT\\StandardCimv2");
+        System.out.println("prefixIri=" + prefixIri);
+        for(String iriIpAddress: setIpAddresses) {
+            System.out.println("iriIpAddress=" + iriIpAddress);
+            Assert.assertTrue(iriIpAddress.startsWith(prefixIri));
+        }
+    }
 }

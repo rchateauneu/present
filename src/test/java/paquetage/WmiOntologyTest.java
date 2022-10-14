@@ -1,16 +1,12 @@
 package paquetage;
 
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Formatter;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,11 +45,11 @@ public class WmiOntologyTest {
     }
 
     private static void assertContainsItemCIMV2(Set<String> itemsSet, String shortItem) {
-        Assert.assertTrue(itemsSet.contains(PresentUtils.toCIMV2(shortItem)));
+        Assert.assertTrue(itemsSet.contains(WmiProvider.toCIMV2(shortItem)));
     }
 
     private static void assertContainsItemInterop(Set<String> itemsSet, String shortItem) {
-        Assert.assertTrue(itemsSet.contains(PresentUtils.NamespaceTermToIRI("ROOT\\Interop", shortItem)));
+        Assert.assertTrue(itemsSet.contains(WmiProvider.NamespaceTermToIRI("ROOT\\Interop", shortItem)));
     }
 
     @Test
@@ -161,7 +157,7 @@ public class WmiOntologyTest {
     @Test
     public void CIMV2_Win32_Process_Handle_Domain_Filter() {
         String queryString = new Formatter().format(
-                "SELECT ?x WHERE { <%s> rdfs:domain ?x }", PresentUtils.toCIMV2("Win32_Process.Handle")).toString();
+                "SELECT ?x WHERE { <%s> rdfs:domain ?x }", WmiProvider.toCIMV2("Win32_Process.Handle")).toString();
         Set<String> domainsSet = selectColumnCIMV2(queryString, "x");
         System.out.println("domainsSet=" + domainsSet.toString());
         assertContainsItemCIMV2(domainsSet, "Win32_Process");
@@ -177,7 +173,7 @@ public class WmiOntologyTest {
         // http://www.w3.org/2000/01/rdf-schema#range]
         String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:range ?x }",
-                PresentUtils.toCIMV2("CIM_Process.Handle")).toString( );
+                WmiProvider.toCIMV2("CIM_Process.Handle")).toString( );
         Set<String> rangesSet = selectColumnCIMV2(queryString, "x");
         Assert.assertTrue(rangesSet.contains("http://www.w3.org/2001/XMLSchema#string"));
     }

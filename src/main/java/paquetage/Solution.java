@@ -176,7 +176,6 @@ public class Solution implements Iterable<Solution.Row> {
      */
     public static class Row {
 
-
         private Map<String, ValueTypePair> Elements;
 
         /**
@@ -203,10 +202,26 @@ public class Solution implements Iterable<Solution.Row> {
             if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
                 throw new Exception("Double transformation in IRI:" + valueString);
             }
-            Resource resourceValue = WmiOntology.WbemPathToIri(valueString);
+
+            // FIXME: It would me MUCH BETTER to store the namespace with the solution.
+            // FIXME: Otherwise this parsing must be repeated over and over.
+            // FIXME: But, are we sure it will always ne the same namespace ?
+            // FIXME: Or, when the value is a node, carry the namespace with it ?
+            // Unfortunately, the namespace must be extracted from the node.
+            String namespaceExtracted = WmiProvider.ExtractNamespaceFromRef(valueString);
+            // \\LAPTOP-R89KG6V1\ROOT\StandardCimv2:MSFT_NetIPAddress.CreationClassName="",Name="poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;",SystemCreationClassName="",SystemName=""
+
+            Resource resourceValue;
+            if(namespaceExtracted == null) {
+                logger.warn("Cannot extract namespace from:" + valueString);
+                resourceValue = WmiOntology.WbemPathToIri("???", valueString);
+            } else {
+                resourceValue = WmiOntology.WbemPathToIri(namespaceExtracted, valueString);
+            }
+
+            // Resource resourceValue = WmiOntology.WbemPathToIriCIMV2(valueString);
             return resourceValue;
         }
-
         public ValueTypePair TryValueType(String key) {
             ValueTypePair vtp = Elements.get(key);
             // This is just a hint to check that wbem paths are correctly typed.

@@ -9,11 +9,12 @@ import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.log4j.Logger;
 
-import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,8 +31,12 @@ public class WmiProvider {
     // These two variables are temporary.
     private static Wbemcli.IWbemServices wbemServiceRoot = null;
     public static Wbemcli.IWbemServices wbemServiceRootCimv2 = null;
-    static private Pattern patternNamespace = Pattern.compile("^[\\\\_a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
     static Path ontologiesPathCache;
+    // For "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_Net..."
+    static private String regexReference = "\\\\\\\\[-\\dA-Z\\._]+\\\\([-A-Z\\d_\\\\]*):.*";
+    static private Pattern patternReference = Pattern.compile(regexReference, Pattern.CASE_INSENSITIVE);
+    static private Pattern patternNamespace = Pattern.compile("^[\\\\_a-zA-Z\\d]+$", Pattern.CASE_INSENSITIVE);
+
     static {
         String tempDir = System.getProperty("java.io.tmpdir");
 
@@ -64,7 +69,7 @@ public class WmiProvider {
             logger.info("Not calling CoInitializeSecurity");
         }
 
-        // These namespaces are always needed. Other namespaces are loaded on demand.
+        // These namespaces are practically always needed. Other namespaces are loaded on demand.
         wbemServiceRoot = GetWbemService("ROOT");
         wbemServiceRootCimv2 = GetWbemService("ROOT\\CIMV2");
     }
@@ -109,13 +114,30 @@ public class WmiProvider {
                 }
             }
             catch(Exception exception) {
-                // Might throw 80041003=wbemErrAccessDenied with 5 seconds delay.
+                // This might throw 80041003=wbemErrAccessDenied with 5 seconds delay.
+                // Unfortunately, no other Wbem service creation can be made at this time, by another thread.
                 logger.error("Caught:" + exception + " namespace=" + namespace);
                 wbemService = null;
             }
             wbemServices.put(namespace, wbemService);
         }
         return wbemService;
+    }
+
+    /** This is used to check that a WMI value cannot be possibly a node.
+     * Example:
+     * '\\LAPTOP-R89KG6V1\ROOT\StandardCimv2:MSFT_NetIPAddress.CreationClassName="",Name="poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;",SystemCreationClassName="",SystemName=""'
+     */
+    static public String ExtractNamespaceFromRef(String refString) {
+        Matcher matcher = patternReference.matcher(refString);
+        boolean matchFound = matcher.find();
+        if (!matchFound) {
+            return null;
+        }
+        String namespace = matcher.group(1);
+        // Double-check, but it should be ok.
+        CheckValidNamespace(namespace);
+        return namespace;
     }
 
     static public void CheckValidNamespace(String namespace) {
@@ -127,6 +149,15 @@ public class WmiProvider {
         if (!matchFound) {
             throw new RuntimeException("Invalid namespace:" + namespace);
         }
+    }
+
+    static String NamespaceTermToIRI(String namespace, String term) {
+        return WmiOntology.NamespaceUrlPrefix(namespace) + term;
+    }
+
+    /** This is exclusively used for tests, because this is a very common namespace. */
+    static String toCIMV2(String term) {
+        return NamespaceTermToIRI("ROOT\\CIMV2", term);
     }
 
     /*
@@ -564,16 +595,22 @@ public class WmiProvider {
                             longValue = Long.toString(pVal.longValue());
                         } else {
                             // Some corner cases do not work, i.e. Win32_Process.InstallDate
-                            String valueTypeUnknownStr = mapVariantTypes.get(valueTypeUnknown);
-                            String valueTypeStr = mapCimTypes.get(valueType);
-                            logger.warn("Different types:" + valueType + "/" + valueTypeStr
-                                    + " [" + pType + "]"
-                                    + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
+                            Consumer<String> warner = (String msg) -> {
+                                String valueTypeUnknownStr = mapVariantTypes.get(valueTypeUnknown);
+                                String valueTypeStr = mapCimTypes.get(valueType);
+                                logger.warn(msg + valueType + "/" + valueTypeStr
+                                        + " [" + pType + "]"
+                                        + " != " + valueTypeUnknown + "/" + valueTypeUnknownStr);
+                            };
 
                             // FIXME: Obscure behaviour in some corner cases ??
                             switch(valueTypeUnknown) {
                                 case Wbemcli.CIM_REFERENCE:
+                                    warner.accept("Should be reference");
+                                    longValue = pVal.stringValue();
+                                    break;
                                 case Wbemcli.CIM_STRING:
+                                    warner.accept("Should be string");
                                     longValue = pVal.stringValue();
                                     break;
                                 case Wbemcli.CIM_SINT8:
@@ -588,8 +625,15 @@ public class WmiProvider {
                                     break;
                                 case Wbemcli.CIM_REAL32:
                                 case Wbemcli.CIM_REAL64:
+                                    warner.accept("Should be floating-point");
+                                    longValue = pVal.toString();
+                                    break;
                                 case Wbemcli.CIM_DATETIME:
+                                    warner.accept("Should be date/time");
+                                    longValue = pVal.toString();
+                                    break;
                                 default:
+                                    warner.accept("Should be something");
                                     longValue = pVal.toString();
                                     break;
                             } // switch

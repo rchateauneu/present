@@ -1,6 +1,7 @@
 package paquetage;
 
 import com.google.common.collect.Sets;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -28,17 +29,15 @@ import java.util.*;
 public class StatementsGenerationTest {
     ValueFactory factory = SimpleValueFactory.getInstance();
 
-    static void CompareVariable(ObjectPattern.PredicateObjectPair a, String predicate, String variable) {
-        Assert.assertEquals(predicate, a.ShortPredicate);
-        Assert.assertEquals(variable, a.variableName);
-        Assert.assertEquals(null, a.ObjectContent);
-    }
-
-    static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
+    static private void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
         Assert.assertEquals(predicate, a.ShortPredicate);
         Assert.assertEquals(a.variableName, a.variableName);
         if(a.variableName == null)
             Assert.assertEquals(ValueTypePair.FromString(content), a.ObjectContent);
+    }
+
+    static private Resource WbemPathToIriCIMV2(String valueString) throws Exception {
+        return WmiOntology.WbemPathToIri("ROOT\\CIMV2", valueString);
     }
 
     @Test
@@ -69,7 +68,7 @@ public class StatementsGenerationTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
-        String dirIri = "\\\\ANY_MACHINE\\ArbitraryIri";
+        String dirIri = "\\\\ANY_MACHINE\\ROOT\\CIMV2:Win32_Directory.Name=C:";
         Solution rows = new Solution();
         rows.add(new Solution.Row(Map.of(
                 "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
@@ -81,13 +80,13 @@ public class StatementsGenerationTest {
         Assert.assertEquals(2, statements.size());
 
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIri),
+                WbemPathToIriCIMV2(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
+                Values.iri(WmiProvider.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(PresentUtils.toCIMV2("Name")),
+                WbemPathToIriCIMV2(dirIri),
+                Values.iri(WmiProvider.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
     }
@@ -120,8 +119,8 @@ public class StatementsGenerationTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", true, "dir_name");
 
         // Now it generates statements from the patterns, forcing the values of the single variable.
-        String dirIriC = "\\\\ANY_MACHINE\\DirC";
-        String dirIriD = "\\\\ANY_MACHINE\\DirD";
+        String dirIriC = "\\\\ANY_MACHINE\\ROOT\\CIMV2:Win32_Directory.Name=C:";
+        String dirIriD = "\\\\ANY_MACHINE\\ROOT\\CIMV2:Win32_Directory.Name=D:";
         Solution rows = new Solution();
         rows.add(
                 new Solution.Row(Map.of(
@@ -142,23 +141,23 @@ public class StatementsGenerationTest {
         Assert.assertEquals(4, statements.size());
 
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIriC),
+                WbemPathToIriCIMV2(dirIriC),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
+                Values.iri(WmiProvider.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIriC),
-                Values.iri(PresentUtils.toCIMV2("Name")),
+                WbemPathToIriCIMV2(dirIriC),
+                Values.iri(WmiProvider.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIriD),
+                WbemPathToIriCIMV2(dirIriD),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
+                Values.iri(WmiProvider.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIriD),
-                Values.iri(PresentUtils.toCIMV2("Name")),
+                WbemPathToIriCIMV2(dirIriD),
+                Values.iri(WmiProvider.toCIMV2("Name")),
                 Values.literal("D:"))
         ));
     }
@@ -195,7 +194,7 @@ public class StatementsGenerationTest {
         CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", true, "dir_name");
 
         // Now it generates statements from the patterns, forcing the values of the single variable.
-        String dirIri = "\\\\ANY_MACHINE\\Something";
+        String dirIri = "\\\\ANY_MACHINE\\ROOT\\CIMV2:Win32_Directory.Name=C:";
         Solution rows = new Solution();
         rows.add(
             new Solution.Row(Map.of(
@@ -211,18 +210,18 @@ public class StatementsGenerationTest {
         Assert.assertEquals(3, statements.size());
 
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIri),
+                WbemPathToIriCIMV2(dirIri),
                 Values.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                Values.iri(PresentUtils.toCIMV2("Win32_Directory")))
+                Values.iri(WmiProvider.toCIMV2("Win32_Directory")))
         ));
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(PresentUtils.toCIMV2("Name")),
+                WbemPathToIriCIMV2(dirIri),
+                Values.iri(WmiProvider.toCIMV2("Name")),
                 Values.literal("C:"))
         ));
         Assert.assertTrue(statements.contains(factory.createStatement(
-                WmiOntology.WbemPathToIri(dirIri),
-                Values.iri(PresentUtils.toCIMV2("Caption")),
+                WbemPathToIriCIMV2(dirIri),
+                Values.iri(WmiProvider.toCIMV2("Caption")),
                 Values.literal("This is a text"))
         ));
     }
