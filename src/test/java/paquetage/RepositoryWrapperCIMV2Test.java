@@ -37,7 +37,7 @@ public class RepositoryWrapperCIMV2Test {
 
     /** This tests that at least some triples are there, coming from the ontology. */
     @Test
-    public void testSelectAnyTriples() throws Exception {
+    public void testSelect_AnyTriples() throws Exception {
         String sparqlQuery = "SELECT ?x WHERE { ?x ?y ?z } limit 10";
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
@@ -48,7 +48,7 @@ public class RepositoryWrapperCIMV2Test {
 
     /** This tests the presence of a table from the ontology. */
     @Test
-    public void testSelectWin32_ProcessFromOntology() throws Exception {
+    public void testSelect_Win32_ProcessFromOntology() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -66,7 +66,7 @@ public class RepositoryWrapperCIMV2Test {
 
     /** Checks the list of classes in the ontology. */
     @Test
-    public void testSelectClassesFromOntology() throws Exception {
+    public void testSelect_ClassesFromOntology() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
