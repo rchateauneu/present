@@ -41,7 +41,8 @@ public class WmiOntology {
 
     public static String namespaces_url_prefix = "http://www.primhillcomputers.com/ontology/";
 
-    private static IRI iriNamespaces = iri(namespaces_url_prefix, "NamespaceDefinition");
+    // TODO: Consider a hierarchical definition of namespaces ?
+    private static IRI iriNamespaceProperty = iri(namespaces_url_prefix, "NamespaceDefinition");
 
     static String NamespaceUrlPrefix(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
@@ -159,7 +160,7 @@ public class WmiOntology {
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, factory.createLiteral(className));
             connection.add(classIri, RDFS.COMMENT, factory.createLiteral(wmiClass.Description));
-            connection.add(classIri, iriNamespaces, literalNamespace);
+            connection.add(classIri, iriNamespaceProperty, literalNamespace);
 
             if (wmiClass.BaseName != null) {
                 IRI baseClassIri = lambdaClassToNode.apply(wmiClass.BaseName);
@@ -179,7 +180,7 @@ public class WmiOntology {
                 connection.add(uniquePropertyIri, RDFS.LABEL, factory.createLiteral(uniquePropertyName));
                 connection.add(uniquePropertyIri, RDFS.DOMAIN, classIri);
                 connection.add(uniquePropertyIri, RDFS.COMMENT, factory.createLiteral(wmiProperty.Description));
-                connection.add(uniquePropertyIri, iriNamespaces, literalNamespace);
+                connection.add(uniquePropertyIri, iriNamespaceProperty, literalNamespace);
 
                 if(wmiProperty.Type.startsWith("ref:")) {
                     String domainName = wmiProperty.Type.substring(4);
