@@ -14,12 +14,18 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
     }
 
     /** This is used for testing.
+     * Strings are returned by Sparql, enclosed in double-quotes.
      *
-     * @param variable_name
+     * @param variable
      * @return
      */
     Set<String> StringValuesSet(String variable) {
         return stream().map(tuple-> PresentUtils.trimQuotes(tuple.GetStringValue(variable))).collect(Collectors.toSet());
+    }
+
+    /** Nodes are not enclosed in double-quotes. */
+    Set<String> NodeValuesSet(String variable) {
+        return stream().map(tuple-> tuple.GetStringValue(variable)).collect(Collectors.toSet());
     }
 
     public static class Tuple {
