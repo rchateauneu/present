@@ -8,7 +8,7 @@ Bridge Sparql <=> Wql
 
 # TODO
 * Onto text plugin.
+* wsMan connection to OMI: https://github.com/OpenNMS/wsman GitHub - OpenNMS/wsman: A WS-Man client for Java A pure Java WS-Man client implemented using JAX-WS & CXF. Artifacts are available in Maven Central.
+* SqlServer provider: https://flylib.com/books/en/2.679.1.46/1/ : SQL WMI classes = MSSQL_Column, MSSQL_Database, MSSQL_ForeignKey etc...
+* OMI provider in Python : https://github.com/microsoft/omi-script-provider
 
-# Issue : Win32_Process.GetOwner
-Win32_Process.GetOwner() method to get the owner and domain.
-How to call methods ? Possible add a virtual attribute in a provider only.
