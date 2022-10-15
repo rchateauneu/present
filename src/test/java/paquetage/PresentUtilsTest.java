@@ -17,6 +17,7 @@ public class PresentUtilsTest {
           Assert.assertEquals(true, hasSyntax);
      }
 
+     @Test
      public void test_hasWmiReferenceSyntax_3() throws Exception {
           boolean hasSyntax = PresentUtils.hasWmiReferenceSyntax("\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_NetIPAddress.CreationClassName=\"\",Name=\"poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;\",SystemCreationClassName=\"\",SystemName=\"\"");
           Assert.assertEquals(true, hasSyntax);
@@ -46,11 +47,13 @@ public class PresentUtilsTest {
           Assert.assertEquals(41, longResult);
      }
 
+     @Test
      public void test_XmlToBoolean_1() throws Exception {
           boolean boolResult = PresentUtils.XmlToBoolean("\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>");
           Assert.assertEquals(true, boolResult);
      }
 
+     @Test
      public void test_XmlToBoolean_2() throws Exception {
           boolean boolResult = PresentUtils.XmlToBoolean("\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>");
           Assert.assertEquals(false, boolResult);

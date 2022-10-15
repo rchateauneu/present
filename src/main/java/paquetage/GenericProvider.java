@@ -565,11 +565,14 @@ public class GenericProvider {
         return  (baseSelecter == null) ? wmiSelecter : baseSelecter;
     }
 
+    /**
+     * The column PSComputerName does not exist for all classes but at least "Win32_Process".
+     * Like some other columns, it cannot be selected not used in a "where". The reason is not known.
+     * So, this class calculates it "by hand". Consequently, it is available for all instances.
+     * Therefore, it can be used to select instances based on the machine they are running on.
+     *
+     */
     class PSComputerNameHandler {
-        // The column PSComputerName does not exist for all classes but at least "Win32_Process".
-        // Like some other columns, it cannot be selected not used in a "where". The reason is not known.
-        // So, this class calculates it "by hand". Consequently, it is available for all instances.
-        // Therefore, it can be used to select instances based on the machine they are running on.
 
         private QueryData m_queryData;
         private String selectPSComputerNameVariable = null;
@@ -589,10 +592,19 @@ public class GenericProvider {
             if(selectPSComputerNameVariable != null) {
                 m_queryData.queryColumns.remove(columnPSComputerName);
             }
+
             // It is OK to loop because there are very few "where" clauses.
             for(int whereIndex = 0; whereIndex < m_queryData.whereTests.size(); ++whereIndex) {
                 if(queryData.whereTests.get(whereIndex).predicate.equals(columnPSComputerName)) {
                     wherePSComputerName = m_queryData.whereTests.get(whereIndex);
+                    if(wherePSComputerName.variableName != null) {
+                        // TODO: If this is a constant, or if its value is known, or might point to another
+                        // TODO: machine than the current one, then WMI should access this other machine.
+                        // TODO: If this is a variable, then other machines should be accessed too.
+                        // TODO: This is not designed yet.
+                        throw new RuntimeException("PSComputerName should be defined at this stage.");
+                    }
+
                     m_queryData.whereTests.remove(whereIndex);
                     break;
                 }
