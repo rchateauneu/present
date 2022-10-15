@@ -51,8 +51,14 @@ public class WmiSelecter extends BaseSelecter {
 
         Wbemcli.IWbemServices wbemService = wmiProvider.GetWbemService(queryData.namespace);
 
-        // Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
-        // WBEM_FLAG_RETURN_IMMEDIATELY might be faster than WBEM_FLAG_RETURN_WBEM_COMPLETE
+        /**
+         * Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
+         * WBEM_FLAG_RETURN_IMMEDIATELY might be faster than WBEM_FLAG_RETURN_WBEM_COMPLETE
+         *
+         * When selecting a single column "MyColumn", the returned effective columns are:
+         *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
+         *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
+         */
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL", wqlQuery,
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY,
@@ -63,18 +69,11 @@ public class WmiSelecter extends BaseSelecter {
             Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
             IntByReference pType = new IntByReference();
             while (true) {
-                /**
-                 * When selecting a single column "MyColumn", the returned effective columns are:
-                 *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
-                 *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
-                 */
                 logger.debug("Next start totalRows=" + totalRows + " by " + countRows);
                 Wbemcli.IWbemClassObject[] wqlResults = enumerator.Next(Wbemcli.WBEM_INFINITE, countRows);
-                if (wqlResults.length == 0) {
-                    break;
-                }
-                totalRows += wqlResults.length;
-                for (int indexRow = 0; indexRow < wqlResults.length; ++indexRow) {
+                int queryLength = wqlResults.length;
+                totalRows += queryLength;
+                for (int indexRow = 0; indexRow < queryLength; ++indexRow) {
                     Wbemcli.IWbemClassObject wqlResult = wqlResults[indexRow];
                     Solution.Row oneRow = new Solution.Row();
                     // The path is always returned if the key is selected.
@@ -87,10 +86,8 @@ public class WmiSelecter extends BaseSelecter {
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
                         WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, null);
                         COMUtils.checkRC(hr);
-
                         ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, pType, pVal);
                         oneRow.PutValueType(lambda_variable, rowValueType);
-
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
 
@@ -99,6 +96,9 @@ public class WmiSelecter extends BaseSelecter {
                     storeValue.accept("__PATH", queryData.mainVariable);
                     wqlResult.Release();
                     resultRows.add(oneRow);
+                }
+                if (queryLength < countRows) {
+                    break;
                 }
             }
         } finally {
