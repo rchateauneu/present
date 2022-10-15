@@ -17,6 +17,8 @@ public class WmiOntologyTest {
     static private RepositoryConnection ontologyInterop = WmiOntology.CloneToMemoryConnection("ROOT\\Interop");
     static private RepositoryConnection ontologyStandardCimv2 = WmiOntology.CloneToMemoryConnection("ROOT\\StandardCimv2");
 
+    static private RepositoryConnection ontologyCIMV2_StandardCimv2 = WmiOntology.CloneToMemoryConnection("ROOT\\CIMV2", "ROOT\\StandardCimv2");
+
     /** The Sparql query is executed in the repository of the ontology.
      * This is why this repository must NOT be cached because it is polluted with the output of the tests.
      * @param repositoryConnection
@@ -42,6 +44,11 @@ public class WmiOntologyTest {
     /** This executes a Sparql query in the repository containing the StandardCIMV2 ontology. */
     private static Set<String> selectColumnStandardCimv2(String sparqlQuery, String columnName){
         return selectColumnFromOntology(ontologyStandardCimv2, sparqlQuery, columnName);
+    }
+
+    /** This executes a Sparql query in the repository containing the CIMV2 and StandardCIMV2 ontology. */
+    private static Set<String> selectColumnCIMV2_StandardCimv2(String sparqlQuery, String columnName){
+        return selectColumnFromOntology(ontologyCIMV2_StandardCimv2, sparqlQuery, columnName);
     }
 
     private static void assertContainsItemCIMV2(Set<String> itemsSet, String shortItem) {
@@ -500,7 +507,7 @@ public class WmiOntologyTest {
     }
 
     /**
-     * Properties of StandardCimv2 class "MSFT_NetTCPConnection".
+     * Properties of StandardCimv2 class "MSFT_NetUDPEndpoint".
      */
     @Test
     public void StandardCimv2_MSFT_NetUDPEndpoint_Properties() {
@@ -557,25 +564,34 @@ public class WmiOntologyTest {
     /**
      * Classes with the same name in the namespaces StandardCimv2 and CIMV2.
      */
-    @Ignore("WMI namespace not available yet")
+    //@Ignore("WMI namespace not available yet")
     @Test
     public void StandardCimv2_CIMV2_HomonymClasses() {
         String queryString = """
-                        prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
-                        prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
-                        prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                        select ?class_label
-                        where {
-                            ?my_class_cimv2 rdf:type rdfs:Class .
-                            ?my_class_cimv2 rdfs:label ?class_label .
-                            ?my_class_standard_cimv2 rdf:type rdfs:Class .
-                            ?my_class_standard_cimv2 rdfs:label ?class_label .
-                        }
-                    """;
-        Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
+                    prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix wmi:  <http://www.primhillcomputers.com/ontology/>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?class_label
+                    where {
+                        ?my_class_cimv2 rdf:type rdfs:Class .
+                        ?my_class_cimv2 rdfs:label ?class_label .
+                        ?my_class_cimv2 wmi:NamespaceDefinition "ROOT\\\\CIMV2" .
+                        ?my_class_standard_cimv2 rdf:type rdfs:Class .
+                        ?my_class_standard_cimv2 rdfs:label ?class_label .
+                        ?my_class_standard_cimv2 wmi:NamespaceDefinition "ROOT\\\\StandardCimv2" .
+                    }
+                """;
+        // ontologyCIMV2_StandardCimv2
+        Set<String> labelsSet = selectColumnCIMV2_StandardCimv2(queryString, "class_label");
         System.out.println("labelsSet=" + labelsSet);
 
-        Assert.assertTrue(false);
+        Assert.assertTrue(labelsSet.contains("\"__Win32Provider\""));
+        Assert.assertTrue(labelsSet.contains("\"__EventFilter\""));
+        Assert.assertFalse(labelsSet.contains("\"Win32_Process\""));
+        Assert.assertFalse(labelsSet.contains("\"CIM_DataFile\""));
+        Assert.assertFalse(labelsSet.contains("\"MSFT_NetUDPEndpoint\""));
+        Assert.assertFalse(labelsSet.contains("\"MSFT_NetTCPConnection\""));
     }
 
 

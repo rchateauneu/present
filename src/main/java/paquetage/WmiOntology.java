@@ -343,12 +343,14 @@ public class WmiOntology {
      * This is rather slow because an ontology contains thousands of triples.
      * TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
      */
-    public static RepositoryConnection CloneToMemoryConnection(String namespace) {
-        WmiProvider.CheckValidNamespace(namespace);
+    public static RepositoryConnection CloneToMemoryConnection(String ... namespaces) {
         // This is not persisted to a file.
         Repository repo = new SailRepository(new MemoryStore());
         RepositoryConnection repositoryConnection = repo.getConnection();
-        InsertOntologyToConnection(namespace, repositoryConnection);
+        for(String namespace:namespaces) {
+            WmiProvider.CheckValidNamespace(namespace);
+            InsertOntologyToConnection(namespace, repositoryConnection);
+        }
         return repositoryConnection;
     }
 
