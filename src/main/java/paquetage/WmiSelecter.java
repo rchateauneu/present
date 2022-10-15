@@ -40,14 +40,14 @@ public class WmiSelecter extends BaseSelecter {
 
         Solution cachedResultRows = queryData.GetCachedQueryResults(wqlQuery);
         if(cachedResultRows != null) {
-            logger.debug("CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT");
+            logger.debug("CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT- CACHE HIT");
             return cachedResultRows;
         }
 
         Solution resultRows = new Solution();
 
         // The results are batched in a big number, so it is faster.
-        int countRows = 100;
+        int countRows = 1000;
 
         Wbemcli.IWbemServices wbemService = wmiProvider.GetWbemService(queryData.namespace);
 
@@ -58,6 +58,7 @@ public class WmiSelecter extends BaseSelecter {
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY,
                 null);
         logger.debug("wqlQuery finished");
+        int totalRows = 0;
         try {
             Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
             IntByReference pType = new IntByReference();
@@ -67,12 +68,13 @@ public class WmiSelecter extends BaseSelecter {
                  *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
                  *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
                  */
-                logger.debug("Next start countRows=" + countRows);
+                logger.debug("Next start countRows=" + countRows + "/" + totalRows);
                 Wbemcli.IWbemClassObject[] wqlResults = enumerator.Next(Wbemcli.WBEM_INFINITE, countRows);
                 logger.debug("Next finished");
                 if (wqlResults.length == 0) {
                     break;
                 }
+                totalRows += wqlResults.length;
                 for (int indexRow = 0; indexRow < wqlResults.length; ++indexRow) {
                     Wbemcli.IWbemClassObject wqlResult = wqlResults[indexRow];
                     Solution.Row oneRow = new Solution.Row();
@@ -103,7 +105,7 @@ public class WmiSelecter extends BaseSelecter {
         } finally {
             enumerator.Release();
         }
-        logger.debug("Leaving. Rows=" + resultRows.size());
+        logger.debug("Leaving. Rows=" + resultRows.size() + "/" + totalRows);
         queryData.StoreCachedQueryResults(wqlQuery, resultRows);
         return resultRows;
     }
