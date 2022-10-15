@@ -68,9 +68,8 @@ public class WmiSelecter extends BaseSelecter {
                  *     __GENUS, __CLASS, __SUPERCLASS, __DYNASTY, __RELPATH, __PROPERTY_COUNT,
                  *     __DERIVATION, __SERVER, __NAMESPACE, __PATH, MyColumn
                  */
-                logger.debug("Next start countRows=" + countRows + "/" + totalRows);
+                logger.debug("Next start totalRows=" + totalRows + " by " + countRows);
                 Wbemcli.IWbemClassObject[] wqlResults = enumerator.Next(Wbemcli.WBEM_INFINITE, countRows);
-                logger.debug("Next finished");
                 if (wqlResults.length == 0) {
                     break;
                 }
