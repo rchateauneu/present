@@ -121,7 +121,6 @@ public class WmiJnaTest {
                         break;
                     }
                     COMUtils.checkRC(result[0].Get("Handle", 0, pVal, pType, plFlavor));
-                    System.out.println("---------" + pVal.getValue() + "-------------");
                     OleAuto.INSTANCE.VariantClear(pVal);
                     result[0].Release();
                 }
