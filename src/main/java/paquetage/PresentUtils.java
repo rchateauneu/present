@@ -2,6 +2,8 @@ package paquetage;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,10 +62,13 @@ public class PresentUtils {
         return Long.toString(parentProcess.pid());
     }
 
-    /** This is used only for tests. */
-    public static String ParentProcessCommand() throws Exception
+    /** This is used only for tests.
+     * */
+    public static String ParentProcessName() throws Exception
     {
-        return parentProcess.info().command().orElse(null);
+        String command = parentProcess.info().command().orElse(null);
+        Path pathCommand = Paths.get(command);
+        return pathCommand.getFileName().toString();
     }
 
     static public String LongToXml(long longNumber) {

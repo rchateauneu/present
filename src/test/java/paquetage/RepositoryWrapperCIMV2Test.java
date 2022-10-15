@@ -1303,7 +1303,8 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertTrue(setPids.contains(currentPidStr));
     }
 
-    /** Command of the parent process.
+    /** Name of the parent process.
+     * The property is chosen to work when running From Intellij and also from Maven on a command line.
      *
      * @throws Exception
      */
@@ -1323,7 +1324,7 @@ public class RepositoryWrapperCIMV2Test {
                     select ?parent_process_command
                     where {
                         ?_1_process_sub cimv2:Win32_Process.Handle "%s" .
-                        ?parent_process_command ^cimv2:Win32_Process.CommandLine/cimv2:Win32_Process.ProcessId/^cimv2:Win32_Process.ParentProcessId  ?_1_process_sub .
+                        ?parent_process_command ^cimv2:Win32_Process.Name/cimv2:Win32_Process.ProcessId/^cimv2:Win32_Process.ParentProcessId  ?_1_process_sub .
                     }
                 """, currentPidStr);
 
@@ -1331,11 +1332,10 @@ public class RepositoryWrapperCIMV2Test {
         Set<String> setCommands = listRows.StringValuesSet("parent_process_command");
         System.out.println("setCommands=" + setCommands);
 
-        String commandParentProcess = PresentUtils.ParentProcessCommand();
+        String commandParentProcess = PresentUtils.ParentProcessName();
         System.out.println("Expected command=" + commandParentProcess);
 
-        // WMI wraps the command in double-quotes and adds a space at the end, for no reason.
-        Assert.assertEquals(Set.of("\"" + commandParentProcess + "\" "), setCommands);
+        Assert.assertEquals(Set.of(commandParentProcess), setCommands);
     }
 
     /** Subprocesses of a process at any level.
