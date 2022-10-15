@@ -264,18 +264,14 @@ public class WmiProviderTest {
         System.out.println("classes=" + new TreeSet<String>(classes.keySet()));
 
         for (String className : sampleClassesCIMV2Microsoft) {
-            System.out.println("class=" + className);
             Assert.assertTrue(classes.containsKey(className));
         }
         for (String className : sampleClassesCIMV2) {
-            System.out.println("class=" + className);
             Assert.assertTrue(classes.containsKey(className));
         }
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classes.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /**
@@ -297,10 +293,8 @@ public class WmiProviderTest {
         System.out.println("classesMicrosoft=" + new TreeSet<String>(classesMicrosoft.keySet()));
 
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classesCIMV2.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /**
@@ -322,10 +316,8 @@ public class WmiProviderTest {
         System.out.println("classesInterop=" + new TreeSet<String>(classesInterop.keySet()));
 
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classesCIMV2.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /**
@@ -347,10 +339,8 @@ public class WmiProviderTest {
         System.out.println("classesCli=" + new TreeSet<String>(classesCli.keySet()));
 
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classesCIMV2.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /**
@@ -372,10 +362,8 @@ public class WmiProviderTest {
         System.out.println("classesaspnet=" + new TreeSet<String>(classesaspnet.keySet()));
 
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classesCIMV2.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /**
@@ -397,10 +385,8 @@ public class WmiProviderTest {
         System.out.println("classesCSMVE=" + new TreeSet<String>(classesCSMVE.keySet()));
 
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classesCIMV2.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /**
@@ -482,15 +468,12 @@ public class WmiProviderTest {
         System.out.println("classes=" + new TreeSet<String>(classes.keySet()));
 
         for (String className : sampleClassesCIMV2Microsoft) {
-            System.out.println("class=" + className);
             Assert.assertTrue(classes.containsKey(className));
         }
         for (String className : sampleClassesCIMV2) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classes.containsKey(className));
         }
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertTrue(classes.containsKey(className));
         }
     }
@@ -523,18 +506,14 @@ public class WmiProviderTest {
         System.out.println("classes=" + new TreeSet<String>(classes.keySet()));
 
         for (String className : sampleClassesInterop) {
-            System.out.println("class=" + className);
             Assert.assertTrue(classes.containsKey(className));
         }
         for (String className : sampleClassesCIMV2) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classes.containsKey(className));
         }
         for (String className : sampleClassesMicrosoft) {
-            System.out.println("class=" + className);
             Assert.assertFalse(classes.containsKey(className));
         }
-        //Assert.assertTrue(false);
     }
 
     /**
@@ -582,7 +561,6 @@ public class WmiProviderTest {
             System.out.println("oneNamespace=" + oneNamespace);
             //Map<String, WmiProvider.WmiClass> classesNamespace = wmiProvider.Classes(oneNamespace);
             for (String className : exclusiveClassesPerNamespace.get(oneNamespace)) {
-                System.out.println("    className=" + className);
                 Assert.assertFalse(classesCIMV2.containsKey(className));
             }
         }
