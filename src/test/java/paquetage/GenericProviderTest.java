@@ -37,7 +37,6 @@ public class GenericProviderTest extends TestCase {
         Assert.assertEquals(row1.ElementsSize(), row2.ElementsSize());
         Assert.assertEquals(row1.KeySet(), row2.KeySet());
         for(String oneKey:  row1.KeySet()) {
-            System.out.println("oneKey=" + oneKey);
             // Conversion to upper case because WMI has a different behaviour wrt to cases,
             // depending on the Windows version.
             Assert.assertEquals(row1.GetStringValue(oneKey).toUpperCase(), row2.GetStringValue(oneKey).toUpperCase());
