@@ -35,5 +35,5 @@ script:
     else
         maven="mvn";
     fi;
-  - $maven
+  - $maven test
     # $maven <your_goal_here>
