@@ -35,7 +35,8 @@ public class WmiProvider {
     // For "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_Net..."
     static private String regexReference = "\\\\\\\\[-\\dA-Z\\._]+\\\\([-A-Z\\d_\\\\]*):.*";
     static private Pattern patternReference = Pattern.compile(regexReference, Pattern.CASE_INSENSITIVE);
-    static private Pattern patternNamespace = Pattern.compile("^[\\\\_a-zA-Z\\d]+$", Pattern.CASE_INSENSITIVE);
+    static private String regexNamespace = "^ROOT[\\\\_A-Z\\d]*$";
+    static private Pattern patternNamespace = Pattern.compile(regexNamespace, Pattern.CASE_INSENSITIVE);
 
     static {
         String tempDir = System.getProperty("java.io.tmpdir");
@@ -141,9 +142,6 @@ public class WmiProvider {
     }
 
     static public void CheckValidNamespace(String namespace) {
-        if(!namespace.startsWith("ROOT")) {
-            throw new RuntimeException("Namespace must start with 'ROOT':" + namespace);
-        }
         Matcher matcher = patternNamespace.matcher(namespace);
         boolean matchFound = matcher.find();
         if (!matchFound) {
