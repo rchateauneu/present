@@ -65,7 +65,7 @@ class JoinExpressionNode extends BaseExpressionNode {
     private List<StatementPattern> visitorPatternsRaw = new ArrayList<>();
 
     void AddPattern(StatementPattern statementPattern) {
-        logger.debug("Add one pattern to " + visitorPatternsRaw.size());
+        //logger.debug("Add one pattern to " + visitorPatternsRaw.size());
         visitorPatternsRaw.add(statementPattern);
     }
 
@@ -211,14 +211,13 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
     }
 
     void GenericReport(QueryModelNode queryModelNode) {
-        System.out.println("-----------------------------------------------------------------------------");
     }
 
     BaseExpressionNode parent = null;
 
     @Override
     public void meet(Union unionNode) throws Exception {
-        logger.debug("Union=\n" + unionNode);
+        //logger.debug("Union=\n" + unionNode);
         GenericReport(unionNode);
         BaseExpressionNode previousParent = parent;
         UnionExpressionNode currentUnion = new UnionExpressionNode(parent, unionNode);
@@ -236,7 +235,7 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
      */
     @Override
     public void meet(Join joinNode) throws Exception {
-        logger.debug("Join=\n" + joinNode);
+        //logger.debug("Join=\n" + joinNode);
         GenericReport(joinNode);
 
         BaseExpressionNode previousParent = parent;
@@ -252,7 +251,7 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
      * The rule about gathering StatementPatterns is the same for Join and LeftJoin. */
     @Override
     public void meet(LeftJoin leftJoinNode) throws Exception {
-        logger.debug("LeftJoin=\n" + leftJoinNode);
+        //logger.debug("LeftJoin=\n" + leftJoinNode);
         GenericReport(leftJoinNode);
 
         BaseExpressionNode previousParent = parent;
@@ -271,7 +270,7 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
      */
     @Override
     public void meet(Projection projectionNode) throws Exception {
-        logger.debug("Projection=\n" + projectionNode);
+        //logger.debug("Projection=\n" + projectionNode);
         GenericReport(projectionNode);
         BaseExpressionNode previousParent = parent;
         ProjectionExpressionNode currentProjection = new ProjectionExpressionNode(parent, projectionNode);
@@ -414,7 +413,6 @@ public class SparqlBGPTreeExtractor {
     public SparqlBGPTreeExtractor(String input_query) throws Exception {
         ParseQuery(input_query);
         String extractorString = patternsVisitor.toString();
-        System.out.println("Extractor:\n" + extractorString);
         patternsVisitor.PartitionBGP();
     }
 
@@ -426,17 +424,13 @@ public class SparqlBGPTreeExtractor {
      * @throws Exception
      */
     private void ParseQuery(String sparql_query) throws Exception {
-        logger.debug("Parsing:\n" + sparql_query);
+        //logger.debug("Parsing:\n" + sparql_query);
         SPARQLParser parser = new SPARQLParser();
         ParsedQuery pq = parser.parseQuery(sparql_query, null);
         TupleExpr tupleExpr = pq.getTupleExpr();
         // FIXME: This is an unordered set. What about an union without BIND() statements, if several variables ?
         bindings = tupleExpr.getBindingNames();
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         tupleExpr.visit(patternsVisitor);
-        System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        System.out.println(tupleExpr);
-        System.out.println("=============================================================================");
     }
 
     Solution EvaluateSolution() {
