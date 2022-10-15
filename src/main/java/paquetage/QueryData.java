@@ -46,10 +46,30 @@ public class QueryData {
     // Such a getter attempts to return the same result as a WQL query, but faster.
     BaseGetter classGetter = null;
 
-    // Used only for WMI: This stores queries and their result.
-    // The query must be stored because the values in the "where" clause change.
-    // However, the main variable must not change.
-    // TODO: Consider a LRU cache to limit memory usage.
+    /**
+     * This cache is used only for WMI: It maps the query strings to their result.
+     * The query must be stored because the values in the "where" clause of the QueryData instance,
+     * might temporarily change.
+     * However, the main variable must not change, and also the variable names in the where clause.
+     * It would be enough to index the results with a tuple containing the values of the where clause.
+     * TODO: Consider a LRU cache to limit memory usage.
+     */
+
+    /**
+     * TODO: Consider reusing parts of the cache for this usage pattern:
+     * A first query selects from the class, with wide selection criterias:
+     * wqlQuery=Select LocalAddress,LocalPort,OwningProcess,RemoteAddress,RemotePort, __PATH from MSFT_NetTCPConnection
+     *
+     * Subsequent queries select with stricter tests, data which belong the the initial data set:
+     * wqlQuery=Select OwningProcess, __PATH from MSFT_NetTCPConnection where LocalAddress = "::" and LocalPort = "0" and RemoteAddress = "::" and RemotePort = "65360"
+     * wqlQuery=Select OwningProcess, __PATH from MSFT_NetTCPConnection where LocalAddress = "::" and LocalPort = "0" and RemoteAddress = "::" and RemotePort = "65344"
+     *
+     * Conditions: If the select and where columns are part of the selected columns of the initial query,
+     * and of the where columns are a superset of the where columns of the initial query,
+     * then, it is possible to reuse the results of the initial query, making an appropriate extra filtering
+     * on the columns (only the needed columns in the select) and the rows (only the needed rows in the where).
+     *
+     */
     private HashMap<String, Solution> CacheQueries = null;
 
     public Solution GetCachedQueryResults(String wqlQuery) {
