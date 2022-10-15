@@ -33,7 +33,7 @@ public class WmiProvider {
     public static Wbemcli.IWbemServices wbemServiceRootCimv2 = null;
     static Path ontologiesPathCache;
     // For "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_Net..."
-    static private String regexReference = "\\\\\\\\[-\\dA-Z\\._]+\\\\([-A-Z\\d_\\\\]*):.*";
+    static private String regexReference = "\\\\\\\\[-\\dA-Z\\._]+\\\\(ROOT[-A-Z\\d_\\\\]*):.*";
     static private Pattern patternReference = Pattern.compile(regexReference, Pattern.CASE_INSENSITIVE);
     static private String regexNamespace = "^ROOT[\\\\_A-Z\\d]*$";
     static private Pattern patternNamespace = Pattern.compile(regexNamespace, Pattern.CASE_INSENSITIVE);
@@ -136,8 +136,6 @@ public class WmiProvider {
             return null;
         }
         String namespace = matcher.group(1);
-        // Double-check, but it should be ok.
-        CheckValidNamespace(namespace);
         return namespace;
     }
 
@@ -259,7 +257,6 @@ public class WmiProvider {
             // In this case, do not add the namespace to the list.
             Wbemcli.IWbemServices wbemServiceSub = GetWbemService(namespaceFull);
             if(wbemServiceSub != null) {
-                // Strip string "ROOT\\" at the beginning.
                 namespacesHierarchical.add(namespaceFull);
                 Namespaces(namespacesHierarchical, wbemServiceSub, namespaceFull);
             }
