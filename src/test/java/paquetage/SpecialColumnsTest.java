@@ -23,7 +23,7 @@ public class SpecialColumnsTest {
 
     /** This gets all processes with the current machine name and checks that the current one is found. */
     @Test
-    public void testSelectWin32_Process_PSComputerName_Where() throws Exception {
+    public void testSelect_Win32_Process_PSComputerName_Where() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -41,7 +41,7 @@ public class SpecialColumnsTest {
     /** This gets machines of all processes. The intention of this test is to check how the column
      * "PSComputerName" is processed. */
     @Test
-    public void testSelectWin32_Process_PSComputerName_Select() throws Exception {
+    public void testSelect_Win32_Process_PSComputerName_Select() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -60,7 +60,7 @@ public class SpecialColumnsTest {
      * @throws Exception
      */
     @Test (expected = RuntimeException.class)
-    public void testSelectWin32_Process_PSComputerName_Select_Known() throws Exception {
+    public void testSelect_Win32_Process_PSComputerName_Select_Known() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -102,7 +102,7 @@ public class SpecialColumnsTest {
     */
     @Ignore("Not designed nor implemented yet")
     @Test
-    public void testSelectWin32_Process_GetOwner() throws Exception {
+    public void testSelect_Win32_Process_GetOwner() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
