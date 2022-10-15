@@ -463,6 +463,7 @@ public class RepositoryWrapperCIMV2Test {
 
     /** Executables of the process running the service "Windows Search".
      * FIXME: This does not work because the service forbid to access its executable and libraries.
+     * Same error when running from an Administrator session.
      *
      * @throws Exception
      */
@@ -490,6 +491,7 @@ public class RepositoryWrapperCIMV2Test {
     }
 
     /** Logon type of the process running the service "Windows Search".
+     * Same error when running from an Administrator session.
      *
      * @throws Exception
      */
@@ -918,7 +920,6 @@ public class RepositoryWrapperCIMV2Test {
      *
      * @throws Exception
      */
-    @Ignore("This does not work for some obscure reason")
     @Test
     public void testSelect_Win32_Process_Oldest() throws Exception {
         String sparqlQuery = """
@@ -927,7 +928,7 @@ public class RepositoryWrapperCIMV2Test {
                     select (MIN(?creation_date) as ?min_creation_date)
                     where {
                         ?my_process cimv2:Win32_Process.CreationDate ?creation_date .
-                    } group by ?my_process
+                    } #group by ?my_process
                 """;
 
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
@@ -936,40 +937,47 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("min_creation_date"), singleRow.KeySet());
 
-        String minCreationDate = singleRow.GetStringValue("min_creation_date");
-        System.out.println("minCreationDate=" + minCreationDate);
+        String minStartActualString = singleRow.GetStringValue("min_creation_date");
+        System.out.println("minStartActualString=" + minStartActualString);
 
-        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minCreationDate);
-        ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
-        LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
-        Instant asInstantActual = zonedDateTimeActual.toInstant();
+        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minStartActualString);
+        ZonedDateTime minStartActualZoned = xmlDate.toGregorianCalendar().toZonedDateTime();
+        LocalDateTime minStartActualLocal = minStartActualZoned.toLocalDateTime();
+        Instant minStartActualInstant = minStartActualZoned.toInstant();
 
         // Now calculate the same time.
         List<Instant> instantsList = ProcessHandle.allProcesses().map(ph -> ph.info().startInstant().orElse(null)).toList();
-        Instant minStartExpected = null;
+        Instant minStartExpectedInstant = null;
         System.out.println("Instants:" + instantsList.size());
+
+        int missedProcess = 0;
         for(Instant instant: instantsList) {
             if(instant != null) {
-                if (minStartExpected == null || minStartExpected.isAfter(instant)) {
-                    minStartExpected = instant;
+                if (minStartExpectedInstant == null || minStartExpectedInstant.isAfter(instant)) {
+                    minStartExpectedInstant = instant;
                 }
+            }
+            else {
+                ++missedProcess;
             }
         }
 
-        LocalDateTime minStartDate = LocalDateTime.ofInstant(minStartExpected, ZoneId.systemDefault());
-        System.out.println("Expect:" + minStartDate);
-        System.out.println("Actual:" + localDateTimeActual);
-        System.out.println("Expect (Milli):" + minStartExpected.toEpochMilli());
-        System.out.println("Actual (Milli):" + asInstantActual.toEpochMilli());
+        LocalDateTime minStartExpectedLocal = LocalDateTime.ofInstant(minStartExpectedInstant, ZoneId.systemDefault());
+        System.out.println("Expect:" + minStartExpectedLocal);
+        System.out.println("Actual:" + minStartActualLocal);
 
-        /** Apparently, the hand-made loop misses some processes, so we do a rounding to 10 seconds.
-         * Expected :2022-07-20T08:56:40.199Z
-         * Actual   :2022-07-20T08:56:41.672Z
-         */
-        Assert.assertEquals(minStartExpected.toEpochMilli() / 10000, asInstantActual.toEpochMilli() / 10000);
+        if(missedProcess > 0) {
+            System.out.println("Missed " + missedProcess + " expected processes. Approximate check.");
+            Assert.assertTrue(minStartActualInstant.isBefore(minStartExpectedInstant));
 
-        // Assert.assertEquals(asInstantActual, minStartExpected);
-        Assert.assertTrue(asInstantActual.isBefore(minStartExpected));
+            // Even if some processes are missed, this should be correct.
+            // FIXME: Why start date of some processes is visible with WMI, but not Java ?
+            Assert.assertEquals(minStartExpectedLocal.getDayOfYear(), minStartActualLocal.getDayOfYear());
+            Assert.assertEquals(minStartExpectedLocal.getMonthValue(), minStartActualLocal.getMonthValue());
+        } else {
+            System.out.println("All expected processes found. Exact check.");
+            Assert.assertEquals(minStartExpectedInstant, minStartActualInstant);
+        }
     }
 
     /** Creation date of a file. Here, the java executable.

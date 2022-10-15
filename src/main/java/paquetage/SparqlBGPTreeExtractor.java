@@ -382,9 +382,9 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
             JoinExpressionNode joinNode = (JoinExpressionNode)node;
             joinNode.GenerateStatements(generatedStatements);
         }
-        logger.debug("node.children:" + node.children.size());
+        logger.debug("node.children:" + node.children.size() + " generatedStatements.size()=" + generatedStatements.size());
         for(BaseExpressionNode child : node.children) {
-            GenerateStatementsFromTreeAux(generatedStatements,child);
+            GenerateStatementsFromTreeAux(generatedStatements, child);
         }
     }
 
@@ -439,9 +439,8 @@ public class SparqlBGPTreeExtractor {
         return solution;
     }
 
-    List<Statement> SolutionToStatements(/*Solution rows*/) throws Exception {
-        //logger.debug("Solution:" + rows.size() + " rows.");
-        return patternsVisitor.GenerateStatementsFromTree(/*rows*/);
+    List<Statement> SolutionToStatements() throws Exception {
+        return patternsVisitor.GenerateStatementsFromTree();
     }
 
     /** This is just a helper for flat Sparql queries, and for testing only,

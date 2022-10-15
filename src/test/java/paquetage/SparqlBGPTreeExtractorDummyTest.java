@@ -42,7 +42,6 @@ public class SparqlBGPTreeExtractorDummyTest {
 
         Arrays.sort(expectedSolution);
         System.out.println("Expected solution:" + expectedSolution.length);
-        // System.out.println(expectedSolution);
         for(int index=0; index < expectedSolution.length; ++index) {
             System.out.println("\t" + expectedSolution[index]);
         }
@@ -52,7 +51,7 @@ public class SparqlBGPTreeExtractorDummyTest {
             Assert.assertEquals(expectedSolution[index], actualSolutionStr.get(index));
         }
 
-        List<Statement> statements = extractor.SolutionToStatements(/*actualSolution*/);
+        List<Statement> statements = extractor.SolutionToStatements();
         List<String> actualStatementsStr = statements.stream().map(st -> st.toString()).collect(Collectors.toList());
         Collections.sort(actualStatementsStr);
 
