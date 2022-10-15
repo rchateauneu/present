@@ -580,7 +580,7 @@ public class SparqlTranslationTest {
         for(String oneName: namesSet) {
             System.out.println("Name=" + oneName);
         }
-        System.out.println("namesSet=" + namesSet.toString());
+        System.out.println("namesSet=" + namesSet);
         Assert.assertTrue(namesSet.contains("java.exe"));
     }
 
@@ -657,7 +657,6 @@ public class SparqlTranslationTest {
         Assert.assertTrue(dirsSet.size() > 0);
         Assert.assertTrue(dirsSet.contains("C:\\"));
     }
-
 
     /***
      * Drive of a given directory.
