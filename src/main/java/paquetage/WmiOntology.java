@@ -383,7 +383,6 @@ public class WmiOntology {
         } else {
             wmiNamespace = null;
         }
-        logger.debug("token=" + token + " namespace=" + wmiNamespace);
 
         return new NamespaceTokenPair(wmiNamespace, splitToken[1]);
     }
