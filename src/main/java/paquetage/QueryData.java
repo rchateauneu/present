@@ -38,12 +38,12 @@ public class QueryData {
     */
     List<WhereEquality> whereTests;
 
-    // Provider class used to execute a query similar to WQL.
-    // Such a selecter attempts to return the same result as a WQL query, but faster.
+    // Provider is a class used to execute a query similar to WQL.
+    // This attempts to return the same result as a WQL query, but faster.
     BaseSelecter classBaseSelecter = null;
 
-    // Getter class used for a query similar to GetObject.
-    // Such a getter attempts to return the same result as a WQL query, but faster.
+    // Getter is a class used for a query similar to GetObject.
+    // It returns the same object, but faster.
     BaseGetter classGetter = null;
 
     /**
