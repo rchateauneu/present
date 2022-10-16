@@ -41,7 +41,9 @@ public class WmiOntology {
 
     public static String namespaces_url_prefix = "http://www.primhillcomputers.com/ontology/";
 
-    // TODO: Consider a hierarchical definition of namespaces ?
+    /** Each WMI class and property has its namespace with this predicate.
+     TODO: Consider a hierarchical definition of namespaces ?
+     */
     private static IRI iriNamespaceProperty = iri(namespaces_url_prefix, "NamespaceDefinition");
 
     static String NamespaceUrlPrefix(String namespace) {
