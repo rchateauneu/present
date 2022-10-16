@@ -13,8 +13,7 @@ import java.util.HashMap;
 import java.util.function.BiConsumer;
 
 public class WmiSelecter extends BaseSelecter {
-    // TODO: Try a singleton.
-    WmiProvider wmiProvider = new WmiProvider();
+    static WmiProvider wmiProvider = new WmiProvider();
 
     final static private Logger logger = Logger.getLogger(WmiSelecter.class);
 
@@ -63,7 +62,7 @@ public class WmiSelecter extends BaseSelecter {
                 "WQL", wqlQuery,
                 Wbemcli.WBEM_FLAG_FORWARD_ONLY | Wbemcli.WBEM_FLAG_RETURN_IMMEDIATELY,
                 null);
-        logger.debug("wqlQuery finished");
+        logger.debug("wqlQuery execution finished");
         int totalRows = 0;
         try {
             Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();

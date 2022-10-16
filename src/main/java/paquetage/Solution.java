@@ -207,19 +207,17 @@ public class Solution implements Iterable<Solution.Row> {
             // FIXME: Otherwise this parsing must be repeated over and over.
             // FIXME: But, are we sure it will always ne the same namespace ?
             // FIXME: Or, when the value is a node, carry the namespace with it ?
-            // Unfortunately, the namespace must be extracted from the node.
+            // FIXME: For the moment, the namespace must be extracted from the node.
             String namespaceExtracted = WmiProvider.ExtractNamespaceFromRef(valueString);
             // \\LAPTOP-R89KG6V1\ROOT\StandardCimv2:MSFT_NetIPAddress.CreationClassName="",Name="poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;",SystemCreationClassName="",SystemName=""
 
             Resource resourceValue;
             if(namespaceExtracted == null) {
-                logger.warn("Cannot extract namespace from:" + valueString);
-                resourceValue = WmiOntology.WbemPathToIri("???", valueString);
+                throw new Exception("Cannot extract namespace from:" + valueString);
             } else {
                 resourceValue = WmiOntology.WbemPathToIri(namespaceExtracted, valueString);
             }
 
-            // Resource resourceValue = WmiOntology.WbemPathToIriCIMV2(valueString);
             return resourceValue;
         }
         public ValueTypePair TryValueType(String key) {

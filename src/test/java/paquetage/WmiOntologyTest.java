@@ -19,6 +19,8 @@ public class WmiOntologyTest {
 
     static private RepositoryConnection ontologyCIMV2_StandardCimv2 = WmiOntology.CloneToMemoryConnection("ROOT\\CIMV2", "ROOT\\StandardCimv2");
 
+    static WmiProvider wmiProvider = new WmiProvider();
+
     /** The Sparql query is executed in the repository of the ontology.
      * This is why this repository must NOT be cached because it is polluted with the output of the tests.
      * @param repositoryConnection
@@ -92,7 +94,6 @@ public class WmiOntologyTest {
      */
     @Test
     public void LoadAllOntologies() throws Exception {
-        WmiProvider wmiProvider = new WmiProvider();
         Set<String> setNamespaces = wmiProvider.Namespaces();
         for (String oneNamespace : setNamespaces) {
             RepositoryConnection ontologyNamespace = WmiOntology.CloneToMemoryConnection(oneNamespace);
@@ -564,7 +565,6 @@ public class WmiOntologyTest {
     /**
      * Classes with the same name in the namespaces StandardCimv2 and CIMV2.
      */
-    //@Ignore("WMI namespace not available yet")
     @Test
     public void StandardCimv2_CIMV2_HomonymClasses() {
         String queryString = """

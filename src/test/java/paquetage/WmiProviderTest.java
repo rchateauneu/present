@@ -11,6 +11,8 @@ import org.junit.Test;
 public class WmiProviderTest {
     static String currentPidStr = String.valueOf(ProcessHandle.current().pid());
 
+    static WmiProvider wmiProvider = new WmiProvider();
+
     @Test
     public void test_ExtractNamespaceFromRef() throws Exception {
         String nodeStr = "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_NetIPAddress.CreationClassName=\"\",Name=\"poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;\",SystemCreationClassName=\"\",SystemName=\"\"";
@@ -49,7 +51,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestNamespaces() throws Exception {
-        WmiProvider wmiProvider = new WmiProvider();
         Set<String> namespaces = wmiProvider.Namespaces();
         System.out.println("namespaces=" + new TreeSet<String>(namespaces));
         /* Typical content: [Cli, RSOP, subscription, StandardCimv2, directory, aspnet, CIMV2, PEH, WMI,
@@ -256,7 +257,6 @@ public class WmiProviderTest {
 
     @Test
     public void TestClassesList_CIMV2() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.ClassesCIMV2();
 
         // Checks the presence or absence of some classes.
@@ -279,7 +279,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesList_MicrosoftSubsetCIMV2() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.ClassesCIMV2();
 
         // Checks the presence or absence of some classes.
@@ -302,7 +301,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesList_InteropSubsetCIMV2() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.ClassesCIMV2();
 
         // Checks the presence or absence of some classes.
@@ -325,7 +323,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesList_CliSubsetCIMV2() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.ClassesCIMV2();
 
         // Checks the presence or absence of some classes.
@@ -348,7 +345,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesList_aspnetSubsetCIMV2() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.ClassesCIMV2();
 
         // Checks the presence or absence of some classes.
@@ -371,7 +367,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesList_CIMV2_Security_MicrosoftVolumeEncryptionSubsetCIMV2() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.ClassesCIMV2();
 
         // Checks the presence or absence of some classes.
@@ -394,7 +389,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClass_Win32_Process() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.ClassesCIMV2();
         Assert.assertTrue(classes.containsKey("Win32_Process"));
         System.out.println("BaseName=" + classes.get("Win32_Process").BaseName);
@@ -409,7 +403,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClass_CIM_DataFile() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.ClassesCIMV2();
         Assert.assertTrue(classes.containsKey("CIM_DataFile"));
         Map<String, WmiProvider.WmiProperty> properties = classes.get("CIM_DataFile").Properties;
@@ -462,7 +455,6 @@ public class WmiProviderTest {
 
     @Test
     public void TestClassesListMicrosoft() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes("ROOT\\Microsoft");
         System.out.println("classes.size()=" + classes.size());
         System.out.println("classes=" + new TreeSet<String>(classes.keySet()));
@@ -483,7 +475,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClass_Microsoft_CIM_InstModification() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes("ROOT\\Microsoft");
 
         System.out.println("classes=" + classes.keySet());
@@ -500,7 +491,6 @@ public class WmiProviderTest {
      */
     @Test
     public void TestClassesListInterop() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes("ROOT\\Interop");
         System.out.println("classes.size()=" + classes.size());
         System.out.println("classes=" + new TreeSet<String>(classes.keySet()));
@@ -521,7 +511,6 @@ public class WmiProviderTest {
      * This is a helper function used to generate the map exclusiveClassesPerNamespace.
      */
     public void TestNamespacesExclusiveClassesGenerate() throws Exception {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.Classes("ROOT\\CIMV2");
         Set<String> setNamespaces = wmiProvider.Namespaces();
         for (String oneNamespace : setNamespaces) {
@@ -555,11 +544,9 @@ public class WmiProviderTest {
 
     @Test
     public void TestNamespacesExclusiveClasses() {
-        WmiProvider wmiProvider = new WmiProvider();
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.Classes("ROOT\\CIMV2");
         for (String oneNamespace : exclusiveClassesPerNamespace.keySet()) {
             System.out.println("oneNamespace=" + oneNamespace);
-            //Map<String, WmiProvider.WmiClass> classesNamespace = wmiProvider.Classes(oneNamespace);
             for (String className : exclusiveClassesPerNamespace.get(oneNamespace)) {
                 Assert.assertFalse(classesCIMV2.containsKey(className));
             }
