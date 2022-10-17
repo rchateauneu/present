@@ -8,8 +8,6 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.function.BiConsumer;
 
 public class WmiSelecter extends BaseSelecter {
