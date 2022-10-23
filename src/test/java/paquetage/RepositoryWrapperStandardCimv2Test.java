@@ -238,10 +238,9 @@ public class RepositoryWrapperStandardCimv2Test {
             }
             servicePorts.add(portNumber);
         }
-        System.out.println("\"RPC Endpoint Mapper\":" + mapServiceToPort.get("\"RPC Endpoint Mapper\""));
-        System.out.println("\"Apache Tomcat 9.0 Tomcat9\":" + mapServiceToPort.get("\"Apache Tomcat 9.0 Tomcat9\""));
         Assert.assertTrue(mapServiceToPort.get("\"RPC Endpoint Mapper\"").contains(Long.valueOf(135)));
-        Assert.assertTrue(mapServiceToPort.get("\"Apache Tomcat 9.0 Tomcat9\"").contains(Long.valueOf(8080)));
+        Assert.assertTrue(mapServiceToPort.get("\"Connected Devices Platform Service\"").contains(Long.valueOf(5040)));
+        Assert.assertTrue(mapServiceToPort.get("\"Delivery Optimization\"").contains(Long.valueOf(7680)));
     }
 
     /**
