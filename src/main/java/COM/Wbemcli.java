@@ -180,7 +180,7 @@ public interface Wbemcli {
             );
          */
         public HRESULT GetPropertyQualifierSet(WString wszProperty, PointerByReference ppQualSet) {
-            // Get is 9th method of IWbemClassObjectVtbl in WbemCli.h :
+            // Get is 12th method of IWbemClassObjectVtbl in WbemCli.h :
             return (HRESULT) _invokeNativeObject(11,
                     new Object[] { getPointer(), wszProperty, ppQualSet }, HRESULT.class);
         }
@@ -200,7 +200,7 @@ public interface Wbemcli {
             super(pvInstance);
         }
 
-        public HRESULT Get(WString wszName, long lFlags, VARIANT.ByReference pVal, IntByReference plFlavor) {
+        public HRESULT Get(WString wszName, int lFlags, VARIANT.ByReference pVal, IntByReference plFlavor) {
             return (HRESULT) _invokeNativeObject(3,
                     new Object[] { getPointer(), wszName, lFlags, pVal, plFlavor }, HRESULT.class);
         }
@@ -223,7 +223,7 @@ public interface Wbemcli {
             return "Get " + wszName + " cannot convert type:" + qualifierInt;
         }
 
-        public HRESULT GetNames(long lFlags, PointerByReference pNames) {
+        public HRESULT GetNames(int lFlags, PointerByReference pNames) {
             return (HRESULT) _invokeNativeObject(6,
                     new Object[] { getPointer(), lFlags, pNames }, HRESULT.class);
         }
@@ -369,8 +369,7 @@ public interface Wbemcli {
                                  PointerByReference ppObject, PointerByReference ppCallResult) {
             // GetObject is the 7th method of IWbemServicesVtbl in WbemCli.h
             return (HRESULT) _invokeNativeObject(6,
-                    new Object[] { getPointer(), strObjectPath, lFlags, pCtx,
-                            ppObject, ppCallResult}, HRESULT.class);
+                    new Object[] { getPointer(), strObjectPath, lFlags, pCtx, ppObject, ppCallResult}, HRESULT.class);
         }
 
         public IWbemClassObject GetObject(String strObjectPath, int lFlags, IWbemContext pCtx) {
@@ -426,21 +425,21 @@ public interface Wbemcli {
         }
 
         public void SetValue(String wszName, int lFlag, boolean pValue) {
-            Variant.VARIANT.ByReference aVariant = new Variant.VARIANT.ByReference();
+            Variant.VARIANT aVariant = new Variant.VARIANT();
             aVariant.setValue(Variant.VT_BOOL, pValue ? Variant.VARIANT_TRUE : Variant.VARIANT_FALSE);
             SetValue(wszName, lFlag, aVariant);
             OleAuto.INSTANCE.VariantClear(aVariant);
         }
 
         public void SetValue(String wszName, int lFlag, String pValue) {
-            BSTR wszNameBSTR = OleAuto.INSTANCE.SysAllocString(wszName);
+            Variant.VARIANT aVariant = new Variant.VARIANT();
+            BSTR strValue = OleAuto.INSTANCE.SysAllocString(pValue);
             try {
-                // SetValue is the 9th method of IWbemContextVtbl in WbemCli.h
-                HRESULT res = (HRESULT) _invokeNativeObject(8,
-                        new Object[] { getPointer(), wszNameBSTR, lFlag, pValue}, HRESULT.class);
-                COMUtils.checkRC(res);
-            } finally {
-                OleAuto.INSTANCE.SysFreeString(wszNameBSTR);
+                aVariant.setValue(Variant.VT_LPSTR, strValue);
+                SetValue(wszName, lFlag, aVariant);
+            }
+            finally {
+                OleAuto.INSTANCE.SysFreeString(strValue);
             }
         }
     }
