@@ -51,7 +51,7 @@ public class WmiGetter extends BaseGetter {
         return objectNode;
     }
 
-    /** This gets a WMI object and its properties mong the input list of properties.
+    /** This gets a WMI object and its properties among the input list of properties.
      * This should be faster than fetching all of them.
      * @param objectPath
      * @param properties
