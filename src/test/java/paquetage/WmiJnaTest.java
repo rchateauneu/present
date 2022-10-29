@@ -1,58 +1,44 @@
 package paquetage;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.COMUtils;
-import com.sun.jna.platform.win32.COM.Wbemcli;
-import com.sun.jna.platform.win32.COM.WbemcliUtil;
+import COM.Wbemcli;
+import COM.WbemcliUtil;
 import com.sun.jna.platform.win32.OaIdl.SAFEARRAY;
-import com.sun.jna.platform.win32.WTypes.BSTR;
-import com.sun.jna.platform.win32.WTypes.LPOLESTR;
-import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
 
-import java.net.UnknownHostException;
-import java.util.logging.Level;
-
-import org.jinterop.dcom.impls.JIObjectFactory;
-import org.jinterop.dcom.impls.automation.IJIDispatch;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
-/** This is just to test some tricky parameters passing techniques with JNA. */
+import java.util.Arrays;
 
-enum Win32_DiskDrive_Values {
-    Caption,
-    Capabilities
-}
+import static com.sun.jna.platform.win32.Variant.VT_ARRAY;
+import static com.sun.jna.platform.win32.Variant.VT_BSTR;
 
 public class WmiJnaTest {
-    //@Test
-    public void DoTheTest() {
-        WbemcliUtil.WmiQuery<Win32_DiskDrive_Values> serialNumberQuery = new WbemcliUtil.WmiQuery<Win32_DiskDrive_Values>("Win32_DiskDrive", Win32_DiskDrive_Values.class);
+
+    @Before
+    public void initCom() {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-        WbemcliUtil.WmiResult<Win32_DiskDrive_Values> result = serialNumberQuery.execute();
-        for (int i = 0; i < result.getResultCount(); i++) {
-            //System.out.println(result.getValue(Win32_DiskDrive_Values.Caption, i));
-            SAFEARRAY value = (OaIdl.SAFEARRAY) result.getValue(Win32_DiskDrive_Values.Capabilities, i);
-            // According to https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/win32-diskdrive, the type of Capabilities
-            // should be uint16[] which should be Variant.VT_I2 (2-byte integer)
-            // however, it is not constant. sometimes it is 0, sometimes Variant.VT_I2 (3);
-            //System.out.println("Var Type(3 expected): " + value.getVarType().intValue());
-            //System.out.println("Size (>0 expected): " + (value.getUBound(0) - value.getLBound(0)));
-            Object el = value.getElement(0);
-            //System.out.println("Element 0 (!=null expected): " + el);
-            Pointer pointer = value.accessData();
-            //System.out.println("pointer (!=null expected): " + pointer);
-        }
+        // assertEquals(COMUtils.S_OK, Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED).intValue());
+        assertEquals(COMUtils.S_OK,
+                Ole32.INSTANCE.CoInitializeSecurity(null, -1, null, null, Ole32.RPC_C_AUTHN_LEVEL_DEFAULT,
+                        Ole32.RPC_C_IMP_LEVEL_IMPERSONATE, null, Ole32.EOAC_NONE, null).intValue());
+    }
+
+    @After
+    public void unInitCom() {
+        Ole32.INSTANCE.CoUninitialize();
     }
 
     @Test
-    public void SelectDiskDrives() {
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-
+    public void testSelectDiskDrives() {
         // Connect to the server
-        Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
+        Wbemcli.IWbemServices svc = WbemcliUtil.connectServer(WbemcliUtil.DEFAULT_NAMESPACE);
 
         // Send query
         try {
@@ -75,13 +61,13 @@ public class WmiJnaTest {
                     OleAuto.INSTANCE.VariantClear(pVal);
                     COMUtils.checkRC(result[0].Get("CapabilityDescriptions", 0, pVal, pType, plFlavor));
                     SAFEARRAY safeArray = (SAFEARRAY) pVal.getValue();
-                    for(int i = safeArray.getLBound(0); i<=safeArray.getUBound(0); i++) {
+                    for(int i = safeArray.getLBound(0); i <= safeArray.getUBound(0); i++) {
                         System.out.println("\tCapabilityDescriptions " + safeArray.getElement(i));
                     }
                     OleAuto.INSTANCE.VariantClear(pVal);
                     COMUtils.checkRC(result[0].Get("Capabilities", 0, pVal, pType, plFlavor));
                     safeArray = (SAFEARRAY) pVal.getValue();
-                    for(int i = safeArray.getLBound(0); i<=safeArray.getUBound(0); i++) {
+                    for(int i = safeArray.getLBound(0); i <= safeArray.getUBound(0); i++) {
                         System.out.println("\tCapabilities " + safeArray.getElement(i));
                     }
                     OleAuto.INSTANCE.VariantClear(pVal);
@@ -93,16 +79,12 @@ public class WmiJnaTest {
         } finally {
             svc.Release();
         }
-
-        Ole32.INSTANCE.CoUninitialize();
     }
 
     @Test
-    public void SelectProcesses() {
-        Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-
+    public void testSelectProcesses() {
         // Connect to the server
-        Wbemcli.IWbemServices svc = WbemcliUtil.connectServer("ROOT\\CIMV2");
+        Wbemcli.IWbemServices svc = WbemcliUtil.connectServer(WbemcliUtil.DEFAULT_NAMESPACE);
 
         // Send query
         try {
@@ -130,8 +112,139 @@ public class WmiJnaTest {
         } finally {
             svc.Release();
         }
-
-        Ole32.INSTANCE.CoUninitialize();
     }
 
+    /**
+     * Copy from WbemcliUtil#connectServer with American English selected as
+     * locale.
+     */
+    private static Wbemcli.IWbemServices connectServerEnglishLocale(String namespace) {
+        Wbemcli.IWbemLocator loc = Wbemcli.IWbemLocator.create();
+        if (loc == null) {
+            throw new COMException("Failed to create WbemLocator object.");
+        }
+
+        Wbemcli.IWbemServices services = loc.ConnectServer(namespace, null, null, "MS_409", 0, null, null);
+        loc.Release();
+
+        WinNT.HRESULT hres = Ole32.INSTANCE.CoSetProxyBlanket(services, Ole32.RPC_C_AUTHN_WINNT, Ole32.RPC_C_AUTHZ_NONE, null,
+            Ole32.RPC_C_AUTHN_LEVEL_CALL, Ole32.RPC_C_IMP_LEVEL_IMPERSONATE, null, Ole32.EOAC_NONE);
+        if (COMUtils.FAILED(hres)) {
+                services.Release();
+                throw new COMException("Could not set proxy blanket.", hres);
+            }
+        return services;
+    }
+
+    @Test
+    public void testIWbemClassObjectGetQualifierSet() {
+
+        Wbemcli.IWbemServices svc = null;
+        Wbemcli.IEnumWbemClassObject enumRes = null;
+        Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
+        IntByReference pType = new IntByReference();
+        IntByReference plFlavor = new IntByReference();
+
+        boolean foundWin32_Process = false;
+        try {
+            svc = connectServerEnglishLocale(WbemcliUtil.DEFAULT_NAMESPACE);
+            enumRes = svc.ExecQuery(
+                    "WQL",
+                    "SELECT * FROM meta_class",
+                    COM.Wbemcli.WBEM_FLAG_FORWARD_ONLY | COM.Wbemcli.WBEM_FLAG_USE_AMENDED_QUALIFIERS, null);
+
+            while (true) {
+                Wbemcli.IWbemClassObject[] results = enumRes.Next(Wbemcli.WBEM_INFINITE, 1);
+                if (results.length == 0) {
+                    break;
+                }
+
+                Wbemcli.IWbemClassObject classObject = results[0];
+                Variant.VARIANT.ByReference pQualifierVal = new Variant.VARIANT.ByReference();
+
+                COMUtils.checkRC(classObject.Get("__CLASS", 0, pVal, pType, plFlavor));
+                String className = pVal.stringValue();
+                if(! className.equals("Win32_Process")) {
+                    continue;
+                }
+                foundWin32_Process = true;
+                OleAuto.INSTANCE.VariantClear(pVal);
+
+                COMUtils.checkRC(classObject.Get("__SUPERCLASS", 0, pVal, pType, plFlavor));
+                Object baseClass = pVal.getValue();
+                OleAuto.INSTANCE.VariantClear(pVal);
+                assertEquals("CIM_Process", baseClass.toString());
+
+                String[] propertyNames = classObject.GetNames(null, 0, pQualifierVal);
+                assertTrue(Arrays.asList(propertyNames).contains("ProcessId"));
+
+                Wbemcli.IWbemQualifierSet classQualifiersSet = classObject.GetQualifierSet();
+                String[] classQualifiersNames = classQualifiersSet.GetNames();
+                assertTrue(Arrays.asList(classQualifiersNames).contains("DisplayName"));
+                String classDisplayName = classQualifiersSet.Get("DisplayName");
+                assertEquals("Processes", classDisplayName);
+
+                Wbemcli.IWbemQualifierSet propertyQualifiersSet = classObject.GetPropertyQualifierSet("ProcessId");
+                String[] propertyQualifierNames = propertyQualifiersSet.GetNames();
+
+                assertTrue(Arrays.asList(propertyQualifierNames).contains("DisplayName"));
+                String propertyDisplayName = propertyQualifiersSet.Get("DisplayName");
+                assertEquals("Process Id", propertyDisplayName);
+
+                assertTrue(Arrays.asList(propertyQualifierNames).contains("CIMTYPE"));
+                String propertyCIMTYPE = propertyQualifiersSet.Get("CIMTYPE");
+                assertEquals("uint32", propertyCIMTYPE);
+
+                classObject.Release();
+            }
+        } finally {
+            if (svc != null) svc.Release();
+            if (enumRes != null) enumRes.Release();
+        }
+        assertTrue(foundWin32_Process);
+    }
+
+    @Test
+    public void testIWbemContextSetValue() {
+        long currentPid = Kernel32.INSTANCE.GetCurrentProcessId();
+        String objectPath = String.format("\\\\.\\%s:Win32_Process.Handle=\"%d\"", WbemcliUtil.DEFAULT_NAMESPACE, currentPid);
+
+        // This context object retrieves only parts of a WMI instance.
+        Wbemcli.IWbemContext pctxDrive = new Wbemcli.IWbemContext().create();
+        pctxDrive.SetValue("__GET_EXTENSIONS", 0, true);
+        pctxDrive.SetValue("__GET_EXT_CLIENT_REQUEST", 0, true);
+
+        // Create a safe array of just one property to retrieve.
+        OaIdl.SAFEARRAY psaProperties = OaIdl.SAFEARRAY.createSafeArray(new WTypes.VARTYPE(VT_BSTR), 1);
+        OleAuto.INSTANCE.SafeArrayLock(psaProperties);
+        try {
+            WTypes.BSTR strPropertyBSTR = OleAuto.INSTANCE.SysAllocString("ProcessId");
+            try {
+                psaProperties.putElement(strPropertyBSTR, 0);
+            } finally {
+                OleAuto.INSTANCE.SysFreeString(strPropertyBSTR);
+            }
+        } finally {
+            OleAuto.INSTANCE.SafeArrayUnlock(psaProperties);
+        }
+
+        Variant.VARIANT.ByReference vPropertyList = new Variant.VARIANT.ByReference();
+        vPropertyList.setVarType((short) (VT_ARRAY | VT_BSTR));
+        vPropertyList.setValue(psaProperties);
+        pctxDrive.SetValue("__GET_EXT_PROPERTIES", 0, vPropertyList);
+        psaProperties.destroy();
+
+        Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
+        Wbemcli.IWbemServices svc = null;
+        try {
+            svc = WbemcliUtil.connectServer(WbemcliUtil.DEFAULT_NAMESPACE);
+            Wbemcli.IWbemClassObject classObject = svc.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
+            // The properties "Handle" and "PropertyId" must have the same values with different types.
+            COMUtils.checkRC(classObject.Get("ProcessId", 0, pVal, null, null));
+        }
+        finally {
+            if (svc != null) svc.Release();
+        }
+        assertEquals(currentPid, pVal.longValue());
+    }
 }
