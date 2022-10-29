@@ -24,10 +24,20 @@ public class WmiJnaTest {
     @Before
     public void initCom() {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-        // assertEquals(COMUtils.S_OK, Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED).intValue());
+        Ole32.INSTANCE.CoInitializeSecurity(null, -1, null, null, Ole32.RPC_C_AUTHN_LEVEL_DEFAULT,
+                        Ole32.RPC_C_IMP_LEVEL_IMPERSONATE, null, Ole32.EOAC_NONE, null).intValue();
+
+        /*
+        // This does not work with other tests, because, a CoUninitialize() is missing.
+        Not a problem: This can be called several times.
+
+        assertEquals(COMUtils.S_OK, Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED).intValue());
+
+        // This can be calles several times too: https://learn.microsoft.com/en-us/windows/win32/api/combaseapi/nf-combaseapi-coinitializesecurity
         assertEquals(COMUtils.S_OK,
                 Ole32.INSTANCE.CoInitializeSecurity(null, -1, null, null, Ole32.RPC_C_AUTHN_LEVEL_DEFAULT,
                         Ole32.RPC_C_IMP_LEVEL_IMPERSONATE, null, Ole32.EOAC_NONE, null).intValue());
+        */
     }
 
     @After
