@@ -9,6 +9,7 @@ import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.log4j.Logger;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -269,6 +270,14 @@ public class WmiProvider {
      */
     private static HashSet<String> cacheNamespacesSingleThreaded = null;
 
+    private void CheckCacheDirectoryExists() {
+        boolean dirExists = Files.exists(WmiProvider.ontologiesPathCache);
+        if(! dirExists) {
+            File file = new File(WmiProvider.ontologiesPathCache.toString());
+            file.mkdirs();
+        }
+    }
+
     public Set<String> Namespaces() throws Exception{
         if(cacheNamespacesSingleThreaded == null) {
             cacheNamespacesSingleThreaded = new HashSet<>();
@@ -280,9 +289,12 @@ public class WmiProvider {
                 cacheNamespacesSingleThreaded = mapperObj.readValue(pathCacheNamespaces.toFile(), HashSet.class);
                 logger.debug("Number of namespaces=" + cacheNamespacesSingleThreaded.size());
             } else {
-                logger.debug("Filling namespaces cache");
+                logger.debug("Filling namespaces cache to:" + pathCacheNamespaces);
                 Namespaces(cacheNamespacesSingleThreaded, wbemServiceRoot, "ROOT");
                 logger.debug("End. Number of namespaces=" + cacheNamespacesSingleThreaded.size());
+
+                // Maybe the cache directory does not exist.
+                CheckCacheDirectoryExists();
                 mapperObj.writeValue(pathCacheNamespaces.toFile(),cacheNamespacesSingleThreaded);
                 logger.debug("Written namespaces to:" + pathCacheNamespaces);
             }
