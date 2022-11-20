@@ -113,6 +113,13 @@ public class ServletQueryJavax extends HttpServlet {
         response.addHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         response.addIntHeader("Content-Length", queryResult.length());
 
+        /*
+        Unable to get response from endpoint. Possible reasons:
+            Incorrect endpoint URL.
+            Endpoint is down.
+            Endpoint is not accessible from the YASGUI server and website, and the endpoint is not CORS-enabled.
+        */
+
         WriteFile("queryResult.length()=" + queryResult.length());
         response.getWriter().print(queryResult);
     }
