@@ -46,6 +46,23 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(Set.of("x"), singleRow.KeySet());
     }
 
+    /* Default Yasgui query. */
+    @Test
+    public void testSelect_Yasgui() throws Exception {
+        String sparqlQuery = """
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT * WHERE {
+                ?sub ?pred ?obj .
+            } LIMIT 10
+        """;
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertEquals(10, listRows.size());
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("sub", "pred", "obj"), singleRow.KeySet());
+    }
+
     /** This tests the presence of a table from the ontology. */
     @Test
     public void testSelect_Win32_ProcessFromOntology() throws Exception {
@@ -159,9 +176,9 @@ public class RepositoryWrapperCIMV2Test {
         // ... and have the correct value.
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("handle", "executablepath"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetStringValue("executablepath"));
+        System.out.println("Exec=" + singleRow.GetAsLiteral("executablepath"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
-        Assert.assertEquals(expectedBin, singleRow.GetStringValue("executablepath"));
+        Assert.assertEquals(expectedBin, singleRow.GetAsLiteral("executablepath"));
     }
 
     /** Also select the attribute ProcessId which is an integer.
@@ -186,7 +203,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("process", "pid"), singleRow.KeySet());
         // "18936"^^<http://www.w3.org/2001/XMLSchema#long>
-        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetStringValue("pid"));
+        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetAsLiteral("pid"));
     }
 
     /** Selects all properties of a process.
@@ -267,7 +284,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(propertiesCamelCase, singleRow.KeySet());
 
         // Check the value of a property whose result is known.
-        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetStringValue("processid"));
+        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetAsLiteral("processid"));
     }
 
     /** Get all attributes of Win32_Process.
@@ -375,8 +392,8 @@ public class RepositoryWrapperCIMV2Test {
         // Win32_Service.Caption = "Windows Search"
         // Win32_Process.Caption = "SearchIndexer.exe"
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals("\"Windows Search\"",singleRow.GetStringValue("caption1"));
-        Assert.assertEquals("\"SearchIndexer.exe\"",singleRow.GetStringValue("caption2"));
+        Assert.assertEquals("\"Windows Search\"",singleRow.GetAsLiteral("caption1"));
+        Assert.assertEquals("\"SearchIndexer.exe\"",singleRow.GetAsLiteral("caption2"));
     }
 
     /** This gets the antecedents of the process running the service "Windows Search".
@@ -516,7 +533,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
         // Service (5)
-        Assert.assertEquals(Set.of(PresentUtils.LongToXml(5)), singleRow.GetStringValue("logon_type"));
+        Assert.assertEquals(Set.of(PresentUtils.LongToXml(5)), singleRow.GetAsLiteral("logon_type"));
     }
 
     /** Parent of the process running the service "Windows Search".
@@ -542,7 +559,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals("\"services.exe\"", singleRow.GetStringValue("parent_caption"));
+        Assert.assertEquals("\"services.exe\"", singleRow.GetAsLiteral("parent_caption"));
     }
 
     /** This selects the executable and libraries of the current process.
@@ -575,9 +592,9 @@ public class RepositoryWrapperCIMV2Test {
         //Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetStringValue("file_name"));
+        System.out.println("Exec=" + singleRow.GetAsLiteral("file_name"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
-        Assert.assertEquals(expectedBin, singleRow.GetStringValue("file_name"));
+        Assert.assertEquals(expectedBin, singleRow.GetAsLiteral("file_name"));
     }
 
     /** Patterns order, therefore the order of queries, is forced with alphabetical order and no optimisation.
@@ -610,9 +627,9 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetStringValue("file_name"));
+        System.out.println("Exec=" + singleRow.GetAsLiteral("file_name"));
         String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
-        Assert.assertEquals(expectedBin, singleRow.GetStringValue("file_name"));
+        Assert.assertEquals(expectedBin, singleRow.GetAsLiteral("file_name"));
     }
 
     /** This fetches processes running Java, and return only the node of the associated files.
@@ -639,7 +656,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("_3_file"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetStringValue("_3_file"));
+        System.out.println("Exec=" + singleRow.GetAsUri("_3_file"));
     }
 
     /** This selects all Win32_UserAccount. The current account must be there.
@@ -813,8 +830,8 @@ public class RepositoryWrapperCIMV2Test {
         String countStr = PresentUtils.IntToXml(countFilesExpected);
         System.out.println("countFilesExpected=" + Integer.toString(countFilesExpected));
 
-        String countActual = singleRow.GetStringValue("count_files");
-        System.out.println("count_files=" + singleRow.GetStringValue("count_files"));
+        String countActual = singleRow.GetAsLiteral("count_files");
+        System.out.println("count_files=" + singleRow.GetAsLiteral("count_files"));
         Assert.assertEquals(countStr, countActual);
     }
 
@@ -872,9 +889,9 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("expectedFileSum=" + expectedFileSum);
 
         Assert.assertEquals(Set.of("size_min", "size_max", "size_sum"), singleRow.KeySet());
-        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMin), singleRow.GetStringValue("size_min"));
-        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMax), singleRow.GetStringValue("size_max"));
-        Assert.assertEquals(PresentUtils.LongToXml(expectedFileSum), singleRow.GetStringValue("size_sum"));
+        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMin), singleRow.GetAsLiteral("size_min"));
+        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMax), singleRow.GetAsLiteral("size_max"));
+        Assert.assertEquals(PresentUtils.LongToXml(expectedFileSum), singleRow.GetAsLiteral("size_sum"));
     }
 
     /** Startup time of current process.
@@ -899,7 +916,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
 
-        String minCreationDate = singleRow.GetStringValue("creation_date");
+        String minCreationDate = singleRow.GetAsLiteral("creation_date");
         System.out.println("minCreationDate=" + minCreationDate);
 
         XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minCreationDate);
@@ -937,7 +954,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("min_creation_date"), singleRow.KeySet());
 
-        String minStartActualString = singleRow.GetStringValue("min_creation_date");
+        String minStartActualString = singleRow.GetAsLiteral("min_creation_date");
         System.out.println("minStartActualString=" + minStartActualString);
 
         XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minStartActualString);
@@ -1002,7 +1019,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
 
-        String actualCreationDate = singleRow.GetStringValue("creation_date");
+        String actualCreationDate = singleRow.GetAsLiteral("creation_date");
         System.out.println("actualCreationDate=" + actualCreationDate);
 
         XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(actualCreationDate);
@@ -1039,7 +1056,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
 
-        String actualCreationDate = singleRow.GetStringValue("creation_date");
+        String actualCreationDate = singleRow.GetAsLiteral("creation_date");
         System.out.println("actualCreationDate=" + actualCreationDate);
 
         XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(actualCreationDate);
@@ -1084,7 +1101,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(Set.of("max_inusecount"), singleRow.KeySet());
 
         // FIXME: This value is always null. Why ?
-        String maxInUseCount = singleRow.GetStringValue("max_inusecount");
+        String maxInUseCount = singleRow.GetAsLiteral("max_inusecount");
         System.out.println("maxInUseCount=" + maxInUseCount);
 
         Assert.assertTrue(false);
@@ -1139,7 +1156,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(Set.of("count_threads"), singleRow.KeySet());
 
         // For example: count_threads = ""41"^^<http://www.w3.org/2001/XMLSchema#integer>"
-        Long countThreads = PresentUtils.XmlToLong(singleRow.GetStringValue("count_threads"));
+        Long countThreads = PresentUtils.XmlToLong(singleRow.GetAsLiteral("count_threads"));
         System.out.println("countThreads=" + countThreads);
 
         // At least one thread in this process.
@@ -1172,7 +1189,7 @@ public class RepositoryWrapperCIMV2Test {
         // Typical value: "14.870860927152317880794702"^^<http://www.w3.org/2001/XMLSchema#decimal>
         Assert.assertEquals(Set.of("average_count_threads"), singleRow.KeySet());
 
-        double average_count_threads = PresentUtils.XmlToDouble(singleRow.GetStringValue("average_count_threads"));
+        double average_count_threads = PresentUtils.XmlToDouble(singleRow.GetAsLiteral("average_count_threads"));
         System.out.println("average_count_threads=" + average_count_threads);
 
         // At least one thread per process on the average.
@@ -1442,8 +1459,8 @@ public class RepositoryWrapperCIMV2Test {
                         .collect(
                                 Collectors
                                         .toMap(
-                                                tp -> PresentUtils.trimQuotes(tp.GetStringValue("dir_name")),
-                                                tp -> PresentUtils.XmlToBoolean(tp.GetStringValue(booleanAttribute))));
+                                                tp -> PresentUtils.trimQuotes(tp.GetAsLiteral("dir_name")),
+                                                tp -> PresentUtils.XmlToBoolean(tp.GetAsLiteral(booleanAttribute))));
 
         Map<String, Boolean> mapNameToSystem = ToMapToBool.apply("dir_system");
         System.out.println("mapNameToSystem=" + mapNameToSystem);

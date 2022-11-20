@@ -194,10 +194,10 @@ public class RepositoryWrapperStandardCimv2Test {
 
         int countPresentProcess = 0;
         for(RdfSolution.Tuple oneRow : listRows) {
-            Long pid1 = PresentUtils.XmlToLong(oneRow.GetStringValue("owning_process1"));
+            Long pid1 = PresentUtils.XmlToLong(oneRow.GetAsLiteral("owning_process1"));
             // This test might fail if it is too slow.
             Optional<ProcessHandle> processHandle1 = ProcessHandle.of(pid1);
-            Long pid2 = PresentUtils.XmlToLong(oneRow.GetStringValue("owning_process2"));
+            Long pid2 = PresentUtils.XmlToLong(oneRow.GetAsLiteral("owning_process2"));
             Optional<ProcessHandle> processHandle2 = ProcessHandle.of(pid2);
             System.out.println("pid1=" + pid1 + " pid2=" + pid2);
             if(processHandle1.isPresent() && processHandle2.isPresent()) countPresentProcess++;
@@ -228,8 +228,8 @@ public class RepositoryWrapperStandardCimv2Test {
 
         HashMap<String, List<Long>> mapServiceToPort = new HashMap<>();
         for(RdfSolution.Tuple oneRow : listRows ) {
-            Long portNumber = PresentUtils.XmlToLong(oneRow.GetStringValue("local_port"));
-            String serviceName = oneRow.GetStringValue("service_name");
+            Long portNumber = PresentUtils.XmlToLong(oneRow.GetAsLiteral("local_port"));
+            String serviceName = oneRow.GetAsLiteral("service_name");
             System.out.println("portNumber=" + portNumber + " serviceName=" + serviceName);
             List<Long> servicePorts = mapServiceToPort.get(serviceName);
             if(servicePorts == null) {
@@ -285,8 +285,8 @@ public class RepositoryWrapperStandardCimv2Test {
         */
         Set<String> setProcessNamesPairs = new HashSet<>();
         for(RdfSolution.Tuple oneRow : listRows) {
-            String name1 = oneRow.GetStringValue("process_name1");
-            String name2 = oneRow.GetStringValue("process_name2");
+            String name1 = oneRow.GetAsLiteral("process_name1");
+            String name2 = oneRow.GetAsLiteral("process_name2");
             System.out.println("name1=" + name1 + " name2=" + name2);
             setProcessNamesPairs.add(name1 + " + " + name2);
         }

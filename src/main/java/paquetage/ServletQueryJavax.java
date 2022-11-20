@@ -13,6 +13,11 @@ import javax.servlet.http.HttpServletResponse;
 
 public class ServletQueryJavax extends HttpServlet {
 
+    private RepositoryWrapper repositoryWrapper = null;
+
+    ServletQueryJavax() {
+        repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
+    }
 
     @Override
     public void init(final ServletConfig config) throws ServletException {
@@ -23,36 +28,57 @@ public class ServletQueryJavax extends HttpServlet {
 
     private String outputJson() {
         WriteFile("outputJson");
-        return "tagada";
+        return rdfJson;
     }
 
     private String outputXml() {
         WriteFile("outputXml");
-        return "tralala";
+        return rdfXml;
     }
 
+    static int counter = 0;
     void WriteFile(String message) {
         String fileName = "C:\\Users\\rchat\\Developpement\\present_DVL\\present_solution\\present\\src\\main\\webapp\\WEB-INF\\classes\\paquetage\\Output.txt";
         try {
             FileWriter fileWriter = new FileWriter(fileName, true);
             BufferedWriter out = new BufferedWriter(fileWriter);
-            out.write("Hello:" + message + "\n");
+            out.write("Hello:" + counter + ":" + message + "\n");
+            ++counter;
             out.flush();
+            out.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        WriteFile("doGet");
+        WriteFile("doGet getQueryString=" + request.getQueryString());
+        ProcessQuery(request, response);
+    }
+
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        WriteFile("doPost getQueryString=" + request.getQueryString());
+        ProcessQuery(request, response);
+    }
+
+    private String QueryToJson(String sparqlQuery) throws Exception {
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        String jsonResult = listRows.ToJson();
+        return jsonResult;
+    }
+
+    private void ProcessQuery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         java.lang.String sparqlQuery = request.getParameter("query");
         getServletContext().log("sparqlQuery=" + sparqlQuery);
+        WriteFile("sparqlQuery=" + sparqlQuery);
         java.lang.String resultFormat = request.getParameter("format");
         getServletContext().log("resultFormat=" + resultFormat);
+        WriteFile("resultFormat=" + resultFormat);
 
         String mimeFormat;
         String queryResult;
@@ -63,19 +89,25 @@ public class ServletQueryJavax extends HttpServlet {
         WriteFile("resultFormat=" + resultFormat);
         if(resultFormat.equalsIgnoreCase("JSON")) {
             mimeFormat = "application/sparql-results+json";
-            queryResult = outputJson();
+            // queryResult = outputJson();
+            try {
+                queryResult = QueryToJson(sparqlQuery);
+            }
+            catch(Exception exc) {
+                throw new ServletException(exc);
+            }
         }
         else if(resultFormat.equalsIgnoreCase("XML")) {
             mimeFormat = "application/sparql-results+xml";
             queryResult = outputXml();
         }
         else {
-            mimeFormat = "application/sparql-results+json";
-            queryResult = outputJson();
+            throw new ServletException("Format not implemented:" + resultFormat);
         }
         getServletContext().log("mimeFormat=" + mimeFormat);
 
         response.addHeader("Content-Type", mimeFormat + ";charset=utf-8");
+        // CORS-enabled site.
         response.addHeader("Access-Control-Allow-Origin", "*");
         response.addHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
         response.addHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -90,6 +122,71 @@ public class ServletQueryJavax extends HttpServlet {
         WriteFile("destroy");
         getServletContext().log("destroy() called");
     }
+
+    static String rdfJson = """
+            {
+              "head": { "vars": [ "book" , "title" ]
+              } ,
+              "results": {\s
+                "bindings": [
+                  {
+                    "book": { "type": "uri" , "value": "http://example.org/book/book6" } ,
+                    "title": { "type": "literal" , "value": "Harry Potter and the Half-Blood Prince" }
+                  } ,
+                  {
+                    "book": { "type": "uri" , "value": "http://example.org/book/book7" } ,
+                    "title": { "type": "literal" , "value": "Harry Potter and the Deathly Hallows" }
+                  } ,
+                  {
+                    "book": { "type": "uri" , "value": "http://example.org/book/book5" } ,
+                    "title": { "type": "literal" , "value": "Harry Potter and the Order of the Phoenix" }
+                  } ,
+                  {
+                    "book": { "type": "uri" , "value": "http://example.org/book/book4" } ,
+                    "title": { "type": "literal" , "value": "Harry Potter and the Goblet of Fire" }
+                  } ,
+                  {
+                    "book": { "type": "uri" , "value": "http://example.org/book/book2" } ,
+                    "title": { "type": "literal" , "value": "Harry Potter and the Chamber of Secrets" }
+                  } ,
+                  {
+                    "book": { "type": "uri" , "value": "http://example.org/book/book3" } ,
+                    "title": { "type": "literal" , "value": "Harry Potter and the Prisoner Of Azkaban" }
+                  } ,
+                  {
+                    "book": { "type": "uri" , "value": "http://example.org/book/book1" } ,
+                    "title": { "type": "literal" , "value": "Harry Potter and the Philosopher's Stone" }
+                  }
+                ]
+              }
+            }
+        """;
+
+    // NOT TESTED.
+    static String rdfXml = """
+            <?xml version="1.0"?>
+            <rdf:RDF
+            xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+            xmlns:cd="http://www.recshop.fake/cd#">
+            <rdf:Description
+             rdf:about="http://www.recshop.fake/cd/Empire Burlesque">
+              <cd:artist>Bob Dylan</cd:artist>
+              <cd:country>USA</cd:country>
+              <cd:company>Columbia</cd:company>
+              <cd:price>10.90</cd:price>
+              <cd:year>1985</cd:year>
+            </rdf:Description>
+            <rdf:Description
+             rdf:about="http://www.recshop.fake/cd/Hide your heart">
+              <cd:artist>Bonnie Tyler</cd:artist>
+              <cd:country>UK</cd:country>
+              <cd:company>CBS Records</cd:company>
+              <cd:price>9.90</cd:price>
+              <cd:year>1988</cd:year>
+            </rdf:Description>
+            </rdf:RDF>
+        """;
+
 }
 
 
