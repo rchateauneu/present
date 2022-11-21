@@ -98,6 +98,9 @@ public class WmiProvider {
                             and then click "Security" button in the lower right. Dig deeper if needed.
                  */
                 wbemService = WbemcliUtil.connectServer(namespace);
+                if(wbemService == null) {
+                    throw new RuntimeException("Cannot create wbemService to namespace=" + namespace);
+                }
 
                 // For documentation only. Not needed, see connectServer().
                 if(false) {
@@ -312,6 +315,9 @@ public class WmiProvider {
         if(cacheClasses == null) {
             logger.debug("Getting IWbemServices for namespace=" + namespace);
             Wbemcli.IWbemServices wbemService = GetWbemService(namespace);
+            if(wbemService == null) {
+                throw new RuntimeException("WBEM service is null for namespace=" + namespace);
+            }
             logger.debug("Getting classes for namespace=" + namespace);
             cacheClasses = ClassesCached(wbemService);
             logger.debug("End getting classes in " + namespace + " Number of classes=" + cacheClasses.size());
