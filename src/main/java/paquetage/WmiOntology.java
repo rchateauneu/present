@@ -292,7 +292,7 @@ public class WmiOntology {
 
             if (fileExists) {
                 // Load the existing ontology from the file and sets the repository connection to it.
-                logger.debug("File exists: dirSaildump=" + dirSaildump);
+                logger.debug("Directory exists: dirSaildump=" + dirSaildump);
                 MemoryStore memStore = new MemoryStore(dirSaildump);
                 memStore.setSyncDelay(3600000L); // Practically no synchronization.
                 logger.debug("MemoryStore created");
