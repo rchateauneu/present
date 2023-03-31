@@ -43,7 +43,7 @@ public class WmiProvider {
         String tempDir = System.getProperty("java.io.tmpdir");
 
         // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-        ontologiesPathCache = Paths.get(tempDir + "\\" + "Ontologies");
+        ontologiesPathCache = Paths.get(tempDir + "\\" + "PresentOntologies");
     }
 
     static {
