@@ -12,3 +12,11 @@ Bridge Sparql <=> Wql
 * SqlServer provider: https://flylib.com/books/en/2.679.1.46/1/ : SQL WMI classes = MSSQL_Column, MSSQL_Database, MSSQL_ForeignKey etc...
 * OMI provider in Python : https://github.com/microsoft/omi-script-provider
 
+* OMI query examples:
+* https://github.com/microsoft/omi
+
+* /opt/omi/bin/omicli ei root/omi OMI_Identify
+
+Display help:
+/opt/omi/bin/omicli
+/opt/omi/bin/omicli gc root/omi OMI_Identify
