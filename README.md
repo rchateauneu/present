@@ -22,9 +22,9 @@ SELECT * WHERE {
 } LIMIT 10
 ```
 
-
 # TODO
 * Ontotext plugin, see [GraphDB Plugins](https://graphdb.ontotext.com/documentation/10.0/plug-ins.html)
+* Display with [d3.js](d3.js) and [d3sparql.js](http://biohackathon.org/d3sparql/) . Are these the sources : [https://github.com/ktym/d3sparql](https://github.com/ktym/d3sparql) ?
 
 # OMI
 * wsMan connection to OMI: https://github.com/OpenNMS/wsman GitHub - OpenNMS/wsman: A WS-Man client for Java A pure Java WS-Man client implemented using JAX-WS & CXF. Artifacts are available in Maven Central.
