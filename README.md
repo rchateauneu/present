@@ -51,3 +51,11 @@ Displaying OMI help:
 /opt/omi/bin/omicli
 /opt/omi/bin/omicli gc root/omi OMI_Identif
 ```
+
+TODO:
+Reimplement the sparql command DESCRIBE which will return for a given CIM object:
+- Its attributes.
+- Associated objects (associators).
+- related scripts (As SeeAlso)
+
+How to execute scripts ? Is it possible to use them as variables in a FROM sparql clause ?
