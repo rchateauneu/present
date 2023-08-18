@@ -1,18 +1,35 @@
 <html>
 <head><title>Status page</title></head>
 <body>
+  Internal status
   <%
-    double num = Math.random();
-    if (num > 0.95) {
+  String computerName = paquetage.PresentUtils.computerName;
+  String parentProcessId = paquetage.PresentUtils.ParentProcessId();
+  String parentProcessName = paquetage.PresentUtils.ParentProcessName();
   %>
-      <h2>Random value over 0.95 :</h2><p>(<%= num %>)</p>
+  <table border=1>
+  <tr><td>Computer name</td><td><%= computerName %></td></tr>
+  <tr><td>Parent process id</td><td><%= parentProcessId %></td></tr>
+  <tr><td>Parent process name</td><td><%= parentProcessName %></td></tr>
+  <tr><td>Ontologies path cache</td><td><%= paquetage.WmiProvider.ontologiesPathCache %></td></tr>
+  </table>
+
   <%
-    } else {
+  java.util.Set<String> namespaces = paquetage.WmiOntology.Namespaces();
+  int countNamespaces = namespaces.size();
   %>
-      <h2>Random value below 0.95 :</h2><p>(<%= num %>)</p>
+  <h2>Namespaces count: </h2><p><%= countNamespaces %></p>
+
+  <table>
   <%
-    }
+  for(String currentNamespace: namespaces) {
   %>
+  <tr><td><%= currentNamespace %></td></tr>
+  <%
+  }
+  %>
+  </table>
+
   <a href="<%= request.getRequestURI() %>"><h3>Retry</h3></a>
 </body>
 </html>
