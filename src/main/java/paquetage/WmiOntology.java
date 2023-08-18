@@ -24,7 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import static org.eclipse.rdf4j.model.util.Values.iri;
@@ -253,6 +255,11 @@ public class WmiOntology {
      */
     static private HashMap<String, RepositoryConnection> mapNamespaceToConnects = new HashMap<>();
 
+    /** Used to display information about the repository. */
+    static public Set<String> Namespaces() {
+        return mapNamespaceToConnects.keySet();
+    }
+
     static public RepositoryConnection ReadOnlyOntologyConnection(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection = mapNamespaceToConnects.get(namespace);
@@ -361,7 +368,6 @@ public class WmiOntology {
         Repository repo = new SailRepository(new MemoryStore());
         RepositoryConnection repositoryConnection = repo.getConnection();
 
-        // mapNamespaceToConnects.keySet()
         for(String namespace: wmiProvider.Namespaces()) {
             InsertOntologyToConnection(namespace, repositoryConnection);
         }

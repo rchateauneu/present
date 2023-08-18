@@ -32,7 +32,7 @@ public class WmiProvider {
     // These two variables are temporary.
     private static Wbemcli.IWbemServices wbemServiceRoot = null;
     public static Wbemcli.IWbemServices wbemServiceRootCimv2 = null;
-    static Path ontologiesPathCache;
+    public static Path ontologiesPathCache;
     // For "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_Net..."
     static private String regexReference = "\\\\\\\\[-\\dA-Z\\._]+\\\\(ROOT[-A-Z\\d_\\\\]*):.*";
     static private Pattern patternReference = Pattern.compile(regexReference, Pattern.CASE_INSENSITIVE);
