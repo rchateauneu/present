@@ -1,0 +1,56 @@
+<head>
+  <link href="https://unpkg.com/@triply/yasgui/build/yasgui.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://unpkg.com/@triply/yasgui/build/yasgui.min.js"></script>
+  <!-- It does not really work with this: -->
+  <!--
+  <link href="https://yasgui.org/dist/yasgui.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://yasgui.org/dist/yasgui.min.js"></script>
+  -->
+<style>
+  /* See https://triply.cc/docs/yasgui-api for details. */
+
+  /* We do not want to disable the endpoint selector. */
+  /*
+  https://stackoverflow.com/questions/9245353/what-does-important-mean-in-css
+  !important changes the rules for override priority of css cascades.
+  */
+  /*
+  .yasgui .autocompleteWrapper {
+    display: none !important;
+  }
+  */
+</style>
+  <script src="https://unpkg.com/@triply/yasgui/build/yasgui.min.js"></script>
+
+</head>
+<body>
+  <div id="yasgui"></div>
+  <script>
+    // See https://triply.cc/docs/yasgui-api for explanations.
+    // const yasgui2 = new Yasgui(document.getElementById("yasguiABC"));
+    // http://localhost:8180/present/query
+    // https://dbpedia.org/sparql
+
+    // URL is http://localhost:8080/present-1.0-SNAPSHOT/status.jsp when deploying.
+    configuration =
+    {
+      requestConfig: { endpoint: "http://localhost:8180/present/query" },
+      copyEndpointOnNewTab: false,
+      endpointCatalogueOptions:
+      {
+        getData: () => {
+          return [
+            {
+              endpoint: "https://dbpedia.org/dzing"
+            },
+          ];
+        },
+      }
+    };
+    configuration =
+    {
+      requestConfig: { endpoint: "http://localhost:8180/present/query" }
+    };
+    const yasgui = new Yasgui(document.getElementById("yasgui"), configuration);
+  </script>
+</body>

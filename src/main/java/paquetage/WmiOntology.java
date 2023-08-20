@@ -296,6 +296,7 @@ public class WmiOntology {
             // TODO: Find a way to IMPORT this content into a new MemoryStore, later unconnected to the file.
             // TODO: This will avoid a useless copy.
             // TODO: See MemoryStore.setPersist
+            // FIXME : Possibly a bug when the cache is obsolete. In this case, just delete the cache directory.
 
             if (fileExists) {
                 // Load the existing ontology from the file and sets the repository connection to it.
@@ -406,5 +407,4 @@ public class WmiOntology {
             Token = token;
         }
     }
-
 }
