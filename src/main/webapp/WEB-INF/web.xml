@@ -19,4 +19,33 @@
         <servlet-name>query_servlet</servlet-name>
         <url-pattern>/query</url-pattern>
     </servlet-mapping>
+    <!--
+    https://tomcat.apache.org/tomcat-7.0-doc/config/filter.html#CORS_Filter
+    ('Access-Control-Allow-Origin', '*'),
+    ('Access-Control-Allow-Methods', 'POST,GET,OPTIONS'),
+    ('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept'),
+    ]
+    // Already sent in ServletQueryJavax and ServletStatusJavax ?
+    // These filters may conflict with the code ?
+    -->
+    <filter>
+        <filter-name>CorsFilter</filter-name>
+        <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+        <init-param>
+            <param-name>cors.allowed.origins</param-name>
+            <param-value>*</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.allowed.methods</param-name>
+            <param-value>POST,GET,OPTIONS</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.allowed.headers</param-name>
+            <param-value>Origin, X-Requested-With, Content-Type, Accept</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CorsFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 </web-app>

@@ -18,7 +18,7 @@
   java.util.Set<String> namespaces = paquetage.WmiOntology.Namespaces();
   int countNamespaces = namespaces.size();
   %>
-  <h2>Namespaces count: </h2><p><%= countNamespaces %></p>
+  Namespaces in cache: <p><%= countNamespaces %></p>
 
   <table>
   <%

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+// Is it used ???
 public class SparqlFrontEnd {
     /**
      * - Receives a Sparql query.
