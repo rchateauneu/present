@@ -17,7 +17,7 @@ public class RepositoryWrapperStandardCimv2Test {
     @Before
     public void setUp() throws Exception {
         // FIXME: Beware, only this ontology is loaded.
-        //   Ajouter un test prenant en compte les deux ontologies.
+        // TODO: Add a test using both ontologies.
         repositoryWrapper = new RepositoryWrapper("ROOT\\StandardCimv2");
     }
 
@@ -28,7 +28,7 @@ public class RepositoryWrapperStandardCimv2Test {
     }
 
     /**
-     * Represents a TCP connection for the Microsoft TCP/IP WMI v2 provider.
+     * Processes of all TCP connection for the Microsoft TCP/IP WMI v2 provider.
      * @throws Exception
      */
     @Test
