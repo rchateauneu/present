@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class ServletQueryJavax extends HttpServlet {
-    final static private Logger logger = Logger.getLogger(SparqlBGPTreeExtractor.class);
+    final static private Logger logger = Logger.getLogger(ServletQueryJavax.class);
 
     private RepositoryWrapper repositoryWrapper = null;
 
@@ -25,11 +25,6 @@ public class ServletQueryJavax extends HttpServlet {
         WriteFile("init");
         repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
         WriteFile("after repositoryWrapper creation");
-    }
-
-    private String outputXml() {
-        WriteFile("outputXml");
-        return rdfXml;
     }
 
     static int counter = 0;
@@ -64,38 +59,62 @@ public class ServletQueryJavax extends HttpServlet {
     private String QueryToJson(String sparqlQuery) throws Exception {
         logger.debug("sparqlQuery=" + sparqlQuery);
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        String jsonResult = listRows.ToJson();
+        String jsonResult = listRows.ToJson(true);
         return jsonResult;
     }
 
-    private void ProcessQuery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private void ProcessQuery(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        /*
+        Header of Wikidata Sparql GUI:
+            :method: GET
+            :scheme: https
+            Accept: application/sparql-results+json
+            Accept-Encoding: gzip, deflate, br
+            Accept-Language: en-GB,en;q=0.9,en-US;q=0.8,fr;q=0.7
+            Cache-Control: no-cache
+            Cookie: GeoIP=GB:ENG:Acton:51.51:-0.27:v4; WMF-Last-Access-Global=02-Sep-2023
+            Pragma: no-cache
+         */
+        String acceptHeader = request.getHeader("Accept");
+        getServletContext().log("acceptHeader=" + acceptHeader);
+        logger.debug("acceptHeader=" + acceptHeader);
+
         response.setContentType("text/html;charset=UTF-8");
         java.lang.String sparqlQuery = request.getParameter("query");
         getServletContext().log("sparqlQuery=" + sparqlQuery);
         WriteFile("sparqlQuery=" + sparqlQuery);
+        // TODO: Should parse "acceptHeader=application/sparql-results+json"
         java.lang.String resultFormat = request.getParameter("format");
         getServletContext().log("resultFormat=" + resultFormat);
         WriteFile("resultFormat=" + resultFormat);
 
         String mimeFormat;
-        String queryResult;
         if(resultFormat == null) {
             WriteFile("resultFormat is null");
+            logger.debug("resultFormat is null");
             resultFormat = "JSON";
         }
+        logger.debug("resultFormat=" + resultFormat);
         WriteFile("resultFormat=" + resultFormat);
+
+        RdfSolution listRows = null;
+        try {
+            listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        }
+        catch(Exception exc) {
+            throw new ServletException(exc);
+        }
+
+        String queryResult;
         if(resultFormat.equalsIgnoreCase("JSON")) {
             mimeFormat = "application/sparql-results+json";
-            try {
-                queryResult = QueryToJson(sparqlQuery);
-            }
-            catch(Exception exc) {
-                throw new ServletException(exc);
-            }
+            queryResult = listRows.ToJson(false);
         }
         else if(resultFormat.equalsIgnoreCase("XML")) {
+            // FIXME: This is not tested.
             mimeFormat = "application/sparql-results+xml";
-            queryResult = outputXml();
+            queryResult = listRows.ToJson(true);
         }
         else {
             throw new ServletException("Format not implemented:" + resultFormat);

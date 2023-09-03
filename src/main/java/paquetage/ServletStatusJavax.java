@@ -73,6 +73,9 @@ public class ServletStatusJavax extends HttpServlet {
         return outputXml;
     }
 
+    /*
+    This is for temporary debugging only.
+     */
     void WriteFile(String message) {
         String fileName = "C:\\Users\\rchat\\Developpement\\present_DVL\\present_solution\\present\\src\\main\\webapp\\WEB-INF\\classes\\paquetage\\Output.txt";
         try {
@@ -117,7 +120,7 @@ public class ServletStatusJavax extends HttpServlet {
             queryResult = outputJson();
         }
         getServletContext().log("mimeFormat=" + mimeFormat);
-
+        // FIXME: Should do that with TomCat, because we want to serve static files too.
         response.addHeader("Content-Type", mimeFormat + ";charset=utf-8");
         response.addHeader("Access-Control-Allow-Origin", "*");
         response.addHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");

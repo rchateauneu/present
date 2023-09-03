@@ -14,7 +14,7 @@ public class RdfSolutionTest {
         RdfSolution solution = new RdfSolution();
         Assert.assertEquals(0, solution.size());
         Assert.assertEquals(new HashSet<String>(), solution.Bindings());
-        String actualJson = solution.ToJson();
+        String actualJson = solution.ToJson(true);
 
         String expectedJson = """
 {
@@ -25,15 +25,14 @@ public class RdfSolutionTest {
         Assert.assertEquals(expectedJson, actualJson);
     }
 
-    String strZero = "\"0\"^^<http://www.w3.org/2001/XMLSchema#long>\"";
     @Test
-    public void testToJsonOneLine() {
+    public void testToJsonOneLine_1() {
         RdfSolution solution = new RdfSolution();
         solution.add(RdfSolution.Tuple.Factory()
-                .AddKeyValue("k1", false, strZero));
+                .AddKeyValue("k1", false, "\"0\"^^<http://www.w3.org/2001/XMLSchema#long>\""));
         Assert.assertEquals(1, solution.size());
         Assert.assertEquals(Set.of("k1"), solution.Bindings());
-        String actualJson = solution.ToJson();
+        String actualJson = solution.ToJson(true);
 
     /*
             {
@@ -57,8 +56,31 @@ public class RdfSolutionTest {
 {
     "head": {"vars": ["k1"]},
     "results": {"bindings": [{"k1": {
+        "datatype": "http://www.w3.org/2001/XMLSchema#long",
         "type": "literal",
         "value": "\\"0\\"^^<http://www.w3.org/2001/XMLSchema#long>\\""
+    }}]}
+}""";
+
+        Assert.assertEquals(expectedJson, actualJson);
+    }
+
+    @Test
+    public void testToJsonOneLine_2() {
+        RdfSolution solution = new RdfSolution();
+        solution.add(RdfSolution.Tuple.Factory()
+                .AddKeyValue("k1", false, "\"0\"^^<http://www.w3.org/2001/XMLSchema#long>\""));
+        Assert.assertEquals(1, solution.size());
+        Assert.assertEquals(Set.of("k1"), solution.Bindings());
+        String actualJson = solution.ToJson(false);
+
+        String expectedJson = """
+{
+    "head": {"vars": ["k1"]},
+    "results": {"bindings": [{"k1": {
+        "datatype": "http://www.w3.org/2001/XMLSchema#long",
+        "type": "literal",
+        "value": "0"
     }}]}
 }""";
 
@@ -76,7 +98,7 @@ public class RdfSolutionTest {
                 .AddKeyValue("k3", false, "3"));
         Assert.assertEquals(2, solution.size());
         Assert.assertEquals(Set.of("k1", "k2", "k3"), solution.Bindings());
-        String actualJson = solution.ToJson();
+        String actualJson = solution.ToJson(true);
 
         String expectedJson = """
 {
@@ -118,7 +140,7 @@ public class RdfSolutionTest {
                 .AddKeyValue("k1", true, "http://some.thing"));
         Assert.assertEquals(1, solution.size());
         Assert.assertEquals(Set.of("k1"), solution.Bindings());
-        String actualJson = solution.ToJson();
+        String actualJson = solution.ToJson(true);
 
         String expectedJson = """
 {

@@ -37,10 +37,32 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
     public static class Tuple {
         public record RdfValue(boolean isUri, String value)
         {
-            public JSONObject ToJSONObject() {
+            public JSONObject ToJSONObject(Boolean withSchema) {
+                // Possible values: "2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>
                 JSONObject jsonRdfValue = new JSONObject();
                 jsonRdfValue.put("type", isUri ? "uri" : "literal");
-                jsonRdfValue.put("value", value);
+
+                PresentUtils.ParsedXMLTag parsedXml = new PresentUtils.ParsedXMLTag(value);
+
+                // FIXME: Not sure: We have experimented only with Json output
+                if(withSchema) {
+                    // FIXME: Maybe this mode is not needed.
+                    jsonRdfValue.put("value", value);
+                } else {
+                    jsonRdfValue.put("value", parsedXml.value);
+                }
+                /*
+                Possible values for optional "datatype":
+                 "datatype" : "http://www.w3.org/1998/Math/MathML",
+                 "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime"
+                */
+                if(parsedXml.datatype != null) {
+                    jsonRdfValue.put("datatype", parsedXml.datatype);
+                }
+
+                /* TODO: Should add
+                "xml:lang" : "en"
+                 */
                 return jsonRdfValue;
             }
         };
@@ -77,6 +99,7 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
         }
 
         public Tuple AddKeyValue(String key, boolean valueIsUri, String valueString) {
+            // FIXME: Where is it created ? "2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>
             KeyValuePairs.put(key, new RdfValue(valueIsUri, valueString));
             return this;
         }
@@ -88,6 +111,8 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
         public Tuple(BindingSet bindingSet) throws Exception {
             for(Binding binding : bindingSet) {
                 Value bindingValue = binding.getValue();
+                // For example '"2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
+                // It must be cleaned to be used in Wikidata Sparrql GUI, for example.
                 String valueString = bindingValue.toString();
 
                 if(bindingValue.isTriple()) {
@@ -107,7 +132,9 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
                     }
                 }
                 // TODO: If the value is a literal, it is formatted as in XML,
-                // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>"'
+                // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>'
+                // TODO: or '"2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
+                // FIXME: Where is it created ?
                 AddKeyValue(binding.getName(), isIri, valueString);
             }
         }
@@ -124,10 +151,10 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
             return KeyValuePairs.toString();
         }
 
-        public JSONObject ToJSONObject() {
+        public JSONObject ToJSONObject(Boolean withSchema) {
             JSONObject jsonTuple = new JSONObject();
             for(Map.Entry<String, RdfValue> kv : KeyValuePairs.entrySet()) {
-                jsonTuple.put(kv.getKey(), kv.getValue().ToJSONObject());
+                jsonTuple.put(kv.getKey(), kv.getValue().ToJSONObject(withSchema));
             }
             return jsonTuple;
         }
@@ -186,7 +213,7 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
               }
             }
      */
-    String ToJson() {
+    String ToJson(Boolean withSchema) {
         JSONObject jsonTop = new JSONObject();
 
         JSONObject jsonHead = new JSONObject();
@@ -197,7 +224,7 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
 
         List<JSONObject> jsonBindings = new ArrayList<>();
         for(Tuple tuple: tuplesList) {
-            JSONObject jsonTuple = tuple.ToJSONObject();
+            JSONObject jsonTuple = tuple.ToJSONObject(withSchema);
             jsonBindings.add(jsonTuple);
         }
         jsonResults.put("bindings", jsonBindings);

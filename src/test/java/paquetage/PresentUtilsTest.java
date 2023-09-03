@@ -59,5 +59,27 @@ public class PresentUtilsTest {
           Assert.assertEquals(false, boolResult);
      }
 
+     public void test_extractStringXMLConditional_1() throws Exception {
+          PresentUtils.ParsedXMLTag parsedXML = new PresentUtils.ParsedXMLTag("\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>");
+          Assert.assertEquals("false", parsedXML.value);
+          Assert.assertEquals("http://www.w3.org/2001/XMLSchema#boolean", parsedXML.datatype);
+     }
+
+     public void test_extractStringXMLConditional_2() throws Exception {
+          PresentUtils.ParsedXMLTag parsedXML = new PresentUtils.ParsedXMLTag("\"2022-07-20\"^^<http://www.w3.org/2001/XMLSchema#date>");
+          Assert.assertEquals("2022-07-20", parsedXML.value);
+          Assert.assertEquals("http://www.w3.org/2001/XMLSchema#date", parsedXML.datatype);
+     }
+     public void test_extractStringXMLConditional_3() throws Exception {
+          PresentUtils.ParsedXMLTag parsedXML = new PresentUtils.ParsedXMLTag("\"2022-02-11T00:44:44.730519\"^^<http://www.w3.org/2001/XMLSchema#dateTime>");
+          Assert.assertEquals("2022-02-11T00:44:44.730519", parsedXML.value);
+          Assert.assertEquals("http://www.w3.org/2001/XMLSchema#dateTime", parsedXML.datatype);
+     }
+
+     public void test_extractStringXMLConditional_4() throws Exception {
+          PresentUtils.ParsedXMLTag parsedXML = new PresentUtils.ParsedXMLTag("any string");
+          Assert.assertEquals("any string", parsedXML.value);
+          Assert.assertEquals(null, parsedXML.datatype);
+     }
 }
 

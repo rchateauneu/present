@@ -292,7 +292,7 @@ query_samples = [
     },
     {
         category : "Volumes and directories",
-        title : "Names of all directories",
+        title : "Names of all directories (very slow)",
         query : `
         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -328,7 +328,7 @@ query_samples = [
                         ?my2_file cimv2:CIM_DataFile.FileSize ?file_size .
                         ?my1_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my2_file .
                         ?my1_assoc cimv2:GroupComponent ?my0_dir .
-                        ?my0_dir cimv2:Win32_Directory.Name "C:\\Windows" .
+                        ?my0_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                     } group by ?my0_dir
         `
     },
@@ -341,7 +341,7 @@ query_samples = [
             select ?creation_date
             where {
                 ?my_file cimv2:Win32_Directory.CreationDate ?creation_date .
-                ?my_file cimv2:Win32_Directory.Name "C:\\Windows" .
+                ?my_file cimv2:Win32_Directory.Name "C:\\\\Windows" .
             }
         `
     },
@@ -353,7 +353,7 @@ query_samples = [
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
             select ?my_name
             where {
-                ?my1_dir cimv2:Win32_Directory.Name "C:\\Windows" .
+                ?my1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                 ?my2_assoc cimv2:GroupComponent ?my1_dir .
                 ?my2_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my3_file .
                 ?my3_file  cimv2:CIM_DataFile.Name ?my_name .
@@ -363,15 +363,16 @@ query_samples = [
     },
     {
         category : "Volumes and directories",
-        title : "Files in a directory",
+        title : "Files in a directory, and their creation dates",
         query : `
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?file_name
+            select ?file_name ?creation_date
             where {
-                ?_1_dir cimv2:Win32_Directory.Name "C:\\Windows" .
+                ?_1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                 ?_1_dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?file .
                 ?file cimv2:CIM_DataFile.Name ?file_name .
+                ?file cimv2:CIM_DataFile.CreationDate ?creation_date .
             }
         `
     },
@@ -398,7 +399,7 @@ query_samples = [
             select ?dir_name
             where
             {
-                ?_1_dir cimv2:Win32_Directory.Name "C:\\WINDOWS" .
+                ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
                 ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                 ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                 ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
@@ -417,7 +418,7 @@ query_samples = [
                 {
                     select ?dir_name where
                     {
-                        ?_1_dir cimv2:Win32_Directory.Name "C:\\WINDOWS" .
+                        ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
                         ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                         ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                         ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
@@ -428,7 +429,7 @@ query_samples = [
                 {
                     select ?dir_name where
                     {
-                        ?_1_dir cimv2:Win32_Directory.Name "C:\\WINDOWS" .
+                        ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
                         ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                         ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                         ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
@@ -439,4 +440,3 @@ query_samples = [
         `
     }
 ];
-//module.exports = query_samples;

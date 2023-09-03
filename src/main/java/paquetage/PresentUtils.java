@@ -82,31 +82,39 @@ public class PresentUtils {
     /** This is used to extract the significant part for "\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>",
      * for example. The XSD type is not checked.
      */
-    static private String regexQuotes = "\"(.*)\".*";
+    static private String regexQuotes = "\"(.*)\"\\^\\^<(.*)>";
     static private Pattern patternQuotesXML = Pattern.compile(regexQuotes);
 
-    /** This returns the string enclosed in quites in a XML-formatted value. */
-    static private String extractStringXML(String xmlString) {
-        Matcher matcher = patternQuotesXML.matcher(xmlString);
-        matcher.find();
-        String stringOnly = matcher.group(1);
-        return stringOnly;
+    static public class ParsedXMLTag {
+        public String datatype;
+        public String value;
+        public ParsedXMLTag(String xmlString) {
+            Matcher matcher = patternQuotesXML.matcher(xmlString);
+            Boolean found = matcher.find();
+            if(found) {
+                value = matcher.group(1);
+                datatype = matcher.group(2);
+            } else {
+                value = xmlString;
+                datatype = null;
+            }
+        }
     }
 
     /** For example longStr = "\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>" */
     static public long XmlToLong(String longStr) {
-        String longOnly = extractStringXML(longStr);
+        String longOnly = new ParsedXMLTag(longStr).value;
         return Long.parseLong(longOnly);
     }
 
     static public double XmlToDouble(String doubleStr) {
-        String doubleOnly = extractStringXML(doubleStr);
+        String doubleOnly = new ParsedXMLTag(doubleStr).value;
         return Double.parseDouble(doubleOnly);
     }
 
     // Example: "false"^^<http://www.w3.org/2001/XMLSchema#boolean>
     static public boolean XmlToBoolean(String booleanStr) {
-        String booleanOnly = extractStringXML(booleanStr);
+        String booleanOnly = new ParsedXMLTag(booleanStr).value;
         if(booleanOnly.equals("true"))
             return true;
         if(booleanOnly.equals("false"))
@@ -127,7 +135,7 @@ public class PresentUtils {
 
         // '"2022-07-20"^^<http://www.w3.org/2001/XMLSchema#date>'
         DatatypeFactory dataTypeFactory = DatatypeFactory.newInstance();
-        String dateOnly = extractStringXML(theDate);
+        String dateOnly = new ParsedXMLTag(theDate).value;
 
         XMLGregorianCalendar xmlDate = dataTypeFactory.newXMLGregorianCalendar(dateOnly);
         return xmlDate;
