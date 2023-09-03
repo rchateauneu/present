@@ -234,11 +234,12 @@ query_samples = [
         query : `
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?name ?domain
+            select ?name ?domain ?description
             where {
                 ?user rdf:type cimv2:Win32_UserAccount .
                 ?user cimv2:Name ?name .
                 ?user cimv2:Domain ?domain .
+                ?user cimv2:Win32_UserAccount.Description ?description .
            }
         `
     },
@@ -367,12 +368,13 @@ query_samples = [
         query : `
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?file_name ?creation_date
+            select ?file_name ?creation_date ?last_modified
             where {
                 ?_1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                 ?_1_dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?file .
                 ?file cimv2:CIM_DataFile.Name ?file_name .
                 ?file cimv2:CIM_DataFile.CreationDate ?creation_date .
+                ?file cimv2:CIM_DataFile.LastModified ?last_modified .
             }
         `
     },

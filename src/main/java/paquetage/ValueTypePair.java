@@ -117,6 +117,66 @@ class ValueTypePair {
         return new ValueTypePair(Long.toString(value), ValueType.INT_TYPE);
     }
 
+    private Value toGregorian(String strValue) {
+        if (strValue == null) {
+            return Values.literal("NULL_DATE");
+        }
+        ZoneId zone = ZoneId.systemDefault();
+        /**
+         * See SWbemDateTime
+         * https://docs.microsoft.com/en-us/windows/win32/wmisdk/swbemdatetime
+         * https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
+         *
+         * strValue = '20220720095636.399854+060' for example.
+         * The time zone offset is in minutes.
+         *
+         * https://stackoverflow.com/questions/37308672/parse-cim-datetime-with-milliseconds-to-java-date                     *
+         */
+
+        String offsetInMinutesAsString = strValue.substring(22);
+        long offsetInMinutes = Long.parseLong(offsetInMinutesAsString);
+        LocalTime offsetAsLocalTime = LocalTime.MIN.plusMinutes(offsetInMinutes);
+        String offsetAsString = offsetAsLocalTime.format(DateTimeFormatter.ISO_LOCAL_TIME);
+        String inputModified = strValue.substring(0, 22) + offsetAsString;
+
+        // "20191207144812.111594+000" => "2019-12-07T14:48:12.111594" for CIM_DataFile.CreationDate
+        DateTimeFormatter formatterInput = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSSSSSZZZZZ");
+        LocalDateTime dateFromGmtString = formatterInput.parse(inputModified, Instant::from).atZone(zone).toLocalDateTime();
+
+        // It does not use LocalDateTime.toString because : "The format used will be the shortest
+        // that outputs the full value of the time where the omitted parts are implied to be zero."
+        // https://stackoverflow.com/questions/50786482/java-8-localdatetime-dropping-00-seconds-value-when-parsing-date-string-value-wi
+
+        /*
+            The output will be one of the following ISO-8601 formats:
+            uuuu-MM-dd'T'HH:mm
+            uuuu-MM-dd'T'HH:mm:ss
+            uuuu-MM-dd'T'HH:mm:ss.SSS
+            uuuu-MM-dd'T'HH:mm:ss.SSSSSS
+            uuuu-MM-dd'T'HH:mm:ss.SSSSSSSSS
+         */
+        DateTimeFormatter formatterOutput = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        //String currentTime= "2017-10-19 22:00:00";
+        //LocalDateTime datetime = LocalDateTime.parse(currentTime,formatter1);
+//2017-10-19T22:00
+        String strDate=dateFromGmtString.format(formatterOutput);
+
+        // "CIM_DataFile.LastAccessed" ??
+        // "CIM_DataFile.InstallDate" ??
+
+
+
+
+
+        logger.debug("strValue=" + strValue);
+        logger.debug("strDate=" + strDate);
+        // Input representation : "2000-01-15T00:00:00"
+        // See https://www.w3.org/TR/xmlschema-2/#dateTime-order
+        XMLGregorianCalendar dateGregorian = datatypeFactory.newXMLGregorianCalendar(strDate);
+
+        return Values.literal(factory, dateGregorian, true);
+    }
+
     /** This transforms a ValueType (as calculated from WMI) into a literal usable by RDF.
      * The original data type is preserved in the literal because the value is not blindly converted to a string.
      * @return
@@ -143,36 +203,7 @@ class ValueTypePair {
             case FLOAT_TYPE:
                 return Values.literal(Double.parseDouble(strValue));
             case DATE_TYPE:
-                if (strValue == null) {
-                    return Values.literal("NULL_DATE");
-                } else {
-                    ZoneId zone = ZoneId.systemDefault();
-                    /**
-                     * See SWbemDateTime
-                     * https://docs.microsoft.com/en-us/windows/win32/wmisdk/swbemdatetime
-                     * https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
-                     *
-                     * strValue = '20220720095636.399854+060' for example.
-                     * The time zone offset is in minutes.
-                     *
-                     * https://stackoverflow.com/questions/37308672/parse-cim-datetime-with-milliseconds-to-java-date                     *
-                     */
-
-                    String offsetInMinutesAsString = strValue.substring(22);
-                    long offsetInMinutes = Long.parseLong(offsetInMinutesAsString);
-                    LocalTime offsetAsLocalTime = LocalTime.MIN.plusMinutes(offsetInMinutes);
-                    String offsetAsString = offsetAsLocalTime.format(DateTimeFormatter.ISO_LOCAL_TIME);
-                    String inputModified = strValue.substring(0, 22) + offsetAsString;
-
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSSSSSZZZZZ");
-                    LocalDateTime dateFromGmtString = formatter.parse(inputModified, Instant::from).atZone(zone).toLocalDateTime();
-
-                    String strDate = dateFromGmtString.toString();
-                    //logger.debug("strDate=" + strDate);
-                    XMLGregorianCalendar dateGregorian = datatypeFactory.newXMLGregorianCalendar(strDate);
-
-                    return Values.literal(factory, dateGregorian, true);
-                }
+                return toGregorian(strValue);
             case STRING_TYPE:
                 return Values.literal(strValue);
             case NODE_TYPE:
