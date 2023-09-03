@@ -272,7 +272,6 @@ public class WmiOntology {
         return repositoryConnection;
     }
 
-
     /** This is only for tests. */
     static public RepositoryConnection ReadOnlyOntologyConnectionNoCacheInMemory(String namespace) {
         logger.debug("Memory-only ontology for namespace=" + namespace);
@@ -332,7 +331,7 @@ public class WmiOntology {
             throw new RuntimeException(exc);
         }
         if(repositoryConnection.isEmpty()) {
-            throw new RuntimeException("Ontology is empty for namespace=" + namespace);
+            throw new RuntimeException("Ontology in " + WmiProvider.ontologiesPathCache + " is empty for namespace=" + namespace);
         }
         return repositoryConnection;
     }
