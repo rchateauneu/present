@@ -127,7 +127,7 @@ query_samples = [
             select ?dir_name ?dir_archive ?dir_compressed ?dir_encrypted ?dir_hidden ?dir_readable ?dir_system ?dir_writeable
             where
             {
-                ?_1_dir cimv2:Win32_Directory.Name "C:\\WINDOWS" .
+                ?_1_dir cimv2:Win32_Directory.Name "C:\\\\WINDOWS" .
                 ?_2_assoc_dir cimv2:Win32_SubDirectory.GroupComponent ?_1_dir .
                 ?_2_assoc_dir cimv2:Win32_SubDirectory.PartComponent ?_3_subdir .
                 ?_3_subdir cimv2:Win32_Directory.FileName ?dir_name .
@@ -314,7 +314,7 @@ query_samples = [
                     where {
                         ?my1_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my2_file .
                         ?my1_assoc cimv2:GroupComponent ?my0_dir .
-                        ?my0_dir cimv2:Win32_Directory.Name "C:\\Windows" .
+                        ?my0_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
                     } group by ?my0_dir
         `
     },
@@ -384,11 +384,12 @@ query_samples = [
         query : `
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-            select ?service_name
+            select ?service_name ?path_name
             where {
                 ?_1_service1 cimv2:Win32_Service.DisplayName "Windows Search" .
                 ?_1_service1 ^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent ?zzzzz_2_service2 .
                 ?zzzzz_2_service2 cimv2:Win32_Service.DisplayName ?service_name .
+                ?zzzzz_2_service2 cimv2:Win32_Service.PathName ?path_name .
             }
         `
     },
