@@ -26,7 +26,7 @@ public class WmiGetter extends BaseGetter {
         return true;
     }
 
-    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) throws Exception {
+    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) {
         try {
             // FIXME: This will not work with other namespaces than "ROOT\\CIMV2".
             Wbemcli.IWbemClassObject objectNode = wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
@@ -42,7 +42,7 @@ public class WmiGetter extends BaseGetter {
     // TODO: This should be thread-safe.
     private static HashMap<String, Wbemcli.IWbemClassObject> cacheWbemClassObject = new HashMap<>();
 
-    private Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) throws Exception {
+    private Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) {
         Wbemcli.IWbemClassObject objectNode = cacheWbemClassObject.get(objectPath);
         if (objectNode == null) {
             objectNode = GetObjectNode(objectPath);
@@ -124,7 +124,7 @@ public class WmiGetter extends BaseGetter {
      * @return
      * @throws Exception
      */
-    private Wbemcli.IWbemClassObject PathToNode(String objectPath, Set<String> columns) throws Exception {
+    private Wbemcli.IWbemClassObject PathToNode(String objectPath, Set<String> columns) {
         Wbemcli.IWbemClassObject objectNode = null;
         if (false) {
             objectNode = GetObjectNode(objectPath);
@@ -146,7 +146,7 @@ public class WmiGetter extends BaseGetter {
      * @return
      * @throws Exception
      */
-    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) {
 
         Set<String> columns = queryData.queryColumns.keySet();
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
@@ -160,7 +160,7 @@ public class WmiGetter extends BaseGetter {
         for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
             String variableName = entry.getValue();
             if(variableName == null) {
-                throw new Exception("Null variable name for objectPath=" + objectPath);
+                throw new RuntimeException("Null variable name for objectPath=" + objectPath);
             }
             if(objectNode == null)
                 singleRow.PutString(variableName, "Object " + objectPath + " is null");
@@ -170,7 +170,7 @@ public class WmiGetter extends BaseGetter {
         // We are sure this is a node.
         ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
         if(wbemPath.Type() != ValueTypePair.ValueType.NODE_TYPE) {
-            throw new Exception("GetSingleObject objectPath should be a node:" + objectPath);
+            throw new RuntimeException("GetSingleObject objectPath should be a node:" + objectPath);
         }
         singleRow.PutValueType(queryData.mainVariable, wbemPath);
         return singleRow;

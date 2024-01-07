@@ -5,13 +5,72 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ef269f1f-ff28-4f68-8628-beed4a904068" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/test/java/paquetage/RdfsPredicatesCIMV2Test.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/paquetage/WikidataGuiTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.travis.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/COM/Wbemcli.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/COM/Wbemcli.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/COM/WbemcliUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/COM/WbemcliUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/DependenciesBuilder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/DependenciesBuilder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/GenericProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/GenericProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPath.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPath.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/PatternsOptimizer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/PatternsOptimizer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/PresentUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/PresentUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ProcessModules.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ProcessModules.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/QueryData.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/QueryData.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/RdfSolution.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/RdfSolution.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/RepositoryWrapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/RepositoryWrapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ServletQueryJavax.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ServletQueryJavax.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/Solution.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/Solution.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPExtractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPTreeExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlBGPTreeExtractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlFrontEnd.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlFrontEnd.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/SparqlTranslation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/SparqlTranslation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/ValueTypePair.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/ValueTypePair.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/WmiGetter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/WmiGetter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/WmiOntology.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/WmiOntology.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/WmiProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/WmiProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/log4j.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/log4j.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/classes/logging.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/classes/logging.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/web.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/web.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/survol_query_samples.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/survol_query_samples.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/yasgui.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/yasgui.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/DependenciesBuilderTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/DependenciesBuilderTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/GenericProviderTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/GenericProviderTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/ObjectPathTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/ObjectPathTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/PresentUtilsTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/PresentUtilsTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/ProcessModulesTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/ProcessModulesTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/RdfSolutionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/RdfSolutionTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/RepositoryWrapperCIMV2Test.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/RepositoryWrapperCIMV2Test.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/RepositoryWrapperOntologyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/RepositoryWrapperOntologyTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/RepositoryWrapperStandardCimv2Test.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/RepositoryWrapperStandardCimv2Test.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorDummyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorDummyTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPTreeExtractorTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SparqlTranslationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SparqlTranslationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/SpecialColumnsTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/SpecialColumnsTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/StatementsGenerationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/StatementsGenerationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiOntologyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiOntologyTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/paquetage/WmiProviderTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/paquetage/WmiProviderTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-archiver/pom.properties" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-archiver/pom.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/yasgui_cors.html" beforeDir="false" afterPath="$PROJECT_DIR$/yasgui_cors.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +82,7 @@
       <list>
         <option value="JUnit5 Test Class" />
         <option value="JUnit3 Test Class" />
+        <option value="HTML File" />
         <option value="Class" />
       </list>
     </option>
@@ -56,20 +116,30 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Program Files/Apache Software Foundation/Tomcat 9.0&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.poratu.idea.plugins.tomcat.setting.TomcatSettingConfigurable&quot;
+    &quot;jdk.selected.JAVA_MODULE&quot;: &quot;17&quot;,
+    &quot;last_directory_selection&quot;: &quot;C:/Users/rchat/Developpement/present_DVL/present_solution/present/src/main/java&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/rchat/Developpement/present_DVL/present_solution/present/wikidata-examples-api-result.json&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Artifacts&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CreateTestDialog.Recents.Supers">
       <recent name="junit.framework.TestCase" />
       <recent name="" />
+    </key>
+    <key name="MoveMembersDialog.RECENTS_KEY">
+      <recent name="paquetage.WmiProvider" />
+      <recent name="paquetage.WmiOntology" />
+      <recent name="paquetage.StatementsGenerationTest" />
+      <recent name="WmiProvider" />
+      <recent name="paquetage.PresentUtils" />
     </key>
     <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
       <recent name="paquetage" />
@@ -83,7 +153,7 @@
     </key>
   </component>
   <component name="RunManager" selected="JUnit.paquetage in present">
-    <configuration name="SparqlExecutionTest.Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="RepositoryWrapperCIMV2Test.testSelect_Win32_ProcessFromOntology" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -92,14 +162,14 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlExecutionTest" />
-      <option name="METHOD_NAME" value="Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.RepositoryWrapperCIMV2Test" />
+      <option name="METHOD_NAME" value="testSelect_Win32_ProcessFromOntology" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlExecutionTest.Execution_Forced_CIM_ProcessExecutable_3" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="RepositoryWrapperCIMV2Test.testSelect_Win32_Process_WithClass_WithOntology" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -108,14 +178,14 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlExecutionTest" />
-      <option name="METHOD_NAME" value="Execution_Forced_CIM_ProcessExecutable_3" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.RepositoryWrapperCIMV2Test" />
+      <option name="METHOD_NAME" value="testSelect_Win32_Process_WithClass_WithOntology" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SparqlTranslationTest.Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="WikidataGuiTest.testSPARQL_CurrentProcessNoType" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -124,14 +194,14 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.SparqlTranslationTest" />
-      <option name="METHOD_NAME" value="Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.WikidataGuiTest" />
+      <option name="METHOD_NAME" value="testSPARQL_CurrentProcessNoType" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="WmiSelecterTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="WmiOntologyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="present" />
       <extension name="coverage">
         <pattern>
@@ -140,7 +210,7 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="paquetage" />
-      <option name="MAIN_CLASS_NAME" value="paquetage.WmiSelecterTest" />
+      <option name="MAIN_CLASS_NAME" value="paquetage.WmiOntologyTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -161,12 +231,12 @@
       </method>
     </configuration>
     <configuration name="Tomcat 9.0" type="com.poratu.idea.plugins.tomcat" factoryName="SMART_TOMCAT_FACTORY">
-      <option name="adminPort" value="8005" />
-      <option name="contextPath" value="" />
-      <option name="docBase" value="" />
+      <option name="adminPort" value="8105" />
+      <option name="contextPath" value="/present" />
+      <option name="docBase" value="C:\Users\rchat\Developpement\present_DVL\present_solution\present\src\main\webapp" />
       <option name="envOptions" />
       <option name="passParentEnvironmentVariables" value="true" />
-      <option name="port" value="8080" />
+      <option name="port" value="8180" />
       <option name="tomcatInfo">
         <TomcatInfo>
           <option name="name" value="Apache Tomcat/9.0.64" />
@@ -182,32 +252,39 @@
     </configuration>
     <configuration default="true" type="com.poratu.idea.plugins.tomcat" factoryName="SMART_TOMCAT_FACTORY">
       <option name="adminPort" value="8005" />
-      <option name="contextPath" />
-      <option name="docBase" />
+      <option name="contextPath" value="/present" />
+      <option name="docBase" value="$PROJECT_DIR$/src/main/webapp" />
       <option name="envOptions" />
       <option name="passParentEnvironmentVariables" value="true" />
       <option name="port" value="8080" />
-      <option name="tomcatInfo" />
+      <option name="tomcatInfo">
+        <TomcatInfo>
+          <option name="name" value="Apache Tomcat/9.0.64" />
+          <option name="number" value="0" />
+          <option name="path" value="C:\Program Files\Apache Software Foundation\Tomcat 9.0" />
+          <option name="version" value="9.0.64.0" />
+        </TomcatInfo>
+      </option>
       <option name="vmOptions" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
     <list>
-      <item itemvalue="JUnit.SparqlTranslationTest.Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" />
-      <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" />
-      <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_ProcessExecutable_3" />
-      <item itemvalue="JUnit.WmiSelecterTest" />
+      <item itemvalue="JUnit.WikidataGuiTest.testSPARQL_CurrentProcessNoType" />
+      <item itemvalue="JUnit.RepositoryWrapperCIMV2Test.testSelect_Win32_Process_WithClass_WithOntology" />
+      <item itemvalue="JUnit.RepositoryWrapperCIMV2Test.testSelect_Win32_ProcessFromOntology" />
+      <item itemvalue="JUnit.WmiOntologyTest" />
       <item itemvalue="JUnit.paquetage in present" />
       <item itemvalue="Smart Tomcat.Tomcat 9.0" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="JUnit.paquetage in present" />
-        <item itemvalue="JUnit.SparqlTranslationTest.Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2" />
-        <item itemvalue="JUnit.WmiSelecterTest" />
-        <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_ProcessExecutable_3" />
-        <item itemvalue="JUnit.SparqlExecutionTest.Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2" />
+        <item itemvalue="JUnit.WikidataGuiTest.testSPARQL_CurrentProcessNoType" />
+        <item itemvalue="JUnit.RepositoryWrapperCIMV2Test.testSelect_Win32_Process_WithClass_WithOntology" />
+        <item itemvalue="JUnit.RepositoryWrapperCIMV2Test.testSelect_Win32_ProcessFromOntology" />
+        <item itemvalue="JUnit.WmiOntologyTest" />
       </list>
     </recent_temporary>
   </component>
@@ -237,30 +314,83 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java</url>
-          <line>31</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/paquetage/WmiJnaTest.java</url>
-          <line>58</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/paquetage/SparqlBGPExtractorTest.java</url>
-          <line>71</line>
+          <line>69</line>
           <option name="timeStamp" value="12" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiSelecter.java</url>
-          <line>108</line>
+          <line>107</line>
           <option name="timeStamp" value="72" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/GenericProvider.java</url>
+          <line>526</line>
+          <option name="timeStamp" value="97" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiOntology.java</url>
+          <line>404</line>
+          <option name="timeStamp" value="112" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiOntology.java</url>
+          <line>382</line>
+          <option name="timeStamp" value="114" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/SparqlTranslation.java</url>
+          <line>203</line>
+          <option name="timeStamp" value="121" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/GenericProvider.java</url>
+          <line>234</line>
+          <option name="timeStamp" value="136" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/WmiOntology.java</url>
+          <line>481</line>
+          <option name="timeStamp" value="143" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/Solution.java</url>
+          <line>311</line>
+          <option name="timeStamp" value="144" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/DependenciesBuilder.java</url>
+          <line>199</line>
+          <option name="timeStamp" value="145" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/Solution.java</url>
+          <line>51</line>
+          <option name="timeStamp" value="146" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/paquetage/ObjectPattern.java</url>
+          <line>289</line>
+          <option name="timeStamp" value="147" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/present$MyClasse.ic" NAME="MyClasse Coverage Results" MODIFIED="1650910403645" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/present$All_in_present.ic" NAME="All in present Coverage Results" MODIFIED="1650910605590" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/present$DependenciesBuilderTest.ic" NAME="DependenciesBuilderTest Coverage Results" MODIFIED="1665959215227" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>paquetage.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/present$ProcessModulesTest.ic" NAME="ProcessModulesTest Coverage Results" MODIFIED="1665906147188" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>paquetage.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/present$MyClasse.ic" NAME="MyClasse Coverage Results" MODIFIED="1650910403645" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/present$paquetage_in_present.ic" NAME="paquetage in present Coverage Results" MODIFIED="1665959238163" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>paquetage.*</FILTER>
+    </SUITE>
   </component>
 </project>
