@@ -15,7 +15,7 @@ abstract class BaseSelecter {
     public abstract boolean MatchProvider(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract Solution EffectiveSelect(QueryData queryData) throws Exception;
+    public abstract Solution EffectiveSelect(QueryData queryData);
 
     // TODO: Estimate cost.
 }
@@ -43,7 +43,7 @@ class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
      * @return
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String dummyValue = queryData.GetWhereValue("DummyKey").toValueString();
 
@@ -80,7 +80,7 @@ class BaseSelecter_DummyClass_All extends BaseSelecter {
      * @return
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
 
         for(int key = 0; key < DummyClass.MaxElements; ++key) {
@@ -115,7 +115,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
      * @return
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String fileName = queryData.GetWhereValue("Name").toValueString();
         String pathFile = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
@@ -138,7 +138,7 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
                 Set.of("PartComponent"),
                 Set.of("GroupComponent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valuePartComponent = queryData.GetWhereValue("PartComponent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valuePartComponent);
@@ -164,12 +164,13 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
 }
 
 class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter {
+    final static private Logger logger = Logger.getLogger(ObjectPattern.class);
     public boolean MatchProvider(QueryData queryData) {
         return queryData.CompatibleQuery("CIM_DirectoryContainsFile",
                 Set.of("GroupComponent"),
                 Set.of("PartComponent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valueGroupComponent = queryData.GetWhereValue("GroupComponent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
@@ -181,6 +182,10 @@ class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter
         File path = new File(dirPath);
 
         File [] files = path.listFiles();
+        if(files == null) {
+            logger.warn("No files in:" + dirPath);
+            files = new File[0];
+        }
         for (File aFile : files){
             if (! aFile.isFile()){
                 continue;
@@ -218,11 +223,18 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
                 Set.of("Antecedent"),
                 Set.of("Dependent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valueAntecedent = queryData.GetWhereValue("Antecedent").toValueString();
+        if(valueAntecedent == null) {
+            throw new RuntimeException("No Antecedent in:" + queryData.whereTests);
+        }
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
         String filePath = properties.get("Name");
+        if(filePath == null) {
+            throw new RuntimeException("filePath is null. properties.keySet()=" + properties.keySet()
+                    + " Antecedent=" + valueAntecedent);
+        }
         List<String> listPids = processModules.GetFromModule(filePath);
 
         String variableName = queryData.ColumnToVariable("Dependent");
@@ -245,7 +257,7 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
     }
 }
 
-/** The input is a process and it returns its executable and libraries.
+/** The input is a process as "Dependent" and it returns its executable and libraries as "Antecedent".
  *
  */
 class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
@@ -253,23 +265,30 @@ class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
     static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchProvider(QueryData queryData) {
+        // "Antecedent" might bit be in the variables requiring a value.
         return queryData.CompatibleQuery(
                 "CIM_ProcessExecutable",
                 Set.of("Dependent"),
                 Set.of("Antecedent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valueDependent = queryData.GetWhereValue("Dependent").toValueString();
         Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
         String pidStr = properties.get("Handle");
         List<String> listModules = processModules.GetFromPid(pidStr);
 
+        // Maybe, the value of "Antecedent" is not required by a variable.
+        // However, it is calculated because it is needed to build the path of the associator.
         String variableName = queryData.ColumnToVariable("Antecedent");
         for(String oneFile : listModules) {
             Solution.Row singleRow = new Solution.Row();
             String pathAntecedent = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", oneFile));
-            singleRow.PutNode(variableName, pathAntecedent);
+            if(variableName != null) {
+                singleRow.PutNode(variableName, pathAntecedent);
+            } else {
+                logger.debug("No variable for Antecedent=" + pathAntecedent);
+            }
 
             // It must also the path of the associator row, even if it will probably not be used.
             String pathAssoc = ObjectPath.BuildCimv2PathWbem(
@@ -289,7 +308,7 @@ abstract class BaseGetter {
     public abstract boolean MatchGetter(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract Solution.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception;
+    public abstract Solution.Row GetSingleObject(String objectPath, QueryData queryData);
 
     // TODO: Cost estimation.
 }
@@ -385,7 +404,8 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
         }
     }
 
-    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public Solution.Row GetSingleObject(String objectPath, QueryData queryData)
+    {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String fileName = properties.get("Name");
         Solution.Row singleRow = new Solution.Row();
@@ -488,11 +508,11 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
                 "WindowsVersion", (String processId) -> WindowsVersion(processId)
         );
 
-        public static void FillRowFromQueryAndPid(Solution.Row singleRow, QueryData queryData, String processId) throws Exception {
+        public static void FillRowFromQueryAndPid(Solution.Row singleRow, QueryData queryData, String processId) {
             for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
                 Function<String, ValueTypePair> lambda = columnsMap.get(qCol.getKey());
                 if(lambda == null) {
-                    throw new Exception("Cannot find lambda for " + qCol.getKey());
+                    throw new RuntimeException("Cannot find lambda for " + qCol.getKey());
                 }
                 ValueTypePair variableValue = lambda.apply(processId);
                 // These columns do not return a path, so a string is OK.
@@ -500,11 +520,11 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
             }
     }
 
-    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) throws Exception {
+    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String processId = properties.get("Handle");
         if(processId == null) {
-            throw new Exception("Null pid for objectPath=" + objectPath);
+            throw new RuntimeException("Null pid for objectPath=" + objectPath);
         }
         Solution.Row singleRow = new Solution.Row();
         FillRowFromQueryAndPid(singleRow, queryData, processId);
@@ -541,26 +561,28 @@ public class GenericProvider {
     static private Set<String> foundSelecters = new HashSet<>();
 
     public static BaseSelecter FindCustomSelecter(QueryData queryData) {
+        logger.debug("FindCustomSelecter: isMainVariableAvailable=" + queryData.isMainVariableAvailable);
         String strQueryData = queryData.toString();
         for(BaseSelecter baseSelecter : baseSelecters) {
+            logger.debug("Trying:" + baseSelecter.getClass().getSimpleName());
             if (baseSelecter.MatchProvider(queryData)) {
                 if(!foundSelecters.contains(strQueryData)) {
                     // So the message is displayed once only.
                     foundSelecters.add(strQueryData);
-                    logger.debug("Found provider " + baseSelecter.getClass().getName() + " for " + strQueryData);
+                    logger.debug("Found custom selecter " + baseSelecter.getClass().getName() + " for " + strQueryData);
                 }
                 return baseSelecter;
             }
         }
         if(!foundSelecters.contains(strQueryData)) {
-            // So the message is displayed once only.
+            // So the logging message is displayed once only.
             foundSelecters.add(strQueryData);
-            logger.debug("No provider found for " + strQueryData);
+            logger.debug("No custom selecter found for " + strQueryData);
         }
         return null;
     }
 
-    static public BaseSelecter FindSelecter(QueryData queryData) throws Exception {
+    static public BaseSelecter FindSelecter(QueryData queryData) {
         BaseSelecter baseSelecter = FindCustomSelecter(queryData);
         return  (baseSelecter == null) ? wmiSelecter : baseSelecter;
     }
@@ -571,25 +593,29 @@ public class GenericProvider {
      * So, this class calculates it "by hand". Consequently, it is available for all instances.
      * Therefore, it can be used to select instances based on the machine they are running on.
      *
+     * TODO: Use this for rdfs:LABEL and rdfs:COMMENT ?
      */
     class PSComputerNameHandler {
-
+        // Points to the input query data, which can be restored at the end.
         private QueryData m_queryData;
         private String selectPSComputerNameVariable = null;
         private QueryData.WhereEquality wherePSComputerName = null;
         private String columnPSComputerName = "PSComputerName";
+
+
         PSComputerNameHandler(QueryData queryData) {
             m_queryData = queryData;
 
             /* The column "PSComputerName" is not processed like the others in WMI:
               - It cannot be selected.
               - It cannot be used in a Where clause.
-              So, it is present in a QueryData, it must be handled, as it were a normal column.
+              So, if it is present in a QueryData, it must be handled, as it were a normal column.
               For the moment, the only acceptable value is the current host.
               TODO: Run this query on another host.
             */
             selectPSComputerNameVariable = queryData.queryColumns.get(columnPSComputerName);
             if(selectPSComputerNameVariable != null) {
+                // Remove the column "PSComputerName" if it is there.
                 m_queryData.queryColumns.remove(columnPSComputerName);
             }
 
@@ -602,7 +628,7 @@ public class GenericProvider {
                         // TODO: machine than the current one, then WMI should access this other machine.
                         // TODO: If this is a variable, then other machines should be accessed too.
                         // TODO: This is not designed yet.
-                        throw new RuntimeException("PSComputerName should be defined at this stage.");
+                        throw new RuntimeException("Variable PSComputerName not implemented yet. Must be constant.");
                     }
 
                     m_queryData.whereTests.remove(whereIndex);
@@ -611,6 +637,7 @@ public class GenericProvider {
             }
         }
 
+        // Restore QueryData as it where before removing "PSComputerName" column.
         private void RestoreQueryData() {
             if(selectPSComputerNameVariable != null) {
                 m_queryData.queryColumns.put(columnPSComputerName, selectPSComputerNameVariable);
@@ -640,7 +667,12 @@ public class GenericProvider {
 
     static private WmiSelecter wmiSelecter = new WmiSelecter();
 
-    public Solution SelectVariablesFromWhere(QueryData queryData, boolean withCustom) throws Exception {
+    /*
+    The flag withCustom indicates that adhoc implementations of some classes are allowed.
+    These custom implementations are for performance reasons. They must return the same results
+    as querying from WMI.
+    */
+    public Solution SelectVariablesFromWhere(QueryData queryData, boolean withCustom) {
         if(queryData.classBaseSelecter == null) {
             throw new RuntimeException("Provider is not set");
         }
@@ -718,9 +750,6 @@ public class GenericProvider {
         for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
             logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
             String variableName = queryData.ColumnToVariable(oneWhere.predicate);
-            if(variableName == null) {
-                throw new RuntimeException("Variable is null for column:" + oneWhere.predicate);
-            }
 
             // Beware of performance waste if the same value is read twice from the object,
             // if the column is in the where  expression and also in the selected column.
@@ -743,7 +772,8 @@ public class GenericProvider {
      * @return
      * @throws Exception
      */
-    Solution.Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom) throws Exception {
+    Solution.Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom)
+    {
         if(queryData.classGetter == null) {
             throw new RuntimeException("Getter is not set");
         }

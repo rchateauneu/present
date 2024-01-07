@@ -52,6 +52,15 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
                     jsonRdfValue.put("value", parsedXml.value);
                 }
                 /*
+                See SELF.prototype.isEntityUri in FormatterHelper.js
+                Wikidata gui is hacked to accept uri starting with "http://www.primhillcomputers.com/ontology"
+                and not only ending with wikidata syntax like ".../entity/Q123456".
+                        SELF.prototype.isEntityUri = function( uri ) {
+                            return typeof uri === 'string'
+                                && /\/entity\/(Q|P|L|M)[0-9]+$/.test( uri );
+                */
+
+                /*
                 Possible values for optional "datatype":
                  "datatype" : "http://www.w3.org/1998/Math/MathML",
                  "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime"
@@ -84,7 +93,6 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
             RdfValue rdfValue = GetValueType(key);
             if(rdfValue.isUri) {
                 throw new RuntimeException("Should not be an Uri: " + key + ". value=" + rdfValue.value);
-
             }
             return rdfValue.value;
         }

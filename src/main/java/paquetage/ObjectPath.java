@@ -18,7 +18,13 @@ import org.sblim.wbem.cim.CIMValue;
  */
 public class ObjectPath {
 
-    public static Map<String, String> ParseWbemPath(String objectPath) throws Exception {
+    /*
+    Example of input: \\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"");
+     */
+    public static Map<String, String> ParseWbemPath(String objectPath) {
+        if(!PresentUtils.CheckValidWbemPath(objectPath)){
+            throw new RuntimeException("Invalid Wbem path:" + objectPath);
+        }
         // CIMObjectPath.parse() is deprecated and not implemented. Why ???
         int positionColon = objectPath.indexOf(':');
         String moniker = objectPath.substring(positionColon + 1);
@@ -33,7 +39,7 @@ public class ObjectPath {
                 String property = kvs.substring(startProp, indexChar);
                 indexChar += 1;
                 if(kvs.charAt(indexChar) != '"') {
-                    throw new Exception("Missing beginning quote for value of property:" + property);
+                    throw new RuntimeException("Missing beginning quote for value of property:" + property);
                 }
                 indexChar += 1;
                 boolean previousSlash = false;
@@ -66,7 +72,7 @@ public class ObjectPath {
                 propertiesMap.put(property, value.toString());
                 if(indexChar == kvs.length()) break;
                 if(kvs.charAt(indexChar) != ',') {
-                    throw new Exception("Inconsistent path:" + objectPath);
+                    throw new RuntimeException("Inconsistent path:" + objectPath);
                 }
                 indexChar += 1;
                 startProp = indexChar;

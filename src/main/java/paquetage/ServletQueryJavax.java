@@ -84,6 +84,32 @@ public class ServletQueryJavax extends HttpServlet {
         java.lang.String sparqlQuery = request.getParameter("query");
         getServletContext().log("sparqlQuery=" + sparqlQuery);
         WriteFile("sparqlQuery=" + sparqlQuery);
+
+        logger.debug("sparqlQuery=" + sparqlQuery);
+        /*
+        Comment afficher des labels et des images ?
+        Voir ce qui existe.
+
+        On ne sait pas executer ceci:
+
+		SELECT
+            ?p
+            (SAMPLE(?pl) AS ?pl_)
+            (COUNT(?o) AS ?count )
+            (group_concat(?ol;separator=", ") AS ?ol_)
+		WHERE {
+		    <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%2223284%22/entity/Q378619> ?p ?o .
+		    ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .
+		    FILTER ( LANG(?ol) = "en" )
+		    ?s <http://wikiba.se/ontology#directClaim> ?p .
+		    ?s rdfs:label ?pl .
+		    FILTER ( LANG(?pl) = "en" )
+		} group by ?p
+
+         */
+
+
+
         // TODO: Should parse "acceptHeader=application/sparql-results+json"
         java.lang.String resultFormat = request.getParameter("format");
         getServletContext().log("resultFormat=" + resultFormat);

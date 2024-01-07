@@ -27,9 +27,9 @@ public class WmiSelecter extends BaseSelecter {
      * @return A list of rows containing the values of the variables as taken from the query results.
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) throws Exception {
+    public Solution EffectiveSelect(QueryData queryData) {
         if (queryData.isMainVariableAvailable) {
-            throw new Exception("Main variable should not be available in a WQL query.");
+            throw new RuntimeException("Main variable should not be available in a WQL query.");
         }
 
         String wqlQuery = queryData.BuildWqlQuery();
@@ -69,6 +69,7 @@ public class WmiSelecter extends BaseSelecter {
                 logger.debug("Next start totalRows=" + totalRows + " by " + countRows);
                 Wbemcli.IWbemClassObject[] wqlResults = enumerator.Next(Wbemcli.WBEM_INFINITE, countRows);
                 int queryLength = wqlResults.length;
+                logger.debug("queryLength=" + queryLength);
                 totalRows += queryLength;
                 for (int indexRow = 0; indexRow < queryLength; ++indexRow) {
                     Wbemcli.IWbemClassObject wqlResult = wqlResults[indexRow];

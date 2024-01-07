@@ -81,5 +81,10 @@ public class PresentUtilsTest {
           Assert.assertEquals("any string", parsedXML.value);
           Assert.assertEquals(null, parsedXML.datatype);
      }
+
+     public void test_Internationalize() throws Exception {
+          Assert.assertEquals("\"any\"@en", PresentUtils.InternationalizeQuoted("any"));
+          Assert.assertEquals("\"any\"@en", PresentUtils.InternationalizeQuoted("\"any\""));
+     }
 }
 

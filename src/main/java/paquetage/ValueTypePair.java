@@ -52,6 +52,12 @@ class ValueTypePair {
         switch(m_Type) {
             case NODE_TYPE:
                 // It could be "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process"
+                /*
+                Non, c'est plus subtil:
+                Ca peut commencer par http si c'est un predicat,
+                mais si c'est un IRI qui ca etre utilise par WBEM, ca doit etre transforme en path wbem
+                et commencer par "\\\\machine\\"
+                */
                 return PresentUtils.hasWmiReferenceSyntax(m_Value) || PresentUtils.hasUrlSyntax(m_Value);
             case INT_TYPE:
                 try {
@@ -78,6 +84,10 @@ class ValueTypePair {
     // Very common usage in tests/
     static public ValueTypePair FromString(String value) {
         return new ValueTypePair(value, ValueType.STRING_TYPE);
+    }
+
+    static public Value AsValueFromString(String value) {
+        return factory.createLiteral(value);
     }
 
     public String toDisplayString() {
@@ -155,18 +165,11 @@ class ValueTypePair {
             uuuu-MM-dd'T'HH:mm:ss.SSSSSS
             uuuu-MM-dd'T'HH:mm:ss.SSSSSSSSS
          */
-        DateTimeFormatter formatterOutput = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        DateTimeFormatter formatterOutput = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
         //String currentTime= "2017-10-19 22:00:00";
         //LocalDateTime datetime = LocalDateTime.parse(currentTime,formatter1);
-//2017-10-19T22:00
+        //2017-10-19T22:00
         String strDate=dateFromGmtString.format(formatterOutput);
-
-        // "CIM_DataFile.LastAccessed" ??
-        // "CIM_DataFile.InstallDate" ??
-
-
-
-
 
         logger.debug("strValue=" + strValue);
         logger.debug("strDate=" + strDate);
@@ -207,6 +210,7 @@ class ValueTypePair {
             case STRING_TYPE:
                 return Values.literal(strValue);
             case NODE_TYPE:
+                // Or prefix it with "http://" like PrefixCimv2Path ??
                 return Values.literal(strValue);
         }
         throw new RuntimeException("Data type not handled:" + valueType);

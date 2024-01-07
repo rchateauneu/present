@@ -6,6 +6,7 @@ import java.util.*;
 
 
 /** This implements the nested execution of queries based on a list of BGP patterns.
+ * TODO: Merge SparqlTranslation and DependenciesBuilder
  */
 public class SparqlTranslation {
     final static private Logger logger = Logger.getLogger(SparqlTranslation.class);
@@ -18,7 +19,7 @@ public class SparqlTranslation {
         this(input_extractor.patternsAsArray());
     }
 
-    public SparqlTranslation(List<ObjectPattern> patterns) throws Exception {
+    public SparqlTranslation(List<ObjectPattern> patterns) /*throws Exception */ {
         // TODO: Optimize QueryData list here. Providers are necessary.
         //bindings = inputBindings;
 
@@ -38,7 +39,11 @@ public class SparqlTranslation {
         for(Map.Entry<String, ValueTypePair> pairKeyValue: dependencies.variablesContext.entrySet())
         {
             // PresentUtils.WbemPathToIri( ? The type should not be lost, especially for IRIs
-            new_row.PutValueType(pairKeyValue.getKey(), pairKeyValue.getValue());
+            String newKey = pairKeyValue.getKey();
+            if(newKey == null) {
+                throw new RuntimeException("Key is null, getValue=" + pairKeyValue.getValue());
+            }
+            new_row.PutValueType(newKey, pairKeyValue.getValue());
         }
         solution.add(new_row);
     }
@@ -49,7 +54,12 @@ public class SparqlTranslation {
                 throw new RuntimeException("Variable " + variableName + " from selection not in context");
             }
             // Or generates new statements for all BGP triples depending on this variable.
-            dependencies.variablesContext.put(variableName, singleRow.GetValueType(variableName));
+            if(variableName == null)
+            {
+                logger.warn("Input variableName is null. singleRow=" + singleRow);
+            } else {
+                dependencies.variablesContext.put(variableName, singleRow.GetValueType(variableName));
+            }
         }
     }
 
@@ -99,7 +109,7 @@ public class SparqlTranslation {
      * @param index
      * @throws Exception
      */
-    void ExecuteOneLevel(int index) throws Exception
+    void ExecuteOneLevel(int index) //throws Exception
     {
         if(index == dependencies.prepared_queries.size())
         {
@@ -178,7 +188,8 @@ public class SparqlTranslation {
                     TODO: Do this once only, the result set should separately contain the header.
                     */
                     throw new RuntimeException("Inconsistent size between returned results " + row.ElementsSize()
-                            + " and columns:" + numColumns);
+                            + " and columns:" + numColumns + " columns=" + queryData.queryColumns.keySet()
+                            + " row.KeySet()=" + row.KeySet());
                 }
                 RowToContext(row);
                 // New WQL query for this row.
@@ -189,7 +200,7 @@ public class SparqlTranslation {
 
     /** TODO: This should not return the same "Row" as ExecuteQuery because here, the Row are created by this ...
      * TODO: ... local code, not by the Sparql engine. This is confusing. */
-    public Solution ExecuteToRows() throws Exception
+    public Solution ExecuteToRows() //throws Exception
     {
         solution = new Solution();
         for(QueryData queryData : dependencies.prepared_queries) {
@@ -208,6 +219,12 @@ public class SparqlTranslation {
         logger.debug("Rows generated:" + solution.size());
         logger.debug("Header:" + solution.header());
         logger.debug("Context keys:" + dependencies.variablesContext.keySet());
+
+        /*
+        TODO: Ici, on peut remplacer les Name par RDFS.LABEL et Description par RDFS.COMMENT
+        FIXME: Ou alors dans Solution.PatternsToStatements, utilise par un JoinExpressionNode ?
+         */
+        dependencies.ListeRenommage(solution);
 
     return solution;
     }

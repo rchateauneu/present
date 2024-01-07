@@ -12,6 +12,8 @@ import java.nio.file.attribute.FileTime;
 import java.time.*;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /** This tests Sparql selection from a repository containing the ontology plus the result of a WQL selection.
@@ -21,12 +23,16 @@ import java.util.stream.Collectors;
 public class RepositoryWrapperCIMV2Test {
     static long currentPid = ProcessHandle.current().pid();
     static String currentPidStr = String.valueOf(currentPid);
+    String currentProcessUri = null;
 
+    static String currJavaBin = PresentUtils.CurrentJavaBinary();
+    static String currJavaDir = new File(currJavaBin).getParent();
     private RepositoryWrapper repositoryWrapper = null;
 
     @Before
     public void setUp() throws Exception {
         repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
+        currentProcessUri = WmiOntology.CreateUriVarArgs("Win32_Process", "Handle", currentPidStr);
     }
 
     //@Override
@@ -95,11 +101,14 @@ public class RepositoryWrapperCIMV2Test {
                 """;
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Set<String> setLabels = listRows.StringValuesSet("class_label");
-        Assert.assertTrue(setLabels.contains("Win32_Process"));
-        Assert.assertTrue(setLabels.contains("Win32_DependentService"));
+        System.out.println("setLabels="+setLabels);
+        // This checks that '"Win32_Process"@en' is present.
+        Assert.assertTrue(setLabels.contains(PresentUtils.InternationalizeUnquoted("Win32_Process")));
+        Assert.assertTrue(setLabels.contains(PresentUtils.InternationalizeUnquoted("Win32_DependentService")));
     }
 
-    /** This selects the caption of the current process and does not use the ontology. */
+    /** This selects the caption of the current process and does not use the ontology.
+     * It also checks the URI of the process. */
     @Test
     public void testSelect_Win32_Process_WithClass_WithoutOntology() throws Exception {
         String sparqlQuery = String.format("""
@@ -117,6 +126,15 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("caption", "process"), singleRow.KeySet());
+
+        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
+        String uriProcess = WmiOntology.CreateUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        System.out.println("uriProcess=" + uriProcess);
+
+        Set<String> setLabels = listRows.NodeValuesSet("process");
+        System.out.println("setLabels=" + setLabels);
+
+        Assert.assertTrue(setLabels.contains(uriProcess));
     }
 
     /** This selects the caption of the current process and the label of its class. */
@@ -125,7 +143,7 @@ public class RepositoryWrapperCIMV2Test {
         String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    select ?label ?caption
+                    select ?label ?caption ?process
                     where {
                         ?process rdf:type cimv2:Win32_Process .
                         ?process cimv2:Handle "%s" .
@@ -137,7 +155,10 @@ public class RepositoryWrapperCIMV2Test {
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("caption", "label", "process"), singleRow.KeySet());
+
+        String actualPath = singleRow.GetAsUri("process");
+        //Assert.assertTrue(PresentUtils.CheckValidWbemPath(actualPath));
     }
 
     /** This selects all processes which runs the same executable as the current process.
@@ -204,6 +225,15 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(Set.of("process", "pid"), singleRow.KeySet());
         // "18936"^^<http://www.w3.org/2001/XMLSchema#long>
         Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetAsLiteral("pid"));
+
+        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
+        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
+        String expectedProcessUri = WmiOntology.CreateUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        System.out.println("expectedProcessUri=" + expectedProcessUri);
+        System.out.println("singleRow=" + singleRow);
+        String actualProcessUri = singleRow.GetAsUri("process");
+        Assert.assertEquals(expectedProcessUri, actualProcessUri);
+        //Assert.assertTrue(PresentUtils.CheckValidWbemPath(actualProcessUri));
     }
 
     /** Selects all properties of a process.
@@ -287,6 +317,16 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetAsLiteral("processid"));
     }
 
+    // Transforms '"Win32_Process.VirtualSize"@en' into 'VirtualSize'
+    static String extractPredicateFromLabel(String fullProperty) {
+        Pattern pattern = Pattern.compile(".*\\.(.*)\"@en");
+        Matcher matcher = pattern.matcher(fullProperty);
+        if(matcher.find()) {
+            return matcher.group(1);
+        }
+        throw new RuntimeException("Cannot match:" + fullProperty);
+    }
+
     /** Get all attributes of Win32_Process.
      *
      * @throws Exception
@@ -305,16 +345,19 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         Set<String> setLabels = listRows.StringValuesSet("property_label");
         // Checks the presence of an arbitrary property.
+        // setLabels=["Win32_Process.TerminationDate"@en, "Win32_Process.VirtualSize"@en, ...
         System.out.println("setLabels=" + setLabels);
-        Assert.assertTrue(setLabels.contains("Win32_Process.VirtualSize"));
+        // This tests the presence of '"Win32_Process.VirtualSize"@en'
+        Assert.assertTrue(setLabels.contains(PresentUtils.InternationalizeUnquoted("Win32_Process.VirtualSize")));
 
-        // Transforms '"Win32_Process.VirtualSize"' into 'VirtualSize'
+        // Transforms '"Win32_Process.VirtualSize"@en' into 'VirtualSize'
         Set<String> shortLabels = setLabels.stream()
-                .map(fullProperty -> fullProperty.split("\\.")[1])
+                .map(RepositoryWrapperCIMV2Test::extractPredicateFromLabel)
                 .collect(Collectors.toSet());
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
         WmiProvider.WmiClass cl = new WmiProvider().ClassesCIMV2().get("Win32_Process");
+        // allProperties = [CreationDate, ExecutionState, VirtualSize, ...
         Set<String> allProperties = cl.Properties.keySet();
         Assert.assertEquals(shortLabels, allProperties);
     }
@@ -652,11 +695,176 @@ public class RepositoryWrapperCIMV2Test {
                 """, currentPidStr);
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
 
-        //Assert.assertEquals(1, listRows.size());
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("_3_file"), singleRow.KeySet());
         System.out.println("Exec=" + singleRow.GetAsUri("_3_file"));
+    }
+
+    /** This selects only the associator of a given process, with a given order of patterns.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_CIM_ProcessExecutable_AssocOnlyFromProcessOrderA() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?_1_assoc
+                    where {
+                        ?_2_process cimv2:Win32_Process.Handle "%s" .
+                        ?_1_assoc cimv2:CIM_ProcessExecutable.Dependent ?_2_process .
+                   }
+                """, currentPidStr);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("_1_assoc"), singleRow.KeySet());
+    }
+
+    /** This selects only the associator of a given process, with another given order of patterns.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_CIM_ProcessExecutable_AssocOnlyFromProcessOrderB() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?_2_assoc
+                    where {
+                        ?_1_process cimv2:Win32_Process.Handle "%s" .
+                        ?_2_assoc cimv2:CIM_ProcessExecutable.Dependent ?_1_process .
+                   }
+                """, currentPidStr);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("_2_assoc"), singleRow.KeySet());
+    }
+
+    /** This select only the associator of all processes.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_CIM_ProcessExecutable_AssocOnlyFromAllProcesses() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?_1_process ?_2_assoc
+                    where {
+                        ?_2_assoc cimv2:CIM_ProcessExecutable.Dependent ?_1_process .
+                   }
+                """, currentPidStr);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("_1_process", "_2_assoc"), singleRow.KeySet());
+        System.out.println("singleRow=" + singleRow);
+
+        // Checks that the current process is present.
+        Set<String> setProcesses = listRows.NodeValuesSet("_1_process");
+        System.out.println("currentProcessUri=" + currentProcessUri);
+        System.out.println("setProcesses=" + setProcesses);
+        Assert.assertTrue(setProcesses.contains(currentProcessUri));
+    }
+
+    /*
+    This selects the directory names of the executables and libraries of all running processes.
+    It must contain the directory of "java.exe" which runs the current process.
+    */
+    @Ignore ("SLOW ! SLOW !")
+    @Test
+    public void testSelect_CIM_ProcessExecutable_CIM_DirectoryContainsFile_AllProcess() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?dir_name
+                    where {
+                        ?_1_assoc cimv2:CIM_ProcessExecutable.Antecedent ?_3_file .
+                        ?_2_dir cimv2:Win32_Directory.FileName ?dir_name .
+                        ?_2_dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?_3_file .
+                   }
+                """;
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("dir_name"), singleRow.KeySet());
+        System.out.println("singleRow=" + singleRow);
+
+        // Checks that the current process is present.
+        Set<String> setDirNames = listRows.NodeValuesSet("dir_name");
+        System.out.println("setDirNames=" + setDirNames);
+
+        Assert.assertTrue(setDirNames.contains(currJavaDir));
+    }
+
+    /*
+    This selects the directory names of the executables and libraries of all running processes.
+    It must contain the directory of "java.exe" which runs the current process.
+    */
+    @Ignore("Too slow., because it loops on: 'Select FileName, __PATH from Win32_Directory'")
+    @Test
+    public void testSelect_CIM_ProcessExecutable_CIM_DirectoryContainsFile_CurrentProcess() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?dir_name
+                    where {
+                        ?_1_process cimv2:CIM_Process.Handle %s .
+                        ?_1_process ^cimv2:CIM_ProcessExecutable.Dependent/cimv2:CIM_ProcessExecutable.Antecedent ?_2_file .
+                        ?_3_dir cimv2:Win32_Directory.FileName ?dir_name .
+                        ?_3_dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?_2_file .
+                   }
+                """, currentPidStr);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("dir_name"), singleRow.KeySet());
+        System.out.println("singleRow=" + singleRow);
+
+        // Checks that the current process is present.
+        Set<String> setDirNames = listRows.NodeValuesSet("dir_name");
+        System.out.println("setDirNames=" + setDirNames);
+
+        Assert.assertTrue(setDirNames.contains(currJavaDir));
+    }
+
+    /*
+    This selects the directory names of the executables and libraries of all running processes.
+    It must contain the directory of "java.exe" whihc runs the current process.
+    */
+    @Ignore("Too slow. Loop on all files.")
+    @Test
+    public void testSelect_CIM_ProcessExecutable_CIM_DirectoryContainsFile_CurrentProcess_Concise() throws Exception {
+        String sparqlQuery = String.format("""
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?dir_name
+                    where {
+                        ?_1_process cimv2:CIM_Process.Handle %s .
+                        ?_1_process ^cimv2:CIM_ProcessExecutable.Dependent/cimv2:CIM_ProcessExecutable.Antecedent ?_2_file .
+                        ?_3_dir ^cimv2:Win32_Directory.FileName/^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?_2_file .
+                   }
+                """, currentPidStr);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Assert.assertTrue(listRows.size() > 0);
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("dir_name"), singleRow.KeySet());
+        System.out.println("singleRow=" + singleRow);
+
+        // Checks that the current process is present.
+        Set<String> setDirNames = listRows.NodeValuesSet("dir_name");
+        System.out.println("setDirNames=" + setDirNames);
+
+        Assert.assertTrue(setDirNames.contains(currJavaDir));
     }
 
     /** This selects all Win32_UserAccount. The current account must be there.

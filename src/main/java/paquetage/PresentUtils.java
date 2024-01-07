@@ -40,6 +40,10 @@ public class PresentUtils {
         return prefixComputer + "\\ROOT\\CIMV2:" + shortPath;
     }
 
+    public static boolean CheckValidWbemPath(String objectPath) {
+        return objectPath.startsWith(prefixComputer);
+    }
+
     /** This is used in tests, to check that the current binary of the current process is detected.
      * Otherwise it is not needed by objects from WMI, because their paths contain the host name and the namespace.
      *
@@ -198,5 +202,20 @@ public class PresentUtils {
         }
         Matcher matcher = patternVariableName.matcher(variableName);
         return matcher.find();
+    }
+
+    static public String InternationalizeUnquoted(String inputString) {
+        if((inputString.length() > 0) && (inputString.charAt(0) == '"') ) {
+            return inputString + "@en";
+        } else {
+            return "\"" + inputString + "\"@en";
+        }
+    }
+
+    /* This is needed because RDF4J quotes values.
+    This should probably be changed, to avoid having string quoted once or even twice.
+    */
+    static public String InternationalizeQuoted(String inputString) {
+        return "\"" + InternationalizeUnquoted(inputString) +"\"";
     }
 }

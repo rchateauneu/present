@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,8 +33,12 @@ public class WmiProvider {
     public static Wbemcli.IWbemServices wbemServiceRootCimv2 = null;
     public static Path ontologiesPathCache;
     // For "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_Net..."
-    static private String regexReference = "\\\\\\\\[-\\dA-Z\\._]+\\\\(ROOT[-A-Z\\d_\\\\]*):.*";
-    static private Pattern patternReference = Pattern.compile(regexReference, Pattern.CASE_INSENSITIVE);
+    //  or '\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="12456"'
+    static private String regexReferenceNamespace = "\\\\\\\\[-\\dA-Z\\._]+\\\\(ROOT[-A-Z\\d_\\\\]*):.*";
+    static private Pattern patternReferenceNamespace = Pattern.compile(regexReferenceNamespace, Pattern.CASE_INSENSITIVE);
+
+    static private String regexReferenceNamespaceClassname = "\\\\\\\\[-\\dA-Z\\._]+\\\\(ROOT[-A-Z\\d_\\\\]*):([A-Z\\d_]*)\\..*";
+    static private Pattern patternReferenceNamespaceClassname = Pattern.compile(regexReferenceNamespaceClassname, Pattern.CASE_INSENSITIVE);
     static private String regexNamespace = "^ROOT[\\\\_A-Z\\d]*$";
     static private Pattern patternNamespace = Pattern.compile(regexNamespace, Pattern.CASE_INSENSITIVE);
 
@@ -134,16 +137,22 @@ public class WmiProvider {
      * '\\LAPTOP-R89KG6V1\ROOT\StandardCimv2:MSFT_NetIPAddress.CreationClassName="",Name="poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;",SystemCreationClassName="",SystemName=""'
      */
     static public String ExtractNamespaceFromRef(String refString) {
-        Matcher matcher = patternReference.matcher(refString);
+        Matcher matcher = patternReferenceNamespace.matcher(refString);
         boolean matchFound = matcher.find();
         if (!matchFound) {
+            logger.debug("No namespace in:" + refString);
             return null;
         }
         String namespace = matcher.group(1);
+        CheckValidNamespace(namespace);
         return namespace;
     }
 
+
     static public void CheckValidNamespace(String namespace) {
+        if(namespace == null) {
+            throw new RuntimeException("namespace is null");
+        }
         Matcher matcher = patternNamespace.matcher(namespace);
         boolean matchFound = matcher.find();
         if (!matchFound) {
@@ -151,13 +160,35 @@ public class WmiProvider {
         }
     }
 
-    static String NamespaceTermToIRI(String namespace, String term) {
-        return WmiOntology.NamespaceUrlPrefix(namespace) + term;
+    // '\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="12456"'
+    static public String ExtractClassnameFromRef(String refString) {
+        Matcher matcher = patternReferenceNamespaceClassname.matcher(refString);
+        boolean matchFound = matcher.find();
+        if (!matchFound) {
+            return null;
+        }
+        String classname = matcher.group(2);
+        return classname;
     }
+
 
     /** This is exclusively used for tests, because this is a very common namespace. */
     static String toCIMV2(String term) {
-        return NamespaceTermToIRI("ROOT\\CIMV2", term);
+        return WmiOntology.NamespaceTermToIRI("ROOT\\CIMV2", term);
+    }
+
+    static public void CheckValidClassname(String wmiClassName) {
+        if(wmiClassName.contains("#") || wmiClassName.contains(".") ) {
+            throw new RuntimeException("Invalid class:" + wmiClassName);
+        }
+    }
+
+    static public void CheckValidPredicate(String wmiPredicateName) {
+        String[] splitPredicate = wmiPredicateName.split("\\.");
+        if(splitPredicate.length != 2) {
+            throw new RuntimeException("Invalid predicate (No dot):" + wmiPredicateName);
+        }
+        CheckValidClassname(splitPredicate[0]);
     }
 
     /*
@@ -180,6 +211,10 @@ public class WmiProvider {
             Name = propertyName;
             Description = "No description available yet for property " + propertyName;
             Type = "string";
+        }
+
+        boolean isWbemPathRef() {
+            return Type.startsWith("ref:");
         }
     }
 

@@ -61,7 +61,7 @@ public class RepositoryWrapperOntologyTest {
                     prefix wmi:  <http://www.primhillcomputers.com/ontology/>
                     select ?namespace
                     where {
-                        ?class rdfs:label "__Win32Provider" .
+                        ?class rdfs:label "\\"__Win32Provider\\"@en" .
                         ?class wmi:NamespaceDefinition ?namespace .
                     }
                 """;

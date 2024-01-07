@@ -16,6 +16,8 @@ import org.eclipse.rdf4j.model.Statement;
  * This extracts the BGP (basic graph patterns) from a Sparql query.
  *
  * This works only for very simple, flat Sparql queries.
+ *
+ * FIXME: Obsolete and replaced with SparqlBGPTreeExtractor.
  */
 public class SparqlBGPExtractor {
     final static private Logger logger = Logger.getLogger(SparqlBGPExtractor.class);
@@ -23,7 +25,7 @@ public class SparqlBGPExtractor {
     public Set<String> bindings;
 
     // This should be private except for tests.
-    public Map<String, ObjectPattern> patternsMap;
+    public List<ObjectPattern> patternsMap;
 
     private SparqlBGPTreeExtractor treeExtractor;
 
@@ -45,7 +47,12 @@ public class SparqlBGPExtractor {
 
     // This is only for testing.
     public ObjectPattern FindObjectPattern(String variable) {
-        return patternsMap.get(variable);
+        for(ObjectPattern objPatt : patternsMap) {
+            if(variable.equals(objPatt.VariableName)) {
+                return objPatt;
+            }
+        }
+        return null;
     }
 
     /**
@@ -53,8 +60,10 @@ public class SparqlBGPExtractor {
      * @return
      */
     List<ObjectPattern> patternsAsArray() {
-        ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(patternsMap.values());
-        patternsArray.sort(Comparator.comparing(s -> s.VariableName));
+        // FIXME: Duplicate code with JoinExpressionNode
+        ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(patternsMap);
+        ObjectPattern.Sort(patternsArray);
+        // patternsArray.sort(Comparator.comparing(s -> s.VariableName));
         return patternsArray;
     }
 

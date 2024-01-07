@@ -56,7 +56,8 @@ class JoinExpressionNode extends BaseExpressionNode {
         logger.debug("JoinExpressionNode. Parent type=" + parent.getClass().getName());
     }
 
-    public Map<String, ObjectPattern> patternsMap = null;
+    // public Map<String, ObjectPattern> patternsMap = null;
+    public List<ObjectPattern> patternsMap = null;
 
     // These are the raw patterns extracted from the query. They may contain variables which are not defined
     // in the WMI evaluation. In this case, they are copied as is.
@@ -75,19 +76,24 @@ class JoinExpressionNode extends BaseExpressionNode {
             throw new RuntimeException("patternsMap should not be set twice.");
         }
         patternsMap = ObjectPattern.PartitionBySubject(visitorPatternsRaw);
-        logger.debug("Pattern keys:" + patternsMap.keySet());
+        List<String> listKeys = new ArrayList<>();
+        for(ObjectPattern objPatt: patternsMap) {
+            listKeys.add(objPatt.VariableName);
+        }
+        logger.debug("Pattern keys:" + listKeys);
     }
 
     Solution localSolution = null;
 
     public Solution Evaluate() {
         logger.debug("children.size()=" + children.size() + " visitorPatternsRaw.size()=" + visitorPatternsRaw.size());
-        try {
+        //try {
             SparqlTranslation patternSparql = new SparqlTranslation(patternsAsArray());
             /*
             TODO: This solution is returned only for testing.
             TODO: It is possible to get rid of it and keep only the solutions in nodes which have a BGP.
-             */
+            */
+            // IS IT HERE THAT WE CALL patternSparql.dependencies.ListeRenommage(solution) ??
             localSolution = patternSparql.ExecuteToRows();
             logger.debug("Solution:" + localSolution.size() + " Header=" + localSolution.header());
 
@@ -98,10 +104,10 @@ class JoinExpressionNode extends BaseExpressionNode {
                 localSolution = cartesianProduct;
             }
             return localSolution;
-        }
-        catch(Exception exc) {
-            throw new RuntimeException(exc);
-        }
+        //}
+        //catch(Exception exc) {
+        //    throw new RuntimeException(exc);
+        //}
     }
 
     public String toString() {
@@ -120,6 +126,7 @@ class JoinExpressionNode extends BaseExpressionNode {
             throw new RuntimeException("localSolution not set");
         }
         for(StatementPattern statementPattern : visitorPatternsRaw) {
+            // Here, We need to know if the property was RDFS.LABEL
             localSolution.PatternToStatements(generatedStatements, statementPattern);
             logger.debug("Generated statements number after:" + generatedStatements.size());
         }
@@ -129,14 +136,22 @@ class JoinExpressionNode extends BaseExpressionNode {
 
     /**
      * Returns the BGPs as a list whose order is guaranteed.
+     * FIXME: It sorts the ObjectPattern based on the alphabetic order !
+     * FIXME: It should optimize the query based on the classes and known members !!
+     * FIXME: Known objects must come first !!!
+     * FIXME: Duplicate code with SparqlBGPExtractor
      * @return
      */
     List<ObjectPattern> patternsAsArray() {
         if(patternsMap == null) {
             throw new RuntimeException("patternsMap is null");
         }
-        ArrayList<ObjectPattern> patternsArray = new ArrayList<>(patternsMap.values());
-        patternsArray.sort(Comparator.comparing(s -> s.VariableName));
+        //ArrayList<ObjectPattern> patternsArray = new ArrayList<>(patternsMap.values());
+        ArrayList<ObjectPattern> patternsArray = new ArrayList<>(patternsMap);
+        // patternsArray.sort(Comparator.comparing(s -> s.VariableName));
+        // patternsArray.sort(new Comparator<ObjectPattern>());
+        ObjectPattern.Sort(patternsArray);
+
         return patternsArray;
     }
 } // JoinExpressionNode
@@ -158,6 +173,10 @@ class ProjectionExpressionNode extends BaseExpressionNode {
         projectionNode.getBindingNames();
         logger.debug("projectionNode.getBindingNames():" + projectionNode.getBindingNames());
         if(children.size() != 1) {
+            logger.debug("Children");
+            for(BaseExpressionNode ben : children) {
+                logger.debug("    " + ben.toString());
+            }
             throw new RuntimeException("There must be one child only:" + children.size());
         }
         logger.debug("children.size():" + children.size());
@@ -343,7 +362,8 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         return null;
     }
 
-    public Map<String, ObjectPattern> patterns() {
+    // public Map<String, ObjectPattern> patterns() {
+    public List<ObjectPattern> patterns() {
         JoinExpressionNode join = FindTopLevelJoin(parent);
         return join.patternsMap;
     }
@@ -412,7 +432,7 @@ public class SparqlBGPTreeExtractor {
 
     public SparqlBGPTreeExtractor(String input_query) throws Exception {
         ParseQuery(input_query);
-        String extractorString = patternsVisitor.toString();
+        //String extractorString = patternsVisitor.toString();
         patternsVisitor.PartitionBGP();
     }
 
@@ -468,9 +488,8 @@ public class SparqlBGPTreeExtractor {
     }
 
     // This is just a helper for flat Sparql queries, and for testing only.
-    Map<String, ObjectPattern> TopLevelPatternsTestHelper() {
-        Map<String, ObjectPattern> patternsMap = patternsVisitor.patterns();
-        return patternsMap;
+    List<ObjectPattern> TopLevelPatternsTestHelper() {
+        return patternsVisitor.patterns();
     }
 
 }

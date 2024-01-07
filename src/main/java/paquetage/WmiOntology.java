@@ -18,15 +18,13 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.eclipse.rdf4j.model.util.Values.iri;
@@ -74,11 +72,50 @@ public class WmiOntology {
             put("real32", XSD.DOUBLE);
         }};
 
-    static Resource WbemPathToIri(String namespace, String valueString) throws Exception {
-        String encodedValueString = URLEncoder.encode(valueString, StandardCharsets.UTF_8.toString());
-        String iriValue = WmiProvider.NamespaceTermToIRI(namespace, encodedValueString);
-        Resource resourceValue = Values.iri(iriValue);
-        return resourceValue;
+    static String NamespaceTermToIRI(String namespace, String term) {
+        return NamespaceUrlPrefix(namespace) + term;
+    }
+
+    static Resource WbemPathToIri(String namespace, String valueString) {
+        WmiProvider.CheckValidNamespace(namespace);
+        // Convention: Namespaces in uppercase.
+        // Beware thet Associators return their references with lowercase namespaces, for no reason.
+        // This is not an issue in WMI, but a problem when creating an IRI which are case-sensitive.
+        String upperNamespace = namespace.toUpperCase();
+        String valueStringUpNS = valueString.replace(namespace, upperNamespace);
+        try {
+            String encodedValueString = URLEncoder.encode(valueStringUpNS, StandardCharsets.UTF_8.toString());
+            String iriValue = NamespaceTermToIRI(upperNamespace, encodedValueString);
+            Resource resourceValue = Values.iri(iriValue);
+            return resourceValue;
+        } catch(Exception exc) {
+            throw new RuntimeException(exc);
+        }
+    }
+
+    /*
+    Input can be: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Handle"
+
+    FIXME: The namespace should not be a parameter, but parsed from the IRI and compared with the WBEM path.
+    */
+    static public String IriToWbemPath(String namespace, String iri) {
+        WmiProvider.CheckValidNamespace(namespace);
+        int lenPrefix = NamespaceUrlPrefix(namespace).length();
+        String encodedValueString = iri.substring(lenPrefix);
+        try {
+            String decodedValueString = URLDecoder.decode(encodedValueString, StandardCharsets.UTF_8.toString());
+            return decodedValueString;
+        }
+        catch(Exception exc) {
+            logger.error("Invalid iri=" + iri);
+            throw new RuntimeException(exc);
+        }
+    }
+
+    static private ValueFactory factory = SimpleValueFactory.getInstance();
+
+    static private Literal literalInternational(String inputString) {
+        return factory.createLiteral(PresentUtils.InternationalizeUnquoted(inputString));
     }
 
     /**
@@ -120,8 +157,6 @@ public class WmiOntology {
         logger.debug("CreateOntologyInRepository namespace=" + namespace);
         // We want to reuse this namespace when creating several building blocks.
 
-        ValueFactory factory = SimpleValueFactory.getInstance();
-
         /** This contains all properties without their classes : There are homonyms,
         that is, different properties with the same name, but different domains and ranges.
         "Ambiguous" properties are created because this allows to write RDF statements
@@ -162,8 +197,8 @@ public class WmiOntology {
 
             WmiProvider.WmiClass wmiClass = entry_class.getValue();
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
-            connection.add(classIri, RDFS.LABEL, factory.createLiteral(className));
-            connection.add(classIri, RDFS.COMMENT, factory.createLiteral(wmiClass.Description));
+            connection.add(classIri, RDFS.LABEL, literalInternational(className));
+            connection.add(classIri, RDFS.COMMENT, literalInternational(wmiClass.Description));
             connection.add(classIri, iriNamespaceProperty, literalNamespace);
 
             if (wmiClass.BaseName != null) {
@@ -181,16 +216,21 @@ public class WmiOntology {
                 WmiProvider.WmiProperty wmiProperty = entry_property.getValue();
 
                 connection.add(uniquePropertyIri, RDF.TYPE, RDF.PROPERTY);
-                connection.add(uniquePropertyIri, RDFS.LABEL, factory.createLiteral(uniquePropertyName));
+                connection.add(uniquePropertyIri, RDFS.LABEL, literalInternational(uniquePropertyName));
                 connection.add(uniquePropertyIri, RDFS.DOMAIN, classIri);
-                connection.add(uniquePropertyIri, RDFS.COMMENT, factory.createLiteral(wmiProperty.Description));
+                connection.add(uniquePropertyIri, RDFS.COMMENT, literalInternational(wmiProperty.Description));
                 connection.add(uniquePropertyIri, iriNamespaceProperty, literalNamespace);
 
-                if(wmiProperty.Type.startsWith("ref:")) {
+                if(wmiProperty.isWbemPathRef()) {
                     String domainName = wmiProperty.Type.substring(4);
                     // This should be another class.
                     IRI domainIri = iri(namespace_iri_prefix, domainName);
                     connection.add(uniquePropertyIri, RDFS.RANGE, domainIri);
+
+                    /*
+                    Ici, on sait qu'il faut passer un path WBEM, et pas un IRI.
+                    Et donc, une constante passee par une query Sparql doit etre conertie.
+                     */
                 }
                 else
                 {
@@ -208,8 +248,8 @@ public class WmiOntology {
                     ambiguousPropertyIri = iri(namespace_iri_prefix, ambiguousPropertyName);
                     ambiguousProperties.put(ambiguousPropertyName, ambiguousPropertyIri);
                     connection.add(ambiguousPropertyIri, RDF.TYPE, RDF.PROPERTY);
-                    connection.add(ambiguousPropertyIri, RDFS.LABEL, factory.createLiteral(ambiguousPropertyName));
-                    connection.add(ambiguousPropertyIri, RDFS.COMMENT, factory.createLiteral(ambiguousPropertyName + " maps to several classes"));
+                    connection.add(ambiguousPropertyIri, RDFS.LABEL, literalInternational(ambiguousPropertyName));
+                    connection.add(ambiguousPropertyIri, RDFS.COMMENT, literalInternational(ambiguousPropertyName + " maps to several classes"));
                     // It does not have a domain, or rather has several domains.
                     // It does not have a range, or rather several ranges: int, string etc...
                     // or different classes if this is an associator.
@@ -219,6 +259,37 @@ public class WmiOntology {
         }
         logger.debug("End");
     }
+
+    public static boolean isWbemPath(String namespace, String className, String predicateName) {
+        /* Special case for testing purpose only. */
+        if(namespace.equals("ROOT\\CIMV2") && className.equals("DummyClass") && predicateName.equals("DummyKey")) {
+            return false;
+        }
+
+        Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(namespace);
+        if(className == null) {
+            throw new RuntimeException("Class name is null, namespace=" + namespace);
+        }
+        WmiProvider.WmiClass oneClass = classes.get(className);
+        if(oneClass == null) {
+            throw new RuntimeException("Cannot find namespace=" + namespace + " className=" + className);
+        }
+
+        // This is a special WMI case.
+        if(predicateName.equals("PSComputerName")) {
+            // https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-wmiobject?view=powershell-5.1
+            // Beginning in Windows PowerShell 3.0,
+            // the __Server property of the object that Get-WmiObject returns has a PSComputerName alias.
+            logger.debug("Special case namespace=" + namespace + " className=" + className + " predicateName=" + predicateName);
+            return false;
+        }
+        WmiProvider.WmiProperty oneProperty = oneClass.Properties.get(predicateName);
+        if(oneProperty == null) {
+            throw new RuntimeException("Cannot find namespace=" + namespace + " className=" + className + " predicateName=" + predicateName);
+        }
+        return oneProperty.isWbemPathRef();
+    }
+
 
     static private void WriteRepository(RepositoryConnection repositoryConnection, String rdfFileName) throws Exception {
         logger.debug("Storing RDF statements to:" + rdfFileName);
@@ -375,8 +446,15 @@ public class WmiOntology {
         return repositoryConnection;
     }
 
-    // Example: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#ProcessId"
-    static NamespaceTokenPair SplitToken(String token) {
+    /* This IRI can be a RDF/RDFS one, a WBEM class or predicate, or a WBEM instance.
+    Examples:
+         "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process"
+    or:  "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Handle"
+    or: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%223160%22"
+    or: "http://www.w3.org/2000/01/rdf-schema#label"
+    */
+    static NamespaceTokenPair SplitIRI(String token) {
+        logger.debug("token=" + token);
         if(! token.contains("#")) {
             logger.debug("Cannot split token:" + token);
             return null;
@@ -384,26 +462,70 @@ public class WmiOntology {
         String[] splitToken = token.split("#");
 
         String prefixUrl = splitToken[0];
-        String wmiNamespace;
+
         if(prefixUrl.startsWith(namespaces_url_prefix)) {
             String wmiNamespaceSlashes = prefixUrl.substring(namespaces_url_prefix.length());
             // In the URL, the backslash separator of namespaces is replaced with a slash.
-            wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
+            String wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
             WmiProvider.CheckValidNamespace(wmiNamespace);
+            String className = splitToken[1];
+            NamespaceTokenPair.TokenTypeEnum tokenType;
+            if(className.startsWith("%5C%5C")) {
+                /* Typical values:
+                token = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%223160%22"
+                className = "%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%223160%22"
+                This is a constant instance IRI built with a WMI path. Machine name and the namespace must be removed.
+                */
+                String wbemPath = IriToWbemPath("ROOT\\CIMV2", token);
+                className = WmiProvider.ExtractClassnameFromRef(wbemPath);
+                if(className == null) {
+                    throw new RuntimeException("Classname should not be null. wbemPath=" + wbemPath);
+                }
+                //className = SplitWbemPath(wbemPath);
+                tokenType = NamespaceTokenPair.TokenTypeEnum.INSTANCE_IRI;
+                // throw new RuntimeException("ljhljkh");
+            } else {
+                if (className.indexOf('.') > 0) {
+                    tokenType = NamespaceTokenPair.TokenTypeEnum.PREDICATE_IRI;
+                    WmiProvider.CheckValidPredicate(className);
+                } else {
+                    tokenType = NamespaceTokenPair.TokenTypeEnum.CLASS_IRI;
+                    WmiProvider.CheckValidClassname(className);
+                }
+            }
+            return new NamespaceTokenPair(wmiNamespace, className, tokenType);
         } else {
-            wmiNamespace = null;
+            // the input string might be "http://www.w3.org/2000/01/rdf-schema#label"
+            return null;
         }
-
-        return new NamespaceTokenPair(wmiNamespace, splitToken[1]);
     }
+
+    // It returns something like "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22"
+    static public String CreateUriVarArgs(String className, String propertyName, String propertyValue) throws Exception {
+        String iri = "\\\\" + PresentUtils.computerName + "\\ROOT\\CIMV2:" + className + "." + propertyName + "=" + "\"" + propertyValue + "\"";
+        // Ou bien root/cimv2 ??
+        // WbemPathToIri
+        return WbemPathToIri("ROOT\\CIMV2", iri).stringValue();
+    }
+
 
     /** This contains a WMI namespace, and a class name or a property name. */
     public static class NamespaceTokenPair {
         public String nameSpace;
         public String Token;
-        NamespaceTokenPair(String namespace, String token) {
+
+        public enum TokenTypeEnum {
+            INSTANCE_IRI,
+            CLASS_IRI,
+            PREDICATE_IRI
+        }
+
+        TokenTypeEnum TokenType;
+
+        NamespaceTokenPair(String namespace, String token, TokenTypeEnum tokenType) {
             nameSpace = namespace;
             Token = token;
+            TokenType = tokenType;
         }
     }
 }

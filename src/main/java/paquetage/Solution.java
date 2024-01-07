@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Var;
 
@@ -37,6 +38,8 @@ public class Solution implements Iterable<Solution.Row> {
      * TODO: When adding a predicate value in a statement, consider RDF.VALUE (rdf:value) to add more information
      * TODO: such as the unit for a numerical type. Units are sometimes available from WMI.
      *
+     * FIXME: JoinExpressionNode is the top-level node type of expressions.
+     *
      * @param generatedTriples
      * @param myPattern
      * @throws Exception
@@ -46,13 +49,18 @@ public class Solution implements Iterable<Solution.Row> {
         String subjectName = subject.getName();
         Var predicate = myPattern.getPredicateVar();
         if(!predicate.isConstant()) {
-            logger.debug("Predicate is not constant:" + predicate);
+            logger.debug("Predicate is not constant:" + predicate + " subjectName=" + subjectName + ". Leaving.");
             return;
         }
         IRI predicateIri = Values.iri(predicate.getValue().stringValue());
         Var object = myPattern.getObjectVar();
         String objectName = object.getName();
         Value objectValue = object.getValue();
+        if(Rows.isEmpty()) {
+            logger.debug("No rows");
+        } else {
+            logger.debug("Rows.get(0).KeySet()=" + Rows.get(0).KeySet());
+        }
         if (subject.isConstant()) {
             String subjectString = subject.getValue().stringValue();
             Resource resourceSubject = Values.iri(subjectString);
@@ -110,18 +118,81 @@ public class Solution implements Iterable<Solution.Row> {
                 }
             } else {
                 // The subject and the object change for each row.
+                // Special RDFS property, which does not exist in WMI but can be computed on-the-fly.
+                String predicateValue = predicate.getValue().stringValue();
+                logger.debug("predicateValue=" + predicate.getValue() + ".");
+                logger.debug("subjectName=" + subjectName);
+                logger.debug("RDFS.LABEL.stringValue()=" + RDFS.LABEL.stringValue() + ".");
+                boolean isRdfsLabel = predicateValue.equals(RDFS.LABEL.stringValue());
+                logger.debug("isRdfsLabel=" + isRdfsLabel);
                 for(Row row: Rows) {
-                    Resource resourceSubject = row.AsIRI(subjectName);
-                    ValueTypePair objectWmiValue = row.GetValueType(objectName);
+                    logger.debug("row=" + row);
+                    /* The subject might not be a node if the query comes from Wikidata GUI.
+                    In this case, a label must be generated anyway, but WMI cannot help for this.
+                    Strictly speaking, a resourceSubject should be generated based on the various predicates used
+                    to get this value. But it is not possible to have them
+                    */
+                    Resource resourceSubject;
                     Value resourceObject;
-
-                    if (objectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
-                        resourceObject = row.AsIRI(objectName);
-                    } else {
-                        if (objectWmiValue == null) {
-                            throw new RuntimeException("Null value for " + objectName);
+                    if(isRdfsLabel) {
+                        ValueTypePair subjectWmiValue = row.GetValueType(subjectName);
+                        if (subjectWmiValue == null) {
+                            throw new RuntimeException("Null value for subjectName=" + subjectName);
                         }
-                        resourceObject = objectWmiValue.ValueTypeToLiteral();
+
+                        if (subjectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
+                            resourceSubject = row.AsIRI(subjectName);
+                        } else {
+                            Value literalSubject = subjectWmiValue.ValueTypeToLiteral();
+                            /*
+                            Ca ne peut pas marcher ici:
+                            processUri="http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%222404%22"
+                             ... qui est parse en ceci: \\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="2404"
+                            propertyUri="http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.CreationDate"
+                                <{processUri}> <{propertyUri}> ?date_value .
+                                ?date_value <http://www.w3.org/2000/01/rdf-schema#label> ?date_label .
+
+                            D'une part ?date_value est un literal, mais doit aussi etre un iri.
+                            Utilisons un predicat qui est un IRI.
+
+                            Probleme: Ca n'existe que dans les associators !
+                            */
+                            resourceSubject = Values.iri("SyntheticNode:" + literalSubject.stringValue());
+                        }
+
+                        logger.debug("subjectName=" + subjectName + " objectName=" + objectName);
+                        logger.debug("predicate=" + predicate);
+                        logger.debug("resourceSubject=" + resourceSubject);
+                        // This variable was removed because it cannot be taken from WMI.
+                        assert row.TryValueType(objectName) == null;
+                        // Non, ca aura ete fait avant.
+                        resourceObject = Values.literal("\"" + "tralala_SubjName=" + subjectName + "\"" + "@en");
+                        logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
+
+                        /*
+                            Expected :"C:\\Windows"@en
+                            Actual   :"tralala"
+
+                            Remplacer RDFS.LABEL par Name
+                            Remplacer RDFS.COMMENT par Description
+
+                            Mais il faut garder un flag quelque part pour ajouter le "@en" a la fin.
+
+                            ListeRenommage() ou equivalent ici ? C'est la question.
+                        */
+                    }
+                    else {
+                        resourceSubject = row.AsIRI(subjectName);
+                        ValueTypePair objectWmiValue = row.GetValueType(objectName);
+                        if (objectWmiValue == null) {
+                            throw new RuntimeException("Null value for objectName=" + objectName);
+                        }
+
+                        if (objectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
+                            resourceObject = row.AsIRI(objectName);
+                        } else {
+                            resourceObject = objectWmiValue.ValueTypeToLiteral();
+                        }
                     }
 
                     generatedTriples.add(factory.createStatement(
@@ -140,6 +211,9 @@ public class Solution implements Iterable<Solution.Row> {
             return;
         }
         if(Rows.isEmpty()) {
+
+            assert ! solution.header().contains(null);
+
             for(Row row: solution) {
                 // TODO: Maybe just point to the solution, which normally should not change.
                 add(row);
@@ -187,6 +261,9 @@ public class Solution implements Iterable<Solution.Row> {
          *
          * So, Wbem path must be URL-encoded and prefixed.
          *
+         * Beware that in references, that is, "Antecedent" or "Precedent" for an associators,
+         * namespaces are in lowercase : Why does WMI do this ??
+         *
          * @param varName
          * @return
          * @throws Exception
@@ -205,7 +282,7 @@ public class Solution implements Iterable<Solution.Row> {
 
             // FIXME: It would me MUCH BETTER to store the namespace with the solution.
             // FIXME: Otherwise this parsing must be repeated over and over.
-            // FIXME: But, are we sure it will always ne the same namespace ?
+            // FIXME: But, are we sure it will always be the same namespace ?
             // FIXME: Or, when the value is a node, carry the namespace with it ?
             // FIXME: For the moment, the namespace must be extracted from the node.
             String namespaceExtracted = WmiProvider.ExtractNamespaceFromRef(valueString);
@@ -232,7 +309,7 @@ public class Solution implements Iterable<Solution.Row> {
 
         public ValueTypePair GetValueType(String key) {
             if(key == null) {
-                throw new RuntimeException("Input variable is null");
+                throw new RuntimeException("Input key is null");
             }
             ValueTypePair value = TryValueType(key);
             if(value == null) {
@@ -263,6 +340,9 @@ public class Solution implements Iterable<Solution.Row> {
             Elements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.STRING_TYPE));
         }
         public void PutNode(String key, String str) {
+            if(key == null) {
+                throw new RuntimeException("Null key for str=" + str);
+            }
             Elements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.NODE_TYPE));
         }
         public void PutLong(String key, String str) {

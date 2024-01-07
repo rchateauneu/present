@@ -21,6 +21,13 @@ public class WmiProviderTest {
     }
 
     @Test
+    public void test_ExtractClassnameFromRef() throws Exception {
+        String nodeStr = "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_NetIPAddress.CreationClassName=\"\",Name=\"poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;\",SystemCreationClassName=\"\",SystemName=\"\"";
+        String namespace = WmiProvider.ExtractClassnameFromRef(nodeStr);
+        Assert.assertEquals("MSFT_NetIPAddress", namespace);
+    }
+
+    @Test
     public void test_CheckValidNamespace_NoThrow() throws Exception {
         WmiProvider.CheckValidNamespace("ROOT\\StandardCimv2");
     }

@@ -18,7 +18,7 @@ public class QueryData {
     String mainVariable;
 
     // After sorting the QueryData in the right order before recursive evaluation, this indicates
-    // that the the main variable - the variable representing the object - is evaluated by the nesting queries.
+    // that the main variable - the variable representing the object - is evaluated by the nesting queries.
     boolean isMainVariableAvailable;
 
     // It maps a column name to a Sparql variable and is used to copy the column values to the variables.
@@ -112,16 +112,16 @@ public class QueryData {
         // Tells if this is a Sparql variable (which must be evaluated in the nesting WQL queries) or a constant.
         String variableName; // null if constant,
 
-        public WhereEquality(String predicateArg, ValueTypePair pairValueType, String variable) throws Exception {
+        public WhereEquality(String predicateArg, ValueTypePair pairValueType, String variable) {
             if(predicateArg.contains("#")) {
                 // This ensures that the IRI of the RDF node is stripped of its prefix.
-                throw new Exception("Invalid class name:" + predicateArg);
+                throw new RuntimeException("Invalid class name:" + predicateArg);
             }
             if(specialColumns.contains(predicateArg)) {
-                throw new Exception("This special column is forbidden:" + predicateArg);
+                throw new RuntimeException("This special column is forbidden:" + predicateArg);
             }
             if((variable != null) && !PresentUtils.ValidSparqlVariable(variable)) {
-                throw new Exception("Invalid syntax for Sparql variable:" + variable);
+                throw new RuntimeException("Invalid syntax for Sparql variable:" + variable);
             }
 
             predicate = predicateArg;
@@ -133,7 +133,7 @@ public class QueryData {
             this(predicateArg, null, variable);
         }
 
-        public WhereEquality(String predicateArg, ValueTypePair pairValueType) throws Exception {
+        public WhereEquality(String predicateArg, ValueTypePair pairValueType) {
             this(predicateArg, pairValueType, null);
         }
 
@@ -151,6 +151,9 @@ public class QueryData {
                 // This should not happen.
                 logger.debug("Value of " + predicate + " is null");
             }
+            /*
+            Si le predicat attend un path wbem, verifier que la syntaxe est OK.
+            */
             String escapedValue = value.toValueString().replace("\\", "\\\\").replace("\"", "\\\"");
             return String.format("%s = \"%s\"", predicate, escapedValue);
         }
@@ -159,7 +162,8 @@ public class QueryData {
     /** Checks if a selecter or a getter can be used for a QueryData. */
     public boolean CompatibleQuery(String whereClassName, Set<String> whereColumns, Set<String> availableColumns)
     {
-        // It must be for the goo=d class, and be able to return the needed columns.
+        logger.debug("whereClassName=" + whereClassName + " whereColumns=" + whereColumns + " availableColumns=" + availableColumns);
+        // It must be for the good class, and be able to return the needed columns.
         if(! ColumnsSubsetOf(whereClassName, availableColumns)) {
             return false;
         }
@@ -177,6 +181,8 @@ public class QueryData {
             return false;
         }
         Set<String> requiredColumns = queryColumns.keySet();
+        logger.debug("whereClassName="+whereClassName);
+        logger.debug("queryColumns.keySet()="+queryColumns.keySet());
         logger.debug("selectedColumns="+selectedColumns);
         logger.debug("requiredColumns="+requiredColumns);
         return selectedColumns.containsAll(requiredColumns);
@@ -197,7 +203,15 @@ public class QueryData {
     }
 
     public String ColumnToVariable(String columnName) {
-        return queryColumns.get(columnName);
+        String variableName = queryColumns.get(columnName);
+        /*
+        if(variableName == null) {
+            throw new RuntimeException(
+                    "Variable is null for column:" + columnName
+                    + ". Available columns are:" + queryColumns.keySet());
+        }
+        */
+        return variableName;
     }
 
     /** This is used to evaluate the cost of accessing a single object given its path.
@@ -285,27 +299,30 @@ public class QueryData {
             String variable,
             boolean mainVariableAvailable,
             Map<String, String> columns,
-            List<QueryData.WhereEquality> wheres) throws Exception {
+            List<QueryData.WhereEquality> wheres) {
         WmiProvider.CheckValidNamespace(wmiNamespace);
+        // If the subject is a constant, then there is no main variable.
+        if(variable == null) {
+            logger.debug("Variable is null");
+        }
         mainVariable = variable;
         isMainVariableAvailable = mainVariableAvailable;
-        if(wmiClassName.contains("#")) {
-            throw new Exception("Invalid class:" + wmiClassName);
-        }
+        WmiProvider.CheckValidClassname(wmiClassName);
         namespace = wmiNamespace;
         className = wmiClassName;
         // Creates a map even if no columns are selected.
-        if(columns == null)
+        if(columns == null) {
             queryColumns = new TreeMap<>();
-        else {
+        } else {
             for(String oneColumn: columns.keySet()) {
                 if (specialColumns.contains(oneColumn)) {
-                    throw new Exception("Selected column is forbidden:" + oneColumn);
+                    throw new RuntimeException("Selected column is forbidden:" + oneColumn);
                 }
             }
             queryColumns = new TreeMap<>(columns);
         }
         SwapWheres(wheres);
+        logger.debug("wmiClassName=" + wmiClassName + " variable=" + variable + " queryColumns=" + queryColumns);
 
         if(isMainVariableAvailable)
             classGetter = GenericProvider.FindGetter(this);
