@@ -48,7 +48,7 @@ public class SparqlTranslation {
         solution.add(new_row);
     }
 
-    void RowToContext(Solution.Row singleRow) {
+    void RowToContext(Solution.Row singleRow, Map<String, List<String>> variablesSynonyms) {
         for(String variableName : singleRow.KeySet()) {
             if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new RuntimeException("Variable " + variableName + " from selection not in context");
@@ -58,7 +58,16 @@ public class SparqlTranslation {
             {
                 logger.warn("Input variableName is null. singleRow=" + singleRow);
             } else {
-                dependencies.variablesContext.put(variableName, singleRow.GetValueType(variableName));
+                ValueTypePair vtp = singleRow.GetValueType(variableName);
+                dependencies.variablesContext.put(variableName, vtp);
+
+                List<String> synonyms = variablesSynonyms == null ? null : variablesSynonyms.get(variableName);
+                if(synonyms != null) {
+                    // For example, "rdfs:Label" => "Name", "rdfs:Comment" => "Description"
+                    for (String synonymVariable : synonyms) {
+                        dependencies.variablesContext.put(synonymVariable, vtp);
+                    }
+                }
             }
         }
     }
@@ -149,7 +158,7 @@ public class SparqlTranslation {
                 logger.error("Cannot get row for objectPath=" + objectPath);
             }
             else {
-                RowToContext(singleRow);
+                RowToContext(singleRow, queryData.variablesSynonyms);
                 // New WQL query for this row only.
                 ExecuteOneLevel(index + 1);
             }
@@ -191,7 +200,7 @@ public class SparqlTranslation {
                             + " and columns:" + numColumns + " columns=" + queryData.queryColumns.keySet()
                             + " row.KeySet()=" + row.KeySet());
                 }
-                RowToContext(row);
+                RowToContext(row, queryData.variablesSynonyms);
                 // New WQL query for this row.
                 ExecuteOneLevel(index + 1);
             } //  Next fetched row.
@@ -219,12 +228,6 @@ public class SparqlTranslation {
         logger.debug("Rows generated:" + solution.size());
         logger.debug("Header:" + solution.header());
         logger.debug("Context keys:" + dependencies.variablesContext.keySet());
-
-        /*
-        TODO: Ici, on peut remplacer les Name par RDFS.LABEL et Description par RDFS.COMMENT
-        FIXME: Ou alors dans Solution.PatternsToStatements, utilise par un JoinExpressionNode ?
-         */
-        dependencies.ListeRenommage(solution);
 
     return solution;
     }

@@ -17,45 +17,6 @@ public class DependenciesBuilder {
      */
     public HashMap<String, ValueTypePair> variablesContext;
 
-    // TODO: ?? Here, RDFS.LABEL and RDFS.COMMENT to which variables ? SEEALSO AND ISDEFINEDBY ??
-    public void ListeRenommage(Solution solution) {
-        /*
-        SeeAlso et isDefinedBy ne sont pas associes a des colonnes WMI comme Name et Description.
-         */
-        logger.debug("ListeRenommage keys solution.Rows.size()=" + String.valueOf(solution.Rows.size()));
-        if(solution.Rows.size() > 0) {
-            for (String oneKey : solution.Rows.get(0).KeySet()) {
-                logger.debug("    oneKey=" + oneKey);
-            }
-        }
-        // En principe, ca contient "Name" et "Description" et on va remplacer par "label" et "comment",
-        // eventuellement les laisser si c etait specifie.
-
-        /*
-        PSEUDO-COLONNES:
-        On peut avoir plus de colonnes que ce qui ete ajoute en entree.
-        Les traitements sont differents:
-        RDFS.LABEL / RDFS.COMMENT
-            Inconnu:
-                Avant: Ajouter "Name" ou "Caption" / "Description" s'il n'y est pas deja.
-                       FIXME: S'il y est deja, ca va faire des problemes car la meme valeur de colonne WMI
-                              doit remplir deux variables differentes ?
-                                  ?x rdfs:label ?l
-                                  ?x CIMV2:Win32_Process ?c
-                              Il faut donc creer une pseudo colonne dans la solution.
-                              Si on a du ajouter "Name" ou autre, verifier que cette colonne ne gene pas.
-                Apres: Suffixer avec "@en"
-            Connu:
-                Calculer "Name", "Caption" etc... mais sans grand espoir.
-        RDFS.SEEALSO / RDFS.ISDEFINEDBY
-            Inconnu:
-                Avant: Rien.
-                Avant: Renvoyer un URL specifique.
-            Connu:
-                IMPOSSIBLE.
-         */
-    }
-
     /** It represented the nested WQL queries.
      There is one such query for each object exposed in a Sparql query.
      The order, and input and output columns, and the performance depend highly on the order of the input BGPs.
@@ -92,84 +53,63 @@ public class DependenciesBuilder {
             ObjectPattern pattern = patterns.get(patternCounter);
             List<QueryData.WhereEquality> wheres = new ArrayList<>();
             Map<String, String> selected_variables = new HashMap<>();
-            List<ObjectPattern.PredicateObjectPair> rdfsPredicates = new ArrayList<>();
+
+            Map<String, List<String>> variablesSynonyms = new HashMap();
+
 
             // Now, split the variables of this object, between:
             // - the variables known at this stage from the previous queries, which can be used in the "WHERE" clause,
             // - the variables which are not known yet, and returned by this WQL query.
             // The variable representing the object is selected anyway and contains the WMI relative path.
             for(ObjectPattern.PredicateObjectPair predicateObjectPair: pattern.Members) {
-                if(predicateObjectPair.ShortPredicate == null) {
-                    /*
-                    This is a Sparql "predicate" which does not exist in WMI, and cannot be selected
-                    or used for filtering, but is a property of the object.
-                    It could be RDFS.LABEL, RDFS.COMMENT, RDFS.SEEALSO, RDFS.ISDEFINEDBY etc...
-                    Depending on the pseudo-column, it adds a real WMI column, if it is not already there.
-
-                    */
-                    rdfsPredicates.add(predicateObjectPair);
-                    logger.debug("Not a WMI column: predicateObjectPair.variableName=" + predicateObjectPair.variableName
-                            + " predicateObjectPair.RawPredicate=" + predicateObjectPair.RawPredicate
-                    );
-                    continue;
-                }
+                String predShortPredicate = predicateObjectPair.ShortPredicate;
+                String predVariableName = predicateObjectPair.variableName;
                 QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(
-                        predicateObjectPair.ShortPredicate,
+                        predShortPredicate,
                         predicateObjectPair.ObjectContent,
-                        predicateObjectPair.variableName);
+                        predVariableName);
 
-                if(predicateObjectPair.variableName != null) {
-                    if(variablesContext.containsKey(predicateObjectPair.variableName))  {
+                if(predVariableName != null) {
+                    if(variablesContext.containsKey(predVariableName))  {
                         // If it is a variable calculated in the previous queries, its value is known when executing.
                         wheres.add(wmiKeyValue);
                     } else {
-                        selected_variables.put(predicateObjectPair.ShortPredicate, predicateObjectPair.variableName);
+                        logger.debug("Selecting variable:" + predShortPredicate + "=>" + predVariableName);
+                        String existingVariable = selected_variables.get(predShortPredicate);
+                        if(existingVariable != null) {
+                            List<String> synonymsList = variablesSynonyms.get(existingVariable);
+                            if(synonymsList == null) {
+                                synonymsList = new ArrayList<String>();
+                                variablesSynonyms.put(existingVariable, synonymsList);
+                            }
+                            synonymsList.add(predVariableName);
+                            logger.debug(
+                                    "Already in selected_variables"
+                                            + " predShortPredicate=" + predShortPredicate
+                                            + " predVariableName=" + predVariableName
+                                    + " selected_variables.keySet=" + selected_variables);
+                        } else {
+                            selected_variables.put(predicateObjectPair.ShortPredicate, predVariableName);
+                        }
                     }
                 } else {
                     // If the value of the predicate is known because it is a constant.
                     wheres.add(wmiKeyValue);
                 }
             }
-
-            /*
-            Plusieurs cas:
-                ?my_file rdfs:label ?directory_label .
-                ?my_file cimv2:Win32_Directory.Name ?name .
-                ==>> Inutile d'ajouter la colonne "Name" car elle doit deja se trouver la.
-
-                ?my_file rdfs:label ?directory_label .
-                ?my_file cimv2:Win32_Directory.Name "C:\\Windows" .
-                ==>> Inutile d'ajouter "Name" car on a deja la valeur, c'est une constante.
-
-                ?my_file rdfs:label ?directory_label .
-                ==>> Il faut ajouter "Name" et le retirer des resultats par la suite.
-            */
-            logger.debug("RDFS predicate object pairs");
-            for(ObjectPattern.PredicateObjectPair rdfsPredicateObjectPair : rdfsPredicates) {
-                String wmiPredicate = ObjectPattern.RDFSToWMI(rdfsPredicateObjectPair.RawPredicate);
-                logger.debug("    rdfs2wmi:" + wmiPredicate);
-                if(selected_variables.get(wmiPredicate) != null) {
-                    logger.debug("        Already selected. No need to add it");
-                }
-                // TODO: wheres should be indexed with the column, but there are very few of them.
-                QueryData.WhereEquality whereEqFound = null;
-                for(QueryData.WhereEquality whereEq : wheres) {
-                    if(whereEq.predicate.equals(wmiPredicate)) {
-                        whereEqFound = whereEq;
-                        break;
-                    }
-                }
-                if(whereEqFound == null) {
-                    logger.debug("        Not in where clause. Must be added if not already selected.");
-                } else {
-                    logger.debug("        Implicit because in where clause");
-                }
-            }
+            logger.debug("selected_variables="
+                    + selected_variables.entrySet().stream()
+                    .map(x -> x.getKey() + "=>" + x.getValue()).collect(Collectors.toList()));
 
             // The same variables might be added several times, and duplicates will be eliminated.
             for(String variable_name : selected_variables.values()) {
                 if(variable_name == null) {
                     throw new RuntimeException("Should not add null variable in context");
+                }
+                logger.debug("variablesContext.put variable_name=" + variable_name);
+                if(variablesContext.get(variable_name) != null) {
+                    throw new RuntimeException("Already selected variable_name=" + variable_name
+                    + " keys=" + variablesContext.keySet());
                 }
                 variablesContext.put(variable_name, null);
             }
@@ -177,14 +117,6 @@ public class DependenciesBuilder {
             // The variable which defines the object will receive a value with the execution of this WQL query,
             // but maybe it is already known because of an association request done before.
             boolean isMainVariableAvailable = variablesContext.containsKey(pattern.VariableName);
-            /*
-            if(!isMainVariableAvailable) {
-                if(pattern.VariableName == null) {
-                    throw new RuntimeException("Should not add null pattern.VariableName in context");
-                }
-                variablesContext.put(pattern.VariableName, null);
-            }
-            */
 
             if(isMainVariableAvailable) {
                 assert pattern.ConstantSubject == null;
@@ -197,16 +129,10 @@ public class DependenciesBuilder {
                     // several times in this Sparql query.
                     String internalVariable = pattern.ClassName + "." + nonSelectedColumn + "." + patternCounter + ".internal";
                     selected_variables.put(nonSelectedColumn, internalVariable);
+                    logger.debug("variablesContext.put internalVariable=" + internalVariable);
                     variablesContext.put(internalVariable, null);
                 }
             } else {
-                /*
-                if(pattern.VariableName == null) {
-                    throw new RuntimeException("Should not add null pattern.VariableName in context");
-                }
-                variablesContext.put(pattern.VariableName, null);
-                */
-
                 // This has nothing to do with a constant subject.
                 logger.debug("NOT isMainVariableAvailable VariableName=" + pattern.VariableName
                         + " ClassName=" + pattern.ClassName);
@@ -226,6 +152,7 @@ public class DependenciesBuilder {
                 assert variablesContext.containsKey(constantVariable) == false;
                 // The subject must be a node.
                 ValueTypePair vtp = new ValueTypePair(pattern.ConstantSubject, ValueTypePair.ValueType.NODE_TYPE);
+                logger.debug("variablesContext.put constantVariable=" + constantVariable);
                 variablesContext.put(constantVariable, vtp);
 
                 // Maybe, this is not needed anymore.
@@ -234,6 +161,7 @@ public class DependenciesBuilder {
                 if(pattern.VariableName == null) {
                     throw new RuntimeException("Should not add null pattern.VariableName in context");
                 }
+                logger.debug("variablesContext.put pattern.VariableName=" + pattern.VariableName);
                 variablesContext.put(pattern.VariableName, null);
             }
 
@@ -241,10 +169,14 @@ public class DependenciesBuilder {
                 // A class name is needed to run WQL queries, and also its WMI namespace.
                 WmiProvider.CheckValidNamespace(pattern.CurrentNamespace);
                 WmiProvider.CheckValidClassname(pattern.ClassName);
-                QueryData queryData = new QueryData(pattern.CurrentNamespace, pattern.ClassName, pattern.VariableName, isMainVariableAvailable, selected_variables, wheres);
+
+                QueryData queryData = new QueryData(
+                        pattern.CurrentNamespace, pattern.ClassName, pattern.VariableName,
+                        isMainVariableAvailable, selected_variables, wheres, variablesSynonyms);
                 prepared_queries.add(queryData);
             }
         } // Next ObjectPattern
+        logger.debug("variablesContext.keySet()=" + variablesContext.keySet());
     } // DependenciesBuilder
 
     /**

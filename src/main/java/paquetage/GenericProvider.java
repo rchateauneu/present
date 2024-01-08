@@ -695,12 +695,16 @@ public class GenericProvider {
         return solution;
     }
 
+    // Used for tests only.
     public Solution SelectVariablesFromWhere(
             String namespace,
             String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
-        return SelectVariablesFromWhere(new QueryData(namespace, className, variable, false,columns, wheres), true);
+        return SelectVariablesFromWhere(
+                new QueryData(namespace, className, variable, false,columns, wheres),
+                true);
     }
 
+    // Used for tests only.
     public Solution SelectVariablesFromWhere(
             String namespace,
             String className, String variable, Map<String, String> columns) throws Exception {

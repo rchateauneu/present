@@ -163,23 +163,12 @@ public class Solution implements Iterable<Solution.Row> {
                         logger.debug("subjectName=" + subjectName + " objectName=" + objectName);
                         logger.debug("predicate=" + predicate);
                         logger.debug("resourceSubject=" + resourceSubject);
-                        // This variable was removed because it cannot be taken from WMI.
-                        assert row.TryValueType(objectName) == null;
-                        // Non, ca aura ete fait avant.
-                        resourceObject = Values.literal("\"" + "tralala_SubjName=" + subjectName + "\"" + "@en");
+
+                        String valueObject = row.GetStringValue(objectName);
+                        logger.debug("valueObject=" + valueObject);
+
+                        resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
                         logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
-
-                        /*
-                            Expected :"C:\\Windows"@en
-                            Actual   :"tralala"
-
-                            Remplacer RDFS.LABEL par Name
-                            Remplacer RDFS.COMMENT par Description
-
-                            Mais il faut garder un flag quelque part pour ajouter le "@en" a la fin.
-
-                            ListeRenommage() ou equivalent ici ? C'est la question.
-                        */
                     }
                     else {
                         resourceSubject = row.AsIRI(subjectName);
@@ -205,7 +194,7 @@ public class Solution implements Iterable<Solution.Row> {
     }
 
     /** TODO: This should be faster. */
-    /** TODO: Maybe not necessary, because ultimately, Solutions which just be created in "Join" nodes. */
+    /** TODO: Maybe not necessary, because ultimately, Solutions will just be created in "Join" nodes. */
     void Append(Solution solution) {
         if(solution.Rows.isEmpty()) {
             return;

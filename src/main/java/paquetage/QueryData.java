@@ -25,6 +25,8 @@ public class QueryData {
     // This sorted container guarantees the order to help comparison in tests.
     SortedMap<String, String> queryColumns;
 
+    public Map<String, List<String>> variablesSynonyms;
+
     /** Patterns of the WHERE clause of a WMI query. The values are variables or constants at creation,
     but are transformed into constants before building the query .
     TODO: Consider a Map, instead of a List, for simplicity.
@@ -113,6 +115,10 @@ public class QueryData {
         String variableName; // null if constant,
 
         public WhereEquality(String predicateArg, ValueTypePair pairValueType, String variable) {
+            logger.debug("predicateArg=" + predicateArg);
+            if(pairValueType != null) logger.debug("pairValueType.toValueString()=" + pairValueType.toValueString());
+            if(variable != null) logger.debug("variable=" + variable);
+
             if(predicateArg.contains("#")) {
                 // This ensures that the IRI of the RDF node is stripped of its prefix.
                 throw new RuntimeException("Invalid class name:" + predicateArg);
@@ -194,6 +200,8 @@ public class QueryData {
      * @return
      */
     public ValueTypePair GetWhereValue(String columnName) {
+        logger.debug("columnName=" + columnName
+                + " whereTests=" + whereTests.stream().map(x -> x.predicate + "/" + x.variableName).collect(Collectors.toList()));
         for(WhereEquality whereElement : whereTests) {
             if(whereElement.predicate.equals(columnName)) {
                 return whereElement.value;
@@ -300,6 +308,17 @@ public class QueryData {
             boolean mainVariableAvailable,
             Map<String, String> columns,
             List<QueryData.WhereEquality> wheres) {
+        this(wmiNamespace, wmiClassName, variable, mainVariableAvailable, columns, wheres, null);
+    }
+
+    QueryData(
+            String wmiNamespace,
+            String wmiClassName,
+            String variable,
+            boolean mainVariableAvailable,
+            Map<String, String> columns,
+            List<QueryData.WhereEquality> wheres,
+            Map<String, List<String>> synonyms) {
         WmiProvider.CheckValidNamespace(wmiNamespace);
         // If the subject is a constant, then there is no main variable.
         if(variable == null) {
@@ -310,6 +329,7 @@ public class QueryData {
         WmiProvider.CheckValidClassname(wmiClassName);
         namespace = wmiNamespace;
         className = wmiClassName;
+        variablesSynonyms = synonyms;
         // Creates a map even if no columns are selected.
         if(columns == null) {
             queryColumns = new TreeMap<>();

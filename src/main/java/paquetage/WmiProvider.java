@@ -354,7 +354,7 @@ public class WmiProvider {
                 throw new RuntimeException("WBEM service is null for namespace=" + namespace);
             }
             logger.debug("Getting classes for namespace=" + namespace);
-            cacheClasses = ClassesCached(wbemService);
+            cacheClasses = ClassesNocache(wbemService);
             logger.debug("End getting classes in " + namespace + " Number of classes=" + cacheClasses.size());
             cacheClassesMap.put(namespace, cacheClasses);
         }
@@ -364,9 +364,10 @@ public class WmiProvider {
     /** This returns a map containing the WMI classes. This is calculated with a WQL query.
      * This is rather a task whose result does not often change, so it must be cached.
      * */
-    private Map<String, WmiClass> ClassesCached(Wbemcli.IWbemServices wbemService) {
+    private Map<String, WmiClass> ClassesNocache(Wbemcli.IWbemServices wbemService) {
         // Classes are indexed with their names.
         Map<String, WmiClass> resultClasses = new HashMap<>();
+        logger.debug("About to select from meta_class");
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL",
                 "SELECT * FROM meta_class",

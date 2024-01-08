@@ -83,6 +83,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             if(!rawPredicate.startsWith("http:")) {
                 throw new RuntimeException("Predicate must be an IRI:" + rawPredicate);
             }
+            logger.debug("rawPredicate=" + rawPredicate + " variable=" + variable + " shortPredicate=" + shortPredicate);
             RawPredicate = rawPredicate;
             variableName = variable;
             ObjectContent = objectContent;
@@ -377,12 +378,6 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 /* String */
                 predicateStr = predicateValue.stringValue();
 
-                WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.SplitIRI(predicateStr);
-                if (namespacedPredicate == null) {
-                    logger.debug("Predicate:" + predicateStr + "cannot be used for WMI");
-                    continue;
-                }
-
                 // Possible case of a non-WMI but RDFS column, for example:
                 // keyValue.RawPredicate = "http://www.w3.org/2000/01/rdf-schema#label"
                 // with a triple like: ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .
@@ -395,52 +390,53 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 String predicateRDFSToWMI = RDFSToWMI(predicateStr);
                 if (predicateRDFSToWMI != null) {
                     logger.debug("RDFS column:" + predicateStr);
-                /*
-                Remplacer par "Name" et mettre "@en" a la fin ??????????????????????????????
-                Ou bien mettre une pseudo-expression, style: "label = $Name+@en" ?
-                Surtout, il faut retrouver ce pattern quand on fabrique la solution.
-                 */
-                    continue;
-                }
+                    shortPredicate = predicateRDFSToWMI;
+                    logger.debug("RDFS shortPredicate=" + shortPredicate);
+                    //continue;
+                } else {
+                    WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.SplitIRI(predicateStr);
+                    if (namespacedPredicate == null) {
+                        logger.debug("Predicate:" + predicateStr + " cannot be used for WMI");
+                        continue;
+                    }
 
-                /* String */
-                shortPredicate = namespacedPredicate.Token;
-                logger.debug("shortPredicate=" + shortPredicate);
-                if (namespacedPredicate.nameSpace != null) {
-                    if (CurrentNamespace == null) {
-                        CurrentNamespace = namespacedPredicate.nameSpace;
-                    } else {
-                        if (!CurrentNamespace.equals(namespacedPredicate.nameSpace)) {
-                            throw new RuntimeException("Different namespaces:" + CurrentNamespace
-                                    + "!=" + namespacedPredicate.nameSpace
-                                    + ". predicateStr=" + predicateStr
-                                    + ". shortPredicate=" + shortPredicate);
+                    /* String */
+                    shortPredicate = namespacedPredicate.Token;
+                    logger.debug("shortPredicate=" + shortPredicate);
+                    if (namespacedPredicate.nameSpace != null) {
+                        if (CurrentNamespace == null) {
+                            CurrentNamespace = namespacedPredicate.nameSpace;
+                        } else {
+                            if (!CurrentNamespace.equals(namespacedPredicate.nameSpace)) {
+                                throw new RuntimeException("Different namespaces:" + CurrentNamespace
+                                        + "!=" + namespacedPredicate.nameSpace
+                                        + ". predicateStr=" + predicateStr
+                                        + ". shortPredicate=" + shortPredicate);
+                            }
                         }
                     }
-                }
-                // Maybe the predicate is prefixed with the class name, for example "CIM_Process.Handle".
-                // If so, the class name is deduced and will be compared.
-                String[] splitPredicate = shortPredicate.split("\\.");
-                if(splitPredicate.length > 1) {
-                    if (splitPredicate.length == 2) {
-                        shortPredicate = splitPredicate[1];
-                    } else {
-                        throw new RuntimeException("Too many dots in invalid predicate:" + shortPredicate);
+                    // Maybe the predicate is prefixed with the class name, for example "CIM_Process.Handle".
+                    // If so, the class name is deduced and will be compared.
+                    String[] splitPredicate = shortPredicate.split("\\.");
+                    if (splitPredicate.length > 1) {
+                        if (splitPredicate.length == 2) {
+                            shortPredicate = splitPredicate[1];
+                        } else {
+                            throw new RuntimeException("Too many dots in invalid predicate:" + shortPredicate);
+                        }
                     }
                 }
             }
 
-            if(CurrentNamespace != null) {
+            if(CurrentNamespace == null) {
                 // If the namespace cannot be deduced from the subject and the predicate, cannot do anything.
-                logger.debug("Namespace cannot be deduced from the sujbject and the predicates");
+                logger.debug("Namespace cannot be deduced from the subject and the predicates");
                 return;
             }
 
             if(predicateStr == null) {
-                /* The predicate is a variable.
-                FIXME: Ajouter un triplet par predicat ? Mais il faudrait une Union.
-                */
                 assert shortPredicate == null;
+                logger.debug("Getting classes from " + CurrentNamespace);
                 Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(CurrentNamespace);
                 WmiProvider.WmiClass wmiClass = classes.get(ClassName);
                 for (Map.Entry<String, WmiProvider.WmiProperty> entry_property : wmiClass.Properties.entrySet()) {
@@ -448,12 +444,6 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     logger.debug("propertyName=" + propertyName);
                 }
                 throw new RuntimeException("Cannot handle variable predicate for ClassName=" + ClassName);
-                /*
-                ValueTypePair vtp = new ValueTypePair(strValue, dataType);
-                PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicateStr, shortPredicate, null, vtp);
-                // FIXME: What happens if the same predicate appears several times ?
-                Members.add(predicateObjectPair);
-                */
             }
             // TODO: Make this comparison faster than a string comparison.
             else if (predicateStr.equals(RDF.TYPE.stringValue())) {

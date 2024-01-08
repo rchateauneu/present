@@ -78,6 +78,7 @@ public class RepositoryWrapper {
     public RdfSolution ExecuteQuery(String sparqlQuery) throws Exception
     {
         SparqlBGPTreeExtractor treeExtractor = new SparqlBGPTreeExtractor(sparqlQuery);
+        logger.debug("sparqlQuery=" + sparqlQuery);
         logger.debug("bindings=" + treeExtractor.bindings);
 
         Solution translatedRows = treeExtractor.EvaluateSolution();
