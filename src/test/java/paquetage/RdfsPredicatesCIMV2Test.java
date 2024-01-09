@@ -69,11 +69,94 @@ public class RdfsPredicatesCIMV2Test {
         Set<String> setLabels = listRows.StringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
+
         Set<String> setNames = listRows.StringValuesSet("my_name");
         System.out.println("setNames=" + setNames.toString());
 
         Assert.assertTrue(setNames.contains("C:\\Windows\\notepad.exe"));
         Assert.assertTrue(setNames.contains("C:\\Windows\\system.ini"));
+    }
+
+    /*
+    FIXME: It fails because there is no way to deduce the type of a subject,
+    FIXME: with its patterns. However, it would be possible to deduce it
+    FIXME: if it is the object of a CIM predicate.
+    FIXME: Moreover, it would be doable at runtime if the predicate is not known.
+    */
+    @Test
+    @Ignore("FIXME: It should not be necessary to set the type when it can be deduced.")
+    public void testSelect_Win32_Directory_RdfsLabel_NoName() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_label
+                    where {
+                        ?my1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
+                        ?my2_assoc cimv2:GroupComponent ?my1_dir .
+                        ?my2_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my3_file .
+                        ?my3_file rdfs:label ?my_label .
+                    }
+                """;
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        System.out.println("setLabels=" + setLabels.toString());
+
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
+    }
+
+    @Test
+    public void testSelect_Win32_Directory_RdfsLabel_NoNameWithCaption() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_label
+                    where {
+                        ?my1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
+                        ?my2_assoc cimv2:GroupComponent ?my1_dir .
+                        ?my2_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my3_file .
+                        ?my3_file  cimv2:CIM_DataFile.Caption ?my_caption .
+                        ?my3_file  rdfs:label ?my_label .
+                    }
+
+                """;
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        System.out.println("setLabels=" + setLabels.toString());
+
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
+    }
+
+    @Test
+    public void testSelect_Win32_Directory_RdfsLabel_NoNameWithType() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_label
+                    where {
+                        ?my1_dir cimv2:Win32_Directory.Name "C:\\\\Windows" .
+                        ?my2_assoc cimv2:GroupComponent ?my1_dir .
+                        ?my2_assoc cimv2:CIM_DirectoryContainsFile.PartComponent ?my3_file .
+                        ?my3_file  rdf:type cimv2:CIM_DataFile .
+                        ?my3_file  rdfs:label ?my_label .
+                    }
+
+                """;
+
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+
+        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        System.out.println("setLabels=" + setLabels.toString());
+
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
+        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
     }
 
     /* The same column is selected in two different variables.

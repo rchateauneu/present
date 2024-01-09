@@ -228,7 +228,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             logger.debug("The namespace could not be found in:" + ClassName);
         }
         if(ClassName == null && CurrentNamespace == null) {
-            logger.warn("ObjectPattern:" + VariableName + " CANNOT be used for WMI.");
+            logger.warn("ObjectPattern:" + VariableName + " CANNOT be used for WMI: Class and namespace are unknown.");
         }
     }
 
@@ -266,24 +266,10 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
     }
 
     ObjectPattern(String subjectName, boolean isConstant, List<StatementPattern> visitorPatternsRaw) {
-        /*
-        if(isConstant) {
-            // Then it must be an IRI.
-            if(!subjectName.startsWith("http:")) {
-                throw new RuntimeException("Incorrect syntax for IRI:" + subjectName);
-            }
-            VariableName = null;
-            // FIXME: We need the namespace to parse the IRI, but parsing the IRI gives the namespace...
-            ConstantSubject = WmiOntology.IriToWbemPath("ROOT\\CIMV2", subjectName);
-        } else {
-            CheckVariableNameSyntax(subjectName);
-            VariableName = subjectName;
-            ConstantSubject = null;
-        }
-        */
-
         // This will always be null if the properties are not prefixed with the class name.
         // This is OK of the type is given with a triple with rdf:type as predicate.
+        // FIXME: It would be possible to deduce the type of the subject,
+        // FIXME: if it is used as an object in another pattern.
         DetermineNamespaceClassnameFromPatterns(visitorPatternsRaw);
 
         // If the subject is constant, the namespace and the class can be extracted.
@@ -500,6 +486,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
         } // for on triples.
     }
 
+    /* This receives a list of BGP and groups them based on the subject. */
     private static Map<Pair<String, Boolean>, List<StatementPattern>> SplitBySubject(List<StatementPattern> visitorPatternsRaw) {
         Map<Pair<String, Boolean>, List<StatementPattern> > splitSubject = new HashMap();
 

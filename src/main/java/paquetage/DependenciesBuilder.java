@@ -89,7 +89,12 @@ public class DependenciesBuilder {
                                             + " predVariableName=" + predVariableName
                                     + " selected_variables.keySet=" + selected_variables);
                         } else {
-                            selected_variables.put(predicateObjectPair.ShortPredicate, predVariableName);
+                            logger.debug(
+                                    "Adding to selected_variables"
+                                            + " predShortPredicate=" + predShortPredicate
+                                            + " predVariableName=" + predVariableName
+                                            + " selected_variables.keySet=" + selected_variables);
+                            selected_variables.put(predShortPredicate, predVariableName);
                         }
                     }
                 } else {
