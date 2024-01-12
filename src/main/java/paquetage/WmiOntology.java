@@ -290,7 +290,6 @@ public class WmiOntology {
         return oneProperty.isWbemPathRef();
     }
 
-
     static private void WriteRepository(RepositoryConnection repositoryConnection, String rdfFileName) throws Exception {
         logger.debug("Storing RDF statements to:" + rdfFileName);
         FileOutputStream out = new FileOutputStream(rdfFileName);

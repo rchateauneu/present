@@ -56,14 +56,27 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
     }
 
     /*
-    RDFS labels have usual equivalents in WMI
+    RDFS labels have usual equivalents in WMI.
      */
-    static String RDFSToWMI(String rawPredicate) {
-        if(rawPredicate.equals(RDFS.LABEL.stringValue())) {
-            return "Name";
-        }
-        if(rawPredicate.equals(RDFS.COMMENT.stringValue())) {
-            return "Description";
+    static String RDFSToWMI(String className, String rawPredicate) {
+        logger.debug("className=" + className + " rawPredicate=" + rawPredicate);
+        Set<String> classAssociators = Set.of("CIM_ProcessExecutable", "CIM_DirectoryContainsFile");
+        if(classAssociators.contains(className)) {
+            // FIXME: This is a temporary hack:
+            // FIXME: Some classes - possibly the associators - do not have the members "Name" and "Description"
+            if (rawPredicate.equals(RDFS.LABEL.stringValue())) {
+                return "BaseAddress";
+            }
+            if (rawPredicate.equals(RDFS.COMMENT.stringValue())) {
+                return "BaseAddress";
+            }
+        } else {
+            if (rawPredicate.equals(RDFS.LABEL.stringValue())) {
+                return "Name";
+            }
+            if (rawPredicate.equals(RDFS.COMMENT.stringValue())) {
+                return "Description";
+            }
         }
         return null;
     }
@@ -341,6 +354,12 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             ConstantSubject = null;
         }
 
+        /*
+        if(ClassName == null) {
+            throw new RuntimeException("Class should be known at this stage. subjectName=" + subjectName);
+        }
+        */
+
         for (StatementPattern myPattern : visitorPatternsRaw) {
             logger.debug("subjectName=" + subjectName);
 
@@ -373,7 +392,8 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 logger.debug("To be tested column:" + predicateStr);
                 // RDFS.LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 
-                String predicateRDFSToWMI = RDFSToWMI(predicateStr);
+                // ClassName might not be known, for example if the subject is a class or a predicate.
+                String predicateRDFSToWMI = ClassName == null ? null : RDFSToWMI(ClassName, predicateStr);
                 if (predicateRDFSToWMI != null) {
                     logger.debug("RDFS column:" + predicateStr);
                     shortPredicate = predicateRDFSToWMI;
@@ -484,7 +504,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 }
             }
         } // for on triples.
-    }
+    } // ObjectPattern constructor.
 
     /* This receives a list of BGP and groups them based on the subject. */
     private static Map<Pair<String, Boolean>, List<StatementPattern>> SplitBySubject(List<StatementPattern> visitorPatternsRaw) {
@@ -547,5 +567,6 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
         }
         return patternsMap;
     } // PartitionBySubject
+
 
 }
