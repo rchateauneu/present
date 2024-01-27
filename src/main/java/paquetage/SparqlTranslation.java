@@ -4,6 +4,8 @@ import org.apache.log4j.Logger;
 
 import java.util.*;
 
+import static paquetage.WmiSelecter.wmiProvider;
+
 
 /** This implements the nested execution of queries based on a list of BGP patterns.
  * TODO: Merge SparqlTranslation and DependenciesBuilder
@@ -132,7 +134,6 @@ public class SparqlTranslation {
             return;
         }
         QueryData queryData = dependencies.prepared_queries.get(index);
-        queryData.StartSampling();
         if(queryData.isMainVariableAvailable) {
             // NO NEED TO CHECK IT EACH TIME.
             if(! queryData.whereTests.isEmpty()) {
@@ -147,20 +148,49 @@ public class SparqlTranslation {
             }
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
-            Solution.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData, true);
+            // FIXME: It is a pity that handlers are set twice.
+            queryData.SetHandlers(true);
 
-            queryData.FinishSampling(objectPath);
+            if(queryData.queryVariableColumns.isEmpty())  {
+                queryData.StartSampling();
+                Solution.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData);
+                queryData.FinishSampling(objectPath);
 
-            if(singleRow == null)
-            {
-                // Object does not exist or maybe a CIM_FataFile is protected, or a CIM_Process exited ?
-                // FIXME: Maybe this is not an error but a normal behaviour, so should not display an error.
-                logger.error("Cannot get row for objectPath=" + objectPath);
-            }
-            else {
-                RowToContext(singleRow, queryData.variablesSynonyms);
-                // New WQL query for this row only.
-                ExecuteOneLevel(index + 1);
+                if (singleRow == null) {
+                    // Object does not exist or maybe a CIM_FataFile is protected, or a CIM_Process exited ?
+                    // FIXME: Maybe this is not an error but a normal behaviour, so should not display an error.
+                    logger.error("Cannot get row for objectPath=" + objectPath);
+                } else {
+                    RowToContext(singleRow, queryData.variablesSynonyms);
+                    // New WQL query for this row only.
+                    ExecuteOneLevel(index + 1);
+                }
+            } else {
+                if(!queryData.queryColumns.isEmpty()) {
+                    throw new RuntimeException("No constant predicates with Variable predicate. queryData.queryColumns=" + queryData.queryColumns);
+                }
+                if(queryData.queryVariableColumns.size() != 1) {
+                    throw new RuntimeException("Variable predicate must be unique (Now). Columns=" + queryData.queryVariableColumns.keySet());
+                }
+                Map.Entry<String,String> entry = queryData.queryVariableColumns.entrySet().iterator().next();
+                String predicateVariable = entry.getKey();
+                String valueVariable = entry.getValue();
+
+                Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(queryData.namespace);
+                WmiProvider.WmiClass wmiClass = classes.get(queryData.className);
+                Set<String> allClassColumns = wmiClass.Properties.keySet();
+                logger.debug("queryData.mainVariable=" + queryData.mainVariable + " allClassColumns=" + allClassColumns);
+
+                for(String onePredicate : allClassColumns) {
+                    logger.debug("onePredicate=" + onePredicate + " valueVariable=" + valueVariable);
+                    Map<String, String> subQueryColumns = Map.of(onePredicate, valueVariable);
+                    Solution.Row returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData.mainVariable, subQueryColumns);
+                    // This adds the value of the column name.
+                    returnRow.PutString(predicateVariable, onePredicate);
+                    logger.debug("returnRow=" + returnRow);
+                    RowToContext(returnRow, queryData.variablesSynonyms);
+                    ExecuteOneLevel(index + 1);
+                }
             }
         } else {
             ArrayList<QueryData.WhereEquality> substitutedWheres = new ArrayList<>();
@@ -181,6 +211,7 @@ public class SparqlTranslation {
                 }
             }
 
+            queryData.StartSampling();
             List<QueryData.WhereEquality> oldWheres = queryData.SwapWheres(substitutedWheres);
             Solution rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
             // restore to patterns wheres clauses (that is, with variable values).

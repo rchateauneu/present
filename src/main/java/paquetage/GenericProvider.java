@@ -121,7 +121,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
         String pathFile = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
         Solution.Row singleRow = new Solution.Row();
 
-        BaseGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData, fileName);
+        BaseGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData.queryColumns, fileName);
 
         // Add the main variable anyway.
         singleRow.PutNode(queryData.mainVariable, pathFile);
@@ -308,7 +308,7 @@ abstract class BaseGetter {
     public abstract boolean MatchGetter(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract Solution.Row GetSingleObject(String objectPath, QueryData queryData);
+    public abstract Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns);
 
     // TODO: Cost estimation.
 }
@@ -391,8 +391,8 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
             // "FileType", (String fileName) -> "Application Extension",
             );
 
-    public static void FillRowFromQueryAndFilename(Solution.Row singleRow, QueryData queryData, String fileName) {
-        for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
+    public static void FillRowFromQueryAndFilename(Solution.Row singleRow, Map<String, String> queryColumns, String fileName) {
+        for(Map.Entry<String, String> qCol : queryColumns.entrySet()) {
             String columnKey = qCol.getKey();
             Function<String, ValueTypePair> lambda = columnsMap.get(columnKey);
             if(lambda == null)
@@ -404,18 +404,18 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
         }
     }
 
-    public Solution.Row GetSingleObject(String objectPath, QueryData queryData)
+    public Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns)
     {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String fileName = properties.get("Name");
         Solution.Row singleRow = new Solution.Row();
-        FillRowFromQueryAndFilename(singleRow, queryData, fileName);
+        FillRowFromQueryAndFilename(singleRow, queryColumns, fileName);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
         String pathFile = ObjectPath.BuildCimv2PathWbem(
                 "CIM_DataFile", Map.of(
                         "Name", fileName));
-        singleRow.PutNode(queryData.mainVariable, pathFile);
+        singleRow.PutNode(mainVariable, pathFile);
         return singleRow;
     }
 }
@@ -508,8 +508,8 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
                 "WindowsVersion", (String processId) -> WindowsVersion(processId)
         );
 
-        public static void FillRowFromQueryAndPid(Solution.Row singleRow, QueryData queryData, String processId) {
-            for(Map.Entry<String, String> qCol : queryData.queryColumns.entrySet()) {
+        public static void FillRowFromQueryAndPid(Solution.Row singleRow, Map<String, String> queryColumns, String processId) {
+            for(Map.Entry<String, String> qCol : queryColumns.entrySet()) {
                 Function<String, ValueTypePair> lambda = columnsMap.get(qCol.getKey());
                 if(lambda == null) {
                     throw new RuntimeException("Cannot find lambda for " + qCol.getKey());
@@ -520,20 +520,20 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
             }
     }
 
-    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) {
+    public Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns) {
         Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
         String processId = properties.get("Handle");
         if(processId == null) {
             throw new RuntimeException("Null pid for objectPath=" + objectPath);
         }
         Solution.Row singleRow = new Solution.Row();
-        FillRowFromQueryAndPid(singleRow, queryData, processId);
+        FillRowFromQueryAndPid(singleRow, queryColumns, processId);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
         String pathFile = ObjectPath.BuildCimv2PathWbem(
                 "Win32_Process", Map.of(
                         "Handle", processId));
-        singleRow.PutNode(queryData.mainVariable, pathFile);
+        singleRow.PutNode(mainVariable, pathFile);
         return singleRow;
     }
 }
@@ -582,7 +582,8 @@ public class GenericProvider {
         return null;
     }
 
-    static public BaseSelecter FindSelecter(QueryData queryData) {
+    static public BaseSelecter FindSelecter(QueryData queryData, boolean forceWmi) {
+        if(forceWmi) return wmiSelecter;
         BaseSelecter baseSelecter = FindCustomSelecter(queryData);
         return  (baseSelecter == null) ? wmiSelecter : baseSelecter;
     }
@@ -738,7 +739,8 @@ public class GenericProvider {
         return null;
     }
 
-    static public BaseGetter FindGetter(QueryData queryData) {
+    static public BaseGetter FindGetter(QueryData queryData, boolean forceWmi) {
+        if(forceWmi) return wmiGetter;
         BaseGetter getter = FindCustomGetter(queryData);
         return  (getter == null) ? wmiGetter : getter;
     }
@@ -772,22 +774,16 @@ public class GenericProvider {
     /**
      * @param objectPath
      * @param queryData
-     * @param withCustom If custom providers and getters can be used. This might not be the case when testing.
      * @return
      * @throws Exception
      */
-    Solution.Row GetObjectFromPath(String objectPath, QueryData queryData, boolean withCustom)
+    Solution.Row GetObjectFromPath(String objectPath, QueryData queryData)
     {
         if(queryData.classGetter == null) {
             throw new RuntimeException("Getter is not set");
         }
         PSComputerNameHandler handlerPSComputerNameHandler = new PSComputerNameHandler(queryData);
-        Solution.Row returnRow;
-        if(withCustom) {
-            returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData);
-        } else {
-            returnRow = wmiGetter.GetSingleObject(objectPath, queryData);
-        }
+        Solution.Row returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData.mainVariable, queryData.queryColumns);
         handlerPSComputerNameHandler.Restore(returnRow);
         // Now, apply the extra filtering if needed.
         if(ExtraFiltering(queryData, returnRow)) {

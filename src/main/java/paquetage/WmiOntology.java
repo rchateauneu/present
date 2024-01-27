@@ -480,9 +480,7 @@ public class WmiOntology {
                 if(className == null) {
                     throw new RuntimeException("Classname should not be null. wbemPath=" + wbemPath);
                 }
-                //className = SplitWbemPath(wbemPath);
                 tokenType = NamespaceTokenPair.TokenTypeEnum.INSTANCE_IRI;
-                // throw new RuntimeException("ljhljkh");
             } else {
                 if (className.indexOf('.') > 0) {
                     tokenType = NamespaceTokenPair.TokenTypeEnum.PREDICATE_IRI;

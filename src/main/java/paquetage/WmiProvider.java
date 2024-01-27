@@ -428,6 +428,7 @@ public class WmiProvider {
                     logger.error("Error getting Description qualifiers of " + className);
                 }
                 if(false) {
+                    // Debugging purpose, maybe for later use
                     String isAssociation = classQualifiersSet.Get("Association");
                 }
 
@@ -443,7 +444,7 @@ public class WmiProvider {
 
                             // If the class is an association and the property is a key, we can assume it points to an object.
                             if(false) {
-                                // Debugging purpose.
+                                // Debugging purpose, maybe for later use
                                 String isKey = classQualifiersSet.Get("key");
                             }
 
@@ -479,6 +480,7 @@ public class WmiProvider {
         } finally {
             enumerator.Release();
         }
+        logger.debug("Number of cached classes:" + resultClasses.size());
         return resultClasses;
     }
 

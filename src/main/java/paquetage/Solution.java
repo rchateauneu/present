@@ -31,6 +31,21 @@ public class Solution implements Iterable<Solution.Row> {
 
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
+    IRI DereferencePredicate(Var predicate, Row row) {
+        if(predicate.isConstant()) {
+            return Values.iri(predicate.getValue().stringValue());
+        }
+        String variablePredicate = predicate.getName();
+        logger.debug("variablePredicate=" + variablePredicate);
+        String predicateShortValue = row.GetStringValue(variablePredicate);
+        logger.debug("predicateShortValue=" + predicateShortValue);
+        // "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#" + predicateShortValue;
+        String predicateValue = WmiOntology.NamespaceTermToIRI("ROOT\\CIMV2", predicateShortValue);
+        logger.debug("predicateValue=" + predicateValue);
+        IRI predicateIRI = Values.iri(predicateValue);
+        return predicateIRI;
+    }
+
     /** This takes a BGP as parsed from the original Sparql query, and replace the variables with the ones calculated
      * from WMI.
      * The resulting triples will be inserted in an RDF repository.
@@ -48,11 +63,6 @@ public class Solution implements Iterable<Solution.Row> {
         Var subject = myPattern.getSubjectVar();
         String subjectName = subject.getName();
         Var predicate = myPattern.getPredicateVar();
-        if(!predicate.isConstant()) {
-            logger.debug("Predicate is not constant:" + predicate + " subjectName=" + subjectName + ". Leaving.");
-            return;
-        }
-        IRI predicateIri = Values.iri(predicate.getValue().stringValue());
         Var object = myPattern.getObjectVar();
         String objectName = object.getName();
         Value objectValue = object.getValue();
@@ -73,6 +83,11 @@ public class Solution implements Iterable<Solution.Row> {
                 // FIXME: And if the constant object was not found, we should not insert it.
                 logger.error("CONST_OBJECT1: If the constant subject is not found, it must not be inserted:" + objectString);
 
+                if(!predicate.isConstant()) {
+                    logger.debug("Predicate must be constant with constant object:" + predicate + " subjectName=" + subjectName + ". Leaving.");
+                }
+                IRI predicateIri = Values.iri(predicate.getValue().stringValue());
+
                 generatedTriples.add(factory.createStatement(
                         resourceSubject,
                         predicateIri,
@@ -86,6 +101,7 @@ public class Solution implements Iterable<Solution.Row> {
                         logger.debug("Variable " + objectName + " not defined. Continuing to next pattern.");
                         continue;
                     }
+                    IRI predicateIri = DereferencePredicate(predicate, row);
                     String objectString = objectWmiValueType.Value();
                     Value resourceObject = objectWmiValueType.Type() == ValueTypePair.ValueType.NODE_TYPE
                             ? Values.iri(objectString)
@@ -110,6 +126,7 @@ public class Solution implements Iterable<Solution.Row> {
 
                 for(Row row : Rows) {
                     Resource resourceSubject = row.AsIRI(subjectName);
+                    IRI predicateIri = DereferencePredicate(predicate, row);
 
                     generatedTriples.add(factory.createStatement(
                             resourceSubject,
@@ -119,75 +136,82 @@ public class Solution implements Iterable<Solution.Row> {
             } else {
                 // The subject and the object change for each row.
                 // Special RDFS property, which does not exist in WMI but can be computed on-the-fly.
-                String predicateValue = predicate.getValue().stringValue();
-                logger.debug("predicateValue=" + predicate.getValue() + ".");
-                logger.debug("subjectName=" + subjectName);
-                logger.debug("RDFS.LABEL.stringValue()=" + RDFS.LABEL.stringValue() + ".");
-                boolean isRdfsLabel = predicateValue.equals(RDFS.LABEL.stringValue());
-                logger.debug("isRdfsLabel=" + isRdfsLabel);
-                for(Row row: Rows) {
-                    logger.debug("row=" + row);
-                    /* The subject might not be a node if the query comes from Wikidata GUI.
-                    In this case, a label must be generated anyway, but WMI cannot help for this.
-                    Strictly speaking, a resourceSubject should be generated based on the various predicates used
-                    to get this value. But it is not possible to have them
-                    */
-                    Resource resourceSubject;
-                    Value resourceObject;
-                    if(isRdfsLabel) {
-                        ValueTypePair subjectWmiValue = row.GetValueType(subjectName);
-                        if (subjectWmiValue == null) {
-                            throw new RuntimeException("Null value for subjectName=" + subjectName);
-                        }
+                logger.debug("predicate=" + predicate + ".");
+                if(predicate.isConstant()) {
+                    Value predicateValue = predicate.getValue();
+                    logger.debug("predicateValue=" + predicateValue + ".");
+                    String predicateValueString = predicateValue.stringValue();
+                    logger.debug("subjectName=" + subjectName);
+                    logger.debug("RDFS.LABEL.stringValue()=" + RDFS.LABEL.stringValue() + ".");
+                    boolean isRdfsLabel = predicateValueString.equals(RDFS.LABEL.stringValue());
+                    logger.debug("isRdfsLabel=" + isRdfsLabel);
+                    for (Row row : Rows) {
+                        logger.debug("row=" + row);
+                        /* The subject might not be a node if the query comes from Wikidata GUI.
+                        In this case, a label must be generated anyway, but WMI cannot help for this.
+                        Strictly speaking, a resourceSubject should be generated based on the various predicates used
+                        to get this value. But it is not possible to have them
+                        */
+                        Resource resourceSubject;
+                        Value resourceObject;
+                        if (isRdfsLabel) {
+                            ValueTypePair subjectWmiValue = row.GetValueType(subjectName);
+                            if (subjectWmiValue == null) {
+                                throw new RuntimeException("Null value for subjectName=" + subjectName);
+                            }
 
-                        if (subjectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
+                            if (subjectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
+                                resourceSubject = row.AsIRI(subjectName);
+                            } else {
+                                Value literalSubject = subjectWmiValue.ValueTypeToLiteral();
+                                /*
+                                Ca ne peut pas marcher ici:
+                                processUri="http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%222404%22"
+                                 ... qui est parse en ceci: \\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="2404"
+                                propertyUri="http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.CreationDate"
+                                    <{processUri}> <{propertyUri}> ?date_value .
+                                    ?date_value <http://www.w3.org/2000/01/rdf-schema#label> ?date_label .
+
+                                D'une part ?date_value est un literal, mais doit aussi etre un iri.
+                                Utilisons un predicat qui est un IRI.
+
+                                Probleme: Ca n'existe que dans les associators !
+                                */
+                                resourceSubject = Values.iri("SyntheticNode:" + literalSubject.stringValue());
+                            }
+
+                            logger.debug("subjectName=" + subjectName + " objectName=" + objectName);
+                            logger.debug("predicate=" + predicate);
+                            logger.debug("resourceSubject=" + resourceSubject);
+
+                            String valueObject = row.GetStringValue(objectName);
+                            logger.debug("valueObject=" + valueObject);
+
+                            resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
+                            logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
+                        } else {
                             resourceSubject = row.AsIRI(subjectName);
-                        } else {
-                            Value literalSubject = subjectWmiValue.ValueTypeToLiteral();
-                            /*
-                            Ca ne peut pas marcher ici:
-                            processUri="http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%222404%22"
-                             ... qui est parse en ceci: \\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="2404"
-                            propertyUri="http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.CreationDate"
-                                <{processUri}> <{propertyUri}> ?date_value .
-                                ?date_value <http://www.w3.org/2000/01/rdf-schema#label> ?date_label .
+                            ValueTypePair objectWmiValue = row.GetValueType(objectName);
+                            if (objectWmiValue == null) {
+                                throw new RuntimeException("Null value for objectName=" + objectName);
+                            }
 
-                            D'une part ?date_value est un literal, mais doit aussi etre un iri.
-                            Utilisons un predicat qui est un IRI.
-
-                            Probleme: Ca n'existe que dans les associators !
-                            */
-                            resourceSubject = Values.iri("SyntheticNode:" + literalSubject.stringValue());
+                            if (objectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
+                                resourceObject = row.AsIRI(objectName);
+                            } else {
+                                resourceObject = objectWmiValue.ValueTypeToLiteral();
+                            }
                         }
 
-                        logger.debug("subjectName=" + subjectName + " objectName=" + objectName);
-                        logger.debug("predicate=" + predicate);
-                        logger.debug("resourceSubject=" + resourceSubject);
-
-                        String valueObject = row.GetStringValue(objectName);
-                        logger.debug("valueObject=" + valueObject);
-
-                        resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
-                        logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
+                        IRI predicateIri = DereferencePredicate(predicate, row);
+                        generatedTriples.add(factory.createStatement(
+                                resourceSubject,
+                                predicateIri,
+                                resourceObject));
                     }
-                    else {
-                        resourceSubject = row.AsIRI(subjectName);
-                        ValueTypePair objectWmiValue = row.GetValueType(objectName);
-                        if (objectWmiValue == null) {
-                            throw new RuntimeException("Null value for objectName=" + objectName);
-                        }
-
-                        if (objectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
-                            resourceObject = row.AsIRI(objectName);
-                        } else {
-                            resourceObject = objectWmiValue.ValueTypeToLiteral();
-                        }
-                    }
-
-                    generatedTriples.add(factory.createStatement(
-                            resourceSubject,
-                            predicateIri,
-                            resourceObject));
+                } else {
+                    logger.debug("Predicate must be constant with variable subject and variable object:"
+                            + predicate + " subjectName=" + subjectName + ". Do nothing..");
                 }
             }
         }
@@ -238,7 +262,6 @@ public class Solution implements Iterable<Solution.Row> {
      * TODO: When returning List<Row>, store the variable names once only, in a header. All rows have the same binding.
      */
     public static class Row {
-
         private Map<String, ValueTypePair> Elements;
 
         /**
@@ -434,7 +457,7 @@ public class Solution implements Iterable<Solution.Row> {
                         logger.debug("Identical values for key:" + newKey);
                     } else {
                         // Duplicate key with different values.
-                        logger.debug("Different values for key:" + newKey);
+                        logger.warn("Different values for key:" + newKey);
                         return null;
                     }
                 }

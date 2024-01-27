@@ -350,7 +350,7 @@ public class SparqlTranslationTest {
     @Test
     /**
      * This gets the list of files in a directory.
-     * Possibly because accessing CIM_DataFile is slow anyway.
+     * Possible because accessing CIM_DataFile is slow anyway.
      */
     public void Execution_Forced_CIM_DirectoryContainsFile_2() throws Exception {
         String sparqlQuery = """

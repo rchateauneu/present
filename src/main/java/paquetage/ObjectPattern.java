@@ -13,8 +13,6 @@ import org.eclipse.rdf4j.query.algebra.Var;
 
 import java.util.*;
 
-import static paquetage.WmiSelecter.wmiProvider;
-
 /**
  * This models an object and its properties extracted from a Sparql query.
  * The work "object" is misleading : It does not mean the right side of an RDF triple.
@@ -26,6 +24,7 @@ import static paquetage.WmiSelecter.wmiProvider;
  */
 public class ObjectPattern implements Comparable<ObjectPattern> {
     final static private Logger logger = Logger.getLogger(ObjectPattern.class);
+    public static String ALL_PREDICATES = "*";
 
     /** This is used to transform a constant value parsed from a Sparql query, into a value compatible with WMI.
      * Specifically, this extracts the data type in XSD format, such as in ' "1"^^xsd:integer '.
@@ -83,21 +82,28 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
 
     // TODO: ObjectName must be a Variable or Value. See rdf4j
     public static class PredicateObjectPair{
-        public String RawPredicate; // As taken from the Sparql query.
+        public String predicateVariableName;
         public String variableName; // Where to store the result.
         public ValueTypePair ObjectContent;
         public String ShortPredicate; // Used to construct the WQL query. The prefix "http:..." is chopped.
 
-        PredicateObjectPair(String rawPredicate, String shortPredicate, String variable, ValueTypePair objectContent) {
+        PredicateObjectPair(String varPredicate, String shortPredicate, String variable, ValueTypePair objectContent) {
             if(!(variable == null ^ objectContent == null)) {
                 throw new RuntimeException("The variable or the value must be null");
             }
-            // At this stage, this is an IRI.
-            if(!rawPredicate.startsWith("http:")) {
-                throw new RuntimeException("Predicate must be an IRI:" + rawPredicate);
+
+            if(shortPredicate.equals(ALL_PREDICATES)) {
+                if (varPredicate == null) {
+                    throw new RuntimeException("Should not be null: varPredicate");
+                }
+            } else {
+                // At this stage, this is an IRI.
+                if (varPredicate != null) {
+                    throw new RuntimeException("Should be null: varPredicate=" + varPredicate);
+                }
             }
-            logger.debug("rawPredicate=" + rawPredicate + " variable=" + variable + " shortPredicate=" + shortPredicate);
-            RawPredicate = rawPredicate;
+            logger.debug("varPredicate=" + varPredicate + " variable=" + variable + " shortPredicate=" + shortPredicate);
+            predicateVariableName = varPredicate;
             variableName = variable;
             ObjectContent = objectContent;
             ShortPredicate = shortPredicate;
@@ -369,11 +375,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             String predicateStr;
             String shortPredicate;
 
-            if(!predicate.isConstant()) {
-                // If the predicate is a variable.
-                predicateStr = null;
-                shortPredicate = null;
-            } else {
+            if(predicate.isConstant()) {
                 Value predicateValue = predicate.getValue();
                 // If the predicate is not usable, continue without creating a pattern.
                 if (predicateValue == null) {
@@ -432,6 +434,10 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                         }
                     }
                 }
+            } else {
+                // If the predicate is a variable.
+                predicateStr = null;
+                shortPredicate = null;
             }
 
             if(CurrentNamespace == null) {
@@ -443,13 +449,29 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             if(predicateStr == null) {
                 assert shortPredicate == null;
                 logger.debug("Getting classes from " + CurrentNamespace);
-                Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(CurrentNamespace);
-                WmiProvider.WmiClass wmiClass = classes.get(ClassName);
-                for (Map.Entry<String, WmiProvider.WmiProperty> entry_property : wmiClass.Properties.entrySet()) {
-                    String propertyName = entry_property.getKey();
-                    logger.debug("propertyName=" + propertyName);
+                if (object.isConstant()) {
+                    throw new RuntimeException("Cannot handle variable predicate and constant object for ClassName=" + ClassName);
+                } else {
+                    predicateStr = "http:*"; //  This is a horrible temporary hack.
+                    shortPredicate = ALL_PREDICATES;
+
+                    String predicateVariableName = predicate.getName();
+                    logger.debug("predicateVariableName=" + predicateVariableName);
+                    if(predicate.getValue() != null) {
+                        throw new RuntimeException("Predicate value should be null.");
+                    }
+
+                    String variableName = object.getName();
+                    PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicateVariableName, shortPredicate, variableName, null);
+                    // FIXME: What happens if the same predicate appears several times ?
+                    Members.add(predicateObjectPair);
+
+                    /*
+                    Non: Il faut une row par predicat, avec la valeur mais aussi la valeur du predicat
+                    */
+
+                    if(2 != 1+1) throw new RuntimeException("Cannot handle variable predicate for ClassName=" + ClassName);
                 }
-                throw new RuntimeException("Cannot handle variable predicate for ClassName=" + ClassName);
             }
             // TODO: Make this comparison faster than a string comparison.
             else if (predicateStr.equals(RDF.TYPE.stringValue())) {
@@ -489,7 +511,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     }
 
                     ValueTypePair vtp = new ValueTypePair(strValue, dataType);
-                    PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicateStr, shortPredicate, null, vtp);
+                    PredicateObjectPair predicateObjectPair = new PredicateObjectPair(null, shortPredicate, null, vtp);
                     // FIXME: What happens if the same predicate appears several times ?
                     Members.add(predicateObjectPair);
                 } else {
@@ -498,7 +520,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                         logger.debug("object not isConstant and isAnonymous:" + object.getName());
                     }
                     String variableName = object.getName();
-                    PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicateStr, shortPredicate, variableName, null);
+                    PredicateObjectPair predicateObjectPair = new PredicateObjectPair(null, shortPredicate, variableName, null);
                     // FIXME: What happens if the same predicate appears several times ?
                     Members.add(predicateObjectPair);
                 }

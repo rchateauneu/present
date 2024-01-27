@@ -142,13 +142,15 @@ public class WmiGetter extends BaseGetter {
     /** This returns in a Row the properties of a WMI instance specified in a WMI path.
      * The derisred properties are given in the QueryData columns.
      * @param objectPath
-     * @param queryData
+     * @param mainVariable
+     * @param queryColumns
      * @return
      * @throws Exception
      */
-    public Solution.Row GetSingleObject(String objectPath, QueryData queryData) {
+    public Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns) {
 
-        Set<String> columns = queryData.queryColumns.keySet();
+        Set<String> columns = queryColumns.keySet();
+        logger.debug("objectPath=" + objectPath + " queryColumns=" + queryColumns);
         Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
         // Maybe the object does not exist.
         if(objectNode == null) {
@@ -157,7 +159,7 @@ public class WmiGetter extends BaseGetter {
         }
 
         Solution.Row singleRow = new Solution.Row();
-        for (Map.Entry<String, String> entry : queryData.queryColumns.entrySet()) {
+        for (Map.Entry<String, String> entry : queryColumns.entrySet()) {
             String variableName = entry.getValue();
             if(variableName == null) {
                 throw new RuntimeException("Null variable name for objectPath=" + objectPath);
@@ -172,7 +174,7 @@ public class WmiGetter extends BaseGetter {
         if(wbemPath.Type() != ValueTypePair.ValueType.NODE_TYPE) {
             throw new RuntimeException("GetSingleObject objectPath should be a node:" + objectPath);
         }
-        singleRow.PutValueType(queryData.mainVariable, wbemPath);
+        singleRow.PutValueType(mainVariable, wbemPath);
         return singleRow;
     }
 

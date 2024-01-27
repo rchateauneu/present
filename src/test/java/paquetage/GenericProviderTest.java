@@ -294,8 +294,10 @@ public class GenericProviderTest extends TestCase {
         CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
 
         String objectPath = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", filePath));
-        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
-        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
+        queryData.SetHandlers(true);
+        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData);
+        queryData.SetHandlers(false);
+        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 
@@ -324,8 +326,10 @@ public class GenericProviderTest extends TestCase {
 
         String objectPath = ObjectPath.BuildCimv2PathWbem("Win32_Process", Map.of("Handle", currentPidStr));
         System.out.println("objectPath=" + objectPath);
-        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData, true);
-        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData, false);
+        queryData.SetHandlers(true);
+        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData);
+        queryData.SetHandlers(false);
+        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 }

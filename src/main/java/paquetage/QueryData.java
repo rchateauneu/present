@@ -25,6 +25,11 @@ public class QueryData {
     // This sorted container guarantees the order to help comparison in tests.
     SortedMap<String, String> queryColumns;
 
+    // The key and the values are Sparql variable name.
+    SortedMap<String, String> queryVariableColumns;
+
+    // When several variables are selected with the same predicate, then the predicate appears once only in the query
+    // for one of the variables. Once the value is selected, it is copied to the other variables.
     public Map<String, List<String>> variablesSynonyms;
 
     /** Patterns of the WHERE clause of a WMI query. The values are variables or constants at creation,
@@ -212,13 +217,6 @@ public class QueryData {
 
     public String ColumnToVariable(String columnName) {
         String variableName = queryColumns.get(columnName);
-        /*
-        if(variableName == null) {
-            throw new RuntimeException(
-                    "Variable is null for column:" + columnName
-                    + ". Available columns are:" + queryColumns.keySet());
-        }
-        */
         return variableName;
     }
 
@@ -308,7 +306,7 @@ public class QueryData {
             boolean mainVariableAvailable,
             Map<String, String> columns,
             List<QueryData.WhereEquality> wheres) {
-        this(wmiNamespace, wmiClassName, variable, mainVariableAvailable, columns, wheres, null);
+        this(wmiNamespace, wmiClassName, variable, mainVariableAvailable, columns, wheres, null, null);
     }
 
     QueryData(
@@ -316,9 +314,10 @@ public class QueryData {
             String wmiClassName,
             String variable,
             boolean mainVariableAvailable,
-            Map<String, String> columns,
+            Map<String, String> constantColumns,
             List<QueryData.WhereEquality> wheres,
-            Map<String, List<String>> synonyms) {
+            Map<String, List<String>> synonyms,
+            Map<String, String> variableColumns) {
         WmiProvider.CheckValidNamespace(wmiNamespace);
         // If the subject is a constant, then there is no main variable.
         if(variable == null) {
@@ -331,23 +330,29 @@ public class QueryData {
         className = wmiClassName;
         variablesSynonyms = synonyms;
         // Creates a map even if no columns are selected.
-        if(columns == null) {
+        if(constantColumns == null) {
             queryColumns = new TreeMap<>();
         } else {
-            for(String oneColumn: columns.keySet()) {
+            for(String oneColumn: constantColumns.keySet()) {
                 if (specialColumns.contains(oneColumn)) {
-                    throw new RuntimeException("Selected column is forbidden:" + oneColumn);
+                    throw new RuntimeException("Selected constant column is forbidden:" + oneColumn);
                 }
             }
-            queryColumns = new TreeMap<>(columns);
+            queryColumns = new TreeMap<>(constantColumns);
         }
+        queryVariableColumns = (variableColumns == null) ? new TreeMap<>() : new TreeMap<>(variableColumns);
+
         SwapWheres(wheres);
         logger.debug("wmiClassName=" + wmiClassName + " variable=" + variable + " queryColumns=" + queryColumns);
 
-        if(isMainVariableAvailable)
-            classGetter = GenericProvider.FindGetter(this);
-        else
-            classBaseSelecter = GenericProvider.FindSelecter(this);
+        SetHandlers(false);
+    }
+
+    void SetHandlers(boolean forceWmi) {
+            if(isMainVariableAvailable)
+                classGetter = GenericProvider.FindGetter(this, forceWmi);
+            else
+                classBaseSelecter = GenericProvider.FindSelecter(this, forceWmi);
     }
 
     /** This is used for initialising when adding the WHERE tests without values,
