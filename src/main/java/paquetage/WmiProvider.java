@@ -2,6 +2,7 @@ package paquetage;
 
 import COM.Wbemcli;
 import COM.WbemcliUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
@@ -31,7 +32,6 @@ public class WmiProvider {
     // These two variables are temporary.
     private static Wbemcli.IWbemServices wbemServiceRoot = null;
     public static Wbemcli.IWbemServices wbemServiceRootCimv2 = null;
-    public static Path ontologiesPathCache;
     // For "\\\\LAPTOP-R89KG6V1\\ROOT\\StandardCimv2:MSFT_Net..."
     //  or '\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="12456"'
     static private String regexReferenceNamespace = "\\\\\\\\[-\\dA-Z\\._]+\\\\(ROOT[-A-Z\\d_\\\\]*):.*";
@@ -41,13 +41,6 @@ public class WmiProvider {
     static private Pattern patternReferenceNamespaceClassname = Pattern.compile(regexReferenceNamespaceClassname, Pattern.CASE_INSENSITIVE);
     static private String regexNamespace = "^ROOT[\\\\_A-Z\\d]*$";
     static private Pattern patternNamespace = Pattern.compile(regexNamespace, Pattern.CASE_INSENSITIVE);
-
-    static {
-        String tempDir = System.getProperty("java.io.tmpdir");
-
-        // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-        ontologiesPathCache = Paths.get(tempDir + "\\" + "PresentOntologies");
-    }
 
     static {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
@@ -202,7 +195,7 @@ public class WmiProvider {
     }
     */
 
-    public class WmiProperty {
+    public static class WmiProperty {
         public String Name;
         public String Description;
         public String Type;
@@ -213,12 +206,17 @@ public class WmiProvider {
             Type = "string";
         }
 
+        // For Json deserialization.
+        public WmiProperty() {
+            super();
+        }
+
         boolean isWbemPathRef() {
             return Type.startsWith("ref:");
         }
     }
 
-    public class WmiClass {
+    public static class WmiClass {
         public String Name;
         public String BaseName;
         public String Description;
@@ -228,6 +226,11 @@ public class WmiProvider {
             Name = className;
             Properties = new HashMap<>();
             Description = "No description available yet for class " + className;
+        }
+
+        // For Json deserialization.
+        public WmiClass() {
+            super();
         }
     }
 
@@ -284,7 +287,7 @@ public class WmiProvider {
         return namespacesFlat;
     }
 
-    private void Namespaces(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
+    private void BuildNamespacesList(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
 
         Set<String> namespacesFlat = NamespacesFlat(wbemService, namespace);
 
@@ -297,7 +300,7 @@ public class WmiProvider {
             Wbemcli.IWbemServices wbemServiceSub = GetWbemService(namespaceFull);
             if(wbemServiceSub != null) {
                 namespacesHierarchical.add(namespaceFull);
-                Namespaces(namespacesHierarchical, wbemServiceSub, namespaceFull);
+                BuildNamespacesList(namespacesHierarchical, wbemServiceSub, namespaceFull);
             }
         }
     }
@@ -306,38 +309,30 @@ public class WmiProvider {
      * There is no benefit multi-threading connections because it seems that the creation of WBEM connections
      * is serialized.
      */
-    private static HashSet<String> cacheNamespacesSingleThreaded = null;
+    private static HashSet<String> cacheNamespaces = null;
 
-    private void CheckCacheDirectoryExists() {
-        boolean dirExists = Files.exists(WmiProvider.ontologiesPathCache);
-        if(! dirExists) {
-            File file = new File(WmiProvider.ontologiesPathCache.toString());
-            file.mkdirs();
-        }
-    }
-
-    public Set<String> Namespaces() throws Exception{
-        if(cacheNamespacesSingleThreaded == null) {
-            cacheNamespacesSingleThreaded = new HashSet<>();
-            Path pathCacheNamespaces = Paths.get(WmiProvider.ontologiesPathCache + "\\" + "namespaces.json");
+    public Set<String> NamespacesList() throws Exception {
+        if(cacheNamespaces == null) {
+            cacheNamespaces = new HashSet<>();
+            Path pathCacheNamespaces = Paths.get(CacheManager.ontologiesPathCache + "\\" + "namespaces.json");
             boolean fileExists = Files.exists(pathCacheNamespaces);
             ObjectMapper mapperObj = new ObjectMapper();
             if(fileExists) {
                 logger.debug("Loading namespaces from:" + pathCacheNamespaces);
-                cacheNamespacesSingleThreaded = mapperObj.readValue(pathCacheNamespaces.toFile(), HashSet.class);
-                logger.debug("Number of namespaces=" + cacheNamespacesSingleThreaded.size());
+                cacheNamespaces = mapperObj.readValue(pathCacheNamespaces.toFile(), HashSet.class);
+                logger.debug("Number of namespaces=" + cacheNamespaces.size());
             } else {
                 logger.debug("Filling namespaces cache to:" + pathCacheNamespaces);
-                Namespaces(cacheNamespacesSingleThreaded, wbemServiceRoot, "ROOT");
-                logger.debug("End. Number of namespaces=" + cacheNamespacesSingleThreaded.size());
+                BuildNamespacesList(cacheNamespaces, wbemServiceRoot, "ROOT");
+                logger.debug("End. Number of namespaces=" + cacheNamespaces.size());
 
                 // Maybe the cache directory does not exist.
-                CheckCacheDirectoryExists();
-                mapperObj.writeValue(pathCacheNamespaces.toFile(),cacheNamespacesSingleThreaded);
+                CacheManager.CheckCacheDirectoryExists();
+                mapperObj.writeValue(pathCacheNamespaces.toFile(), cacheNamespaces);
                 logger.debug("Written namespaces to:" + pathCacheNamespaces);
             }
         }
-        return cacheNamespacesSingleThreaded;
+        return cacheNamespaces;
     }
 
     // Very commonly used for tests.
@@ -345,18 +340,58 @@ public class WmiProvider {
         return Classes("ROOT\\CIMV2");
     }
 
-    public Map<String, WmiClass> Classes(String namespace) {
+    // Mettre ca dans un fichier !!!
+    public Map<String, WmiClass> ClassesOld(String namespace) {
         Map<String, WmiClass> cacheClasses = cacheClassesMap.get(namespace);
         if(cacheClasses == null) {
-            logger.debug("Getting IWbemServices for namespace=" + namespace);
-            Wbemcli.IWbemServices wbemService = GetWbemService(namespace);
-            if(wbemService == null) {
-                throw new RuntimeException("WBEM service is null for namespace=" + namespace);
-            }
             logger.debug("Getting classes for namespace=" + namespace);
-            cacheClasses = ClassesNocache(wbemService);
+            cacheClasses = ClassesNocache(namespace);
             logger.debug("End getting classes in " + namespace + " Number of classes=" + cacheClasses.size());
             cacheClassesMap.put(namespace, cacheClasses);
+        }
+        return cacheClasses;
+    }
+
+    public Map<String, WmiClass> Classes(String namespace) {
+        Map<String, WmiClass> cacheClasses = cacheClassesMap.get(namespace);
+
+        if(cacheClasses == null) {
+            File fileCacheClasses = CacheManager.ClassesCacheFile(namespace);
+            boolean fileExists = Files.exists(fileCacheClasses.toPath());
+            ObjectMapper mapperObj = new ObjectMapper();
+            if (fileExists) {
+                logger.debug("Loading classes from:" + fileCacheClasses);
+                try {
+                    // java.lang.ClassCastException: class java.util.LinkedHashMap
+                    // cannot be cast to class paquetage.WmiProvider$WmiClass
+                    // (java.util.LinkedHashMap is in module java.base of loader 'bootstrap';
+                    // paquetage.WmiProvider$WmiClass is in unnamed module of loader 'app')
+                    // cacheClasses = mapperObj.readValue(fileCacheClasses, HashMap.class);
+
+                    /*
+                    java.lang.RuntimeException: com.fasterxml.jackson.databind.exc.InvalidDefinitionException:
+                    Cannot construct instance of `paquetage.WmiProvider$WmiClass`:
+                    non-static inner classes like this can only by instantiated using default, no-argument constructor
+                    at [Source: (File); line: 1, column: 30]
+                    (through reference chain: java.util.LinkedHashMap["CIM_ManagedSystemElement"])
+                     */
+                    cacheClasses = mapperObj.readValue(fileCacheClasses, new TypeReference<Map<String, WmiClass>>(){});
+                } catch (Exception exc) {
+                    logger.error("Cannot read classes cache:" + fileCacheClasses);
+                    throw new RuntimeException(exc);
+                }
+            } else {
+                cacheClasses = ClassesNocache(namespace);
+                try {
+                    mapperObj.writeValue(fileCacheClasses, cacheClasses);
+                } catch (Exception exc) {
+                    logger.error("Cannot write classes cache:" + fileCacheClasses);
+                    throw new RuntimeException(exc);
+                }
+                logger.debug("Written classes to:" + fileCacheClasses);
+            }
+            cacheClassesMap.put(namespace, cacheClasses);
+            logger.debug("Number of namespaces=" + cacheClasses.size());
         }
         return cacheClasses;
     }
@@ -364,7 +399,13 @@ public class WmiProvider {
     /** This returns a map containing the WMI classes. This is calculated with a WQL query.
      * This is rather a task whose result does not often change, so it must be cached.
      * */
-    private Map<String, WmiClass> ClassesNocache(Wbemcli.IWbemServices wbemService) {
+    private Map<String, WmiClass> ClassesNocache(String namespace) {
+        Wbemcli.IWbemServices wbemService = GetWbemService(namespace);
+        if(wbemService == null) {
+            throw new RuntimeException("WBEM service is null for namespace=" + namespace);
+        }
+        logger.debug("Getting classes for namespace=" + namespace);
+
         // Classes are indexed with their names.
         Map<String, WmiClass> resultClasses = new HashMap<>();
         logger.debug("About to select from meta_class");

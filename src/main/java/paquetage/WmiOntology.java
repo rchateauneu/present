@@ -23,7 +23,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 
@@ -226,11 +225,6 @@ public class WmiOntology {
                     // This should be another class.
                     IRI domainIri = iri(namespace_iri_prefix, domainName);
                     connection.add(uniquePropertyIri, RDFS.RANGE, domainIri);
-
-                    /*
-                    Ici, on sait qu'il faut passer un path WBEM, et pas un IRI.
-                    Et donc, une constante passee par une query Sparql doit etre conertie.
-                     */
                 }
                 else
                 {
@@ -303,22 +297,6 @@ public class WmiOntology {
         writer.endRDF();
     }
 
-    // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-    static private Path PathNamespacePrefix(String namespace) {
-        // The namespace might contain backslashes, but this is OK on Windows.
-        return Paths.get(WmiProvider.ontologiesPathCache + "\\" + namespace);
-    }
-
-    static private File DirSailDump(String namespace) throws Exception{
-        // The namespace might contain backslashes, but this is OK on Windows.
-        Path pathNamespacePrefix = PathNamespacePrefix(namespace);
-
-        Files.createDirectories(WmiProvider.ontologiesPathCache);
-        File dirSaildump = new File(pathNamespacePrefix + ".SailDir");
-        logger.debug("dirSaildump=" + dirSaildump);
-        return dirSaildump;
-    }
-
     /** This stores the repository connection containing the ontology for each namespace,
      * so it is not necessary to read them several times from file.
      * They should never be modified but instead copied to a new repository.
@@ -326,9 +304,11 @@ public class WmiOntology {
     static private HashMap<String, RepositoryConnection> mapNamespaceToConnects = new HashMap<>();
 
     /** Used to display information about the repository. */
+    /*
     static public Set<String> Namespaces() {
         return mapNamespaceToConnects.keySet();
     }
+    */
 
     static public RepositoryConnection ReadOnlyOntologyConnection(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
@@ -358,7 +338,7 @@ public class WmiOntology {
         RepositoryConnection repositoryConnection;
 
         try {
-            File dirSaildump = DirSailDump(namespace);
+            File dirSaildump = CacheManager.DirSailDump(namespace);
             logger.debug("namespace=" + namespace + " dirSaildump=" + dirSaildump);
             boolean fileExists = Files.exists(dirSaildump.toPath());
 
@@ -391,7 +371,7 @@ public class WmiOntology {
                 memStore.sync();
                 logger.debug("Cached " + repositoryConnection.size() + " statements");
                 // Also saves the new ontology to a RDF file.
-                Path pathNamespacePrefix = PathNamespacePrefix(namespace);
+                Path pathNamespacePrefix = CacheManager.PathNamespacePrefix(namespace);
                 WriteRepository(repositoryConnection, pathNamespacePrefix + ".rdf");
             }
         }
@@ -401,7 +381,7 @@ public class WmiOntology {
             throw new RuntimeException(exc);
         }
         if(repositoryConnection.isEmpty()) {
-            throw new RuntimeException("Ontology in " + WmiProvider.ontologiesPathCache + " is empty for namespace=" + namespace);
+            throw new RuntimeException("Ontology in " + CacheManager.ontologiesPathCache + " is empty for namespace=" + namespace);
         }
         return repositoryConnection;
     }
@@ -438,7 +418,7 @@ public class WmiOntology {
         Repository repo = new SailRepository(new MemoryStore());
         RepositoryConnection repositoryConnection = repo.getConnection();
 
-        for(String namespace: wmiProvider.Namespaces()) {
+        for(String namespace: wmiProvider.NamespacesList()) {
             InsertOntologyToConnection(namespace, repositoryConnection);
         }
 
@@ -500,8 +480,6 @@ public class WmiOntology {
     // It returns something like "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22"
     static public String CreateUriVarArgs(String className, String propertyName, String propertyValue) throws Exception {
         String iri = "\\\\" + PresentUtils.computerName + "\\ROOT\\CIMV2:" + className + "." + propertyName + "=" + "\"" + propertyValue + "\"";
-        // Ou bien root/cimv2 ??
-        // WbemPathToIri
         return WbemPathToIri("ROOT\\CIMV2", iri).stringValue();
     }
 

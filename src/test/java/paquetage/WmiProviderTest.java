@@ -2,7 +2,6 @@ package paquetage;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.lang.Object;
 
 import COM.Wbemcli;
 import org.junit.Assert;
@@ -58,7 +57,7 @@ public class WmiProviderTest {
      */
     @Test
     public void TestNamespaces() throws Exception {
-        Set<String> namespaces = wmiProvider.Namespaces();
+        Set<String> namespaces = wmiProvider.NamespacesList();
         System.out.println("namespaces=" + new TreeSet<String>(namespaces));
         /* Typical content: [Cli, RSOP, subscription, StandardCimv2, directory, aspnet, CIMV2, PEH, WMI,
         Interop, ServiceModel, msdtc, SECURITY, Hardware, Microsoft, SecurityCenter2, DEFAULT, SecurityCenter],
@@ -519,7 +518,7 @@ public class WmiProviderTest {
      */
     public void TestNamespacesExclusiveClassesGenerate() throws Exception {
         Map<String, WmiProvider.WmiClass> classesCIMV2 = wmiProvider.Classes("ROOT\\CIMV2");
-        Set<String> setNamespaces = wmiProvider.Namespaces();
+        Set<String> setNamespaces = wmiProvider.NamespacesList();
         for (String oneNamespace : setNamespaces) {
             Set<String> exclusiveClasses = new HashSet<>();
             Map<String, WmiProvider.WmiClass> classesNamespace = wmiProvider.Classes(oneNamespace);

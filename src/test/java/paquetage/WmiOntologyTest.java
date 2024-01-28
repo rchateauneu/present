@@ -167,7 +167,7 @@ public class WmiOntologyTest {
      */
     @Test
     public void LoadAllOntologies() throws Exception {
-        Set<String> setNamespaces = wmiProvider.Namespaces();
+        Set<String> setNamespaces = wmiProvider.NamespacesList();
         for (String oneNamespace : setNamespaces) {
             RepositoryConnection ontologyNamespace = WmiOntology.CloneToMemoryConnection(oneNamespace);
             String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
