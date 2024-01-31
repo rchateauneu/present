@@ -12,16 +12,18 @@ import java.util.stream.Collectors;
 // Queries sent by Wikidata Sparql GUI: wikibase/queryService/ui/resultBrowser/GraphResultBrowserNodeBrowser.js
 public class WikidataGuiTest {
     private RepositoryWrapper repositoryWrapper = null;
-    static long currentPid = ProcessHandle.current().pid();
-    static String currentPidStr = String.valueOf(currentPid);
+    private static long currentPid = ProcessHandle.current().pid();
+    private static String currentPidStr = String.valueOf(currentPid);
     // The current process is always there, so it is possible to select its properties.
     // "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.laksjfhdlaksjhdflakjshdflha";
     // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
-    String currentProcessUri = null;
+    private String currentProcessUri = null;
 
-    String uriWmi32ProcessHandle = null;
+    static private String predicateCreationDate = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.CreationDate";
 
-    String uri_CIM_ProcessExecutable_Dependent = null;
+    private String uriWmi32ProcessHandle = null;
+
+    private String uri_CIM_ProcessExecutable_Dependent = null;
 
     @Before
     public void setUp() throws Exception {
@@ -304,7 +306,7 @@ uri_CIM_ProcessExecutable_Dependent
         """;
         String sparqlQuery = setLanguage(patternQuery)
                 .replace("{processUri}", currentProcessUri)
-                .replace("{propertyUri}", "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.CreationDate");
+                .replace("{propertyUri}", predicateCreationDate);
         System.out.println("sparqlQuery=" + sparqlQuery);
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
@@ -334,11 +336,47 @@ uri_CIM_ProcessExecutable_Dependent
         """;
         String sparqlQuery = setLanguage(patternQuery)
                 .replace("{processUri}", currentProcessUri)
-                .replace("{propertyUri}", "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.CreationDate");
+                .replace("{propertyUri}", predicateCreationDate);
         System.out.println("sparqlQuery=" + sparqlQuery);
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         Assert.assertTrue(listRows.size() > 0);
+    }
+
+    @Test
+    public void testSPARQL_ProcessLabelOnly() throws Exception {
+        String patternQuery = """
+            SELECT ?process_label
+            WHERE {
+                <{processUri}> <http://www.w3.org/2000/01/rdf-schema#label> ?process_label .
+			} LIMIT 50
+        """;
+        String sparqlQuery = setLanguage(patternQuery)
+                .replace("{processUri}", currentProcessUri);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Assert.assertEquals(1, listRows.size());
+        RdfSolution.Tuple tuple = listRows.get(0);
+        Assert.assertEquals(Set.of("process_label"), tuple.KeySet());
+        Assert.assertEquals("\"java.exe\"", tuple.GetAsLiteral("process_label"));
+    }
+
+    @Test
+    public void testSPARQL_PropertyLabelOnly() throws Exception {
+        String patternQuery = """
+            SELECT ?predicate_label
+            WHERE {
+                <{propertyUri}> <http://www.w3.org/2000/01/rdf-schema#label> ?predicate_label .
+			} LIMIT 50
+        """;
+        String sparqlQuery = setLanguage(patternQuery)
+                .replace("{propertyUri}", predicateCreationDate);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        Assert.assertEquals(1, listRows.size());
+        RdfSolution.Tuple tuple = listRows.get(0);
+        Assert.assertEquals(Set.of("predicate_label"), tuple.KeySet());
+        Assert.assertEquals("\"\"Win32_Process.CreationDate\"@en\"", tuple.GetAsLiteral("predicate_label"));
     }
 
     // Typical URI : "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22"
