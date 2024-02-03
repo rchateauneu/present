@@ -32,10 +32,10 @@ public class WmiSelecter extends BaseSelecter {
             throw new RuntimeException("Main variable should not be available in a WQL query.");
         }
 
-        String wqlQuery = queryData.BuildWqlQuery();
+        String wqlQuery = queryData.buildWqlQuery();
         logger.debug("wqlQuery=" + wqlQuery);
 
-        Solution cachedResultRows = queryData.GetCachedQueryResults(wqlQuery);
+        Solution cachedResultRows = queryData.getCachedQueryResults(wqlQuery);
         if(cachedResultRows != null) {
             logger.debug("CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT - CACHE HIT- CACHE HIT");
             return cachedResultRows;
@@ -84,8 +84,8 @@ public class WmiSelecter extends BaseSelecter {
                     BiConsumer<String, String> storeValue = (String lambda_column, String lambda_variable) -> {
                         WinNT.HRESULT hr = wqlResult.Get(lambda_column, 0, pVal, pType, null);
                         COMUtils.checkRC(hr);
-                        ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(lambda_column, pType, pVal);
-                        oneRow.PutValueType(lambda_variable, rowValueType);
+                        ValueTypePair rowValueType = WmiProvider.convertVariantToValueTypePair(lambda_column, pType, pVal);
+                        oneRow.putValueType(lambda_variable, rowValueType);
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
 
@@ -103,7 +103,7 @@ public class WmiSelecter extends BaseSelecter {
             enumerator.Release();
         }
         logger.debug("Leaving. Rows=" + resultRows.size() + "/" + totalRows);
-        queryData.StoreCachedQueryResults(wqlQuery, resultRows);
+        queryData.storeCachedQueryResults(wqlQuery, resultRows);
         return resultRows;
     }
 }

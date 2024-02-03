@@ -18,18 +18,18 @@ import static com.sun.jna.platform.win32.Variant.VT_BSTR;
 
 public class WmiGetter extends BaseGetter {
     // TODO: Try a singleton.
-    WmiProvider wmiselecter = new WmiProvider();
+    WmiProvider wmiProvider = new WmiProvider();
 
     final static private Logger logger = Logger.getLogger(WmiGetter.class);
 
-    public boolean MatchGetter(QueryData queryData) {
+    public boolean matchGetter(QueryData queryData) {
         return true;
     }
 
-    public Wbemcli.IWbemClassObject GetObjectNode(String objectPath) {
+    public Wbemcli.IWbemClassObject getObjectNode(String objectPath) {
         try {
             // FIXME: This will not work with other namespaces than "ROOT\\CIMV2".
-            Wbemcli.IWbemClassObject objectNode = wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
+            Wbemcli.IWbemClassObject objectNode = wmiProvider.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, null);
             return objectNode;
         } catch (com.sun.jna.platform.win32.COM.COMException exc) {
             // Error Code 80041002 – Object Not Found
@@ -42,10 +42,10 @@ public class WmiGetter extends BaseGetter {
     // TODO: This should be thread-safe.
     private static HashMap<String, Wbemcli.IWbemClassObject> cacheWbemClassObject = new HashMap<>();
 
-    private Wbemcli.IWbemClassObject GetObjectNodeCached(String objectPath) {
+    private Wbemcli.IWbemClassObject getObjectNodeCached(String objectPath) {
         Wbemcli.IWbemClassObject objectNode = cacheWbemClassObject.get(objectPath);
         if (objectNode == null) {
-            objectNode = GetObjectNode(objectPath);
+            objectNode = getObjectNode(objectPath);
             cacheWbemClassObject.put(objectPath, objectNode);
         }
         return objectNode;
@@ -57,7 +57,7 @@ public class WmiGetter extends BaseGetter {
      * @param properties
      * @return
      */
-    private Wbemcli.IWbemClassObject GetObjectNodePartial(String objectPath, Set<String> properties) {
+    private Wbemcli.IWbemClassObject getObjectNodePartial(String objectPath, Set<String> properties) {
         Wbemcli.IWbemContext pctxDrive = new Wbemcli.IWbemContext().create();
 
         // Add named values to the context object.
@@ -74,10 +74,7 @@ public class WmiGetter extends BaseGetter {
             for (String strProperty : properties) {
                 WTypes.BSTR strPropertyBSTR = OleAuto.INSTANCE.SysAllocString(strProperty);
                 try {
-                    //Variant.VARIANT.ByReference vProperty = new Variant.VARIANT.ByReference();
-                    //vProperty.setValue(VT_BSTR, strPropertyBSTR);
                     psaProperties.putElement(strPropertyBSTR, indexProperties);
-                    //OleAuto.INSTANCE.VariantClear(vProperty);
                     ++indexProperties;
                 } finally {
                     OleAuto.INSTANCE.SysFreeString(strPropertyBSTR);
@@ -93,10 +90,10 @@ public class WmiGetter extends BaseGetter {
         pctxDrive.SetValue("__GET_EXT_PROPERTIES", 0, vPropertyList);
         psaProperties.destroy();
 
-        return wmiselecter.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
+        return wmiProvider.wbemServiceRootCimv2.GetObject(objectPath, Wbemcli.WBEM_FLAG_RETURN_WBEM_COMPLETE, pctxDrive);
     }
 
-    ValueTypePair GetObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
+    ValueTypePair getObjectProperty(Wbemcli.IWbemClassObject obj, String propertyName) {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
         IntByReference plFlavor = new IntByReference(); //  Maybe this is not needed.
@@ -107,7 +104,7 @@ public class WmiGetter extends BaseGetter {
             throw exc;
         }
 
-        ValueTypePair rowValueType = WmiProvider.VariantToValueTypePair(propertyName, pType, pVal);
+        ValueTypePair rowValueType = WmiProvider.convertVariantToValueTypePair(propertyName, pType, pVal);
         return rowValueType;
     }
 
@@ -124,17 +121,17 @@ public class WmiGetter extends BaseGetter {
      * @return
      * @throws Exception
      */
-    private Wbemcli.IWbemClassObject PathToNode(String objectPath, Set<String> columns) {
+    private Wbemcli.IWbemClassObject pathToNode(String objectPath, Set<String> columns) {
         Wbemcli.IWbemClassObject objectNode = null;
         if (false) {
-            objectNode = GetObjectNode(objectPath);
+            objectNode = getObjectNode(objectPath);
         } else {
             if (false) {
                 // This works but this is not faster.
-                objectNode = GetObjectNodePartial(objectPath, columns);
+                objectNode = getObjectNodePartial(objectPath, columns);
             } else {
                 // Not faster if all objects have different path.
-                objectNode = GetObjectNodeCached(objectPath);
+                objectNode = getObjectNodeCached(objectPath);
             }
         }
         return objectNode;
@@ -147,11 +144,11 @@ public class WmiGetter extends BaseGetter {
      * @return
      * @throws Exception
      */
-    public Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns) {
+    public Solution.Row getSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns) {
 
         Set<String> columns = queryColumns.keySet();
-        logger.debug("objectPath=" + objectPath + " queryColumns=" + queryColumns);
-        Wbemcli.IWbemClassObject objectNode = PathToNode(objectPath, columns);
+        //logger.debug("objectPath=" + objectPath + " queryColumns=" + queryColumns);
+        Wbemcli.IWbemClassObject objectNode = pathToNode(objectPath, columns);
         // Maybe the object does not exist.
         if(objectNode == null) {
             logger.error("Cannot find object:" + objectPath);
@@ -165,16 +162,16 @@ public class WmiGetter extends BaseGetter {
                 throw new RuntimeException("Null variable name for objectPath=" + objectPath);
             }
             if(objectNode == null)
-                singleRow.PutString(variableName, "Object " + objectPath + " is null");
+                singleRow.putString(variableName, "Object " + objectPath + " is null");
             else
-                singleRow.PutValueType(variableName, GetObjectProperty(objectNode, entry.getKey()));
+                singleRow.putValueType(variableName, getObjectProperty(objectNode, entry.getKey()));
         }
         // We are sure this is a node.
-        ValueTypePair wbemPath = GetObjectProperty(objectNode, "__PATH");
+        ValueTypePair wbemPath = getObjectProperty(objectNode, "__PATH");
         if(wbemPath.Type() != ValueTypePair.ValueType.NODE_TYPE) {
             throw new RuntimeException("GetSingleObject objectPath should be a node:" + objectPath);
         }
-        singleRow.PutValueType(mainVariable, wbemPath);
+        singleRow.putValueType(mainVariable, wbemPath);
         return singleRow;
     }
 

@@ -36,11 +36,11 @@ public class PresentUtils {
      * @param shortPath : A Wbem path without the hostname and the namespace.
      * @return The complete path as usable by WMI.
      */
-    public static String PrefixCimv2Path(String shortPath) {
+    public static String prefixCimv2Path(String shortPath) {
         return prefixComputer + "\\ROOT\\CIMV2:" + shortPath;
     }
 
-    public static boolean CheckValidWbemPath(String objectPath) {
+    public static boolean checkValidWbemPath(String objectPath) {
         return objectPath.startsWith(prefixComputer);
     }
 
@@ -49,7 +49,7 @@ public class PresentUtils {
      *
      * @return The path name of the current binary, which can only be Java.
      */
-    public static String CurrentJavaBinary() {
+    public static String currentJavaBinary() {
         String javaHome = System.getProperty("java.home");
         return javaHome + "\\bin\\java.exe";
     }
@@ -61,25 +61,25 @@ public class PresentUtils {
     static private ProcessHandle parentProcess = currentProcessHandle.parent().get();
 
     /** This is used only for tests. */
-    public static String ParentProcessId() throws Exception
+    public static String parentProcessId() throws Exception
     {
         return Long.toString(parentProcess.pid());
     }
 
     /** This is used only for tests.
      * */
-    public static String ParentProcessName() throws Exception
+    public static String parentProcessName() throws Exception
     {
         String command = parentProcess.info().command().orElse(null);
         Path pathCommand = Paths.get(command);
         return pathCommand.getFileName().toString();
     }
 
-    static public String LongToXml(long longNumber) {
+    static public String longToXml(long longNumber) {
         return "\"" + longNumber + "\"^^<http://www.w3.org/2001/XMLSchema#long>";
     }
 
-    static public String IntToXml(int intNumber) {
+    static public String intToXml(int intNumber) {
         return "\"" + intNumber + "\"^^<http://www.w3.org/2001/XMLSchema#integer>";
     }
 
@@ -106,18 +106,18 @@ public class PresentUtils {
     }
 
     /** For example longStr = "\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>" */
-    static public long XmlToLong(String longStr) {
+    static public long xmlToLong(String longStr) {
         String longOnly = new ParsedXMLTag(longStr).value;
         return Long.parseLong(longOnly);
     }
 
-    static public double XmlToDouble(String doubleStr) {
+    static public double xmlToDouble(String doubleStr) {
         String doubleOnly = new ParsedXMLTag(doubleStr).value;
         return Double.parseDouble(doubleOnly);
     }
 
     // Example: "false"^^<http://www.w3.org/2001/XMLSchema#boolean>
-    static public boolean XmlToBoolean(String booleanStr) {
+    static public boolean xmlToBoolean(String booleanStr) {
         String booleanOnly = new ParsedXMLTag(booleanStr).value;
         if(booleanOnly.equals("true"))
             return true;
@@ -132,7 +132,7 @@ public class PresentUtils {
      * @return Example: '2022-02-11T00:44:44.730519'
      * @throws Exception
      */
-    static public XMLGregorianCalendar ToXMLGregorianCalendar(String theDate) throws Exception {
+    static public XMLGregorianCalendar toXMLGregorianCalendar(String theDate) throws Exception {
         // https://docs.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
         // yyyymmddHHMMSS.mmmmmmsUUU
         // "20220720101048.502446+060"
@@ -196,7 +196,7 @@ public class PresentUtils {
 
     static private Pattern patternVariableName = Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9]*$", Pattern.CASE_INSENSITIVE);
 
-    static boolean ValidSparqlVariable(String variableName) {
+    static boolean validSparqlVariable(String variableName) {
         if(variableName == null) {
             throw new RuntimeException("Cannot test validity of null variable name.");
         }
@@ -204,7 +204,7 @@ public class PresentUtils {
         return matcher.find();
     }
 
-    static public String InternationalizeUnquoted(String inputString) {
+    static public String internationalizeUnquoted(String inputString) {
         if((inputString.length() > 0) && (inputString.charAt(0) == '"') ) {
             return inputString + "@en";
         } else {
@@ -215,7 +215,7 @@ public class PresentUtils {
     /* This is needed because RDF4J quotes values.
     This should probably be changed, to avoid having string quoted once or even twice.
     */
-    static public String InternationalizeQuoted(String inputString) {
-        return "\"" + InternationalizeUnquoted(inputString) +"\"";
+    static public String internationalizeQuoted(String inputString) {
+        return "\"" + internationalizeUnquoted(inputString) +"\"";
     }
 }

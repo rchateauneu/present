@@ -77,20 +77,20 @@ public class QueryData {
      * on the columns (only the needed columns in the select) and the rows (only the needed rows in the where).
      *
      */
-    private HashMap<String, Solution> CacheQueries = null;
+    private HashMap<String, Solution> cacheQueries = null;
 
-    public Solution GetCachedQueryResults(String wqlQuery) {
-        if(CacheQueries == null) {
+    public Solution getCachedQueryResults(String wqlQuery) {
+        if(cacheQueries == null) {
             return null;
         }
-        return CacheQueries.get(wqlQuery);
+        return cacheQueries.get(wqlQuery);
     }
 
-    public void StoreCachedQueryResults(String wqlQuery, Solution resultRows) {
-        if(CacheQueries == null) {
-            CacheQueries = new HashMap<>();
+    public void storeCachedQueryResults(String wqlQuery, Solution resultRows) {
+        if(cacheQueries == null) {
+            cacheQueries = new HashMap<>();
         }
-        CacheQueries.put(wqlQuery, resultRows);
+        cacheQueries.put(wqlQuery, resultRows);
     }
 
     // This is just for debugging.
@@ -131,7 +131,7 @@ public class QueryData {
             if(specialColumns.contains(predicateArg)) {
                 throw new RuntimeException("This special column is forbidden:" + predicateArg);
             }
-            if((variable != null) && !PresentUtils.ValidSparqlVariable(variable)) {
+            if((variable != null) && !PresentUtils.validSparqlVariable(variable)) {
                 throw new RuntimeException("Invalid syntax for Sparql variable:" + variable);
             }
 
@@ -153,7 +153,7 @@ public class QueryData {
          * TODO: Move this is WMI-specific code.
          * @return
          */
-        public String ToEqualComparison() {
+        public String toEqualComparison() {
             // Real examples in Powershell - they are quite fast:
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
@@ -171,11 +171,11 @@ public class QueryData {
     };
 
     /** Checks if a selecter or a getter can be used for a QueryData. */
-    public boolean CompatibleQuery(String whereClassName, Set<String> whereColumns, Set<String> availableColumns)
+    public boolean isCompatibleQuery(String whereClassName, Set<String> whereColumns, Set<String> availableColumns)
     {
         logger.debug("whereClassName=" + whereClassName + " whereColumns=" + whereColumns + " availableColumns=" + availableColumns);
         // It must be for the good class, and be able to return the needed columns.
-        if(! ColumnsSubsetOf(whereClassName, availableColumns)) {
+        if(! areColumnsSubsetOf(whereClassName, availableColumns)) {
             return false;
         }
 
@@ -187,7 +187,7 @@ public class QueryData {
         return true;
     }
 
-    public boolean ColumnsSubsetOf(String whereClassName, Set<String> selectedColumns) {
+    public boolean areColumnsSubsetOf(String whereClassName, Set<String> selectedColumns) {
         if(! className.equals(whereClassName)) {
             return false;
         }
@@ -204,7 +204,7 @@ public class QueryData {
      * @param columnName "Handle", "Name", "PartComponent" etc...
      * @return
      */
-    public ValueTypePair GetWhereValue(String columnName) {
+    public ValueTypePair getWhereValue(String columnName) {
         logger.debug("columnName=" + columnName
                 + " whereTests=" + whereTests.stream().map(x -> x.predicate + "/" + x.variableName).collect(Collectors.toList()));
         for(WhereEquality whereElement : whereTests) {
@@ -215,7 +215,7 @@ public class QueryData {
         return null;
     }
 
-    public String ColumnToVariable(String columnName) {
+    public String columnToVariable(String columnName) {
         String variableName = queryColumns.get(columnName);
         return variableName;
     }
@@ -234,22 +234,22 @@ public class QueryData {
                 count = 0;
             }
         };
-        HashMap<String, Sample> statistics;
-        long startTime = -1;
+        private HashMap<String, Sample> statistics;
+        private long startTime = -1;
 
         Statistics() {
-            ResetAll();
+            resetAll();
         }
 
-        void ResetAll() {
+        void resetAll() {
             statistics = new HashMap<>();
         }
 
-        void StartSample() {
+        void startSample() {
             startTime = System.currentTimeMillis();
         }
 
-        void FinishSample(String objectPath, Set<String> columns) {
+        void finishSample(String objectPath, Set<String> columns) {
             if(startTime == -1) {
                 throw new RuntimeException("Sampling not started");
             }
@@ -267,7 +267,7 @@ public class QueryData {
             startTime = -1;
         }
 
-        void DisplayAll() {
+        void displayAll() {
             long totalElapsed = 0;
             int totalCount = 0;
 
@@ -342,13 +342,13 @@ public class QueryData {
         }
         queryVariableColumns = (variableColumns == null) ? new TreeMap<>() : new TreeMap<>(variableColumns);
 
-        SwapWheres(wheres);
+        swapWheres(wheres);
         logger.debug("wmiClassName=" + wmiClassName + " variable=" + variable + " queryColumns=" + queryColumns);
 
-        SetHandlers(false);
+        setHandlers(false);
     }
 
-    void SetHandlers(boolean forceWmi) {
+    void setHandlers(boolean forceWmi) {
             if(isMainVariableAvailable)
                 classGetter = GenericProvider.FindGetter(this, forceWmi);
             else
@@ -360,7 +360,7 @@ public class QueryData {
      * @param wheres
      * @return
      */
-    List<QueryData.WhereEquality> SwapWheres(List<QueryData.WhereEquality> wheres) {
+    List<QueryData.WhereEquality> swapWheres(List<QueryData.WhereEquality> wheres) {
         List<QueryData.WhereEquality> oldWheres = whereTests;
         if(wheres == null)
             // Guaranteed representation of an empty where clause.
@@ -372,7 +372,7 @@ public class QueryData {
         return oldWheres;
     }
 
-    public String BuildWqlQuery() {
+    public String buildWqlQuery() {
         // The order of select columns is not very important because the results can be mapped to variables.
         String columns = String.join(",", queryColumns.keySet());
 
@@ -387,30 +387,30 @@ public class QueryData {
         if( (whereTests != null) && (! whereTests.isEmpty())) {
             wqlQuery += " where ";
             String whereClause = whereTests.stream()
-                    .map(QueryData.WhereEquality::ToEqualComparison)
+                    .map(QueryData.WhereEquality::toEqualComparison)
                     .collect(Collectors.joining(" and "));
             wqlQuery += whereClause;
         }
         return wqlQuery;
     }
 
-    public void StartSampling() {
-        statistics.StartSample();
+    public void startSampling() {
+        statistics.startSample();
     }
 
-    public void FinishSampling() {
+    public void finishSampling() {
         // This adds some extra information about the execution.
         Set<String> columnsWhere = whereTests.stream()
                 .map(entry -> entry.predicate)
                 .collect(Collectors.toSet());
-        statistics.FinishSample(className, columnsWhere);
+        statistics.finishSample(className, columnsWhere);
     }
 
-    public void FinishSampling(String objectPath) {
-        statistics.FinishSample(objectPath, queryColumns.keySet());
+    public void finishSampling(String objectPath) {
+        statistics.finishSample(objectPath, queryColumns.keySet());
     }
 
-    public void DisplayStatistics() {
+    public void displayStatistics() {
         // Consistency check, then display the selecter of getter of data.
         if(classGetter != null) {
             if(classBaseSelecter != null) {
@@ -430,11 +430,11 @@ public class QueryData {
         else {
             logger.debug("No Provider nor Getter set");
         }
-        statistics.DisplayAll();
+        statistics.displayAll();
     }
 
-    public void ResetStatistics() {
-        statistics.ResetAll();
+    public void resetStatistics() {
+        statistics.resetAll();
     }
 }
 

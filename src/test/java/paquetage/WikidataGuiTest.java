@@ -28,7 +28,7 @@ public class WikidataGuiTest {
     @Before
     public void setUp() throws Exception {
         repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
-        currentProcessUri = WmiOntology.CreateUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        currentProcessUri = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
         // "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Handle"
         uriWmi32ProcessHandle = WmiOntology.namespaces_url_prefix + "ROOT/CIMV2#" + "Win32_Process.Handle";
 
@@ -80,21 +80,21 @@ uri_CIM_ProcessExecutable_Dependent
                 """;
         String sparqlQuery = setLanguage(patternQuery).replace("{processUri}", currentProcessUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         // Because the process is present, it must have at least one property.
         Assert.assertTrue(listRows.size() > 0);
         System.out.println("listRows=" + listRows);
 
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("process_property", "property_value"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("process_property", "property_value"), singleRow.keySet());
 
         // Most of not all properties should have one value only.
         Map<String, String> setPropValues = listRows
                 .stream()
                 .collect(Collectors.toMap(
-                        row -> row.GetAsUri("process_property"),
-                        row -> row.GetAsLiteral("property_value")));
+                        row -> row.getAsUri("process_property"),
+                        row -> row.getAsLiteral("property_value")));
 
         System.out.println("setPropValues=" + setPropValues);
         System.out.println("iri handle="+setPropValues.get(WmiProvider.toCIMV2("Handle")));
@@ -120,7 +120,7 @@ uri_CIM_ProcessExecutable_Dependent
                 """;
         String sparqlQuery = setLanguage(patternQuery).replace("{processUri}", currentProcessUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         for(RdfSolution.Tuple singleRow : listRows) {
             System.out.println("    singleRow=" + singleRow);
@@ -128,9 +128,9 @@ uri_CIM_ProcessExecutable_Dependent
         Assert.assertEquals(1, listRows.size());
 
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("handle"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("handle"), singleRow.keySet());
 
-        String processHandle = singleRow.GetAsLiteral("handle");
+        String processHandle = singleRow.getAsLiteral("handle");
         Assert.assertEquals("\"" + currentPidStr + "\"", processHandle);
     }
 
@@ -148,15 +148,15 @@ uri_CIM_ProcessExecutable_Dependent
                 """;
         String sparqlQuery = setLanguage(patternQuery).replace("{processId}", currentPidStr);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         System.out.println("listRows=" + listRows);
 
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("proc_uri"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("proc_uri"), singleRow.keySet());
 
-        String processUri = singleRow.GetAsUri("proc_uri");
+        String processUri = singleRow.getAsUri("proc_uri");
         Assert.assertEquals(currentProcessUri, processUri);
     }
 
@@ -176,15 +176,15 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processId}", currentPidStr)
                 .replace("{wmi32process_handle_property_uri}", uriWmi32ProcessHandle);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         System.out.println("listRows=" + listRows);
 
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("proc_uri"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("proc_uri"), singleRow.keySet());
 
-        String processUri = singleRow.GetAsUri("proc_uri");
+        String processUri = singleRow.getAsUri("proc_uri");
         Assert.assertEquals(currentProcessUri, processUri);
     }
 
@@ -206,7 +206,7 @@ uri_CIM_ProcessExecutable_Dependent
         """;
         String sparqlQuery = setLanguage(patternQuery).replace("{processUri}", currentProcessUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         Assert.assertTrue(listRows.size() > 0);
         //for(RdfSolution.Tuple tuple : listRows) {
@@ -216,8 +216,8 @@ uri_CIM_ProcessExecutable_Dependent
         Map<String, String> setPropValues = listRows
                 .stream()
                 .collect(Collectors.toMap(
-                        row -> row.GetAsUri("p"),
-                        row -> row.GetAsLiteral("o")));
+                        row -> row.getAsUri("p"),
+                        row -> row.getAsLiteral("o")));
         System.out.println("setPropValues=" + setPropValues);
         System.out.println("iri Handle="+WmiProvider.toCIMV2("Handle"));
         Assert.assertEquals("\""+currentPidStr+"\"", setPropValues.get(WmiProvider.toCIMV2("Handle")));
@@ -269,7 +269,7 @@ uri_CIM_ProcessExecutable_Dependent
         """;
         String sparqlQuery = setLanguage(patternQuery).replace("{processUri}", currentProcessUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         Assert.assertTrue(listRows.size() > 0);
     }
@@ -308,7 +308,7 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processUri}", currentProcessUri)
                 .replace("{propertyUri}", predicateCreationDate);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         // A literal value has no label.
         Assert.assertEquals(0, listRows.size());
@@ -339,7 +339,7 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processUri}", currentProcessUri)
                 .replace("{propertyUri}", predicateCreationDate);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         // Cannot find an object because a literal value has no label.
         Assert.assertEquals(0, listRows.size());
@@ -356,11 +356,11 @@ uri_CIM_ProcessExecutable_Dependent
         String sparqlQuery = setLanguage(patternQuery)
                 .replace("{processUri}", currentProcessUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple tuple = listRows.get(0);
-        Assert.assertEquals(Set.of("process_label"), tuple.KeySet());
-        Assert.assertEquals("\"java.exe\"", tuple.GetAsLiteral("process_label"));
+        Assert.assertEquals(Set.of("process_label"), tuple.keySet());
+        Assert.assertEquals("\"java.exe\"", tuple.getAsLiteral("process_label"));
     }
 
     @Test
@@ -374,11 +374,11 @@ uri_CIM_ProcessExecutable_Dependent
         String sparqlQuery = setLanguage(patternQuery)
                 .replace("{propertyUri}", predicateCreationDate);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple tuple = listRows.get(0);
-        Assert.assertEquals(Set.of("predicate_label"), tuple.KeySet());
-        Assert.assertEquals("\"\"Win32_Process.CreationDate\"@en\"", tuple.GetAsLiteral("predicate_label"));
+        Assert.assertEquals(Set.of("predicate_label"), tuple.keySet());
+        Assert.assertEquals("\"\"Win32_Process.CreationDate\"@en\"", tuple.getAsLiteral("predicate_label"));
     }
 
     // Typical URI : "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22"
@@ -399,7 +399,7 @@ uri_CIM_ProcessExecutable_Dependent
         String sparqlQuery = setLanguage(patternQuery)
                 .replace("{processUri}", currentProcessUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         Assert.assertTrue(listRows.size() > 0);
         for(RdfSolution.Tuple tuple : listRows) {
@@ -409,8 +409,8 @@ uri_CIM_ProcessExecutable_Dependent
         Map<String, String> setPropValues = listRows
                 .stream()
                 .collect(Collectors.toMap(
-                        row -> row.GetAsUri("process_property"),
-                        row -> row.GetAsLiteral("property_value")));
+                        row -> row.getAsUri("process_property"),
+                        row -> row.getAsLiteral("property_value")));
         System.out.println("setPropValues=" + setPropValues);
         Assert.assertEquals(currentPidStr, setPropValues.get("Handle"));
         Assert.assertEquals("Wmi32_Process", setPropValues.get("rdf:type"));
@@ -430,7 +430,7 @@ uri_CIM_ProcessExecutable_Dependent
         String sparqlQuery = setLanguage(patternQuery)
                 .replace("{processUri}", currentProcessUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         Assert.assertTrue(listRows.size() > 0);
         for(RdfSolution.Tuple tuple : listRows) {
@@ -440,8 +440,8 @@ uri_CIM_ProcessExecutable_Dependent
         Map<String, String> setPropValues = listRows
                 .stream()
                 .collect(Collectors.toMap(
-                        row -> row.GetAsUri("process_property"),
-                        row -> row.GetAsLiteral("property_value")));
+                        row -> row.getAsUri("process_property"),
+                        row -> row.getAsLiteral("property_value")));
         System.out.println("setPropValues=" + setPropValues);
         Assert.assertEquals(currentPidStr, setPropValues.get("Handle"));
         Assert.assertEquals("Wmi32_Process", setPropValues.get("rdf:type"));
@@ -459,13 +459,13 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processUri}", currentProcessUri)
                 .replace("{propertyUri}", uri_CIM_ProcessExecutable_Dependent);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
 
         // There must be one executable and probably several libraries.
         Assert.assertTrue(listRows.size() > 0);
 
-        Set<String> nodesProcesses = listRows.NodeValuesSet("obj");
+        Set<String> nodesProcesses = listRows.nodeValuesSet("obj");
         System.out.println("nodesProcesses=" + nodesProcesses);
         Assert.assertTrue(nodesProcesses.contains(currentProcessUri));
     }
@@ -482,20 +482,20 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processUri}", currentProcessUri)
                 .replace("{propertyUri}", uri_CIM_ProcessExecutable_Dependent);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
 
         // There must be one executable and probably several libraries.
         Assert.assertTrue(listRows.size() > 0);
         Set<String> setPropValues = listRows
                 .stream()
-                .map(row -> row.GetAsUri("subj"))
+                .map(row -> row.getAsUri("subj"))
                 .collect(Collectors.toSet());
         System.out.println("setPropValues=" + setPropValues);
 
         Set<String> setClasses = setPropValues
                 .stream()
-                .map(iri -> WmiOntology.SplitIRI(iri).Token)
+                .map(iri -> WmiOntology.splitIRI(iri).Token)
                 .collect(Collectors.toSet());
         System.out.println("setClasses=" + setClasses);
 
@@ -516,7 +516,7 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processUri}", currentProcessUri)
                 .replace("{propertyUri}", uri_CIM_ProcessExecutable_Dependent);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
 
         // There must be one executable and probably several libraries.
@@ -536,7 +536,7 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processUri}", currentProcessUri)
                 .replace("{propertyUri}", uri_CIM_ProcessExecutable_Dependent);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
 
         // There must be one executable and probably several libraries.
@@ -556,13 +556,13 @@ uri_CIM_ProcessExecutable_Dependent
                 .replace("{processUri}", currentProcessUri)
                 .replace("{propertyUri}", uri_CIM_ProcessExecutable_Dependent);
         System.out.println("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
 
         // There must be one executable and probably several libraries.
         Assert.assertTrue(listRows.size() > 0);
         for(RdfSolution.Tuple currentRow : listRows) {
-            String olValue = currentRow.GetAsLiteral("ol");
+            String olValue = currentRow.getAsLiteral("ol");
             System.out.println("    ol=" + olValue);
             Assert.assertTrue(olValue.endsWith("@en\""));
         }

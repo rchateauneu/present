@@ -75,10 +75,10 @@ class JoinExpressionNode extends BaseExpressionNode {
         if(patternsMap != null) {
             throw new RuntimeException("patternsMap should not be set twice.");
         }
-        patternsMap = ObjectPattern.PartitionBySubject(visitorPatternsRaw);
+        patternsMap = ObjectPattern.partitionBySubject(visitorPatternsRaw);
         List<String> listKeys = new ArrayList<>();
         for(ObjectPattern objPatt: patternsMap) {
-            listKeys.add(objPatt.VariableName);
+            listKeys.add(objPatt.variableName);
         }
         logger.debug("Pattern keys:" + listKeys);
     }
@@ -94,13 +94,13 @@ class JoinExpressionNode extends BaseExpressionNode {
             TODO: It is possible to get rid of it and keep only the solutions in nodes which have a BGP.
             */
             // IS IT HERE THAT WE CALL patternSparql.dependencies.ListeRenommage(solution) ??
-            localSolution = patternSparql.ExecuteToRows();
+            localSolution = patternSparql.executeToRows();
             logger.debug("Solution:" + localSolution.size() + " Header=" + localSolution.header());
 
             // TODO: Avoid this cartesian product by merging BGPs in lower nodes.
             for(BaseExpressionNode child : children){
                 Solution subSolution = child.Evaluate();
-                Solution cartesianProduct = localSolution.CartesianProduct(subSolution);
+                Solution cartesianProduct = localSolution.cartesianProduct(subSolution);
                 localSolution = cartesianProduct;
             }
             return localSolution;
@@ -127,7 +127,7 @@ class JoinExpressionNode extends BaseExpressionNode {
         }
         for(StatementPattern statementPattern : visitorPatternsRaw) {
             // Here, We need to know if the property was RDFS.LABEL
-            localSolution.PatternToStatements(generatedStatements, statementPattern);
+            localSolution.patternToStatements(generatedStatements, statementPattern);
             logger.debug("Generated statements number after:" + generatedStatements.size());
         }
 
@@ -212,7 +212,7 @@ class UnionExpressionNode extends BaseExpressionNode {
 
             // FIXME: What about bindings, i.e. renaming of columns ?
 
-            solution.Append(childSolution);
+            solution.appendSolution(childSolution);
         }
         logger.debug("Solution:" + solution.size() + " Header=" + solution.header());
         return solution;

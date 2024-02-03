@@ -48,7 +48,7 @@ public class SparqlBGPExtractor {
     // This is only for testing.
     public ObjectPattern FindObjectPattern(String variable) {
         for(ObjectPattern objPatt : patternsMap) {
-            if(variable.equals(objPatt.VariableName)) {
+            if(variable.equals(objPatt.variableName)) {
                 return objPatt;
             }
         }

@@ -21,8 +21,8 @@ public class ObjectPath {
     /*
     Example of input: \\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"");
      */
-    public static Map<String, String> ParseWbemPath(String objectPath) {
-        if(!PresentUtils.CheckValidWbemPath(objectPath)){
+    public static Map<String, String> parseWbemPath(String objectPath) {
+        if(!PresentUtils.checkValidWbemPath(objectPath)){
             throw new RuntimeException("Invalid Wbem path:" + objectPath);
         }
         // CIMObjectPath.parse() is deprecated and not implemented. Why ???
@@ -88,7 +88,7 @@ public class ObjectPath {
      * to create an object and its path mimicking an object created by WMI.
      * "Pseudo WMI objects" are created by providers classes similar to WMI ones but much faster,
      * */
-    public static String BuildCimv2PathWbem(String className, Map<String, String> propertiesMap)
+    public static String buildCimv2PathWbem(String className, Map<String, String> propertiesMap)
     {
         Vector<CIMProperty> propertyArray = new Vector<CIMProperty>(propertiesMap.size());
         for(Map.Entry<String, String> entry: propertiesMap.entrySet()) {
@@ -98,6 +98,6 @@ public class ObjectPath {
         }
         CIMObjectPath wbemPath = new CIMObjectPath(className, propertyArray);
         // This adds the host name and the namespace.
-        return PresentUtils.PrefixCimv2Path(wbemPath.toString());
+        return PresentUtils.prefixCimv2Path(wbemPath.toString());
     }
 }

@@ -36,13 +36,13 @@ public class RdfsPredicatesCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("directory_label"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("directory_label"), singleRow.keySet());
 
-        String actualLabel = singleRow.GetAsLiteral("directory_label");
+        String actualLabel = singleRow.getAsLiteral("directory_label");
         System.out.println("actualLabel=" + actualLabel);
 
         Assert.assertEquals("\"\"C:\\Windows\"@en\"", actualLabel);
@@ -64,15 +64,15 @@ public class RdfsPredicatesCIMV2Test {
 
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
         Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
         Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
 
-        Set<String> setNames = listRows.StringValuesSet("my_name");
+        Set<String> setNames = listRows.stringValuesSet("my_name");
         System.out.println("setNames=" + setNames.toString());
 
         Assert.assertTrue(setNames.contains("C:\\Windows\\notepad.exe"));
@@ -100,9 +100,9 @@ public class RdfsPredicatesCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
         Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
@@ -125,9 +125,9 @@ public class RdfsPredicatesCIMV2Test {
 
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
         Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
@@ -150,9 +150,9 @@ public class RdfsPredicatesCIMV2Test {
 
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
         Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
@@ -178,15 +178,15 @@ public class RdfsPredicatesCIMV2Test {
 
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> setNames1 = listRows.StringValuesSet("my_name1");
+        Set<String> setNames1 = listRows.stringValuesSet("my_name1");
         System.out.println("setNames1=" + setNames1.toString());
 
         Assert.assertTrue(setNames1.contains("C:\\Windows\\notepad.exe"));
         Assert.assertTrue(setNames1.contains("C:\\Windows\\system.ini"));
 
-        Set<String> setNames2 = listRows.StringValuesSet("my_name2");
+        Set<String> setNames2 = listRows.stringValuesSet("my_name2");
         System.out.println("setNames2=" + setNames2.toString());
 
         Assert.assertTrue(setNames2.contains("C:\\Windows\\notepad.exe"));
@@ -211,10 +211,10 @@ public class RdfsPredicatesCIMV2Test {
 
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertTrue( listRows.size() > 0);
 
-        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
         Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
@@ -237,7 +237,7 @@ public class RdfsPredicatesCIMV2Test {
 
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertTrue( listRows.size() == 1);
     }
 
@@ -257,10 +257,10 @@ public class RdfsPredicatesCIMV2Test {
 
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertTrue( listRows.size() == 1);
 
-        Set<String> setLabels = listRows.StringValuesSet("my_label");
+        Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
         Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));

@@ -58,8 +58,8 @@ public class ServletQueryJavax extends HttpServlet {
 
     private String QueryToJson(String sparqlQuery) throws Exception {
         logger.debug("sparqlQuery=" + sparqlQuery);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        String jsonResult = listRows.ToJson(true);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        String jsonResult = listRows.toJson(true);
         return jsonResult;
     }
 
@@ -126,7 +126,7 @@ public class ServletQueryJavax extends HttpServlet {
 
         RdfSolution listRows = null;
         try {
-            listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+            listRows = repositoryWrapper.executeQuery(sparqlQuery);
         }
         catch(Exception exc) {
             throw new ServletException(exc);
@@ -135,12 +135,12 @@ public class ServletQueryJavax extends HttpServlet {
         String queryResult;
         if(resultFormat.equalsIgnoreCase("JSON")) {
             mimeFormat = "application/sparql-results+json";
-            queryResult = listRows.ToJson(false);
+            queryResult = listRows.toJson(false);
         }
         else if(resultFormat.equalsIgnoreCase("XML")) {
             // FIXME: This is not tested.
             mimeFormat = "application/sparql-results+xml";
-            queryResult = listRows.ToJson(true);
+            queryResult = listRows.toJson(true);
         }
         else {
             throw new ServletException("Format not implemented:" + resultFormat);

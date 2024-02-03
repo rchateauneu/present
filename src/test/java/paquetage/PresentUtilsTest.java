@@ -43,19 +43,19 @@ public class PresentUtilsTest {
 
      @Test
      public void test_XmlToLong_1() throws Exception {
-          long longResult = PresentUtils.XmlToLong("\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>");
+          long longResult = PresentUtils.xmlToLong("\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>");
           Assert.assertEquals(41, longResult);
      }
 
      @Test
      public void test_XmlToBoolean_1() throws Exception {
-          boolean boolResult = PresentUtils.XmlToBoolean("\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>");
+          boolean boolResult = PresentUtils.xmlToBoolean("\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>");
           Assert.assertEquals(true, boolResult);
      }
 
      @Test
      public void test_XmlToBoolean_2() throws Exception {
-          boolean boolResult = PresentUtils.XmlToBoolean("\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>");
+          boolean boolResult = PresentUtils.xmlToBoolean("\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>");
           Assert.assertEquals(false, boolResult);
      }
 
@@ -83,8 +83,8 @@ public class PresentUtilsTest {
      }
 
      public void test_Internationalize() throws Exception {
-          Assert.assertEquals("\"any\"@en", PresentUtils.InternationalizeQuoted("any"));
-          Assert.assertEquals("\"any\"@en", PresentUtils.InternationalizeQuoted("\"any\""));
+          Assert.assertEquals("\"any\"@en", PresentUtils.internationalizeQuoted("any"));
+          Assert.assertEquals("\"any\"@en", PresentUtils.internationalizeQuoted("\"any\""));
      }
 }
 

@@ -46,12 +46,12 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?tcp_connection standard_cimv2:OwningProcess ?owning_process .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         // This checks that all processes are valid.
         // This test might fail if it is too slow because some processes might disappear,
         // so it just counts a reasonable minimum number of processes still present.
-        Set<Long> owningProcesses = listRows.LongValuesSet("owning_process");
+        Set<Long> owningProcesses = listRows.longValuesSet("owning_process");
         int countPresentProcess = 0;
         for(Long onePid : owningProcesses) {
             System.out.println("Pid=" + onePid);
@@ -89,9 +89,9 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_2_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
+        Set<String> namesProcesses = listRows.stringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // These processes open local socket connections.
         //Assert.assertTrue(namesProcesses.contains("System Idle Process"));
@@ -121,9 +121,9 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_1_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
+        Set<String> namesProcesses = listRows.stringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // These processes open local socket connections.
         Assert.assertTrue(namesProcesses.contains("System Idle Process"));
@@ -154,9 +154,9 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_3_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
+        Set<String> namesProcesses = listRows.stringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // The parents of the processes which opened local socket connections.
         Assert.assertTrue(namesProcesses.contains("System Idle Process"));
@@ -190,14 +190,14 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?tcp_connection2 standard_cimv2:OwningProcess ?owning_process2 .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         int countPresentProcess = 0;
         for(RdfSolution.Tuple oneRow : listRows) {
-            Long pid1 = PresentUtils.XmlToLong(oneRow.GetAsLiteral("owning_process1"));
+            Long pid1 = PresentUtils.xmlToLong(oneRow.getAsLiteral("owning_process1"));
             // This test might fail if it is too slow.
             Optional<ProcessHandle> processHandle1 = ProcessHandle.of(pid1);
-            Long pid2 = PresentUtils.XmlToLong(oneRow.GetAsLiteral("owning_process2"));
+            Long pid2 = PresentUtils.xmlToLong(oneRow.getAsLiteral("owning_process2"));
             Optional<ProcessHandle> processHandle2 = ProcessHandle.of(pid2);
             System.out.println("pid1=" + pid1 + " pid2=" + pid2);
             if(processHandle1.isPresent() && processHandle2.isPresent()) countPresentProcess++;
@@ -224,12 +224,12 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_1_service cimv2:Win32_Service.ProcessId ?owning_process .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         HashMap<String, List<Long>> mapServiceToPort = new HashMap<>();
         for(RdfSolution.Tuple oneRow : listRows ) {
-            Long portNumber = PresentUtils.XmlToLong(oneRow.GetAsLiteral("local_port"));
-            String serviceName = oneRow.GetAsLiteral("service_name");
+            Long portNumber = PresentUtils.xmlToLong(oneRow.getAsLiteral("local_port"));
+            String serviceName = oneRow.getAsLiteral("service_name");
             System.out.println("portNumber=" + portNumber + " serviceName=" + serviceName);
             List<Long> servicePorts = mapServiceToPort.get(serviceName);
             if(servicePorts == null) {
@@ -273,7 +273,7 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_4_process cimv2:Win32_Process.Name ?process_name2 .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         /* Result example:
         name1="MediaEngineService.exe" name2="wfica32.exe"
@@ -285,8 +285,8 @@ public class RepositoryWrapperStandardCimv2Test {
         */
         Set<String> setProcessNamesPairs = new HashSet<>();
         for(RdfSolution.Tuple oneRow : listRows) {
-            String name1 = oneRow.GetAsLiteral("process_name1");
-            String name2 = oneRow.GetAsLiteral("process_name2");
+            String name1 = oneRow.getAsLiteral("process_name1");
+            String name2 = oneRow.getAsLiteral("process_name2");
             System.out.println("name1=" + name1 + " name2=" + name2);
             setProcessNamesPairs.add(name1 + " + " + name2);
         }
@@ -314,9 +314,9 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?_2_process cimv2:Win32_Process.Name ?process_name .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<String> namesProcesses = listRows.StringValuesSet("process_name");
+        Set<String> namesProcesses = listRows.stringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         Assert.assertTrue(namesProcesses.contains("svchost.exe"));
         Assert.assertTrue(namesProcesses.contains("System"));
@@ -333,15 +333,15 @@ public class RepositoryWrapperStandardCimv2Test {
                         ?net_ip_address standard_cimv2:MSFT_NetIPAddress.InterfaceAlias ?interface_alias .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         // One of these usual interface aliases should be present.
         Set<String> usualAliases = Set.of("Loopback Pseudo-Interface 1", "Ethernet", "Local Area Connection", "WiFi", "Bluetooth Network Connection", "Local Area Connection* 1");
-        Set<String> setAliases = listRows.StringValuesSet("interface_alias");
+        Set<String> setAliases = listRows.stringValuesSet("interface_alias");
         Set intersectAlias = usualAliases.stream().filter(setAliases::contains).collect(Collectors.toSet());
         Assert.assertFalse(intersectAlias.isEmpty());
 
-        Set<String> setIpAddresses = listRows.NodeValuesSet("net_ip_address");
+        Set<String> setIpAddresses = listRows.nodeValuesSet("net_ip_address");
         System.out.println("setIpAddresses=" + setIpAddresses);
         Assert.assertTrue(setIpAddresses.size() > 0);
         // String prefixIri = WmiOntology.NamespaceUrlPrefix("ROOT\\StandardCimv2");

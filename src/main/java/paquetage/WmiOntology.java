@@ -75,7 +75,7 @@ public class WmiOntology {
         return NamespaceUrlPrefix(namespace) + term;
     }
 
-    static Resource WbemPathToIri(String namespace, String valueString) {
+    static Resource wbemPathToIri(String namespace, String valueString) {
         WmiProvider.CheckValidNamespace(namespace);
         // Convention: Namespaces in uppercase.
         // Beware thet Associators return their references with lowercase namespaces, for no reason.
@@ -114,7 +114,7 @@ public class WmiOntology {
     static private ValueFactory factory = SimpleValueFactory.getInstance();
 
     static private Literal literalInternational(String inputString) {
-        return factory.createLiteral(PresentUtils.InternationalizeUnquoted(inputString));
+        return factory.createLiteral(PresentUtils.internationalizeUnquoted(inputString));
     }
 
     /**
@@ -186,7 +186,7 @@ public class WmiOntology {
             return classNode;
         };
 
-        Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(namespace);
+        Map<String, WmiProvider.WmiClass> classes = wmiProvider.classesMap(namespace);
         Literal literalNamespace = factory.createLiteral(namespace);
 
         for(Map.Entry<String, WmiProvider.WmiClass> entry_class : classes.entrySet()) {
@@ -197,17 +197,17 @@ public class WmiOntology {
             WmiProvider.WmiClass wmiClass = entry_class.getValue();
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, literalInternational(className));
-            connection.add(classIri, RDFS.COMMENT, literalInternational(wmiClass.Description));
+            connection.add(classIri, RDFS.COMMENT, literalInternational(wmiClass.classDescription));
             connection.add(classIri, iriNamespaceProperty, literalNamespace);
 
-            if (wmiClass.BaseName != null) {
-                IRI baseClassIri = lambdaClassToNode.apply(wmiClass.BaseName);
+            if (wmiClass.classBaseName != null) {
+                IRI baseClassIri = lambdaClassToNode.apply(wmiClass.classBaseName);
                 if(baseClassIri != null) {
                     connection.add(classIri, RDFS.SUBCLASSOF, baseClassIri);
                 }
             }
 
-            for(Map.Entry<String, WmiProvider.WmiProperty> entry_property : wmiClass.Properties.entrySet()) {
+            for(Map.Entry<String, WmiProvider.WmiProperty> entry_property : wmiClass.classProperties.entrySet()) {
                 String ambiguousPropertyName = entry_property.getKey();
                 String uniquePropertyName = className + "." + ambiguousPropertyName;
 
@@ -217,18 +217,18 @@ public class WmiOntology {
                 connection.add(uniquePropertyIri, RDF.TYPE, RDF.PROPERTY);
                 connection.add(uniquePropertyIri, RDFS.LABEL, literalInternational(uniquePropertyName));
                 connection.add(uniquePropertyIri, RDFS.DOMAIN, classIri);
-                connection.add(uniquePropertyIri, RDFS.COMMENT, literalInternational(wmiProperty.Description));
+                connection.add(uniquePropertyIri, RDFS.COMMENT, literalInternational(wmiProperty.propertyDescription));
                 connection.add(uniquePropertyIri, iriNamespaceProperty, literalNamespace);
 
                 if(wmiProperty.isWbemPathRef()) {
-                    String domainName = wmiProperty.Type.substring(4);
+                    String domainName = wmiProperty.propertyType.substring(4);
                     // This should be another class.
                     IRI domainIri = iri(namespace_iri_prefix, domainName);
                     connection.add(uniquePropertyIri, RDFS.RANGE, domainIri);
                 }
                 else
                 {
-                    IRI iriType = wmi_type_to_xsd.get(wmiProperty.Type);
+                    IRI iriType = wmi_type_to_xsd.get(wmiProperty.propertyType);
                     if(iriType == null)
                     {
                         iriType = XSD.STRING; // Default value.
@@ -260,7 +260,7 @@ public class WmiOntology {
             return false;
         }
 
-        Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(namespace);
+        Map<String, WmiProvider.WmiClass> classes = wmiProvider.classesMap(namespace);
         if(className == null) {
             throw new RuntimeException("Class name is null, namespace=" + namespace);
         }
@@ -277,7 +277,7 @@ public class WmiOntology {
             logger.debug("Special case namespace=" + namespace + " className=" + className + " predicateName=" + predicateName);
             return false;
         }
-        WmiProvider.WmiProperty oneProperty = oneClass.Properties.get(predicateName);
+        WmiProvider.WmiProperty oneProperty = oneClass.classProperties.get(predicateName);
         if(oneProperty == null) {
             throw new RuntimeException("Cannot find namespace=" + namespace + " className=" + className + " predicateName=" + predicateName);
         }
@@ -310,20 +310,20 @@ public class WmiOntology {
     }
     */
 
-    static public RepositoryConnection ReadOnlyOntologyConnection(String namespace) {
+    static public RepositoryConnection readOnlyOntologyConnection(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection = mapNamespaceToConnects.get(namespace);
         if (repositoryConnection != null) {
             logger.debug("Ontology connection in cache for namespace=" + namespace);
             return repositoryConnection;
         }
-        repositoryConnection = ReadOnlyOntologyConnectionNoCache(namespace);
+        repositoryConnection = readOnlyOntologyConnectionNoCache(namespace);
         mapNamespaceToConnects.put(namespace, repositoryConnection);
         return repositoryConnection;
     }
 
     /** This is only for tests. */
-    static public RepositoryConnection ReadOnlyOntologyConnectionNoCacheInMemory(String namespace) {
+    static public RepositoryConnection readOnlyOntologyConnectionNoCacheInMemory(String namespace) {
         logger.debug("Memory-only ontology for namespace=" + namespace);
         MemoryStore memStore = new MemoryStore();
         Repository repo = new SailRepository(memStore);
@@ -333,7 +333,7 @@ public class WmiOntology {
         return repositoryConnection;
     }
 
-    static private RepositoryConnection ReadOnlyOntologyConnectionNoCache(String namespace) {
+    static private RepositoryConnection readOnlyOntologyConnectionNoCache(String namespace) {
         WmiProvider.CheckValidNamespace(namespace);
         RepositoryConnection repositoryConnection;
 
@@ -386,11 +386,11 @@ public class WmiOntology {
         return repositoryConnection;
     }
 
-    private static void InsertOntologyToConnection(String namespace, RepositoryConnection repositoryConnection) {
+    private static void insertOntologyToConnection(String namespace, RepositoryConnection repositoryConnection) {
         long countInit = repositoryConnection.size();
         logger.debug("Inserting " + namespace + " ontology statements:" + countInit);
         logger.debug("isActive " + repositoryConnection.isActive());
-        RepositoryConnection sourceConnection = ReadOnlyOntologyConnection(namespace);
+        RepositoryConnection sourceConnection = readOnlyOntologyConnection(namespace);
         // TODO: Avoid this useless copy.
         RepositoryResult<Statement> result = sourceConnection.getStatements(null, null, null, true);
         repositoryConnection.add(result);
@@ -402,24 +402,24 @@ public class WmiOntology {
      * This is rather slow because an ontology contains thousands of triples.
      * TODO: Automatically load the ontology associated to the namespace when parsing the Sparql query.
      */
-    public static RepositoryConnection CloneToMemoryConnection(String ... namespaces) {
+    public static RepositoryConnection cloneToMemoryConnection(String ... namespaces) {
         // This is not persisted to a file.
         Repository repo = new SailRepository(new MemoryStore());
         RepositoryConnection repositoryConnection = repo.getConnection();
         for(String namespace:namespaces) {
             WmiProvider.CheckValidNamespace(namespace);
-            InsertOntologyToConnection(namespace, repositoryConnection);
+            insertOntologyToConnection(namespace, repositoryConnection);
         }
         return repositoryConnection;
     }
 
     /** This returns a repository with ontologies of all namespaces. */
-    public static RepositoryConnection CloneToMemoryConnection() throws Exception {
+    public static RepositoryConnection cloneToMemoryConnection() throws Exception {
         Repository repo = new SailRepository(new MemoryStore());
         RepositoryConnection repositoryConnection = repo.getConnection();
 
-        for(String namespace: wmiProvider.NamespacesList()) {
-            InsertOntologyToConnection(namespace, repositoryConnection);
+        for(String namespace: wmiProvider.namespacesList()) {
+            insertOntologyToConnection(namespace, repositoryConnection);
         }
 
         return repositoryConnection;
@@ -432,7 +432,7 @@ public class WmiOntology {
     or: "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%223160%22"
     or: "http://www.w3.org/2000/01/rdf-schema#label"
     */
-    static NamespaceTokenPair SplitIRI(String token) {
+    static NamespaceTokenPair splitIRI(String token) {
         logger.debug("token=" + token);
         if(! token.contains("#")) {
             logger.debug("Cannot split token:" + token);
@@ -478,9 +478,9 @@ public class WmiOntology {
     }
 
     // It returns something like "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22"
-    static public String CreateUriVarArgs(String className, String propertyName, String propertyValue) throws Exception {
+    static public String createUriVarArgs(String className, String propertyName, String propertyValue) throws Exception {
         String iri = "\\\\" + PresentUtils.computerName + "\\ROOT\\CIMV2:" + className + "." + propertyName + "=" + "\"" + propertyValue + "\"";
-        return WbemPathToIri("ROOT\\CIMV2", iri).stringValue();
+        return wbemPathToIri("ROOT\\CIMV2", iri).stringValue();
     }
 
 

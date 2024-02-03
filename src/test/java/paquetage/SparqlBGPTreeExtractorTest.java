@@ -9,15 +9,15 @@ import java.util.*;
  */
 public class SparqlBGPTreeExtractorTest {
     static void CompareVariable(ObjectPattern.PredicateObjectPair a, String predicate, String variableName) {
-        Assert.assertEquals(predicate, a.ShortPredicate);
+        Assert.assertEquals(predicate, a.shortPredicate);
         Assert.assertEquals(variableName, a.variableName);
-        Assert.assertEquals(null, a.ObjectContent);
+        Assert.assertEquals(null, a.objectContent);
     }
 
     static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, String content) {
-        Assert.assertEquals(predicate, a.ShortPredicate);
+        Assert.assertEquals(predicate, a.shortPredicate);
         Assert.assertEquals(null, a.variableName);
-        Assert.assertEquals(ValueTypePair.FromString(content), a.ObjectContent);
+        Assert.assertEquals(ValueTypePair.FromString(content), a.objectContent);
     }
     /***
      * Checks the BGPs extracted from an arbitrary query with a union.
@@ -54,14 +54,14 @@ public class SparqlBGPTreeExtractorTest {
         Assert.assertEquals(1, patterns.size());
         Assert.assertNotEquals(extractor.FindObjectPattern("s"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.ClassName);
-        Assert.assertEquals("s", firstPattern.VariableName);
-        Assert.assertEquals(4, firstPattern.Members.size());
+        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals("s", firstPattern.variableName);
+        Assert.assertEquals(4, firstPattern.membersList.size());
 
-        CompareKeyValue(firstPattern.Members.get(0), "http://www.w3.org/2000/01/rdf-schema#label", "Microsoft");
-        CompareVariable(firstPattern.Members.get(1), "http://xmlns.com/foaf/0.1/page", "page");
-        CompareKeyValue(firstPattern.Members.get(2), "http://www.w3.org/2000/01/rdf-schema#label", "Apple");
-        CompareVariable(firstPattern.Members.get(3), "http://xmlns.com/foaf/0.1/page", "page");
+        CompareKeyValue(firstPattern.membersList.get(0), "http://www.w3.org/2000/01/rdf-schema#label", "Microsoft");
+        CompareVariable(firstPattern.membersList.get(1), "http://xmlns.com/foaf/0.1/page", "page");
+        CompareKeyValue(firstPattern.membersList.get(2), "http://www.w3.org/2000/01/rdf-schema#label", "Apple");
+        CompareVariable(firstPattern.membersList.get(3), "http://xmlns.com/foaf/0.1/page", "page");
     }
 
     @Ignore("Not working yet")
@@ -99,16 +99,16 @@ public class SparqlBGPTreeExtractorTest {
 
         ObjectPattern pattern1 = extractor.FindObjectPattern("process1");
         Assert.assertNotEquals(pattern1, null);
-        Assert.assertEquals(null, pattern1.ClassName);
-        Assert.assertEquals("process1", pattern1.VariableName);
-        Assert.assertEquals(1, pattern1.Members.size());
-        CompareKeyValue(pattern1.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", "Caption1");
+        Assert.assertEquals(null, pattern1.className);
+        Assert.assertEquals("process1", pattern1.variableName);
+        Assert.assertEquals(1, pattern1.membersList.size());
+        CompareKeyValue(pattern1.membersList.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", "Caption1");
 
         ObjectPattern pattern2 = extractor.FindObjectPattern("process2");
         Assert.assertNotEquals(pattern2, null);
-        Assert.assertEquals("process2", pattern2.VariableName);
-        Assert.assertEquals(1, pattern2.Members.size());
-        CompareKeyValue(pattern2.Members.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", "Caption2");
+        Assert.assertEquals("process2", pattern2.variableName);
+        Assert.assertEquals(1, pattern2.membersList.size());
+        CompareKeyValue(pattern2.membersList.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", "Caption2");
     }
 
     @Ignore("Not working yet")
@@ -151,11 +151,11 @@ public class SparqlBGPTreeExtractorTest {
 
         for(ObjectPattern pattern : patterns )
         {
-            System.out.println("pattern.className"+pattern.ClassName);
-            System.out.println("pattern.VariableName"+pattern.VariableName);
-            for(ObjectPattern.PredicateObjectPair pop:pattern.Members) {
-                System.out.println("    pattern.Predicate   :" + pop.ShortPredicate);
-                System.out.println("    pattern.Content     :" + pop.ObjectContent.toDisplayString());
+            System.out.println("pattern.className"+pattern.className);
+            System.out.println("pattern.VariableName"+pattern.variableName);
+            for(ObjectPattern.PredicateObjectPair pop:pattern.membersList) {
+                System.out.println("    pattern.Predicate   :" + pop.shortPredicate);
+                System.out.println("    pattern.Content     :" + pop.objectContent.toDisplayString());
                 System.out.println("    pattern.variableName:" + pop.variableName);
                 System.out.println("");
             }
@@ -163,13 +163,13 @@ public class SparqlBGPTreeExtractorTest {
 
         Assert.assertNotEquals(extractor.FindObjectPattern("country"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.ClassName);
-        Assert.assertEquals("country", firstPattern.VariableName);
-        Assert.assertEquals(4, firstPattern.Members.size());
-        CompareKeyValue(firstPattern.Members.get(0), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");
-        CompareVariable(firstPattern.Members.get(1), "http://www.wikidata.org/prop/direct/P1082", "population");
-        CompareKeyValue(firstPattern.Members.get(2), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");
-        CompareVariable(firstPattern.Members.get(3), "http://www.wikidata.org/prop/direct/P1082", "population");
+        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals("country", firstPattern.variableName);
+        Assert.assertEquals(4, firstPattern.membersList.size());
+        CompareKeyValue(firstPattern.membersList.get(0), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");
+        CompareVariable(firstPattern.membersList.get(1), "http://www.wikidata.org/prop/direct/P1082", "population");
+        CompareKeyValue(firstPattern.membersList.get(2), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");
+        CompareVariable(firstPattern.membersList.get(3), "http://www.wikidata.org/prop/direct/P1082", "population");
     }
 
     /** This checks that instances of the same class in several sub-queries are not mixed together.
@@ -215,11 +215,11 @@ public class SparqlBGPTreeExtractorTest {
 
         for(ObjectPattern pattern : patterns )
         {
-            System.out.println("pattern.className"+pattern.ClassName);
-            System.out.println("pattern.VariableName"+pattern.VariableName);
-            for(ObjectPattern.PredicateObjectPair pop:pattern.Members) {
-                System.out.println("    pattern.Predicate   :" + pop.ShortPredicate);
-                System.out.println("    pattern.Content     :" + pop.ObjectContent.toDisplayString());
+            System.out.println("pattern.className"+pattern.className);
+            System.out.println("pattern.VariableName"+pattern.variableName);
+            for(ObjectPattern.PredicateObjectPair pop:pattern.membersList) {
+                System.out.println("    pattern.Predicate   :" + pop.shortPredicate);
+                System.out.println("    pattern.Content     :" + pop.objectContent.toDisplayString());
                 System.out.println("    pattern.variableName:" + pop.variableName);
                 System.out.println("");
             }
@@ -227,10 +227,10 @@ public class SparqlBGPTreeExtractorTest {
 
         Assert.assertNotEquals(extractor.FindObjectPattern("country"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.ClassName);
-        Assert.assertEquals("country", firstPattern.VariableName);
-        Assert.assertEquals(4, firstPattern.Members.size());
-        CompareKeyValue(firstPattern.Members.get(0), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");
+        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals("country", firstPattern.variableName);
+        Assert.assertEquals(4, firstPattern.membersList.size());
+        CompareKeyValue(firstPattern.membersList.get(0), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");
     }
 
 }

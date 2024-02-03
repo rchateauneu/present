@@ -33,7 +33,7 @@ public class SparqlTranslation {
      * in the target repository.
      * It could use a different data type because "Row" is used for different purpose.
      */
-    void CreateCurrentRow()
+    void createCurrentRow()
     {
         Solution.Row new_row = new Solution.Row();
         // It does not return only the variables in bindings, but all of them because they are
@@ -45,13 +45,13 @@ public class SparqlTranslation {
             if(newKey == null) {
                 throw new RuntimeException("Key is null, getValue=" + pairKeyValue.getValue());
             }
-            new_row.PutValueType(newKey, pairKeyValue.getValue());
+            new_row.putValueType(newKey, pairKeyValue.getValue());
         }
         solution.add(new_row);
     }
 
-    void RowToContext(Solution.Row singleRow, Map<String, List<String>> variablesSynonyms) {
-        for(String variableName : singleRow.KeySet()) {
+    void rowToContext(Solution.Row singleRow, Map<String, List<String>> variablesSynonyms) {
+        for(String variableName : singleRow.keySet()) {
             if(!dependencies.variablesContext.containsKey(variableName)){
                 throw new RuntimeException("Variable " + variableName + " from selection not in context");
             }
@@ -60,7 +60,7 @@ public class SparqlTranslation {
             {
                 logger.warn("Input variableName is null. singleRow=" + singleRow);
             } else {
-                ValueTypePair vtp = singleRow.GetValueType(variableName);
+                ValueTypePair vtp = singleRow.getValueType(variableName);
                 dependencies.variablesContext.put(variableName, vtp);
 
                 List<String> synonyms = variablesSynonyms == null ? null : variablesSynonyms.get(variableName);
@@ -120,9 +120,9 @@ public class SparqlTranslation {
      * @param index
      * @throws Exception
      */
-    void ExecuteOneLevel(int index) //throws Exception
+    void executeOneLevel(int index) //throws Exception
     {
-        if(index == dependencies.prepared_queries.size())
+        if(index == dependencies.preparedQueries.size())
         {
             // The most nested WQL query is reached. Store data then return.
             // It returns rows of key-value paris made with the variables and their values.
@@ -130,10 +130,10 @@ public class SparqlTranslation {
             // and the Sparql query is run again - and now, the needed triples are here, ready to be selected.
             // In other words, they are virtually here.
             // TODO: For performance, consider calculating triples right now.
-            CreateCurrentRow();
+            createCurrentRow();
             return;
         }
-        QueryData queryData = dependencies.prepared_queries.get(index);
+        QueryData queryData = dependencies.preparedQueries.get(index);
         if(queryData.isMainVariableAvailable) {
             // NO NEED TO CHECK IT EACH TIME.
             if(! queryData.whereTests.isEmpty()) {
@@ -149,21 +149,21 @@ public class SparqlTranslation {
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
             // FIXME: It is a pity that handlers are set twice.
-            queryData.SetHandlers(true);
+            queryData.setHandlers(true);
 
             if(queryData.queryVariableColumns.isEmpty())  {
-                queryData.StartSampling();
-                Solution.Row singleRow = genericSelecter.GetObjectFromPath(objectPath, queryData);
-                queryData.FinishSampling(objectPath);
+                queryData.startSampling();
+                Solution.Row singleRow = genericSelecter.getObjectFromPath(objectPath, queryData);
+                queryData.finishSampling(objectPath);
 
                 if (singleRow == null) {
                     // Object does not exist or maybe a CIM_FataFile is protected, or a CIM_Process exited ?
                     // FIXME: Maybe this is not an error but a normal behaviour, so should not display an error.
                     logger.error("Cannot get row for objectPath=" + objectPath);
                 } else {
-                    RowToContext(singleRow, queryData.variablesSynonyms);
+                    rowToContext(singleRow, queryData.variablesSynonyms);
                     // New WQL query for this row only.
-                    ExecuteOneLevel(index + 1);
+                    executeOneLevel(index + 1);
                 }
             } else {
                 if(!queryData.queryColumns.isEmpty()) {
@@ -176,20 +176,20 @@ public class SparqlTranslation {
                 String predicateVariable = entry.getKey();
                 String valueVariable = entry.getValue();
 
-                Map<String, WmiProvider.WmiClass> classes = wmiProvider.Classes(queryData.namespace);
+                Map<String, WmiProvider.WmiClass> classes = wmiProvider.classesMap(queryData.namespace);
                 WmiProvider.WmiClass wmiClass = classes.get(queryData.className);
-                Set<String> allClassColumns = wmiClass.Properties.keySet();
+                Set<String> allClassColumns = wmiClass.classProperties.keySet();
                 logger.debug("queryData.mainVariable=" + queryData.mainVariable + " allClassColumns=" + allClassColumns);
 
                 for(String onePredicate : allClassColumns) {
                     logger.debug("onePredicate=" + onePredicate + " valueVariable=" + valueVariable);
                     Map<String, String> subQueryColumns = Map.of(onePredicate, valueVariable);
-                    Solution.Row returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData.mainVariable, subQueryColumns);
+                    Solution.Row returnRow = queryData.classGetter.getSingleObject(objectPath, queryData.mainVariable, subQueryColumns);
                     // This adds the value of the column name.
-                    returnRow.PutString(predicateVariable, onePredicate);
+                    returnRow.putString(predicateVariable, onePredicate);
                     logger.debug("returnRow=" + returnRow);
-                    RowToContext(returnRow, queryData.variablesSynonyms);
-                    ExecuteOneLevel(index + 1);
+                    rowToContext(returnRow, queryData.variablesSynonyms);
+                    executeOneLevel(index + 1);
                 }
             }
         } else {
@@ -211,50 +211,50 @@ public class SparqlTranslation {
                 }
             }
 
-            queryData.StartSampling();
-            List<QueryData.WhereEquality> oldWheres = queryData.SwapWheres(substitutedWheres);
+            queryData.startSampling();
+            List<QueryData.WhereEquality> oldWheres = queryData.swapWheres(substitutedWheres);
             Solution rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
             // restore to patterns wheres clauses (that is, with variable values).
-            queryData.SwapWheres(oldWheres);
+            queryData.swapWheres(oldWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
-            queryData.FinishSampling();
+            queryData.finishSampling();
 
             int numColumns = queryData.queryColumns.size();
             for(Solution.Row row : rows) {
                 // An extra column contains the path.
-                if(row.ElementsSize() != numColumns + 1) {
+                if(row.elementsSize() != numColumns + 1) {
                     /*
                     This is a hint that the values of some required variables were not found.
                     TODO: Do this once only, the result set should separately contain the header.
                     */
-                    throw new RuntimeException("Inconsistent size between returned results " + row.ElementsSize()
+                    throw new RuntimeException("Inconsistent size between returned results " + row.elementsSize()
                             + " and columns:" + numColumns + " columns=" + queryData.queryColumns.keySet()
-                            + " row.KeySet()=" + row.KeySet());
+                            + " row.KeySet()=" + row.keySet());
                 }
-                RowToContext(row, queryData.variablesSynonyms);
+                rowToContext(row, queryData.variablesSynonyms);
                 // New WQL query for this row.
-                ExecuteOneLevel(index + 1);
+                executeOneLevel(index + 1);
             } //  Next fetched row.
         }
     }
 
     /** TODO: This should not return the same "Row" as ExecuteQuery because here, the Row are created by this ...
      * TODO: ... local code, not by the Sparql engine. This is confusing. */
-    public Solution ExecuteToRows() //throws Exception
+    public Solution executeToRows() //throws Exception
     {
         solution = new Solution();
-        for(QueryData queryData : dependencies.prepared_queries) {
-            queryData.ResetStatistics();
+        for(QueryData queryData : dependencies.preparedQueries) {
+            queryData.resetStatistics();
         }
-        if(!dependencies.prepared_queries.isEmpty()) {
-            ExecuteOneLevel(0);
+        if(!dependencies.preparedQueries.isEmpty()) {
+            executeOneLevel(0);
         }
-        logger.debug("Queries levels:" + dependencies.prepared_queries.size());
+        logger.debug("Queries levels:" + dependencies.preparedQueries.size());
         logger.debug("Statistics:");
-        for(int indexQueryData = 0; indexQueryData < dependencies.prepared_queries.size(); ++indexQueryData) {
-            QueryData queryData = dependencies.prepared_queries.get(indexQueryData);
+        for(int indexQueryData = 0; indexQueryData < dependencies.preparedQueries.size(); ++indexQueryData) {
+            QueryData queryData = dependencies.preparedQueries.get(indexQueryData);
             logger.debug("Query " + indexQueryData);
-            queryData.DisplayStatistics();
+            queryData.displayStatistics();
         }
         logger.debug("Rows generated:" + solution.size());
         logger.debug("Header:" + solution.header());

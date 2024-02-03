@@ -30,14 +30,14 @@ public class StatementsGenerationTest {
     ValueFactory factory = SimpleValueFactory.getInstance();
 
     static private void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, boolean isVariable, String content) {
-        Assert.assertEquals(predicate, a.ShortPredicate);
+        Assert.assertEquals(predicate, a.shortPredicate);
         Assert.assertEquals(a.variableName, a.variableName);
         if(a.variableName == null)
-            Assert.assertEquals(ValueTypePair.FromString(content), a.ObjectContent);
+            Assert.assertEquals(ValueTypePair.FromString(content), a.objectContent);
     }
 
     static private Resource WbemPathToIriCIMV2(String valueString) throws Exception {
-        return WmiOntology.WbemPathToIri("ROOT\\CIMV2", valueString);
+        return WmiOntology.wbemPathToIri("ROOT\\CIMV2", valueString);
     }
 
     @Test
@@ -62,10 +62,10 @@ public class StatementsGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.CurrentNamespace);
-        Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", true, "dir_name");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
+        Assert.assertEquals(1, patternWin32_Directory.membersList.size());
+        CompareKeyValue(patternWin32_Directory.membersList.get(0), "Name", true, "dir_name");
 
         // Now it generates triples from the patterns, forcing the values of the single variable.
         String dirIri = "\\\\ANY_MACHINE\\ROOT\\CIMV2:Win32_Directory.Name=C:";
@@ -113,10 +113,10 @@ public class StatementsGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.CurrentNamespace);
-        Assert.assertEquals(1,patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", true, "dir_name");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
+        Assert.assertEquals(1,patternWin32_Directory.membersList.size());
+        CompareKeyValue(patternWin32_Directory.membersList.get(0), "Name", true, "dir_name");
 
         // Now it generates statements from the patterns, forcing the values of the single variable.
         String dirIriC = "\\\\ANY_MACHINE\\ROOT\\CIMV2:Win32_Directory.Name=C:";
@@ -187,11 +187,11 @@ public class StatementsGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.CurrentNamespace);
-        Assert.assertEquals(2, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(1), "Caption", true, "dir_caption");
-        CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", true, "dir_name");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
+        Assert.assertEquals(2, patternWin32_Directory.membersList.size());
+        CompareKeyValue(patternWin32_Directory.membersList.get(1), "Caption", true, "dir_caption");
+        CompareKeyValue(patternWin32_Directory.membersList.get(0), "Name", true, "dir_name");
 
         // Now it generates statements from the patterns, forcing the values of the single variable.
         String dirIri = "\\\\ANY_MACHINE\\ROOT\\CIMV2:Win32_Directory.Name=C:";

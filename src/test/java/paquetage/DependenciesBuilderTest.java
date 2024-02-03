@@ -145,7 +145,7 @@ public class DependenciesBuilderTest {
                 Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:")))
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 1);
         CompareQueryData(queryData0, preparedQueries.get(0));
     }
@@ -176,7 +176,7 @@ public class DependenciesBuilderTest {
                 null
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 1);
         CompareQueryData(queryData0, preparedQueries.get(0));
     }
@@ -209,7 +209,7 @@ public class DependenciesBuilderTest {
                 )
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 1);
         CompareQueryData(queryData0, preparedQueries.get(0));
     }
@@ -262,7 +262,7 @@ public class DependenciesBuilderTest {
                 )
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 2);
         CompareQueryData(queryData0, preparedQueries.get(0));
         CompareQueryData(queryData1, preparedQueries.get(1));
@@ -313,7 +313,7 @@ public class DependenciesBuilderTest {
                 )
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 2);
         CompareQueryData(queryData0, preparedQueries.get(0));
         CompareQueryData(queryData1, preparedQueries.get(1));
@@ -375,7 +375,7 @@ public class DependenciesBuilderTest {
                 )
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 3);
         CompareQueryData(queryData0, preparedQueries.get(0));
         CompareQueryData(queryData1, preparedQueries.get(1));
@@ -433,7 +433,7 @@ public class DependenciesBuilderTest {
                 null
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 3);
         CompareQueryData(queryData0, preparedQueries.get(0));
         CompareQueryData(queryData1, preparedQueries.get(1));
@@ -494,7 +494,7 @@ public class DependenciesBuilderTest {
                 null
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 3);
         CompareQueryData(queryData0, preparedQueries.get(0));
         CompareQueryData(queryData1, preparedQueries.get(1));
@@ -554,7 +554,7 @@ public class DependenciesBuilderTest {
                 null
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 3);
         CompareQueryData(queryData0, preparedQueries.get(0));
         CompareQueryData(queryData1, preparedQueries.get(1));
@@ -591,7 +591,7 @@ public class DependenciesBuilderTest {
                 )
         );
 
-        List<QueryData> preparedQueries = patternSparql.prepared_queries;
+        List<QueryData> preparedQueries = patternSparql.preparedQueries;
         Assert.assertEquals(preparedQueries.size(), 1);
         CompareQueryData(queryData0, preparedQueries.get(0));
     }

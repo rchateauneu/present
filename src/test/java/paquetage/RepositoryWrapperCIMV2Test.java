@@ -25,14 +25,14 @@ public class RepositoryWrapperCIMV2Test {
     static String currentPidStr = String.valueOf(currentPid);
     String currentProcessUri = null;
 
-    static String currJavaBin = PresentUtils.CurrentJavaBinary();
+    static String currJavaBin = PresentUtils.currentJavaBinary();
     static String currJavaDir = new File(currJavaBin).getParent();
     private RepositoryWrapper repositoryWrapper = null;
 
     @Before
     public void setUp() throws Exception {
         repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
-        currentProcessUri = WmiOntology.CreateUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        currentProcessUri = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
     }
 
     //@Override
@@ -45,11 +45,11 @@ public class RepositoryWrapperCIMV2Test {
     @Test
     public void testSelect_AnyTriples() throws Exception {
         String sparqlQuery = "SELECT ?x WHERE { ?x ?y ?z } limit 10";
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(10, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("x"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("x"), singleRow.keySet());
     }
 
     /* Default Yasgui query. */
@@ -62,11 +62,11 @@ public class RepositoryWrapperCIMV2Test {
                 ?sub ?pred ?obj .
             } LIMIT 10
         """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(10, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("sub", "pred", "obj"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("sub", "pred", "obj"), singleRow.keySet());
     }
 
     /** This tests the presence of a table from the ontology. */
@@ -80,11 +80,11 @@ public class RepositoryWrapperCIMV2Test {
                         cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("label"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("label"), singleRow.keySet());
     }
 
     /** Checks the list of classes in the ontology. */
@@ -99,12 +99,12 @@ public class RepositoryWrapperCIMV2Test {
                         ?class rdfs:label ?class_label .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setLabels = listRows.StringValuesSet("class_label");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setLabels = listRows.stringValuesSet("class_label");
         System.out.println("setLabels="+setLabels);
         // This checks that '"Win32_Process"@en' is present.
-        Assert.assertTrue(setLabels.contains(PresentUtils.InternationalizeUnquoted("Win32_Process")));
-        Assert.assertTrue(setLabels.contains(PresentUtils.InternationalizeUnquoted("Win32_DependentService")));
+        Assert.assertTrue(setLabels.contains(PresentUtils.internationalizeUnquoted("Win32_Process")));
+        Assert.assertTrue(setLabels.contains(PresentUtils.internationalizeUnquoted("Win32_DependentService")));
     }
 
     /** This selects the caption of the current process and does not use the ontology.
@@ -121,17 +121,17 @@ public class RepositoryWrapperCIMV2Test {
                         ?process cimv2:Win32_Process.Caption ?caption .
                     }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("caption", "process"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("caption", "process"), singleRow.keySet());
 
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
-        String uriProcess = WmiOntology.CreateUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        String uriProcess = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
         System.out.println("uriProcess=" + uriProcess);
 
-        Set<String> setLabels = listRows.NodeValuesSet("process");
+        Set<String> setLabels = listRows.nodeValuesSet("process");
         System.out.println("setLabels=" + setLabels);
 
         Assert.assertTrue(setLabels.contains(uriProcess));
@@ -151,13 +151,13 @@ public class RepositoryWrapperCIMV2Test {
                         cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("caption", "label", "process"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("caption", "label", "process"), singleRow.keySet());
 
-        String actualPath = singleRow.GetAsUri("process");
+        String actualPath = singleRow.getAsUri("process");
         //Assert.assertTrue(PresentUtils.CheckValidWbemPath(actualPath));
     }
 
@@ -182,24 +182,24 @@ public class RepositoryWrapperCIMV2Test {
                         }
                     }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         // The current process must be here.
-        Set<String> setHandles = listRows.StringValuesSet("handle");
+        Set<String> setHandles = listRows.stringValuesSet("handle");
         System.out.println("currentPidStr=" + currentPidStr);
         System.out.println("setHandles=" + setHandles);
         Assert.assertTrue(setHandles.contains(currentPidStr));
 
         // Executables are all identical.
-        Set<String> setExecutables = listRows.StringValuesSet("executablepath");
+        Set<String> setExecutables = listRows.stringValuesSet("executablepath");
         Assert.assertEquals(1, setExecutables.size());
 
         // ... and have the correct value.
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("handle", "executablepath"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetAsLiteral("executablepath"));
-        String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
-        Assert.assertEquals(expectedBin, singleRow.GetAsLiteral("executablepath"));
+        Assert.assertEquals(Set.of("handle", "executablepath"), singleRow.keySet());
+        System.out.println("Exec=" + singleRow.getAsLiteral("executablepath"));
+        String expectedBin = "\"" + PresentUtils.currentJavaBinary() + "\"";
+        Assert.assertEquals(expectedBin, singleRow.getAsLiteral("executablepath"));
     }
 
     /** Also select the attribute ProcessId which is an integer.
@@ -218,20 +218,20 @@ public class RepositoryWrapperCIMV2Test {
                         ?process cimv2:Win32_Process.ProcessId ?pid .
                     }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("process", "pid"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("process", "pid"), singleRow.keySet());
         // "18936"^^<http://www.w3.org/2001/XMLSchema#long>
-        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetAsLiteral("pid"));
+        Assert.assertEquals(PresentUtils.longToXml(currentPid), singleRow.getAsLiteral("pid"));
 
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
-        String expectedProcessUri = WmiOntology.CreateUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        String expectedProcessUri = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
         System.out.println("expectedProcessUri=" + expectedProcessUri);
         System.out.println("singleRow=" + singleRow);
-        String actualProcessUri = singleRow.GetAsUri("process");
+        String actualProcessUri = singleRow.getAsUri("process");
         Assert.assertEquals(expectedProcessUri, actualProcessUri);
         //Assert.assertTrue(PresentUtils.CheckValidWbemPath(actualProcessUri));
     }
@@ -294,15 +294,15 @@ public class RepositoryWrapperCIMV2Test {
                         ?process cimv2:Win32_Process.WorkingSetSize ?workingsetsize . 
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         // Only one row because pids are unique.
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
-        WmiProvider.WmiClass cl = new WmiProvider().ClassesCIMV2().get("Win32_Process");
-        Set<String> allProperties = cl.Properties.keySet();
+        WmiProvider.WmiClass cl = new WmiProvider().classesCIMV2().get("Win32_Process");
+        Set<String> allProperties = cl.classProperties.keySet();
         Set<String> propertiesCamelCase = allProperties.stream()
                 .map(property -> CaseUtils.toCamelCase(property, false))
                         .collect(Collectors.toSet());
@@ -311,10 +311,10 @@ public class RepositoryWrapperCIMV2Test {
         propertiesCamelCase.remove("handle");
 
         // All these values must be set.
-        Assert.assertEquals(propertiesCamelCase, singleRow.KeySet());
+        Assert.assertEquals(propertiesCamelCase, singleRow.keySet());
 
         // Check the value of a property whose result is known.
-        Assert.assertEquals(PresentUtils.LongToXml(currentPid), singleRow.GetAsLiteral("processid"));
+        Assert.assertEquals(PresentUtils.longToXml(currentPid), singleRow.getAsLiteral("processid"));
     }
 
     // Transforms '"Win32_Process.VirtualSize"@en' into 'VirtualSize'
@@ -342,13 +342,13 @@ public class RepositoryWrapperCIMV2Test {
                         ?property rdfs:label ?property_label .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setLabels = listRows.StringValuesSet("property_label");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setLabels = listRows.stringValuesSet("property_label");
         // Checks the presence of an arbitrary property.
         // setLabels=["Win32_Process.TerminationDate"@en, "Win32_Process.VirtualSize"@en, ...
         System.out.println("setLabels=" + setLabels);
         // This tests the presence of '"Win32_Process.VirtualSize"@en'
-        Assert.assertTrue(setLabels.contains(PresentUtils.InternationalizeUnquoted("Win32_Process.VirtualSize")));
+        Assert.assertTrue(setLabels.contains(PresentUtils.internationalizeUnquoted("Win32_Process.VirtualSize")));
 
         // Transforms '"Win32_Process.VirtualSize"@en' into 'VirtualSize'
         Set<String> shortLabels = setLabels.stream()
@@ -356,9 +356,9 @@ public class RepositoryWrapperCIMV2Test {
                 .collect(Collectors.toSet());
 
         // To be sure, checks the presence of all properties as extracted from the ontology.
-        WmiProvider.WmiClass cl = new WmiProvider().ClassesCIMV2().get("Win32_Process");
+        WmiProvider.WmiClass cl = new WmiProvider().classesCIMV2().get("Win32_Process");
         // allProperties = [CreationDate, ExecutionState, VirtualSize, ...
-        Set<String> allProperties = cl.Properties.keySet();
+        Set<String> allProperties = cl.classProperties.keySet();
         Assert.assertEquals(shortLabels, allProperties);
     }
 
@@ -375,11 +375,11 @@ public class RepositoryWrapperCIMV2Test {
                         cimv2:Win32_Process.Handle rdfs:label ?label .
                     }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("caption", "label"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("caption", "label"), singleRow.keySet());
     }
 
     /** Get all processes with the same ParentProcessId.
@@ -400,8 +400,8 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, currentPidStr);
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setHandles = listRows.StringValuesSet("handle");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setHandles = listRows.stringValuesSet("handle");
 
         System.out.println("currentPidStr=" + currentPidStr);
         System.out.println("setHandles=" + setHandles);
@@ -428,15 +428,15 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         // One service only with this name.
         Assert.assertEquals(1, listRows.size());
 
         // Win32_Service.Caption = "Windows Search"
         // Win32_Process.Caption = "SearchIndexer.exe"
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals("\"Windows Search\"",singleRow.GetAsLiteral("caption1"));
-        Assert.assertEquals("\"SearchIndexer.exe\"",singleRow.GetAsLiteral("caption2"));
+        Assert.assertEquals("\"Windows Search\"",singleRow.getAsLiteral("caption1"));
+        Assert.assertEquals("\"SearchIndexer.exe\"",singleRow.getAsLiteral("caption2"));
     }
 
     /** This gets the antecedents of the process running the service "Windows Search".
@@ -460,13 +460,13 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         // One service only with this name.
         Assert.assertTrue(listRows.size() > 0);
         for(RdfSolution.Tuple singleRow : listRows) {
             System.out.println("Antecedent service:" + singleRow);
         }
-        Set<String> setAntecedents = listRows.StringValuesSet("display_name");
+        Set<String> setAntecedents = listRows.stringValuesSet("display_name");
         // These are the input dependencies of this service.
         String windowsVersion = System.getProperty("os.name");
         if(windowsVersion.equals("Windows 10")) {
@@ -511,11 +511,11 @@ public class RepositoryWrapperCIMV2Test {
                    }
                 """, currentUser);
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows);
 
         // It might contain several sessions.
-        Set<Long> setLogonTypes = listRows.LongValuesSet("logon_type");
+        Set<Long> setLogonTypes = listRows.longValuesSet("logon_type");
         System.out.println("setLogonTypes=" + setLogonTypes);
         // Interactive (2)
         Assert.assertEquals(Set.of(2L), setLogonTypes);
@@ -544,8 +544,8 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> listExecutables = listRows.StringValuesSet("executable_name");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> listExecutables = listRows.stringValuesSet("executable_name");
         System.out.println("listExecutables=" + listExecutables);
         Assert.assertTrue(listExecutables.contains("SearchIndexer.exe"));
     }
@@ -572,11 +572,11 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
         // Service (5)
-        Assert.assertEquals(Set.of(PresentUtils.LongToXml(5)), singleRow.GetAsLiteral("logon_type"));
+        Assert.assertEquals(Set.of(PresentUtils.longToXml(5)), singleRow.getAsLiteral("logon_type"));
     }
 
     /** Parent of the process running the service "Windows Search".
@@ -599,10 +599,10 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals("\"services.exe\"", singleRow.GetAsLiteral("parent_caption"));
+        Assert.assertEquals("\"services.exe\"", singleRow.getAsLiteral("parent_caption"));
     }
 
     /** This selects the executable and libraries of the current process.
@@ -630,14 +630,14 @@ public class RepositoryWrapperCIMV2Test {
                         ?_3_file cimv2:Name ?file_name .
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         //Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetAsLiteral("file_name"));
-        String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
-        Assert.assertEquals(expectedBin, singleRow.GetAsLiteral("file_name"));
+        Assert.assertEquals(Set.of("file_name"), singleRow.keySet());
+        System.out.println("Exec=" + singleRow.getAsLiteral("file_name"));
+        String expectedBin = "\"" + PresentUtils.currentJavaBinary() + "\"";
+        Assert.assertEquals(expectedBin, singleRow.getAsLiteral("file_name"));
     }
 
     /** Patterns order, therefore the order of queries, is forced with alphabetical order and no optimisation.
@@ -665,14 +665,14 @@ public class RepositoryWrapperCIMV2Test {
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("file_name"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetAsLiteral("file_name"));
-        String expectedBin = "\"" + PresentUtils.CurrentJavaBinary() + "\"";
-        Assert.assertEquals(expectedBin, singleRow.GetAsLiteral("file_name"));
+        Assert.assertEquals(Set.of("file_name"), singleRow.keySet());
+        System.out.println("Exec=" + singleRow.getAsLiteral("file_name"));
+        String expectedBin = "\"" + PresentUtils.currentJavaBinary() + "\"";
+        Assert.assertEquals(expectedBin, singleRow.getAsLiteral("file_name"));
     }
 
     /** This fetches processes running Java, and return only the node of the associated files.
@@ -693,12 +693,12 @@ public class RepositoryWrapperCIMV2Test {
                         filter(regex(?file_name, "java.exe", "i" )) 
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("_3_file"), singleRow.KeySet());
-        System.out.println("Exec=" + singleRow.GetAsUri("_3_file"));
+        Assert.assertEquals(Set.of("_3_file"), singleRow.keySet());
+        System.out.println("Exec=" + singleRow.getAsUri("_3_file"));
     }
 
     /** This selects only the associator of a given process, with a given order of patterns.
@@ -716,11 +716,11 @@ public class RepositoryWrapperCIMV2Test {
                         ?_1_assoc cimv2:CIM_ProcessExecutable.Dependent ?_2_process .
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("_1_assoc"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("_1_assoc"), singleRow.keySet());
     }
 
     /** This selects only the associator of a given process, with another given order of patterns.
@@ -738,11 +738,11 @@ public class RepositoryWrapperCIMV2Test {
                         ?_2_assoc cimv2:CIM_ProcessExecutable.Dependent ?_1_process .
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("_2_assoc"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("_2_assoc"), singleRow.keySet());
     }
 
     /** This select only the associator of all processes.
@@ -759,15 +759,15 @@ public class RepositoryWrapperCIMV2Test {
                         ?_2_assoc cimv2:CIM_ProcessExecutable.Dependent ?_1_process .
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("_1_process", "_2_assoc"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("_1_process", "_2_assoc"), singleRow.keySet());
         System.out.println("singleRow=" + singleRow);
 
         // Checks that the current process is present.
-        Set<String> setProcesses = listRows.NodeValuesSet("_1_process");
+        Set<String> setProcesses = listRows.nodeValuesSet("_1_process");
         System.out.println("currentProcessUri=" + currentProcessUri);
         System.out.println("setProcesses=" + setProcesses);
         Assert.assertTrue(setProcesses.contains(currentProcessUri));
@@ -790,15 +790,15 @@ public class RepositoryWrapperCIMV2Test {
                         ?_2_dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?_3_file .
                    }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("dir_name"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("dir_name"), singleRow.keySet());
         System.out.println("singleRow=" + singleRow);
 
         // Checks that the current process is present.
-        Set<String> setDirNames = listRows.NodeValuesSet("dir_name");
+        Set<String> setDirNames = listRows.nodeValuesSet("dir_name");
         System.out.println("setDirNames=" + setDirNames);
 
         Assert.assertTrue(setDirNames.contains(currJavaDir));
@@ -822,15 +822,15 @@ public class RepositoryWrapperCIMV2Test {
                         ?_3_dir ^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?_2_file .
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("dir_name"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("dir_name"), singleRow.keySet());
         System.out.println("singleRow=" + singleRow);
 
         // Checks that the current process is present.
-        Set<String> setDirNames = listRows.NodeValuesSet("dir_name");
+        Set<String> setDirNames = listRows.nodeValuesSet("dir_name");
         System.out.println("setDirNames=" + setDirNames);
 
         Assert.assertTrue(setDirNames.contains(currJavaDir));
@@ -853,15 +853,15 @@ public class RepositoryWrapperCIMV2Test {
                         ?_3_dir ^cimv2:Win32_Directory.FileName/^cimv2:CIM_DirectoryContainsFile.GroupComponent/cimv2:CIM_DirectoryContainsFile.PartComponent ?_2_file .
                    }
                 """, currentPidStr);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("dir_name"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("dir_name"), singleRow.keySet());
         System.out.println("singleRow=" + singleRow);
 
         // Checks that the current process is present.
-        Set<String> setDirNames = listRows.NodeValuesSet("dir_name");
+        Set<String> setDirNames = listRows.nodeValuesSet("dir_name");
         System.out.println("setDirNames=" + setDirNames);
 
         Assert.assertTrue(setDirNames.contains(currJavaDir));
@@ -882,13 +882,13 @@ public class RepositoryWrapperCIMV2Test {
                         ?user cimv2:Domain ?domain .
                    }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("name", "domain"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("name", "domain"), singleRow.keySet());
 
-        Set<String> setNames = listRows.StringValuesSet("name");
+        Set<String> setNames = listRows.stringValuesSet("name");
         String currentUser = System.getProperty("user.name");
         System.out.println("setNames=" + setNames);
         // These groups are defined on all Windows machines.
@@ -916,14 +916,14 @@ public class RepositoryWrapperCIMV2Test {
                         ?_3_group cimv2:Win32_Group.Name ?group_name .
                    }
                 """, currentUser);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         // The current user is at least in one group.
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("group_name"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("group_name"), singleRow.keySet());
 
-        Set<String> setGroups = listRows.StringValuesSet("group_name");
+        Set<String> setGroups = listRows.stringValuesSet("group_name");
         // A user is always in this group.
         System.out.println("setGroups=" + setGroups);
         // Windows 7.
@@ -952,13 +952,13 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("device_id"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("device_id"), singleRow.keySet());
 
-        Set<String> setDevices = listRows.StringValuesSet("device_id");
+        Set<String> setDevices = listRows.stringValuesSet("device_id");
         System.out.println("setDevices=" + setDevices);
         Assert.assertEquals(1, setDevices.size());
         // For example: "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\"
@@ -986,13 +986,13 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("my_dir_name"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("my_dir_name"), singleRow.keySet());
 
-        Set<String> setDirs = listRows.StringValuesSet("my_dir_name");
+        Set<String> setDirs = listRows.stringValuesSet("my_dir_name");
         System.out.println("setDirs=" + setDirs);
         Assert.assertEquals(1, setDirs.size());
         // Conversion to uppercase due to different behaviour depending on the Windows version, 7 or 10.
@@ -1019,11 +1019,11 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?my0_dir
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("count_files"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("count_files"), singleRow.keySet());
 
         // Check that no file is missing.
         File f = new File("C:\\Windows");
@@ -1035,11 +1035,11 @@ public class RepositoryWrapperCIMV2Test {
         int countFilesExpected = filesSetExpected.size();
 
         // Something like '"36"^^<http://www.w3.org/2001/XMLSchema#integer>'
-        String countStr = PresentUtils.IntToXml(countFilesExpected);
+        String countStr = PresentUtils.intToXml(countFilesExpected);
         System.out.println("countFilesExpected=" + Integer.toString(countFilesExpected));
 
-        String countActual = singleRow.GetAsLiteral("count_files");
-        System.out.println("count_files=" + singleRow.GetAsLiteral("count_files"));
+        String countActual = singleRow.getAsLiteral("count_files");
+        System.out.println("count_files=" + singleRow.getAsLiteral("count_files"));
         Assert.assertEquals(countStr, countActual);
     }
 
@@ -1063,7 +1063,7 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?my0_dir
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         System.out.println("listRows=" + listRows);
         Assert.assertTrue(listRows.size() > 0);
@@ -1096,10 +1096,10 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("expectedFileMax=" + expectedFileMax);
         System.out.println("expectedFileSum=" + expectedFileSum);
 
-        Assert.assertEquals(Set.of("size_min", "size_max", "size_sum"), singleRow.KeySet());
-        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMin), singleRow.GetAsLiteral("size_min"));
-        Assert.assertEquals(PresentUtils.LongToXml(expectedFileMax), singleRow.GetAsLiteral("size_max"));
-        Assert.assertEquals(PresentUtils.LongToXml(expectedFileSum), singleRow.GetAsLiteral("size_sum"));
+        Assert.assertEquals(Set.of("size_min", "size_max", "size_sum"), singleRow.keySet());
+        Assert.assertEquals(PresentUtils.longToXml(expectedFileMin), singleRow.getAsLiteral("size_min"));
+        Assert.assertEquals(PresentUtils.longToXml(expectedFileMax), singleRow.getAsLiteral("size_max"));
+        Assert.assertEquals(PresentUtils.longToXml(expectedFileSum), singleRow.getAsLiteral("size_sum"));
     }
 
     /** Startup time of current process.
@@ -1118,16 +1118,16 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, currentPidStr);
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() == 1);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("creation_date"), singleRow.keySet());
 
-        String minCreationDate = singleRow.GetAsLiteral("creation_date");
+        String minCreationDate = singleRow.getAsLiteral("creation_date");
         System.out.println("minCreationDate=" + minCreationDate);
 
-        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minCreationDate);
+        XMLGregorianCalendar xmlDate = PresentUtils.toXMLGregorianCalendar(minCreationDate);
         ZonedDateTime zonedDateTimeActual = xmlDate.toGregorianCalendar().toZonedDateTime();
         LocalDateTime localDateTimeActual = zonedDateTimeActual.toLocalDateTime();
         Instant asInstantActual = zonedDateTimeActual.toInstant();
@@ -1156,16 +1156,16 @@ public class RepositoryWrapperCIMV2Test {
                     } #group by ?my_process
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("min_creation_date"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("min_creation_date"), singleRow.keySet());
 
-        String minStartActualString = singleRow.GetAsLiteral("min_creation_date");
+        String minStartActualString = singleRow.getAsLiteral("min_creation_date");
         System.out.println("minStartActualString=" + minStartActualString);
 
-        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(minStartActualString);
+        XMLGregorianCalendar xmlDate = PresentUtils.toXMLGregorianCalendar(minStartActualString);
         ZonedDateTime minStartActualZoned = xmlDate.toGregorianCalendar().toZonedDateTime();
         LocalDateTime minStartActualLocal = minStartActualZoned.toLocalDateTime();
         Instant minStartActualInstant = minStartActualZoned.toInstant();
@@ -1219,21 +1219,21 @@ public class RepositoryWrapperCIMV2Test {
                         ?my_file cimv2:CIM_DataFile.CreationDate ?creation_date .
                         ?my_file cimv2:Name "%s" .
                     }
-                """, PresentUtils.CurrentJavaBinary().replace("\\", "\\\\"));
+                """, PresentUtils.currentJavaBinary().replace("\\", "\\\\"));
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("creation_date"), singleRow.keySet());
 
-        String actualCreationDate = singleRow.GetAsLiteral("creation_date");
+        String actualCreationDate = singleRow.getAsLiteral("creation_date");
         System.out.println("actualCreationDate=" + actualCreationDate);
 
-        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(actualCreationDate);
+        XMLGregorianCalendar xmlDate = PresentUtils.toXMLGregorianCalendar(actualCreationDate);
         System.out.println("xmlDate=" + xmlDate);
 
-        FileTime expectedCreationTimeXml = (FileTime) Files.getAttribute( Path.of(PresentUtils.CurrentJavaBinary()), "creationTime");
+        FileTime expectedCreationTimeXml = (FileTime) Files.getAttribute( Path.of(PresentUtils.currentJavaBinary()), "creationTime");
         System.out.println("expectedCreationTimeXml=" + expectedCreationTimeXml);
 
         // Expected :2022-02-11T00:44:44.7305199Z
@@ -1258,16 +1258,16 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("creation_date"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("creation_date"), singleRow.keySet());
 
-        String actualCreationDate = singleRow.GetAsLiteral("creation_date");
+        String actualCreationDate = singleRow.getAsLiteral("creation_date");
         System.out.println("actualCreationDate=" + actualCreationDate);
 
-        XMLGregorianCalendar xmlDate = PresentUtils.ToXMLGregorianCalendar(actualCreationDate);
+        XMLGregorianCalendar xmlDate = PresentUtils.toXMLGregorianCalendar(actualCreationDate);
         System.out.println("xmlDate=" + xmlDate);
 
         FileTime expectedCreationTimeXml = (FileTime) Files.getAttribute( Path.of("C:\\Windows"), "creationTime");
@@ -1302,14 +1302,14 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?my2_assoc
                 """, currentPidStr);
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertTrue(listRows.size() > 0);
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("max_inusecount"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("max_inusecount"), singleRow.keySet());
 
         // FIXME: This value is always null. Why ?
-        String maxInUseCount = singleRow.GetAsLiteral("max_inusecount");
+        String maxInUseCount = singleRow.getAsLiteral("max_inusecount");
         System.out.println("maxInUseCount=" + maxInUseCount);
 
         Assert.assertTrue(false);
@@ -1333,7 +1333,7 @@ public class RepositoryWrapperCIMV2Test {
                 }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         for(RdfSolution.Tuple tuple: listRows) {
             System.out.println("tuple=" + tuple);
         }
@@ -1357,14 +1357,14 @@ public class RepositoryWrapperCIMV2Test {
                     } group by ?process_handle
                 """, currentPidStr, currentPidStr);
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals(Set.of("count_threads"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("count_threads"), singleRow.keySet());
 
         // For example: count_threads = ""41"^^<http://www.w3.org/2001/XMLSchema#integer>"
-        Long countThreads = PresentUtils.XmlToLong(singleRow.GetAsLiteral("count_threads"));
+        Long countThreads = PresentUtils.xmlToLong(singleRow.getAsLiteral("count_threads"));
         System.out.println("countThreads=" + countThreads);
 
         // At least one thread in this process.
@@ -1390,14 +1390,14 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, currentPidStr);
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
         // Typical value: "14.870860927152317880794702"^^<http://www.w3.org/2001/XMLSchema#decimal>
-        Assert.assertEquals(Set.of("average_count_threads"), singleRow.KeySet());
+        Assert.assertEquals(Set.of("average_count_threads"), singleRow.keySet());
 
-        double average_count_threads = PresentUtils.XmlToDouble(singleRow.GetAsLiteral("average_count_threads"));
+        double average_count_threads = PresentUtils.xmlToDouble(singleRow.getAsLiteral("average_count_threads"));
         System.out.println("average_count_threads=" + average_count_threads);
 
         // At least one thread per process on the average.
@@ -1429,8 +1429,8 @@ public class RepositoryWrapperCIMV2Test {
                         ?zzzzz_2_service2 cimv2:Win32_Service.DisplayName ?service_name .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setNames = listRows.StringValuesSet("service_name");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setNames = listRows.stringValuesSet("service_name");
         System.out.println("setNames=" + setNames);
 
         // These might depend on Windows version.
@@ -1478,8 +1478,8 @@ public class RepositoryWrapperCIMV2Test {
                         ?file cimv2:CIM_DataFile.Name ?file_name .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setNames = listRows.StringValuesSet("file_name");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setNames = listRows.stringValuesSet("file_name");
         System.out.println("setNames=" + setNames);
 
         // These files are always present.
@@ -1527,10 +1527,10 @@ public class RepositoryWrapperCIMV2Test {
                         ?process_sub cimv2:Win32_Process.ParentProcessId/^cimv2:Win32_Process.ProcessId ?process_top .
                         ?process_sub cimv2:Win32_Process.Handle ?process_sub_pid
                     }
-                """, PresentUtils.ParentProcessId());
+                """, PresentUtils.parentProcessId());
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setPids = listRows.StringValuesSet("process_sub_pid");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setPids = listRows.stringValuesSet("process_sub_pid");
         System.out.println("setPids=" + setPids);
 
         Assert.assertTrue(setPids.contains(currentPidStr));
@@ -1561,11 +1561,11 @@ public class RepositoryWrapperCIMV2Test {
                     }
                 """, currentPidStr);
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setCommands = listRows.StringValuesSet("parent_process_command");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setCommands = listRows.stringValuesSet("parent_process_command");
         System.out.println("setCommands=" + setCommands);
 
-        String commandParentProcess = PresentUtils.ParentProcessName();
+        String commandParentProcess = PresentUtils.parentProcessName();
         System.out.println("Expected command=" + commandParentProcess);
 
         Assert.assertEquals(Set.of(commandParentProcess), setCommands);
@@ -1622,9 +1622,9 @@ public class RepositoryWrapperCIMV2Test {
                     
         """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-        Set<Long> setPids = listRows.LongValuesSet("handle");
+        Set<Long> setPids = listRows.longValuesSet("handle");
         System.out.println("setPids=" + setPids);
         // Pids 0 is always present, divisible by 2 ad 3.
         Assert.assertTrue(setPids.contains(0L));
@@ -1657,7 +1657,7 @@ public class RepositoryWrapperCIMV2Test {
                 }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         for(RdfSolution.Tuple tuple : listRows) {
             System.out.println(tuple);
         }
@@ -1667,8 +1667,8 @@ public class RepositoryWrapperCIMV2Test {
                         .collect(
                                 Collectors
                                         .toMap(
-                                                tp -> PresentUtils.trimQuotes(tp.GetAsLiteral("dir_name")),
-                                                tp -> PresentUtils.XmlToBoolean(tp.GetAsLiteral(booleanAttribute))));
+                                                tp -> PresentUtils.trimQuotes(tp.getAsLiteral("dir_name")),
+                                                tp -> PresentUtils.xmlToBoolean(tp.getAsLiteral(booleanAttribute))));
 
         Map<String, Boolean> mapNameToSystem = ToMapToBool.apply("dir_system");
         System.out.println("mapNameToSystem=" + mapNameToSystem);
@@ -1715,12 +1715,12 @@ public class RepositoryWrapperCIMV2Test {
                 }
                 """;
 
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         for(RdfSolution.Tuple tuple : listRows) {
             System.out.println(tuple);
         }
 
-        Set<String> setDirs = listRows.StringValuesSet("dir_name");
+        Set<String> setDirs = listRows.stringValuesSet("dir_name");
         System.out.println("setDirs=" + setDirs);
 
         Assert.assertFalse(setDirs.contains("SystemTemp"));
@@ -1771,9 +1771,9 @@ public class RepositoryWrapperCIMV2Test {
                 }
                 """;
 
-            RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+            RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-            Set<String> actualDirNames = listRows.StringValuesSet("dir_name").stream().map(s -> s.toUpperCase()).collect(Collectors.toSet());
+            Set<String> actualDirNames = listRows.stringValuesSet("dir_name").stream().map(s -> s.toUpperCase()).collect(Collectors.toSet());
             ArrayList<String> actualDirNamesArray = new ArrayList<>(actualDirNames);
             Collections.sort(actualDirNamesArray);
             System.out.println("actualDirNamesArray=" + actualDirNamesArray);
@@ -1804,9 +1804,9 @@ public class RepositoryWrapperCIMV2Test {
                             ?process cimv2:Win32_Process.Handle ?handle .
                         }
                     """, currentPidStr);
-            RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+            RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-            Set<String> setHandles = listRows.StringValuesSet("handle");
+            Set<String> setHandles = listRows.stringValuesSet("handle");
             System.out.println("setHandles=" + setHandles);
             Assert.assertEquals(Set.of(currentPidStr), setHandles);
         }
@@ -1814,7 +1814,7 @@ public class RepositoryWrapperCIMV2Test {
         /** This selects the current process with an integer constant in ParentProcessId. */
         @Test
         public void testSelect_Win32_Process_Constant_ParentProcessId() throws Exception {
-            String parentPid = PresentUtils.ParentProcessId();
+            String parentPid = PresentUtils.parentProcessId();
             String sparqlQuery = String.format("""
                             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -1824,9 +1824,9 @@ public class RepositoryWrapperCIMV2Test {
                                 ?process cimv2:Win32_Process.Handle ?handle .
                             }
                         """, parentPid);
-            RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+            RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
 
-            Set<String> setHandles = listRows.StringValuesSet("handle");
+            Set<String> setHandles = listRows.stringValuesSet("handle");
             System.out.println("setHandles=" + setHandles);
             Assert.assertTrue(setHandles.contains(currentPidStr));
         }

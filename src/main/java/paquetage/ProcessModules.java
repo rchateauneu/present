@@ -1,8 +1,6 @@
 package paquetage;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.Period;
 import java.util.*;
 
 import com.sun.jna.Native;
@@ -72,7 +70,7 @@ public class ProcessModules {
      * The first module of each array is the executable.
      * @return
      */
-    private Map<String, ArrayList<String>> GetAllProcessesModulesCached() {
+    private Map<String, ArrayList<String>> getAllProcessesModulesCached() {
         logger.debug("Getting processes and modules");
         HashMap<String, ArrayList<String>> result = new HashMap<>();
 
@@ -82,7 +80,7 @@ public class ProcessModules {
         try {
 
             while (kernel32.Process32Next(processSnapshot, processEntry)) {
-                ArrayList<String> modulesList = GetFromPidDWord(processEntry.th32ProcessID);
+                ArrayList<String> modulesList = getFromPidDWord(processEntry.th32ProcessID);
                 result.put(processEntry.th32ProcessID.toString(), modulesList);
             }
         }
@@ -93,24 +91,24 @@ public class ProcessModules {
         return result;
     }
 
-    private Map<String, ArrayList<String>> CacheAllProcessesModules = null;
-    private LocalTime CacheUpdateTime = null;
+    private Map<String, ArrayList<String>> cacheAllProcessesModules = null;
+    private LocalTime cacheUpdateTime = null;
 
-    public Map<String, ArrayList<String>> GetAllProcessesModules() {
+    public Map<String, ArrayList<String>> getAllProcessesModules() {
         LocalTime nowTime = LocalTime.now();
-        if(CacheAllProcessesModules != null) {
-            Duration duration = Duration.between(CacheUpdateTime, nowTime);
+        if(cacheAllProcessesModules != null) {
+            Duration duration = Duration.between(cacheUpdateTime, nowTime);
             // The validity of the cache is one second, which is reasonable given the time
             // taken by a process to start, and the fact that this query cannot be fully up-to-date.
             // TODO: A better solution would be to detect creation and destruction of processes,
             // TODO and loading of modules, then accordingly update the cache.
             if (duration.getSeconds() < 1) {
-                return CacheAllProcessesModules;
+                return cacheAllProcessesModules;
             }
         }
-        CacheAllProcessesModules = GetAllProcessesModulesCached();
-        CacheUpdateTime = nowTime;
-        return CacheAllProcessesModules;
+        cacheAllProcessesModules = getAllProcessesModulesCached();
+        cacheUpdateTime = nowTime;
+        return cacheAllProcessesModules;
     }
 
 
@@ -164,10 +162,10 @@ public class ProcessModules {
      * @param moduleName
      * @return
      */
-    public List<String> GetFromModule(String moduleName) {
+    public List<String> getFromModule(String moduleName) {
         ArrayList<String> pidsList = new ArrayList<>();
 
-        Map<String, ArrayList<String>> allProcess = GetAllProcessesModules();
+        Map<String, ArrayList<String>> allProcess = getAllProcessesModules();
         for(Map.Entry<String, ArrayList<String>> processEntry : allProcess.entrySet()) {
             // Needed for Windows 7.
             ArrayList<String> listModules = processEntry.getValue();
@@ -186,7 +184,7 @@ public class ProcessModules {
      * @param intProc The pid as DWORD.
      * @return An array of module, the first one being the executable and is always present.
      */
-    public ArrayList<String> GetFromPidDWord(WinDef.DWORD intProc)
+    public ArrayList<String> getFromPidDWord(WinDef.DWORD intProc)
     {
         ArrayList<String> modulesList = new ArrayList<>();
 
@@ -206,9 +204,9 @@ public class ProcessModules {
         return modulesList;
     }
 
-    public List<String> GetFromPid(String strPid) {
+    public List<String> getFromPid(String strPid) {
         WinDef.DWORD intProc = new WinDef.DWORD(Long.parseLong(strPid));
-        return GetFromPidDWord(intProc);
+        return getFromPidDWord(intProc);
     }
 
 }

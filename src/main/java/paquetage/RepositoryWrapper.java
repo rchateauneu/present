@@ -7,7 +7,6 @@ import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -22,21 +21,21 @@ public class RepositoryWrapper {
     // Load the ontology of one namespace only.
     RepositoryWrapper(String namespace)
     {
-        localRepositoryConnection = WmiOntology.CloneToMemoryConnection(namespace);
+        localRepositoryConnection = WmiOntology.cloneToMemoryConnection(namespace);
     }
 
     // Load all namespaces.
     RepositoryWrapper()
     {
         try {
-            localRepositoryConnection = WmiOntology.CloneToMemoryConnection();
+            localRepositoryConnection = WmiOntology.cloneToMemoryConnection();
         }
         catch(Exception exc) {
             throw new RuntimeException(exc);
         }
     }
 
-    private RdfSolution ExecuteQueryWithStatements(String sparqlQuery, Set<String> expectedBindings) throws Exception {
+    private RdfSolution executeQueryWithStatements(String sparqlQuery, Set<String> expectedBindings) throws Exception {
         // Now, execute the sparql query in the repository which contains the ontology
         // and the result of the WQL executions.
         RdfSolution listRows = new RdfSolution();
@@ -52,8 +51,8 @@ public class RepositoryWrapper {
                     if(!expectedBindings.equals(bindingNames)) {
                         throw new RuntimeException("Different bindings:" + expectedBindings + " vs " + bindingNames);
                     }
-                    if(!expectedBindings.equals(newTuple.KeySet())) {
-                        throw new RuntimeException("Bindings different of row keys:" + expectedBindings + " vs " + newTuple.KeySet());
+                    if(!expectedBindings.equals(newTuple.keySet())) {
+                        throw new RuntimeException("Bindings different of row keys:" + expectedBindings + " vs " + newTuple.keySet());
                     }
                     checkedBindingsExecution = true;
                 }
@@ -75,7 +74,7 @@ public class RepositoryWrapper {
      * @param sparqlQuery
      * @throws Exception
      */
-    public RdfSolution ExecuteQuery(String sparqlQuery) throws Exception
+    public RdfSolution executeQuery(String sparqlQuery) throws Exception
     {
         SparqlBGPTreeExtractor treeExtractor = new SparqlBGPTreeExtractor(sparqlQuery);
         logger.debug("sparqlQuery=" + sparqlQuery);
@@ -88,7 +87,7 @@ public class RepositoryWrapper {
 
         localRepositoryConnection.add(statements);
 
-        RdfSolution listRows = ExecuteQueryWithStatements(sparqlQuery, treeExtractor.bindings);
+        RdfSolution listRows = executeQueryWithStatements(sparqlQuery, treeExtractor.bindings);
         return listRows;
     }
 

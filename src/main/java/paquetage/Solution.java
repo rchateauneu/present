@@ -29,15 +29,15 @@ To ease the transition:
 public class Solution implements Iterable<Solution.Row> {
     final static private Logger logger = Logger.getLogger(Solution.class);
 
-    private static ValueFactory factory = SimpleValueFactory.getInstance();
+    private static ValueFactory solutionFactory = SimpleValueFactory.getInstance();
 
-    IRI DereferencePredicate(Var predicate, Row row) {
+    IRI dereferencePredicate(Var predicate, Row row) {
         if(predicate.isConstant()) {
             return Values.iri(predicate.getValue().stringValue());
         }
         String variablePredicate = predicate.getName();
         logger.debug("variablePredicate=" + variablePredicate);
-        String predicateShortValue = row.GetStringValue(variablePredicate);
+        String predicateShortValue = row.getStringValue(variablePredicate);
         logger.debug("predicateShortValue=" + predicateShortValue);
         // "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#" + predicateShortValue;
         String predicateValue = WmiOntology.NamespaceTermToIRI("ROOT\\CIMV2", predicateShortValue);
@@ -59,17 +59,17 @@ public class Solution implements Iterable<Solution.Row> {
      * @param myPattern
      * @throws Exception
      */
-    void PatternToStatements(List<Statement> generatedTriples, StatementPattern myPattern) throws Exception {
+    void patternToStatements(List<Statement> generatedTriples, StatementPattern myPattern) throws Exception {
         Var subject = myPattern.getSubjectVar();
         String subjectName = subject.getName();
         Var predicate = myPattern.getPredicateVar();
         Var object = myPattern.getObjectVar();
         String objectName = object.getName();
         Value objectValue = object.getValue();
-        if(Rows.isEmpty()) {
+        if(rowsList.isEmpty()) {
             logger.debug("No rows");
         } else {
-            logger.debug("Rows.get(0).KeySet()=" + Rows.get(0).KeySet());
+            logger.debug("Rows.get(0).KeySet()=" + rowsList.get(0).keySet());
         }
         if (subject.isConstant()) {
             String subjectString = subject.getValue().stringValue();
@@ -88,25 +88,25 @@ public class Solution implements Iterable<Solution.Row> {
                 }
                 IRI predicateIri = Values.iri(predicate.getValue().stringValue());
 
-                generatedTriples.add(factory.createStatement(
+                generatedTriples.add(solutionFactory.createStatement(
                         resourceSubject,
                         predicateIri,
                         resourceObject));
             } else {
                 // Only the object changes for each row.
-                for(Row row : Rows) {
-                    ValueTypePair objectWmiValueType = row.TryValueType(objectName);
+                for(Row row : rowsList) {
+                    ValueTypePair objectWmiValueType = row.tryValueType(objectName);
                     if(objectWmiValueType == null) {
                         // TODO: If this triple contains a variable calculated by WMI, maybe replicate it ?
                         logger.debug("Variable " + objectName + " not defined. Continuing to next pattern.");
                         continue;
                     }
-                    IRI predicateIri = DereferencePredicate(predicate, row);
+                    IRI predicateIri = dereferencePredicate(predicate, row);
                     String objectString = objectWmiValueType.Value();
                     Value resourceObject = objectWmiValueType.Type() == ValueTypePair.ValueType.NODE_TYPE
                             ? Values.iri(objectString)
-                            : objectWmiValueType.ValueTypeToLiteral();
-                    generatedTriples.add(factory.createStatement(
+                            : objectWmiValueType.convertValueTypeToLiteral();
+                    generatedTriples.add(solutionFactory.createStatement(
                             resourceSubject,
                             predicateIri,
                             resourceObject));
@@ -124,11 +124,11 @@ public class Solution implements Iterable<Solution.Row> {
                         ? Values.iri(objectString)
                         : objectValue; // Keep the original type of the constant.
 
-                for(Row row : Rows) {
-                    Resource resourceSubject = row.AsIRI(subjectName);
-                    IRI predicateIri = DereferencePredicate(predicate, row);
+                for(Row row : rowsList) {
+                    Resource resourceSubject = row.asIRI(subjectName);
+                    IRI predicateIri = dereferencePredicate(predicate, row);
 
-                    generatedTriples.add(factory.createStatement(
+                    generatedTriples.add(solutionFactory.createStatement(
                             resourceSubject,
                             predicateIri,
                             resourceObject));
@@ -145,7 +145,7 @@ public class Solution implements Iterable<Solution.Row> {
                     logger.debug("RDFS.LABEL.stringValue()=" + RDFS.LABEL.stringValue() + ".");
                     boolean isRdfsLabel = predicateValueString.equals(RDFS.LABEL.stringValue());
                     logger.debug("isRdfsLabel=" + isRdfsLabel);
-                    for (Row row : Rows) {
+                    for (Row row : rowsList) {
                         logger.debug("row=" + row);
                         /* The subject might not be a node if the query comes from Wikidata GUI.
                         In this case, a label must be generated anyway, but WMI cannot help for this.
@@ -155,7 +155,7 @@ public class Solution implements Iterable<Solution.Row> {
                         Resource resourceSubject;
                         Value resourceObject;
                         if (isRdfsLabel) {
-                            ValueTypePair subjectWmiValue = row.GetValueType(subjectName);
+                            ValueTypePair subjectWmiValue = row.getValueType(subjectName);
                             if (subjectWmiValue == null) {
                                 throw new RuntimeException("Null value for subjectName=" + subjectName);
                             }
@@ -164,15 +164,15 @@ public class Solution implements Iterable<Solution.Row> {
                             logger.debug("predicate=" + predicate);
 
                             if (subjectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
-                                resourceSubject = row.AsIRI(subjectName);
+                                resourceSubject = row.asIRI(subjectName);
                                 logger.debug("resourceSubject=" + resourceSubject);
-                                String valueObject = row.GetStringValue(objectName);
+                                String valueObject = row.getStringValue(objectName);
                                 logger.debug("valueObject=" + valueObject);
 
                                 resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
                                 logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
                             } else {
-                                Value literalSubject = subjectWmiValue.ValueTypeToLiteral();
+                                Value literalSubject = subjectWmiValue.convertValueTypeToLiteral();
                                 /*
                                 Ca ne peut pas marcher ici:
                                 processUri="http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%222404%22"
@@ -192,31 +192,24 @@ public class Solution implements Iterable<Solution.Row> {
                                 resourceObject = null;
                                 logger.error("Subject is not an IRI:" + subjectName + "=" + literalSubject.stringValue()
                                 + " objectName=" + objectName);
-
-                                // row = {
-                                // date_value=DEBUG_ONLY:20240203183606.916356+000,
-                                // PseudoVariableForConstantSubject_0=DEBUG_ONLY:\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="16428"
-                                //
-                                // date_value n'est pas un IRI et ne pourra pas etre selectionne.
-                                // }
                             }
                         } else {
-                            resourceSubject = row.AsIRI(subjectName);
-                            ValueTypePair objectWmiValue = row.GetValueType(objectName);
+                            resourceSubject = row.asIRI(subjectName);
+                            ValueTypePair objectWmiValue = row.getValueType(objectName);
                             if (objectWmiValue == null) {
                                 throw new RuntimeException("Null value for objectName=" + objectName);
                             }
 
                             if (objectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
-                                resourceObject = row.AsIRI(objectName);
+                                resourceObject = row.asIRI(objectName);
                             } else {
-                                resourceObject = objectWmiValue.ValueTypeToLiteral();
+                                resourceObject = objectWmiValue.convertValueTypeToLiteral();
                             }
                         }
 
                         if(resourceSubject != null) {
-                            IRI predicateIri = DereferencePredicate(predicate, row);
-                            generatedTriples.add(factory.createStatement(
+                            IRI predicateIri = dereferencePredicate(predicate, row);
+                            generatedTriples.add(solutionFactory.createStatement(
                                     resourceSubject,
                                     predicateIri,
                                     resourceObject));
@@ -232,11 +225,11 @@ public class Solution implements Iterable<Solution.Row> {
 
     /** TODO: This should be faster. */
     /** TODO: Maybe not necessary, because ultimately, Solutions will just be created in "Join" nodes. */
-    void Append(Solution solution) {
-        if(solution.Rows.isEmpty()) {
+    void appendSolution(Solution solution) {
+        if(solution.rowsList.isEmpty()) {
             return;
         }
-        if(Rows.isEmpty()) {
+        if(rowsList.isEmpty()) {
 
             assert ! solution.header().contains(null);
 
@@ -247,21 +240,21 @@ public class Solution implements Iterable<Solution.Row> {
             return;
         }
 
-        Set<String> oldBindings = Rows.isEmpty() ? null : Rows.get(0).KeySet();
-        Set<String> newBindings = solution.Rows.get(0).KeySet();
+        Set<String> oldBindings = rowsList.isEmpty() ? null : rowsList.get(0).keySet();
+        Set<String> newBindings = solution.rowsList.get(0).keySet();
 
         Set<String> newColumns = new HashSet<String>(newBindings);
         newColumns.removeAll(oldBindings);
         Set<String> oldColumns = new HashSet<String>(oldBindings);
         oldColumns.removeAll(newBindings);
 
-        for(Solution.Row oldRow : Rows) {
-            oldRow.ExtendColumnsWithNull(newColumns);
+        for(Solution.Row oldRow : rowsList) {
+            oldRow.extendColumnsWithNull(newColumns);
         }
         for(Row row: solution) {
             // TODO: Find a faster way to compare bindings.
-            Row newRow = row.ShallowCopy();
-            newRow.ExtendColumnsWithNull(oldColumns);
+            Row newRow = row.shallowCopy();
+            newRow.extendColumnsWithNull(oldColumns);
             add(newRow);
         }
     }
@@ -275,7 +268,7 @@ public class Solution implements Iterable<Solution.Row> {
      * TODO: When returning List<Row>, store the variable names once only, in a header. All rows have the same binding.
      */
     public static class Row {
-        private Map<String, ValueTypePair> Elements;
+        private Map<String, ValueTypePair> rowElements;
 
         /**
          * IRIS must look like this:
@@ -293,8 +286,8 @@ public class Solution implements Iterable<Solution.Row> {
          * @return
          * @throws Exception
          */
-        Resource AsIRI(String varName) throws Exception {
-            ValueTypePair pairValueType = GetValueType(varName);
+        Resource asIRI(String varName) throws Exception {
+            ValueTypePair pairValueType = getValueType(varName);
             if(pairValueType.Type() != ValueTypePair.ValueType.NODE_TYPE) {
                 throw new Exception("This should be a NODE:" + varName + "=" + pairValueType.toDisplayString());
             }
@@ -310,20 +303,20 @@ public class Solution implements Iterable<Solution.Row> {
             // FIXME: But, are we sure it will always be the same namespace ?
             // FIXME: Or, when the value is a node, carry the namespace with it ?
             // FIXME: For the moment, the namespace must be extracted from the node.
-            String namespaceExtracted = WmiProvider.ExtractNamespaceFromRef(valueString);
+            String namespaceExtracted = WmiProvider.extractNamespaceFromRef(valueString);
             // \\LAPTOP-R89KG6V1\ROOT\StandardCimv2:MSFT_NetIPAddress.CreationClassName="",Name="poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;",SystemCreationClassName="",SystemName=""
 
             Resource resourceValue;
             if(namespaceExtracted == null) {
                 throw new Exception("Cannot extract namespace from:" + valueString);
             } else {
-                resourceValue = WmiOntology.WbemPathToIri(namespaceExtracted, valueString);
+                resourceValue = WmiOntology.wbemPathToIri(namespaceExtracted, valueString);
             }
 
             return resourceValue;
         }
-        public ValueTypePair TryValueType(String key) {
-            ValueTypePair vtp = Elements.get(key);
+        public ValueTypePair tryValueType(String key) {
+            ValueTypePair vtp = rowElements.get(key);
             // This is just a hint to check that wbem paths are correctly typed.
             if(vtp != null && !vtp.IsValid())
             {
@@ -332,55 +325,42 @@ public class Solution implements Iterable<Solution.Row> {
             return vtp;
         }
 
-        public ValueTypePair GetValueType(String key) {
+        public ValueTypePair getValueType(String key) {
             if(key == null) {
                 throw new RuntimeException("Input key is null");
             }
-            ValueTypePair value = TryValueType(key);
+            ValueTypePair value = tryValueType(key);
             if(value == null) {
-                throw new RuntimeException("Unknown variable " + key + ". Vars=" + KeySet());
+                throw new RuntimeException("Unknown variable " + key + ". Vars=" + keySet());
             }
             return value;
         }
 
-        public String GetStringValue(String key) {
-            return GetValueType(key).Value();
+        public String getStringValue(String key) {
+            return getValueType(key).Value();
         }
 
-        public double GetDoubleValue(String key) {
-            return Double.parseDouble(GetValueType(key).Value());
+        public long getLongValue(String key) {
+            return Long.parseLong(getValueType(key).Value());
         }
 
-        public long GetLongValue(String key) {
-            return Long.parseLong(GetValueType(key).Value());
-        }
-
-        public void PutString(String key, String str) {
+        public void putString(String key, String str) {
             if(str == null) {
                 logger.warn("PutString: Key=" + key + " null value");
             } else if(PresentUtils.hasWmiReferenceSyntax(str)) {
                 // This is a hint which might not always work, but helps finding problems.
                 throw new RuntimeException("PutString: Key=" + key + " looks like a node:" + str);
             }
-            Elements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.STRING_TYPE));
+            rowElements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.STRING_TYPE));
         }
-        public void PutNode(String key, String str) {
+        public void putNode(String key, String str) {
             if(key == null) {
                 throw new RuntimeException("Null key for str=" + str);
             }
-            Elements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.NODE_TYPE));
-        }
-        public void PutLong(String key, String str) {
-            Elements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.INT_TYPE));
-        }
-        public void PutDate(String key, String str) {
-            Elements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.DATE_TYPE));
-        }
-        public void PutFloat(String key, String str) {
-            Elements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.FLOAT_TYPE));
+            rowElements.put(key, new ValueTypePair(str, ValueTypePair.ValueType.NODE_TYPE));
         }
 
-        public void PutValueType(String key, ValueTypePair pairValueType) {
+        public void putValueType(String key, ValueTypePair pairValueType) {
             // This is just a hint to detect that Wbem paths are correctly typed.
             // It also checks for "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\" which is not a path.
             if(pairValueType != null) {
@@ -388,23 +368,23 @@ public class Solution implements Iterable<Solution.Row> {
                     throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType.toDisplayString());
                 }
             }
-            Elements.put(key, pairValueType);
+            rowElements.put(key, pairValueType);
         }
 
-        public long ElementsSize() {
-            return Elements.size();
+        public long elementsSize() {
+            return rowElements.size();
         }
 
-        public Set<String> KeySet() {
-            return Elements.keySet();
+        public Set<String> keySet() {
+            return rowElements.keySet();
         }
 
-        public boolean ContainsKey(String key) {
-            return Elements.containsKey(key);
+        public boolean containsKey(String key) {
+            return rowElements.containsKey(key);
         }
 
         public Row() {
-            Elements = new HashMap<>();
+            rowElements = new HashMap<>();
         }
 
         /**
@@ -412,11 +392,11 @@ public class Solution implements Iterable<Solution.Row> {
          * @param elements
          */
         public Row(Map<String, ValueTypePair> elements) {
-            Elements = elements;
+            rowElements = elements;
         }
 
         public String toString() {
-            return Elements.toString();
+            return rowElements.toString();
         }
 
         /** It needs a special function to serialize the value. */
@@ -427,26 +407,26 @@ public class Solution implements Iterable<Solution.Row> {
                 return entry.getKey() + "=" + (entryValue == null ? "null" : entryValue.toDisplayString());
             };
 
-            String result = "{" + Elements.entrySet()
+            String result = "{" + rowElements.entrySet()
                     .stream()
                     .map(entry -> converter.apply(entry))
                     .collect(Collectors.joining(", ")) + "}";
             return result;
         }
 
-        void ExtendColumnsWithNull(Set<String> newBindings) {
+        void extendColumnsWithNull(Set<String> newBindings) {
             for(String newColumn: newBindings) {
-                if(Elements.containsKey(newColumn)) {
+                if(rowElements.containsKey(newColumn)) {
                     throw new RuntimeException(("Row should not contain column:" + newColumn));
                 }
-                Elements.put(newColumn, null);
+                rowElements.put(newColumn, null);
             }
         }
 
         /** The elements are not copied, only the map is. */
-        Row ShallowCopy() {
+        Row shallowCopy() {
             Row newRow = new Row();
-            newRow.Elements = new HashMap<>(Elements);
+            newRow.rowElements = new HashMap<>(rowElements);
             return newRow;
         }
 
@@ -456,15 +436,15 @@ public class Solution implements Iterable<Solution.Row> {
          * @return
          */
         Row Merge(Row otherRow) {
-            Row newRow = ShallowCopy();
+            Row newRow = shallowCopy();
 
-            for(Map.Entry<String, ValueTypePair> entry : otherRow.Elements.entrySet()) {
+            for(Map.Entry<String, ValueTypePair> entry : otherRow.rowElements.entrySet()) {
                 String newKey = entry.getKey();
                 ValueTypePair newValue = entry.getValue();
-                ValueTypePair previousValue = newRow.Elements.get(newKey);
+                ValueTypePair previousValue = newRow.rowElements.get(newKey);
                 if(previousValue == null) {
                     // The existing row does not have this key.
-                    newRow.Elements.put(newKey, newValue);
+                    newRow.rowElements.put(newKey, newValue);
                 } else {
                     if( ValueTypePair.identical(previousValue, newValue) ) {
                         logger.debug("Identical values for key:" + newKey);
@@ -479,53 +459,53 @@ public class Solution implements Iterable<Solution.Row> {
         }
     }
 
-    List<Row> Rows;
+    List<Row> rowsList;
 
     /** TODO: This will change with the implementation of Solution. */
     Set<String> header() {
-        if(Rows.isEmpty()) {
+        if(rowsList.isEmpty()) {
             return new HashSet<>();
         } else {
-            return Rows.get(0).KeySet();
+            return rowsList.get(0).keySet();
         }
     }
 
     Solution( /*List<String> header */ ) {
-        Rows = new ArrayList<>();
+        rowsList = new ArrayList<>();
     }
 
     public Iterator<Row> iterator() {
-        return Rows.iterator();
+        return rowsList.iterator();
     }
 
     void add(Row row) {
-        Rows.add(row);
+        rowsList.add(row);
     }
 
     long size() {
-        return Rows.size();
+        return rowsList.size();
     }
 
     Stream<Row> stream() {
-        return Rows.stream();
+        return rowsList.stream();
     }
 
     Row get(int index) {
-        return Rows.get(index);
+        return rowsList.get(index);
     }
 
     public String toString() {
-        String result = "Elements:" + Rows.size() + "\n";
-        for(Row row : Rows) {
+        String result = "Elements:" + rowsList.size() + "\n";
+        for(Row row : rowsList) {
             result += "\t" + row.toString() + "\n";
         }
         return result;
     }
 
-    public Solution CartesianProduct(Solution otherSolution) {
+    public Solution cartesianProduct(Solution otherSolution) {
         Solution resultSolution = new Solution();
-        for(Row row : Rows) {
-            for(Row otherRow : otherSolution.Rows) {
+        for(Row row : rowsList) {
+            for(Row otherRow : otherSolution.rowsList) {
                 Row mergedRow = row.Merge(otherRow);
                 if(mergedRow != null) {
                     // It returns null if there is a common key with different values.

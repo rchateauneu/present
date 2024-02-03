@@ -8,20 +8,20 @@ import java.util.*;
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 public class SparqlBGPExtractorTest {
-    static void CompareVariable(ObjectPattern.PredicateObjectPair a, String predicate, String variableName) {
-        Assert.assertEquals(predicate, a.ShortPredicate);
+    static void compareVariable(ObjectPattern.PredicateObjectPair a, String predicate, String variableName) {
+        Assert.assertEquals(predicate, a.shortPredicate);
         Assert.assertEquals(variableName, a.variableName);
-        Assert.assertEquals(null, a.ObjectContent);
+        Assert.assertEquals(null, a.objectContent);
     }
 
-    static void CompareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, String content) {
-        Assert.assertEquals(predicate, a.ShortPredicate);
+    static void compareKeyValue(ObjectPattern.PredicateObjectPair a, String predicate, String content) {
+        Assert.assertEquals(predicate, a.shortPredicate);
         Assert.assertEquals(null, a.variableName);
-        Assert.assertEquals(ValueTypePair.FromString(content), a.ObjectContent);
+        Assert.assertEquals(ValueTypePair.FromString(content), a.objectContent);
     }
 
     @Test
-    public void ParsePlainQuery() throws Exception {
+    public void testParsePlainQuery() throws Exception {
         String sparqlQuery = """
             prefix function: <http://org.apache.rya/function#>
             prefix time: <http://www.w3.org/2006/time#>
@@ -43,7 +43,7 @@ public class SparqlBGPExtractorTest {
     /***
      * Checks patterns detection with a constant value (the object).
      */
-    public void Parse_Win32_Directory_NoVariable() throws Exception {
+    public void testParseWin32_Directory_NoVariable() throws Exception {
         String sparqlQuery = """
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -59,16 +59,16 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_directory");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", "C:");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals(1, patternWin32_Directory.membersList.size());
+        compareKeyValue(patternWin32_Directory.membersList.get(0), "Name", "C:");
     }
 
     @Test
     /***
      * Checks that a pattern with a variable value (the object) is detected.
      */
-    public void Parse_Win32_Directory_OneVariable() throws Exception {
+    public void testParseWin32_Directory_OneVariable() throws Exception {
         String sparqlQuery = """
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -84,27 +84,27 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_directory");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareVariable(patternWin32_Directory.Members.get(0), "Name", "my_name");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals(1, patternWin32_Directory.membersList.size());
+        compareVariable(patternWin32_Directory.membersList.get(0), "Name", "my_name");
     }
 
-    static void FindAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObjectPair> members, String predicate, boolean is_variable, String content) {
+    static void findAndCompareKeyValue(ArrayList<ObjectPattern.PredicateObjectPair> members, String predicate, boolean is_variable, String content) {
         ObjectPattern.PredicateObjectPair pairPredObj = members.stream()
-                .filter(x -> x.ShortPredicate.equals(predicate))
+                .filter(x -> x.shortPredicate.equals(predicate))
                 .findFirst().orElse(null);
         Assert.assertNotEquals(null, pairPredObj);
         if(is_variable)
-            CompareVariable(pairPredObj, predicate, content);
+            compareVariable(pairPredObj, predicate, content);
         else
-            CompareKeyValue(pairPredObj, predicate, content);
+            compareKeyValue(pairPredObj, predicate, content);
     }
 
     @Test
     /***
      * Checks the BGPs extracted from a query with three types.
      */
-    public void Parse_CIM_ProcessExecutable_Win32_Process_CIM_DataFile() throws Exception {
+    public void testParseCIM_ProcessExecutable_Win32_Process_CIM_DataFile() throws Exception {
         String sparqlQuery = """
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -125,20 +125,20 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(extractor.patternsAsArray().size(), 3);
 
         ObjectPattern patternCIM_ProcessExecutable = extractor.FindObjectPattern("my_assoc");
-        Assert.assertEquals("CIM_ProcessExecutable", patternCIM_ProcessExecutable.ClassName);
-        Assert.assertEquals(patternCIM_ProcessExecutable.Members.size(), 2);
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, "Dependent", true, "my_process");
-        FindAndCompareKeyValue(patternCIM_ProcessExecutable.Members, "Antecedent", true, "my_file");
+        Assert.assertEquals("CIM_ProcessExecutable", patternCIM_ProcessExecutable.className);
+        Assert.assertEquals(patternCIM_ProcessExecutable.membersList.size(), 2);
+        findAndCompareKeyValue(patternCIM_ProcessExecutable.membersList, "Dependent", true, "my_process");
+        findAndCompareKeyValue(patternCIM_ProcessExecutable.membersList, "Antecedent", true, "my_file");
 
         ObjectPattern patternWin32_Process = extractor.FindObjectPattern("my_process");
-        Assert.assertEquals("Win32_Process", patternWin32_Process.ClassName);
-        Assert.assertEquals(patternWin32_Process.Members.size(), 1);
-        FindAndCompareKeyValue(patternWin32_Process.Members, "Handle", true, "my_process_handle");
+        Assert.assertEquals("Win32_Process", patternWin32_Process.className);
+        Assert.assertEquals(patternWin32_Process.membersList.size(), 1);
+        findAndCompareKeyValue(patternWin32_Process.membersList, "Handle", true, "my_process_handle");
 
         ObjectPattern patternCIM_DataFile = extractor.FindObjectPattern("my_file");
-        Assert.assertEquals("CIM_DataFile", patternCIM_DataFile.ClassName);
-        Assert.assertEquals(patternCIM_DataFile.Members.size(), 1);
-        FindAndCompareKeyValue(patternCIM_DataFile.Members, "Name", false, "C:\\WINDOWS\\System32\\kernel32.dll");
+        Assert.assertEquals("CIM_DataFile", patternCIM_DataFile.className);
+        Assert.assertEquals(patternCIM_DataFile.membersList.size(), 1);
+        findAndCompareKeyValue(patternCIM_DataFile.membersList, "Name", false, "C:\\WINDOWS\\System32\\kernel32.dll");
     }
 
 
@@ -146,7 +146,7 @@ public class SparqlBGPExtractorTest {
      * Checks the BGPs extracted from an arbitrary query with a filter statement.
      */
     @Test
-    public void Parse_Filter() throws Exception {
+    public void testParseFilter() throws Exception {
         String sparqlQuery = """
                 PREFIX schema: <http://schema.org/>
                 SELECT ?subject_name
@@ -167,7 +167,7 @@ public class SparqlBGPExtractorTest {
     /***
      * Checks the BGPs extracted from an arbitrary query with a group statement.
      */
-    public void Parse_GroupSum() throws Exception {
+    public void testParseGroupSum() throws Exception {
         String sparqlQuery = """
                 prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -186,35 +186,35 @@ public class SparqlBGPExtractorTest {
 
         Assert.assertNotEquals(extractor.FindObjectPattern("my0_dir"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals("Win32_Directory", firstPattern.ClassName);
-        Assert.assertEquals("my0_dir", firstPattern.VariableName);
+        Assert.assertEquals("Win32_Directory", firstPattern.className);
+        Assert.assertEquals("my0_dir", firstPattern.variableName);
 
-        Assert.assertEquals(1, firstPattern.Members.size());
-        CompareKeyValue(firstPattern.Members.get(0), "Name", "C:\\Program Files (x86)");
+        Assert.assertEquals(1, firstPattern.membersList.size());
+        compareKeyValue(firstPattern.membersList.get(0), "Name", "C:\\Program Files (x86)");
 
         Assert.assertNotEquals(extractor.FindObjectPattern("my1_assoc"), null);
         ObjectPattern secondPattern = patterns.get(1);
-        Assert.assertEquals("CIM_DirectoryContainsFile", secondPattern.ClassName);
-        Assert.assertEquals("my1_assoc", secondPattern.VariableName);
+        Assert.assertEquals("CIM_DirectoryContainsFile", secondPattern.className);
+        Assert.assertEquals("my1_assoc", secondPattern.variableName);
 
-        Assert.assertEquals(2, secondPattern.Members.size());
-        CompareVariable(secondPattern.Members.get(0), "PartComponent", "my2_file");
-        CompareVariable(secondPattern.Members.get(0), "PartComponent", "my2_file");
+        Assert.assertEquals(2, secondPattern.membersList.size());
+        compareVariable(secondPattern.membersList.get(0), "PartComponent", "my2_file");
+        compareVariable(secondPattern.membersList.get(0), "PartComponent", "my2_file");
 
         Assert.assertNotEquals(extractor.FindObjectPattern("my2_file"), null);
         ObjectPattern thirdPattern = patterns.get(2);
-        Assert.assertEquals("CIM_DataFile", thirdPattern.ClassName);
-        Assert.assertEquals("my2_file", thirdPattern.VariableName);
+        Assert.assertEquals("CIM_DataFile", thirdPattern.className);
+        Assert.assertEquals("my2_file", thirdPattern.variableName);
 
-        Assert.assertEquals(1, thirdPattern.Members.size());
-        CompareVariable(secondPattern.Members.get(0), "PartComponent", "my2_file");
+        Assert.assertEquals(1, thirdPattern.membersList.size());
+        compareVariable(secondPattern.membersList.get(0), "PartComponent", "my2_file");
     }
 
     @Test
     /***
      * Checks the bindings extracted from an arbitrary query with a group statement.
      */
-    public void Parse_GroupMinMaxSum() throws Exception {
+    public void testParseGroupMinMaxSum() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -234,7 +234,7 @@ public class SparqlBGPExtractorTest {
     /***
      * Checks the BGPs extracted from an arbitrary query with an optional statement.
      */
-    public void Parse_Optional() throws Exception {
+    public void testParseOptional() throws Exception {
         String sparqlQuery = """
                     PREFIX schema: <http://schema.org/>
                     SELECT ?creator_name ?author_name
@@ -256,7 +256,7 @@ public class SparqlBGPExtractorTest {
      * Checks that the BGPs of a federated query are NOT extracted.
      */
     @Test
-    public void Parse_FederatedQuery() throws Exception {
+    public void testParseFederatedQuery() throws Exception {
         String sparqlQuery = """
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -280,13 +280,13 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(1, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_directory");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareVariable(patternWin32_Directory.Members.get(0), "Name", "directory_name");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals(1, patternWin32_Directory.membersList.size());
+        compareVariable(patternWin32_Directory.membersList.get(0), "Name", "directory_name");
     }
 
     @Test
-    public void PropertyPath_CIM_Win32_SubDirectory() throws Exception {
+    public void testPropertyPath_CIM_Win32_SubDirectory() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -307,13 +307,13 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(3, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("_1_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", "C:\\Windows");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals(1, patternWin32_Directory.membersList.size());
+        compareKeyValue(patternWin32_Directory.membersList.get(0), "Name", "C:\\Windows");
     }
 
     @Test
-    public void PropertyPath_CIM_Win32_SubDirectory_DirectoryContainsFile() throws Exception {
+    public void testPropertyPath_CIM_Win32_SubDirectory_DirectoryContainsFile() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -334,9 +334,9 @@ public class SparqlBGPExtractorTest {
         Assert.assertEquals(4, extractor.patternsAsArray().size());
 
         ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("_1_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.ClassName);
-        Assert.assertEquals(1, patternWin32_Directory.Members.size());
-        CompareKeyValue(patternWin32_Directory.Members.get(0), "Name", "C:\\Windows");
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
+        Assert.assertEquals(1, patternWin32_Directory.membersList.size());
+        compareKeyValue(patternWin32_Directory.membersList.get(0), "Name", "C:\\Windows");
     }
 
     /** Arbitrary length property paths are not handled yet.
@@ -357,7 +357,7 @@ public class SparqlBGPExtractorTest {
      * @throws Exception
      */
     @Test (expected = RuntimeException.class)
-    public void PropertyPath_Win32_DependentService_Many() throws Exception {
+    public void testPropertyPath_Win32_DependentService_Many() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>

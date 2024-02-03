@@ -21,7 +21,7 @@ public class CacheManager {
         // The namespace might contain backslashes, but this is OK on Windows.
         Path pathNamespacePrefix = PathNamespacePrefix(namespace);
 
-        CheckCacheDirectoryExists();
+        checkCacheDirectoryExists();
         //Files.createDirectories(ontologiesPathCache);
         File dirSaildump = new File(pathNamespacePrefix + ".SailDir");
         logger.debug("dirSaildump=" + dirSaildump);
@@ -41,12 +41,12 @@ public class CacheManager {
         Path pathNamespacePrefix = PathNamespacePrefix(namespace);
         CheckDirectoryExists(pathNamespacePrefix);
 
-        String nameFileClassesCache = pathNamespacePrefix + "ClassesCache.json";
+        String nameFileClassesCache = pathNamespacePrefix + ".ClassesCache.json";
 
         return new File(nameFileClassesCache);
     }
 
-    public static void CheckCacheDirectoryExists() {
+    public static void checkCacheDirectoryExists() {
         CheckDirectoryExists(ontologiesPathCache);
     }
 

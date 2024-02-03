@@ -12,11 +12,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class WmiOntologyTest {
-    static private RepositoryConnection ontologyCIMV2 = WmiOntology.CloneToMemoryConnection("ROOT\\CIMV2");
-    static private RepositoryConnection ontologyInterop = WmiOntology.CloneToMemoryConnection("ROOT\\Interop");
-    static private RepositoryConnection ontologyStandardCimv2 = WmiOntology.CloneToMemoryConnection("ROOT\\StandardCimv2");
+    static private RepositoryConnection ontologyCIMV2 = WmiOntology.cloneToMemoryConnection("ROOT\\CIMV2");
+    static private RepositoryConnection ontologyInterop = WmiOntology.cloneToMemoryConnection("ROOT\\Interop");
+    static private RepositoryConnection ontologyStandardCimv2 = WmiOntology.cloneToMemoryConnection("ROOT\\StandardCimv2");
 
-    static private RepositoryConnection ontologyCIMV2_StandardCimv2 = WmiOntology.CloneToMemoryConnection("ROOT\\CIMV2", "ROOT\\StandardCimv2");
+    static private RepositoryConnection ontologyCIMV2_StandardCimv2 = WmiOntology.cloneToMemoryConnection("ROOT\\CIMV2", "ROOT\\StandardCimv2");
 
     static WmiProvider wmiProvider = new WmiProvider();
 
@@ -90,7 +90,7 @@ public class WmiOntologyTest {
     @Test
     public void SplitIRI_testA() {
         String token = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process";
-        WmiOntology.NamespaceTokenPair ntp = WmiOntology.SplitIRI(token);
+        WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(token);
         Assert.assertEquals("ROOT\\CIMV2", ntp.nameSpace);
         Assert.assertEquals("Win32_Process", ntp.Token);
         Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.CLASS_IRI, ntp.TokenType);
@@ -99,7 +99,7 @@ public class WmiOntologyTest {
     @Test
     public void SplitIRI_testB() {
         String iri = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Handle";
-        WmiOntology.NamespaceTokenPair ntp = WmiOntology.SplitIRI(iri);
+        WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(iri);
         Assert.assertEquals("ROOT\\CIMV2", ntp.nameSpace);
         Assert.assertEquals("Win32_Process.Handle", ntp.Token);
         Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.PREDICATE_IRI, ntp.TokenType);
@@ -107,7 +107,7 @@ public class WmiOntologyTest {
     @Test
     public void SplitIRI_testC() {
         String iri = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%223160%22";
-        WmiOntology.NamespaceTokenPair ntp = WmiOntology.SplitIRI(iri);
+        WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(iri);
         Assert.assertEquals("ROOT\\CIMV2", ntp.nameSpace);
         Assert.assertEquals("Win32_Process", ntp.Token);
         Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.INSTANCE_IRI, ntp.TokenType);
@@ -116,7 +116,7 @@ public class WmiOntologyTest {
     @Test
     public void SplitIRI_testD() {
         String iri = "http://www.w3.org/2000/01/rdf-schema#label" ;
-        WmiOntology.NamespaceTokenPair ntp = WmiOntology.SplitIRI(iri);
+        WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(iri);
         Assert.assertEquals(null, ntp);
     }
 
@@ -153,8 +153,8 @@ public class WmiOntologyTest {
     @Test
     public void Compare_Ontology_Cached() {
         String namespace = "ROOT\\Cli";
-        RepositoryConnection ontologyNonCached = WmiOntology.ReadOnlyOntologyConnectionNoCacheInMemory(namespace);
-        RepositoryConnection cachedOntology = WmiOntology.CloneToMemoryConnection(namespace);
+        RepositoryConnection ontologyNonCached = WmiOntology.readOnlyOntologyConnectionNoCacheInMemory(namespace);
+        RepositoryConnection cachedOntology = WmiOntology.cloneToMemoryConnection(namespace);
 
         String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
         Set<String> countFresh = selectColumnFromOntology(cachedOntology, sparqlQuery, "count");
@@ -167,14 +167,14 @@ public class WmiOntologyTest {
      */
     @Test
     public void LoadAllOntologies() throws Exception {
-        Set<String> setNamespaces = wmiProvider.NamespacesList();
+        Set<String> setNamespaces = wmiProvider.namespacesList();
         for (String oneNamespace : setNamespaces) {
-            RepositoryConnection ontologyNamespace = WmiOntology.CloneToMemoryConnection(oneNamespace);
+            RepositoryConnection ontologyNamespace = WmiOntology.cloneToMemoryConnection(oneNamespace);
             String sparqlQuery = "select (count(*) as ?count) where { ?s ?p ?o }";
             Set<String> countTriples = selectColumnFromOntology(ontologyNamespace, sparqlQuery, "count");
             Assert.assertEquals(1, countTriples.size());
             String firstString = countTriples.iterator().next();
-            long sizeLong = PresentUtils.XmlToLong(firstString);
+            long sizeLong = PresentUtils.xmlToLong(firstString);
             Assert.assertTrue(sizeLong > 0);
         }
     }
@@ -312,8 +312,8 @@ public class WmiOntologyTest {
         Set<String> derivedClassNamesSet = selectColumnCIMV2(queryString, "my_caption");
         System.out.println(derivedClassNamesSet);
         // Test the presence of some classes which derive of this one.
-        Assert.assertTrue(derivedClassNamesSet.contains(PresentUtils.InternationalizeQuoted("Win32_Directory")));
-        Assert.assertTrue(derivedClassNamesSet.contains(PresentUtils.InternationalizeQuoted("Win32_BIOS")));
+        Assert.assertTrue(derivedClassNamesSet.contains(PresentUtils.internationalizeQuoted("Win32_Directory")));
+        Assert.assertTrue(derivedClassNamesSet.contains(PresentUtils.internationalizeQuoted("Win32_BIOS")));
     }
 
     /** This checks the presence of Description for property Win32_Process.Handle. */
@@ -332,7 +332,7 @@ public class WmiOntologyTest {
         System.out.println("descriptionsSet=" + descriptionsSet.toString());
         Assert.assertEquals(1, descriptionsSet.size());
         Assert.assertEquals(
-                PresentUtils.InternationalizeQuoted("\"A string used to identify the process. A process ID is a kind of process handle.\""),
+                PresentUtils.internationalizeQuoted("\"A string used to identify the process. A process ID is a kind of process handle.\""),
                 descriptionsSet.stream().findFirst().orElse("xyz"));
     }
 
@@ -529,9 +529,9 @@ public class WmiOntologyTest {
                     """;
         Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet.toString());
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Dependent")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Member")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("PartComponent")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Dependent")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Member")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("PartComponent")));
     }
 
     /** Labels of classes linked to a CIM_DataFile with an associator. */
@@ -551,13 +551,13 @@ public class WmiOntologyTest {
                     """;
         Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet.toString());
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("CIM_Directory")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_PnPSignedDriver")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_DCOMApplication")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("CIM_DataFile")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("CIM_Process")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_Printer")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_LogicalProgramGroupItem")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("CIM_Directory")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_PnPSignedDriver")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_DCOMApplication")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("CIM_DataFile")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("CIM_Process")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_Printer")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_LogicalProgramGroupItem")));
     }
 
     /** Labels of classes linked to a Win32_Process with an associator. */
@@ -577,10 +577,10 @@ public class WmiOntologyTest {
                     """;
         Set<String> labelsSet = selectColumnCIMV2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet);
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_LogonSession")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_ComputerSystem")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_NamedJobObject")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_Process")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_LogonSession")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_ComputerSystem")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_NamedJobObject")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_Process")));
     }
 
     /**
@@ -600,11 +600,11 @@ public class WmiOntologyTest {
         Set<String> labelsSet = selectColumnStandardCimv2(queryString, "my_label");
         System.out.println("labelsSet=" + labelsSet);
         // Checks the presence of arbitrary properties.
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetUDPEndpoint.AggregationBehavior")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetUDPEndpoint.CommunicationStatus")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetUDPEndpoint.LocalAddress")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetUDPEndpoint.LocalPort")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetUDPEndpoint.OwningProcess")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetUDPEndpoint.AggregationBehavior")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetUDPEndpoint.CommunicationStatus")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetUDPEndpoint.LocalAddress")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetUDPEndpoint.LocalPort")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetUDPEndpoint.OwningProcess")));
     }
 
     /**
@@ -634,8 +634,8 @@ public class WmiOntologyTest {
             boolean matchFound = matcher.find();
             Assert.assertTrue(matchFound);
         }
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetTransportConnection.OwningProcess")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetUDPEndpoint.OwningProcess")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetTransportConnection.OwningProcess")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetUDPEndpoint.OwningProcess")));
     }
 
     /**
@@ -662,12 +662,12 @@ public class WmiOntologyTest {
         Set<String> labelsSet = selectColumnCIMV2_StandardCimv2(queryString, "class_label");
         System.out.println("labelsSet=" + labelsSet);
 
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("__Win32Provider")));
-        Assert.assertTrue(labelsSet.contains(PresentUtils.InternationalizeQuoted("__EventFilter")));
-        Assert.assertFalse(labelsSet.contains(PresentUtils.InternationalizeQuoted("Win32_Process")));
-        Assert.assertFalse(labelsSet.contains(PresentUtils.InternationalizeQuoted("CIM_DataFile")));
-        Assert.assertFalse(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetUDPEndpoint")));
-        Assert.assertFalse(labelsSet.contains(PresentUtils.InternationalizeQuoted("MSFT_NetTCPConnection")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("__Win32Provider")));
+        Assert.assertTrue(labelsSet.contains(PresentUtils.internationalizeQuoted("__EventFilter")));
+        Assert.assertFalse(labelsSet.contains(PresentUtils.internationalizeQuoted("Win32_Process")));
+        Assert.assertFalse(labelsSet.contains(PresentUtils.internationalizeQuoted("CIM_DataFile")));
+        Assert.assertFalse(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetUDPEndpoint")));
+        Assert.assertFalse(labelsSet.contains(PresentUtils.internationalizeQuoted("MSFT_NetTCPConnection")));
     }
 
 

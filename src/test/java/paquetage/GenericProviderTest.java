@@ -32,14 +32,14 @@ public class GenericProviderTest extends TestCase {
     }
 
     static void CompareRows(Solution.Row row1, Solution.Row row2) {
-        System.out.println("row1=" + row1.KeySet());
-        System.out.println("row2=" + row2.KeySet());
-        Assert.assertEquals(row1.ElementsSize(), row2.ElementsSize());
-        Assert.assertEquals(row1.KeySet(), row2.KeySet());
-        for(String oneKey:  row1.KeySet()) {
+        System.out.println("row1=" + row1.keySet());
+        System.out.println("row2=" + row2.keySet());
+        Assert.assertEquals(row1.elementsSize(), row2.elementsSize());
+        Assert.assertEquals(row1.keySet(), row2.keySet());
+        for(String oneKey:  row1.keySet()) {
             // Conversion to upper case because WMI has a different behaviour wrt to cases,
             // depending on the Windows version.
-            Assert.assertEquals(row1.GetStringValue(oneKey).toUpperCase(), row2.GetStringValue(oneKey).toUpperCase());
+            Assert.assertEquals(row1.getStringValue(oneKey).toUpperCase(), row2.getStringValue(oneKey).toUpperCase());
         }
     }
 
@@ -293,11 +293,11 @@ public class GenericProviderTest extends TestCase {
 
         CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
 
-        String objectPath = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", filePath));
-        queryData.SetHandlers(true);
-        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData);
-        queryData.SetHandlers(false);
-        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData);
+        String objectPath = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", filePath));
+        queryData.setHandlers(true);
+        Solution.Row rowGetterCustom = genericProvider.getObjectFromPath(objectPath, queryData);
+        queryData.setHandlers(false);
+        Solution.Row rowGetterGeneric = genericProvider.getObjectFromPath(objectPath, queryData);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 
@@ -324,12 +324,12 @@ public class GenericProviderTest extends TestCase {
         CheckGetter(queryData, "paquetage.BaseGetter_Win32_Process_Handle");
         CheckSelecter(queryData, null);
 
-        String objectPath = ObjectPath.BuildCimv2PathWbem("Win32_Process", Map.of("Handle", currentPidStr));
+        String objectPath = ObjectPath.buildCimv2PathWbem("Win32_Process", Map.of("Handle", currentPidStr));
         System.out.println("objectPath=" + objectPath);
-        queryData.SetHandlers(true);
-        Solution.Row rowGetterCustom = genericProvider.GetObjectFromPath(objectPath, queryData);
-        queryData.SetHandlers(false);
-        Solution.Row rowGetterGeneric = genericProvider.GetObjectFromPath(objectPath, queryData);
+        queryData.setHandlers(true);
+        Solution.Row rowGetterCustom = genericProvider.getObjectFromPath(objectPath, queryData);
+        queryData.setHandlers(false);
+        Solution.Row rowGetterGeneric = genericProvider.getObjectFromPath(objectPath, queryData);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
 }

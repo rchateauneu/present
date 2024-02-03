@@ -129,7 +129,7 @@ public class WmiProvider {
      * Example:
      * '\\LAPTOP-R89KG6V1\ROOT\StandardCimv2:MSFT_NetIPAddress.CreationClassName="",Name="poB:DD;C:@D<n>nD==:@DB=:m/;@55;@55;55;",SystemCreationClassName="",SystemName=""'
      */
-    static public String ExtractNamespaceFromRef(String refString) {
+    static public String extractNamespaceFromRef(String refString) {
         Matcher matcher = patternReferenceNamespace.matcher(refString);
         boolean matchFound = matcher.find();
         if (!matchFound) {
@@ -196,14 +196,14 @@ public class WmiProvider {
     */
 
     public static class WmiProperty {
-        public String Name;
-        public String Description;
-        public String Type;
+        public String propertyName;
+        public String propertyDescription;
+        public String propertyType;
 
-        public WmiProperty(String propertyName) {
-            Name = propertyName;
-            Description = "No description available yet for property " + propertyName;
-            Type = "string";
+        public WmiProperty(String inputPropertyName) {
+            propertyName = inputPropertyName;
+            propertyDescription = "No description available yet for property " + propertyName;
+            propertyType = "string";
         }
 
         // For Json deserialization.
@@ -212,20 +212,20 @@ public class WmiProvider {
         }
 
         boolean isWbemPathRef() {
-            return Type.startsWith("ref:");
+            return propertyType.startsWith("ref:");
         }
     }
 
     public static class WmiClass {
-        public String Name;
-        public String BaseName;
-        public String Description;
-        public Map<String, WmiProperty> Properties;
+        public String className;
+        public String classBaseName;
+        public String classDescription;
+        public Map<String, WmiProperty> classProperties;
 
-        public WmiClass(String className) {
-            Name = className;
-            Properties = new HashMap<>();
-            Description = "No description available yet for class " + className;
+        public WmiClass(String inputClassName) {
+            className = inputClassName;
+            classProperties = new HashMap<>();
+            classDescription = "No description available yet for class " + className;
         }
 
         // For Json deserialization.
@@ -243,7 +243,7 @@ public class WmiProvider {
      */
     static private Pattern patternLocalizationNamespaces = Pattern.compile("^ms_\\d\\d", Pattern.CASE_INSENSITIVE);
 
-    private Set<String> NamespacesFlat(Wbemcli.IWbemServices wbemService, String namespace) {
+    private Set<String> flattenNamespaces(Wbemcli.IWbemServices wbemService, String namespace) {
         CheckValidNamespace(namespace);
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL",
@@ -287,9 +287,9 @@ public class WmiProvider {
         return namespacesFlat;
     }
 
-    private void BuildNamespacesList(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
+    private void buildNamespacesList(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
 
-        Set<String> namespacesFlat = NamespacesFlat(wbemService, namespace);
+        Set<String> namespacesFlat = flattenNamespaces(wbemService, namespace);
 
         for(String namespaceSub : namespacesFlat) {
             String namespaceFull = namespace + "\\" + namespaceSub;
@@ -300,7 +300,7 @@ public class WmiProvider {
             Wbemcli.IWbemServices wbemServiceSub = GetWbemService(namespaceFull);
             if(wbemServiceSub != null) {
                 namespacesHierarchical.add(namespaceFull);
-                BuildNamespacesList(namespacesHierarchical, wbemServiceSub, namespaceFull);
+                buildNamespacesList(namespacesHierarchical, wbemServiceSub, namespaceFull);
             }
         }
     }
@@ -311,7 +311,7 @@ public class WmiProvider {
      */
     private static HashSet<String> cacheNamespaces = null;
 
-    public Set<String> NamespacesList() throws Exception {
+    public Set<String> namespacesList() throws Exception {
         if(cacheNamespaces == null) {
             cacheNamespaces = new HashSet<>();
             Path pathCacheNamespaces = Paths.get(CacheManager.ontologiesPathCache + "\\" + "namespaces.json");
@@ -323,11 +323,11 @@ public class WmiProvider {
                 logger.debug("Number of namespaces=" + cacheNamespaces.size());
             } else {
                 logger.debug("Filling namespaces cache to:" + pathCacheNamespaces);
-                BuildNamespacesList(cacheNamespaces, wbemServiceRoot, "ROOT");
+                buildNamespacesList(cacheNamespaces, wbemServiceRoot, "ROOT");
                 logger.debug("End. Number of namespaces=" + cacheNamespaces.size());
 
                 // Maybe the cache directory does not exist.
-                CacheManager.CheckCacheDirectoryExists();
+                CacheManager.checkCacheDirectoryExists();
                 mapperObj.writeValue(pathCacheNamespaces.toFile(), cacheNamespaces);
                 logger.debug("Written namespaces to:" + pathCacheNamespaces);
             }
@@ -336,23 +336,12 @@ public class WmiProvider {
     }
 
     // Very commonly used for tests.
-    public Map<String, WmiClass> ClassesCIMV2() {
-        return Classes("ROOT\\CIMV2");
+    public Map<String, WmiClass> classesCIMV2() {
+        return classesMap("ROOT\\CIMV2");
     }
 
-    // Mettre ca dans un fichier !!!
-    public Map<String, WmiClass> ClassesOld(String namespace) {
-        Map<String, WmiClass> cacheClasses = cacheClassesMap.get(namespace);
-        if(cacheClasses == null) {
-            logger.debug("Getting classes for namespace=" + namespace);
-            cacheClasses = ClassesNocache(namespace);
-            logger.debug("End getting classes in " + namespace + " Number of classes=" + cacheClasses.size());
-            cacheClassesMap.put(namespace, cacheClasses);
-        }
-        return cacheClasses;
-    }
 
-    public Map<String, WmiClass> Classes(String namespace) {
+    public Map<String, WmiClass> classesMap(String namespace) {
         Map<String, WmiClass> cacheClasses = cacheClassesMap.get(namespace);
 
         if(cacheClasses == null) {
@@ -381,7 +370,7 @@ public class WmiProvider {
                     throw new RuntimeException(exc);
                 }
             } else {
-                cacheClasses = ClassesNocache(namespace);
+                cacheClasses = classesNoCache(namespace);
                 try {
                     mapperObj.writeValue(fileCacheClasses, cacheClasses);
                 } catch (Exception exc) {
@@ -399,7 +388,7 @@ public class WmiProvider {
     /** This returns a map containing the WMI classes. This is calculated with a WQL query.
      * This is rather a task whose result does not often change, so it must be cached.
      * */
-    private Map<String, WmiClass> ClassesNocache(String namespace) {
+    private Map<String, WmiClass> classesNoCache(String namespace) {
         Wbemcli.IWbemServices wbemService = GetWbemService(namespace);
         if(wbemService == null) {
             throw new RuntimeException("WBEM service is null for namespace=" + namespace);
@@ -440,7 +429,7 @@ public class WmiProvider {
                     continue;
                 }
                 WmiClass newClass = new WmiClass(className);
-                if(className != newClass.Name) {
+                if(className != newClass.className) {
                     throw new RuntimeException("Error building class:" + className);
                 }
                 OleAuto.INSTANCE.VariantClear(pVal);
@@ -448,7 +437,7 @@ public class WmiProvider {
                 COMUtils.checkRC(classObject.Get("__SUPERCLASS", 0, pVal, pType, plFlavor));
                 Object baseClass = pVal.getValue();
                 if (baseClass != null) {
-                    newClass.BaseName = baseClass.toString();
+                    newClass.classBaseName = baseClass.toString();
                 }
                 OleAuto.INSTANCE.VariantClear(pVal);
 
@@ -464,7 +453,7 @@ public class WmiProvider {
                 }
                 String classDescription = classQualifiersSet.Get("Description");
                 if(classDescription != null) {
-                    newClass.Description = classDescription;
+                    newClass.classDescription = classDescription;
                 } else {
                     logger.error("Error getting Description qualifiers of " + className);
                 }
@@ -493,7 +482,7 @@ public class WmiProvider {
                             String CIMTYPE = propertyQualifiersSet.Get("CIMTYPE");
                             if(CIMTYPE != null)
                             {
-                                newProperty.Type = CIMTYPE;
+                                newProperty.propertyType = CIMTYPE;
                             }
 
                             if(false) {
@@ -508,9 +497,9 @@ public class WmiProvider {
                             }
                             String propertyDescription = propertyQualifiersSet.Get("Description");
                             if(propertyDescription != null) {
-                                newProperty.Description = propertyDescription;
+                                newProperty.propertyDescription = propertyDescription;
                             }
-                            newClass.Properties.put(propertyName, newProperty);
+                            newClass.classProperties.put(propertyName, newProperty);
                         }
                     }
                 }
@@ -604,13 +593,13 @@ public class WmiProvider {
 
     /** Conversion of a WMI value to a string plus its type.
      *
-     * @param lambda_column
+     * @param lambdaColumn
      * @param pType
      * @param pVal
      * @return
      */
-    static ValueTypePair VariantToValueTypePair(
-            String lambda_column,
+    static ValueTypePair convertVariantToValueTypePair(
+            String lambdaColumn,
             IntByReference pType,
             Variant.VARIANT.ByReference pVal) {
         /** TODO: If the value is a reference, get the object if possible ! Or is it simply a string ?
@@ -628,17 +617,17 @@ public class WmiProvider {
         Object valObject = pVal.getValue();
         if(valObject == null) {
             String valueTypeStr = mapCimTypes.get(valueType);
-            logger.debug("Value is null. lambda_column=" + lambda_column + " type=" + valueType + "/" + valueTypeStr);
+            //logger.debug("Value is null. lambdaColumn=" + lambdaColumn + " type=" + valueType + "/" + valueTypeStr);
         }
 
         String rowValue;
         ValueTypePair.ValueType rowType;
-        if(lambda_column.equals("__PATH")) {
+        if(lambdaColumn.equals("__PATH")) {
             // Not consistent for Win32_Product.
             if(valueType != Wbemcli.CIM_STRING) {
                 // FIXME: Theoretically, it should only be CIM_REFERENCE ...
                 throw new RuntimeException(
-                        "Should be CIM_STRING lambda_column=" + lambda_column + " valueType=" + valueType);
+                        "Should be CIM_STRING lambdaColumn=" + lambdaColumn + " valueType=" + valueType);
             }
             rowValue = pVal.stringValue();
             rowType = ValueTypePair.ValueType.NODE_TYPE;
@@ -650,7 +639,7 @@ public class WmiProvider {
                     rowType = ValueTypePair.ValueType.NODE_TYPE;
                     if(rowValue != null) {
                         if(!PresentUtils.hasWmiReferenceSyntax(rowValue)) {
-                            logger.warn("lambda_column=" + lambda_column + " has not reference syntax:" + rowValue);
+                            logger.warn("lambdaColumn=" + lambdaColumn + " has not reference syntax:" + rowValue);
                         }
                     }
                     break;
@@ -659,7 +648,7 @@ public class WmiProvider {
                     // FIXME: Maybe if a WMI error returning a node as a string ?
                     if(rowValue != null) {
                         if (rowValue.startsWith("\\\\") && !rowValue.startsWith("\\\\?\\")) {
-                            logger.warn("lambda_column=" + lambda_column + " cannot be a string:" + rowValue);
+                            logger.warn("lambdaColumn=" + lambdaColumn + " cannot be a string:" + rowValue);
                         }
                     }
                     rowType = ValueTypePair.ValueType.STRING_TYPE;
@@ -678,7 +667,7 @@ public class WmiProvider {
                         // "Win32_Process.ExecutionState" might be null.
                         // This is temporarily indicated with a special string for later debugging.
                         // TODO: Some values are null. Why ?
-                        longValue = lambda_column + "_IS_NULL";
+                        longValue = lambdaColumn + "_IS_NULL";
                         rowType = ValueTypePair.ValueType.STRING_TYPE;
                     } else {
                         rowType = ValueTypePair.ValueType.INT_TYPE;
@@ -760,7 +749,7 @@ public class WmiProvider {
                 default:
                     String valStringValue = pVal.stringValue();
                     if (valStringValue == null) {
-                        logger.error("Null when converting lambda_column=" + lambda_column + " type=" + valueType);
+                        logger.error("Null when converting lambdaColumn=" + lambdaColumn + " type=" + valueType);
                     }
                     rowValue = valStringValue;
                     rowType = ValueTypePair.ValueType.STRING_TYPE;

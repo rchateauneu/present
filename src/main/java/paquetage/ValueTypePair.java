@@ -184,7 +184,7 @@ class ValueTypePair {
      * The original data type is preserved in the literal because the value is not blindly converted to a string.
      * @return
      */
-    Value ValueTypeToLiteral() {
+    Value convertValueTypeToLiteral() {
         ValueType valueType = m_Type;
         if(valueType == null) {
             logger.warn("Invalid null type of literal value.");

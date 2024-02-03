@@ -20,7 +20,7 @@ public class ProcessModulesTest {
         String path = System.getProperty("java.home");
         String boot = System.getProperty("sun.boot.library.path");
 
-        Map<String, ArrayList<String>> result = new ProcessModules().GetAllProcessesModules();
+        Map<String, ArrayList<String>> result = new ProcessModules().getAllProcessesModules();
 
         Assert.assertTrue(result.containsKey(currentPidStr));
         System.out.println("currExe=" + currExe);
@@ -30,13 +30,13 @@ public class ProcessModulesTest {
 
     @Test
     public void GetFromModule_1() throws Exception {
-        List<String> pidsList = new ProcessModules().GetFromModule(currExe);
+        List<String> pidsList = new ProcessModules().getFromModule(currExe);
         Assert.assertTrue(pidsList.contains(currentPidStr));
     }
 
     @Test
     public void GetFromPid_1() throws Exception {
-        List<String> modulesList = new ProcessModules().GetFromPid(currentPidStr);
+        List<String> modulesList = new ProcessModules().getFromPid(currentPidStr);
         Assert.assertEquals(modulesList.get(0), (currExe));
     }
 }

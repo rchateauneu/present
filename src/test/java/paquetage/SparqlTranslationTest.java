@@ -15,13 +15,13 @@ public class SparqlTranslationTest {
     static private Set<String> RowColumnAsSet(Solution rowsList, String columnName) {
         return rowsList
                 .stream()
-                .map(entry -> entry.GetStringValue(columnName)).collect(Collectors.toSet());
+                .map(entry -> entry.getStringValue(columnName)).collect(Collectors.toSet());
     }
 
     static private Set<String> RowColumnAsSetUppercase(Solution rowsList, String columnName) {
         return rowsList
                 .stream()
-                .map(entry -> entry.GetStringValue(columnName).toUpperCase()).collect(Collectors.toSet());
+                .map(entry -> entry.getStringValue(columnName).toUpperCase()).collect(Collectors.toSet());
     }
 
     /** Loads a file with its name and checks the correctness of the attributes.
@@ -85,7 +85,7 @@ public class SparqlTranslationTest {
                 "file_Caption", "file_FileSize", "file_Drive", "file_Path"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Assert.assertEquals(1, listRows.size());
 
@@ -93,13 +93,13 @@ public class SparqlTranslationTest {
 
         // The current pid must be there because it uses this library.
         String fileName = "C:\\WINDOWS\\SYSTEM32\\ntdll.dll";
-        Assert.assertEquals(fileName, firstRow.GetStringValue("file_Caption"));
-        Assert.assertEquals("c:", firstRow.GetStringValue("file_Drive"));
+        Assert.assertEquals(fileName, firstRow.getStringValue("file_Caption"));
+        Assert.assertEquals("c:", firstRow.getStringValue("file_Drive"));
         File f = new File(fileName);
         long fileSize = f.length();
         String fileSizeStr = Long.toString(fileSize);
-        Assert.assertEquals(fileSizeStr, firstRow.GetStringValue("file_FileSize"));
-        Assert.assertEquals("\\windows\\system32\\", firstRow.GetStringValue("file_Path"));
+        Assert.assertEquals(fileSizeStr, firstRow.getStringValue("file_FileSize"));
+        Assert.assertEquals("\\windows\\system32\\", firstRow.getStringValue("file_Path"));
     }
 
     /** This runs a SPARQL query which returns pids of all processes and checks that the current pid is found.
@@ -121,11 +121,11 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         boolean foundCurrentPid = false;
 
         for(Solution.Row row: listRows) {
-            if (row.GetStringValue("my_process_handle").equals(currentPidStr)) {
+            if (row.getStringValue("my_process_handle").equals(currentPidStr)) {
                 foundCurrentPid = true;
                 break;
             }
@@ -153,9 +153,9 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         Assert.assertEquals(1, listRows.size());
-        Assert.assertEquals("java.exe", listRows.get(0).GetStringValue("my_process_caption"));
+        Assert.assertEquals("java.exe", listRows.get(0).getStringValue("my_process_caption"));
     }
 
     /** Checks the caption of the current process selected with the current pid.
@@ -177,9 +177,9 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         Assert.assertEquals(1, listRows.size());
-        Assert.assertEquals(Set.of("my_process"), listRows.get(0).KeySet());
+        Assert.assertEquals(Set.of("my_process"), listRows.get(0).keySet());
     }
 
     /** This deduces the type of the object because of the prefix predicate.
@@ -201,9 +201,9 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         Assert.assertEquals(1, listRows.size());
-        Assert.assertEquals("java.exe", listRows.get(0).GetStringValue("my_process_caption"));
+        Assert.assertEquals("java.exe", listRows.get(0).getStringValue("my_process_caption"));
     }
 
     @Test
@@ -227,10 +227,10 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         Set<String> libsSet = RowColumnAsSet(listRows, "my_file_name");
         // This tests the presence of some libraries which are used by the current Java process.
-        String javabin = PresentUtils.CurrentJavaBinary();
+        String javabin = PresentUtils.currentJavaBinary();
         Assert.assertTrue(libsSet.contains(javabin));
 
         System.out.println("libsSet=" + libsSet);
@@ -268,7 +268,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // The current pid must be there because it uses this library.
         Set<String> pidsSet = RowColumnAsSet(listRows, "my_handle");
@@ -305,7 +305,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // The current caption must be there because it uses this library.
         Set<String> captionsSet = RowColumnAsSet(listRows, "my_caption");
@@ -341,10 +341,10 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         Assert.assertEquals(listRows.size(), 1);
         // Filename cases are not stable wrt Windows version.
-        Assert.assertEquals(listRows.get(0).GetStringValue("my_dir_name").toUpperCase(), "C:\\WINDOWS\\SYSTEM32");
+        Assert.assertEquals(listRows.get(0).getStringValue("my_dir_name").toUpperCase(), "C:\\WINDOWS\\SYSTEM32");
     }
 
     @Test
@@ -372,7 +372,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // These files must be in this directory.
         // Filename cases in system directories are not stable, therefore uppercase.
@@ -409,10 +409,10 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         Assert.assertEquals(listRows.size(), 1);
         // Case of filenames are not stable wrt Windows version.
-        Assert.assertEquals(listRows.get(0).GetStringValue("my_dir_name").toUpperCase(), "C:\\WINDOWS");
+        Assert.assertEquals(listRows.get(0).getStringValue("my_dir_name").toUpperCase(), "C:\\WINDOWS");
     }
 
     @Test
@@ -443,7 +443,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // These files must be in this directory.
         Set<String> filesSet = RowColumnAsSet(listRows, "my_file_name");
@@ -490,7 +490,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // It must fall back to the initial directory.
         Set<String> dirsSet = RowColumnAsSet(listRows, "my_dir_name");
@@ -529,7 +529,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         System.out.println("Rows number=" + listRows.size());
 
         /*
@@ -546,7 +546,7 @@ public class SparqlTranslationTest {
      * Names of processes which have an executable or a library in a given directory.
      */
     public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2() throws Exception {
-        File file = new File(PresentUtils.CurrentJavaBinary());
+        File file = new File(PresentUtils.currentJavaBinary());
         String parent = file.getAbsoluteFile().getParent();
         // Typically "C:\\Program Files\\Java\\jdk-17.0.2\\bin"
         String dirExecutable = parent.replace("\\", "\\\\");
@@ -573,7 +573,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
         System.out.println("Rows number=" + listRows.size());
 
         Set<String> namesSet = RowColumnAsSet(listRows, "my_process_name");
@@ -614,7 +614,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // Disk "C:" must be found.
         Set<String> volumesSet = RowColumnAsSet(listRows, "device_id");
@@ -645,7 +645,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // Disk "C:" must be found.
         Set<String> dirsSet = RowColumnAsSet(listRows, "dir_name");
@@ -680,7 +680,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_drive", "my1_dir"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         // Disk "C:" must be found.
         Set<String> drivesSet = RowColumnAsSet(listRows, "my_drive");
@@ -713,7 +713,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_account_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> accountsSet = RowColumnAsSet(listRows, "my_account_name");
         Assert.assertTrue(accountsSet.contains("Users"));
@@ -735,7 +735,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_class_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> classesSet = RowColumnAsSet(listRows, "my_class_name");
         System.out.println("classesSet=" + classesSet);
@@ -760,7 +760,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> threadsSet = RowColumnAsSet(listRows, "my_thread_name");
         for(String threadName: threadsSet) {
@@ -788,7 +788,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name", "my_thread_priority"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> threadsSet = RowColumnAsSet(listRows, "my_thread_name");
         for(String threadName: threadsSet) {
@@ -815,7 +815,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> threadsSet = RowColumnAsSet(listRows, "my_thread_name");
         for(String threadName: threadsSet) {
@@ -852,7 +852,7 @@ public class SparqlTranslationTest {
                 "my_product_number", "my_product_name", "my_product_vendor", "my_product_caption", "my_product_version"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> productNamesSet = RowColumnAsSet(listRows, "my_product_name");
         Assert.assertTrue(productNamesSet.contains("Windows SDK Signing Tools"));
@@ -878,7 +878,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> applicationsSet = RowColumnAsSet(listRows, "my_application_name");
         Assert.assertTrue(applicationsSet.contains("User Notification"));
@@ -909,7 +909,7 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name", "my_local_service"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> applicationsSet = RowColumnAsSet(listRows, "my_application_name");
         //Assert.assertTrue(applicationsSet.contains("User Notification"));
@@ -949,11 +949,11 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> applicationsSet = RowColumnAsSet(listRows, "file_name");
         System.out.println("applicationsSet=" + applicationsSet);
-        Assert.assertTrue(applicationsSet.contains(PresentUtils.CurrentJavaBinary()));
+        Assert.assertTrue(applicationsSet.contains(PresentUtils.currentJavaBinary()));
     }
 
     /** This gets the list of files in a directory, and their sizes.
@@ -979,17 +979,17 @@ public class SparqlTranslationTest {
         Assert.assertEquals(extractor.bindings, Sets.newHashSet("file_name", "file_size"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
-        Solution listRows = patternSparql.ExecuteToRows();
+        Solution listRows = patternSparql.executeToRows();
 
         Set<String> filesSetActual = new HashSet<>();
 
         // Check that the sizes are correct.
         for(Solution.Row row : listRows) {
-            String fileName = row.GetStringValue("file_name");
+            String fileName = row.getStringValue("file_name");
             filesSetActual.add(fileName);
             // This is not transformed into a XML value such as ""28400"^^<http://www.w3.org/2001/XMLSchema#long>"
             // because it is not transformed by the Sparql engine.
-            long fileSizeActual = row.GetLongValue("file_size");
+            long fileSizeActual = row.getLongValue("file_size");
             File f = new File(fileName);
             long fileSizeExpected = f.length();
             System.out.println("fileName=" + fileName);

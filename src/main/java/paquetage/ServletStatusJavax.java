@@ -82,7 +82,7 @@ public class ServletStatusJavax extends HttpServlet {
             FileWriter fileWriter = new FileWriter(fileName, true);
             BufferedWriter out = new BufferedWriter(fileWriter);
             out.write("Message:" + message + "\n");
-            String currentJavaBinary = PresentUtils.CurrentJavaBinary();
+            String currentJavaBinary = PresentUtils.currentJavaBinary();
             out.write("currentJavaBinary:" + currentJavaBinary + "\n");
             out.flush();
         } catch (IOException e) {

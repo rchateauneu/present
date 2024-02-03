@@ -30,7 +30,7 @@ class DummyClass {
 class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
     {
-        return queryData.CompatibleQuery(
+        return queryData.isCompatibleQuery(
                 "DummyClass",
                 Set.of("DummyKey"),
                 new HashSet<>());
@@ -45,17 +45,17 @@ class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
      */
     public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
-        String dummyValue = queryData.GetWhereValue("DummyKey").toValueString();
+        String dummyValue = queryData.getWhereValue("DummyKey").toValueString();
 
         // The key must be an integer.
         long intDummyValue = Long.parseLong(dummyValue);
 
         if(intDummyValue >= 0 || intDummyValue < DummyClass.MaxElements) {
             // This assumes that this dummy class is in the namespace "Root/Cimv2"
-            String pathDummy = ObjectPath.BuildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyValue));
+            String pathDummy = ObjectPath.buildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyValue));
             Solution.Row singleRow = new Solution.Row();
 
-            singleRow.PutNode(queryData.mainVariable, pathDummy);
+            singleRow.putNode(queryData.mainVariable, pathDummy);
 
             result.add(singleRow);
         }
@@ -67,7 +67,7 @@ class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
 class BaseSelecter_DummyClass_All extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
     {
-        return queryData.CompatibleQuery(
+        return queryData.isCompatibleQuery(
                 "DummyClass",
                 Set.of(),
                 Set.of("DummyKey"));
@@ -86,12 +86,12 @@ class BaseSelecter_DummyClass_All extends BaseSelecter {
         for(int key = 0; key < DummyClass.MaxElements; ++key) {
             String dummyKey = Long.toString(key);
             // This assumes that this dummy class is in the namespace "Root/Cimv2"
-            String pathDummy = ObjectPath.BuildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyKey));
+            String pathDummy = ObjectPath.buildCimv2PathWbem("DummyClass", Map.of("DummyKey", dummyKey));
             Solution.Row singleRow = new Solution.Row();
 
-            singleRow.PutNode(queryData.mainVariable, pathDummy);
-            String variableName = queryData.ColumnToVariable("DummyKey");
-            singleRow.PutString(variableName, dummyKey);
+            singleRow.putNode(queryData.mainVariable, pathDummy);
+            String variableName = queryData.columnToVariable("DummyKey");
+            singleRow.putString(variableName, dummyKey);
 
             result.add(singleRow);
         }
@@ -103,7 +103,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData)
     {
         // In this selecter, the column "Name" must be provided.
-        return queryData.CompatibleQuery(
+        return queryData.isCompatibleQuery(
                 "CIM_DataFile",
                 Set.of("Name"),
                 BaseGetter_CIM_DataFile_Name.columnsMap.keySet());
@@ -117,14 +117,14 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
      */
     public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
-        String fileName = queryData.GetWhereValue("Name").toValueString();
-        String pathFile = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
+        String fileName = queryData.getWhereValue("Name").toValueString();
+        String pathFile = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
         Solution.Row singleRow = new Solution.Row();
 
         BaseGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData.queryColumns, fileName);
 
         // Add the main variable anyway.
-        singleRow.PutNode(queryData.mainVariable, pathFile);
+        singleRow.putNode(queryData.mainVariable, pathFile);
 
         result.add(singleRow);
         return result;
@@ -133,30 +133,30 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
 
 class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter {
     public boolean MatchProvider(QueryData queryData) {
-        return queryData.CompatibleQuery(
+        return queryData.isCompatibleQuery(
                 "CIM_DirectoryContainsFile",
                 Set.of("PartComponent"),
                 Set.of("GroupComponent"));
     }
     public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
-        String valuePartComponent = queryData.GetWhereValue("PartComponent").toValueString();
-        Map<String, String> properties = ObjectPath.ParseWbemPath(valuePartComponent);
+        String valuePartComponent = queryData.getWhereValue("PartComponent").toValueString();
+        Map<String, String> properties = ObjectPath.parseWbemPath(valuePartComponent);
         String filePath = properties.get("Name");
         File file = new File(filePath);
         String parentPath = file.getAbsoluteFile().getParent();
-        String pathDirectory = ObjectPath.BuildCimv2PathWbem("Win32_Directory", Map.of("Name", parentPath));
+        String pathDirectory = ObjectPath.buildCimv2PathWbem("Win32_Directory", Map.of("Name", parentPath));
 
         Solution.Row singleRow = new Solution.Row();
-        String variableName = queryData.ColumnToVariable("GroupComponent");
-        singleRow.PutNode(variableName, pathDirectory);
+        String variableName = queryData.columnToVariable("GroupComponent");
+        singleRow.putNode(variableName, pathDirectory);
 
         // It must also the path of the associator row, even if it will probably not be used.
-        String pathAssoc = ObjectPath.BuildCimv2PathWbem(
+        String pathAssoc = ObjectPath.buildCimv2PathWbem(
                 "CIM_DirectoryContainsFile", Map.of(
                         "PartComponent", valuePartComponent,
                         "GroupComponent", pathDirectory));
-        singleRow.PutNode(queryData.mainVariable, pathAssoc);
+        singleRow.putNode(queryData.mainVariable, pathAssoc);
 
         result.add(singleRow);
         return result;
@@ -166,18 +166,18 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
 class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter {
     final static private Logger logger = Logger.getLogger(ObjectPattern.class);
     public boolean MatchProvider(QueryData queryData) {
-        return queryData.CompatibleQuery("CIM_DirectoryContainsFile",
+        return queryData.isCompatibleQuery("CIM_DirectoryContainsFile",
                 Set.of("GroupComponent"),
                 Set.of("PartComponent"));
     }
     public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
-        String valueGroupComponent = queryData.GetWhereValue("GroupComponent").toValueString();
-        Map<String, String> properties = ObjectPath.ParseWbemPath(valueGroupComponent);
+        String valueGroupComponent = queryData.getWhereValue("GroupComponent").toValueString();
+        Map<String, String> properties = ObjectPath.parseWbemPath(valueGroupComponent);
         String dirPath = properties.get("Name");
-        String pathGroupComponent = ObjectPath.BuildCimv2PathWbem("Win32_Directory", Map.of("Name", dirPath));
+        String pathGroupComponent = ObjectPath.buildCimv2PathWbem("Win32_Directory", Map.of("Name", dirPath));
 
-        String variableName = queryData.ColumnToVariable("PartComponent");
+        String variableName = queryData.columnToVariable("PartComponent");
 
         File path = new File(dirPath);
 
@@ -194,17 +194,17 @@ class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter
 
             Solution.Row singleRow = new Solution.Row();
 
-            String valuePartComponent = ObjectPath.BuildCimv2PathWbem(
+            String valuePartComponent = ObjectPath.buildCimv2PathWbem(
                     "CIM_DataFile", Map.of(
                             "Name", fileName));
-            singleRow.PutNode(variableName, valuePartComponent);
+            singleRow.putNode(variableName, valuePartComponent);
 
             // It must also the path of the associator row, even if it will probably not be used.
-            String pathAssoc = ObjectPath.BuildCimv2PathWbem(
+            String pathAssoc = ObjectPath.buildCimv2PathWbem(
                     "CIM_DirectoryContainsFile", Map.of(
                             "PartComponent", valuePartComponent,
                             "GroupComponent", pathGroupComponent));
-            singleRow.PutNode(queryData.mainVariable, pathAssoc);
+            singleRow.putNode(queryData.mainVariable, pathAssoc);
             result.add(singleRow);
         }
         return result;
@@ -218,37 +218,37 @@ class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
     static ProcessModules processModules = new ProcessModules();
 
     public boolean MatchProvider(QueryData queryData) {
-        return queryData.CompatibleQuery(
+        return queryData.isCompatibleQuery(
                 "CIM_ProcessExecutable",
                 Set.of("Antecedent"),
                 Set.of("Dependent"));
     }
     public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
-        String valueAntecedent = queryData.GetWhereValue("Antecedent").toValueString();
+        String valueAntecedent = queryData.getWhereValue("Antecedent").toValueString();
         if(valueAntecedent == null) {
             throw new RuntimeException("No Antecedent in:" + queryData.whereTests);
         }
-        Map<String, String> properties = ObjectPath.ParseWbemPath(valueAntecedent);
+        Map<String, String> properties = ObjectPath.parseWbemPath(valueAntecedent);
         String filePath = properties.get("Name");
         if(filePath == null) {
             throw new RuntimeException("filePath is null. properties.keySet()=" + properties.keySet()
                     + " Antecedent=" + valueAntecedent);
         }
-        List<String> listPids = processModules.GetFromModule(filePath);
+        List<String> listPids = processModules.getFromModule(filePath);
 
-        String variableName = queryData.ColumnToVariable("Dependent");
+        String variableName = queryData.columnToVariable("Dependent");
         for(String onePid : listPids) {
             Solution.Row singleRow = new Solution.Row();
-            String pathDependent = ObjectPath.BuildCimv2PathWbem("Win32_Process", Map.of("Handle", onePid));
-            singleRow.PutNode(variableName, pathDependent);
+            String pathDependent = ObjectPath.buildCimv2PathWbem("Win32_Process", Map.of("Handle", onePid));
+            singleRow.putNode(variableName, pathDependent);
 
             // It must also the path of the associator row, even if it will probably not be used.
-            String pathAssoc = ObjectPath.BuildCimv2PathWbem(
+            String pathAssoc = ObjectPath.buildCimv2PathWbem(
                     "CIM_ProcessExecutable", Map.of(
                             "Dependent", pathDependent,
                             "Antecedent", valueAntecedent));
-            singleRow.PutNode(queryData.mainVariable, pathAssoc);
+            singleRow.putNode(queryData.mainVariable, pathAssoc);
 
             result.add(singleRow);
         }
@@ -266,36 +266,36 @@ class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
 
     public boolean MatchProvider(QueryData queryData) {
         // "Antecedent" might bit be in the variables requiring a value.
-        return queryData.CompatibleQuery(
+        return queryData.isCompatibleQuery(
                 "CIM_ProcessExecutable",
                 Set.of("Dependent"),
                 Set.of("Antecedent"));
     }
     public Solution EffectiveSelect(QueryData queryData) {
         Solution result = new Solution();
-        String valueDependent = queryData.GetWhereValue("Dependent").toValueString();
-        Map<String, String> properties = ObjectPath.ParseWbemPath(valueDependent);
+        String valueDependent = queryData.getWhereValue("Dependent").toValueString();
+        Map<String, String> properties = ObjectPath.parseWbemPath(valueDependent);
         String pidStr = properties.get("Handle");
-        List<String> listModules = processModules.GetFromPid(pidStr);
+        List<String> listModules = processModules.getFromPid(pidStr);
 
         // Maybe, the value of "Antecedent" is not required by a variable.
         // However, it is calculated because it is needed to build the path of the associator.
-        String variableName = queryData.ColumnToVariable("Antecedent");
+        String variableName = queryData.columnToVariable("Antecedent");
         for(String oneFile : listModules) {
             Solution.Row singleRow = new Solution.Row();
-            String pathAntecedent = ObjectPath.BuildCimv2PathWbem("CIM_DataFile", Map.of("Name", oneFile));
+            String pathAntecedent = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", oneFile));
             if(variableName != null) {
-                singleRow.PutNode(variableName, pathAntecedent);
+                singleRow.putNode(variableName, pathAntecedent);
             } else {
                 logger.debug("No variable for Antecedent=" + pathAntecedent);
             }
 
             // It must also the path of the associator row, even if it will probably not be used.
-            String pathAssoc = ObjectPath.BuildCimv2PathWbem(
+            String pathAssoc = ObjectPath.buildCimv2PathWbem(
                     "CIM_ProcessExecutable", Map.of(
                             "Dependent", valueDependent,
                             "Antecedent", pathAntecedent));
-            singleRow.PutNode(queryData.mainVariable, pathAssoc);
+            singleRow.putNode(queryData.mainVariable, pathAssoc);
 
             result.add(singleRow);
         }
@@ -305,10 +305,10 @@ class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
 }
 
 abstract class BaseGetter {
-    public abstract boolean MatchGetter(QueryData queryData);
+    public abstract boolean matchGetter(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns);
+    public abstract Solution.Row getSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns);
 
     // TODO: Cost estimation.
 }
@@ -353,8 +353,8 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
     final static private Logger logger = Logger.getLogger(BaseGetter_CIM_DataFile_Name.class);
 
     // Get-WmiObject -Query 'select Drive from CIM_DataFile where Name="C:\\WINDOWS\\SYSTEM32\\ntdll.dll"'
-    public boolean MatchGetter(QueryData queryData) {
-        return queryData.ColumnsSubsetOf("CIM_DataFile", columnsMap.keySet());
+    public boolean matchGetter(QueryData queryData) {
+        return queryData.areColumnsSubsetOf("CIM_DataFile", columnsMap.keySet());
     }
 
     static ValueTypePair FileToDrive(String fileName) {
@@ -400,22 +400,22 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
                 throw new RuntimeException("No lambda for columnKey=" + columnKey + " fileName=" + fileName);
             }
             ValueTypePair variableValue = lambda.apply(fileName); // columnsMap.get)
-            singleRow.PutValueType(qCol.getValue(), variableValue);
+            singleRow.putValueType(qCol.getValue(), variableValue);
         }
     }
 
-    public Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns)
+    public Solution.Row getSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns)
     {
-        Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
+        Map<String, String> properties = ObjectPath.parseWbemPath(objectPath);
         String fileName = properties.get("Name");
         Solution.Row singleRow = new Solution.Row();
         FillRowFromQueryAndFilename(singleRow, queryColumns, fileName);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
-        String pathFile = ObjectPath.BuildCimv2PathWbem(
+        String pathFile = ObjectPath.buildCimv2PathWbem(
                 "CIM_DataFile", Map.of(
                         "Name", fileName));
-        singleRow.PutNode(mainVariable, pathFile);
+        singleRow.putNode(mainVariable, pathFile);
         return singleRow;
     }
 }
@@ -470,14 +470,14 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
         */
 
         /** This tells if this class can calculate the required columns. &*/
-        public boolean MatchGetter(QueryData queryData) {
-            return queryData.ColumnsSubsetOf("Win32_Process", columnsMap.keySet());
+        public boolean matchGetter(QueryData queryData) {
+            return queryData.areColumnsSubsetOf("Win32_Process", columnsMap.keySet());
         }
 
         static ProcessModules processModules = new ProcessModules();
 
         static ValueTypePair ProcessToName(String processId) {
-                List<String> listModules = processModules.GetFromPid(processId);
+                List<String> listModules = processModules.getFromPid(processId);
                 String executablePath = listModules.get(0);
                 Path p = Paths.get(executablePath);
                 String fileNameShort = p.getFileName().toString();
@@ -516,12 +516,12 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
                 }
                 ValueTypePair variableValue = lambda.apply(processId);
                 // These columns do not return a path, so a string is OK.
-                singleRow.PutValueType(qCol.getValue(), variableValue);
+                singleRow.putValueType(qCol.getValue(), variableValue);
             }
     }
 
-    public Solution.Row GetSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns) {
-        Map<String, String> properties = ObjectPath.ParseWbemPath(objectPath);
+    public Solution.Row getSingleObject(String objectPath, String mainVariable, Map<String, String> queryColumns) {
+        Map<String, String> properties = ObjectPath.parseWbemPath(objectPath);
         String processId = properties.get("Handle");
         if(processId == null) {
             throw new RuntimeException("Null pid for objectPath=" + objectPath);
@@ -530,10 +530,10 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
         FillRowFromQueryAndPid(singleRow, queryColumns, processId);
 
         // It must also the path of the variable of the object, because it may be used by an associator.
-        String pathFile = ObjectPath.BuildCimv2PathWbem(
+        String pathFile = ObjectPath.buildCimv2PathWbem(
                 "Win32_Process", Map.of(
                         "Handle", processId));
-        singleRow.PutNode(mainVariable, pathFile);
+        singleRow.putNode(mainVariable, pathFile);
         return singleRow;
     }
 }
@@ -652,8 +652,8 @@ public class GenericProvider {
         void Restore(Solution solution) {
             RestoreQueryData();
             if(selectPSComputerNameVariable != null) {
-                for(Solution.Row row: solution.Rows) {
-                    row.PutString(selectPSComputerNameVariable, PresentUtils.computerName);
+                for(Solution.Row row: solution.rowsList) {
+                    row.putString(selectPSComputerNameVariable, PresentUtils.computerName);
                 }
             }
         }
@@ -661,7 +661,7 @@ public class GenericProvider {
         void Restore(Solution.Row row) {
             RestoreQueryData();
             if(selectPSComputerNameVariable != null) {
-                row.PutString(selectPSComputerNameVariable, PresentUtils.computerName);
+                row.putString(selectPSComputerNameVariable, PresentUtils.computerName);
             }
         }
     }
@@ -731,7 +731,7 @@ public class GenericProvider {
         }
 
         for(BaseGetter getter: baseGetters) {
-            if (getter.MatchGetter(queryData)) {
+            if (getter.matchGetter(queryData)) {
                 logger.debug("Found provider" + getter.getClass().getName() + " for " + queryData);
                 return getter;
             }
@@ -751,15 +751,15 @@ public class GenericProvider {
      * @param returnRow
      * @return
      */
-    static boolean ExtraFiltering(QueryData queryData, Solution.Row returnRow)
+    static boolean extraFiltering(QueryData queryData, Solution.Row returnRow)
     {
         for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
             logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
-            String variableName = queryData.ColumnToVariable(oneWhere.predicate);
+            String variableName = queryData.columnToVariable(oneWhere.predicate);
 
             // Beware of performance waste if the same value is read twice from the object,
             // if the column is in the where  expression and also in the selected column.
-            ValueTypePair vtp = returnRow.GetValueType(variableName);
+            ValueTypePair vtp = returnRow.getValueType(variableName);
             if (oneWhere.variableName != null) {
                 throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context:" + oneWhere.variableName);
             }
@@ -777,19 +777,20 @@ public class GenericProvider {
      * @return
      * @throws Exception
      */
-    Solution.Row GetObjectFromPath(String objectPath, QueryData queryData)
+    Solution.Row getObjectFromPath(String objectPath, QueryData queryData)
     {
         if(queryData.classGetter == null) {
             throw new RuntimeException("Getter is not set");
         }
         PSComputerNameHandler handlerPSComputerNameHandler = new PSComputerNameHandler(queryData);
-        Solution.Row returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData.mainVariable, queryData.queryColumns);
+        Solution.Row returnRow = queryData.classGetter.getSingleObject(objectPath, queryData.mainVariable, queryData.queryColumns);
         if(returnRow == null) {
             logger.error("Cannot find objectPath=" + objectPath);
+            return null;
         }
         handlerPSComputerNameHandler.Restore(returnRow);
         // Now, apply the extra filtering if needed.
-        if(ExtraFiltering(queryData, returnRow)) {
+        if(extraFiltering(queryData, returnRow)) {
             return returnRow;
         } else {
             logger.debug("Filtered row");

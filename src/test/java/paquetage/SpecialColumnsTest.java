@@ -33,8 +33,8 @@ public class SpecialColumnsTest {
                         ?process cimv2:Win32_Process.Handle ?handle .
                     }
                 """, PresentUtils.computerName);
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setHandles = listRows.StringValuesSet("handle");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setHandles = listRows.stringValuesSet("handle");
         Assert.assertTrue(setHandles.contains(currentPidStr));
     }
 
@@ -50,8 +50,8 @@ public class SpecialColumnsTest {
                         ?process cimv2:Win32_Process.PSComputerName ?machine .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setMachines = listRows.StringValuesSet("machine");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setMachines = listRows.stringValuesSet("machine");
         Assert.assertEquals(Set.of(PresentUtils.computerName), setMachines);
     }
 
@@ -69,7 +69,7 @@ public class SpecialColumnsTest {
                         ?process cimv2:Win32_Process.PSComputerName "AnyOtherMachine" .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
     }
 
     /*
@@ -111,8 +111,8 @@ public class SpecialColumnsTest {
                         ?process cimv2:Win32_Process.GetOwner ?owner .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setMachines = listRows.StringValuesSet("machine");
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setMachines = listRows.stringValuesSet("machine");
         Assert.assertEquals(Set.of(PresentUtils.computerName), setMachines);
     }
 

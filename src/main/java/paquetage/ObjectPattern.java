@@ -84,8 +84,8 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
     public static class PredicateObjectPair{
         public String predicateVariableName;
         public String variableName; // Where to store the result.
-        public ValueTypePair ObjectContent;
-        public String ShortPredicate; // Used to construct the WQL query. The prefix "http:..." is chopped.
+        public ValueTypePair objectContent;
+        public String shortPredicate; // Used to construct the WQL query. The prefix "http:..." is chopped.
 
         PredicateObjectPair(String varPredicate, String shortPredicate, String variable, ValueTypePair objectContent) {
             if(!(variable == null ^ objectContent == null)) {
@@ -105,33 +105,33 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             logger.debug("varPredicate=" + varPredicate + " variable=" + variable + " shortPredicate=" + shortPredicate);
             predicateVariableName = varPredicate;
             variableName = variable;
-            ObjectContent = objectContent;
-            ShortPredicate = shortPredicate;
+            this.objectContent = objectContent;
+            this.shortPredicate = shortPredicate;
         }
     } // PredicateObjectPair
 
-    private String RawClassName;
-    public String VariableName; // Contains the subject if it is a variable, otherwise null.
-    public String ConstantSubject; // Null if the subject is a variable.
+    private String rawClassName;
+    public String variableName; // Contains the subject if it is a variable, otherwise null.
+    public String constantSubject; // Null if the subject is a variable.
 
-    String CurrentNamespace = null;
-    String ClassName = null;
+    String currentNamespace = null;
+    String className = null;
 
     /* The object might be the instance of a normal WMI class such as "CIM_Process" or "CIM_DataFile".
     This is the normal situation. But it could also be a WMI class or a WMI predicate : this is used
     for queries on the ontology itself.
     */
-    Boolean IsWMIObject = true;
+    Boolean isWMIObject = true;
 
-    public ArrayList<PredicateObjectPair> Members = new ArrayList<>();
+    public ArrayList<PredicateObjectPair> membersList = new ArrayList<>();
 
     // Debugging and testing purpose only.
     public String toString() {
-        return "className=" + ClassName + " VariableName=" + VariableName;
+        return "className=" + className + " VariableName=" + variableName;
     }
 
     /* This parses the predicates and extract the namespace, and optionally the class name of the subject. */
-    private void DetermineNamespaceClassnameFromPatterns(List<StatementPattern> visitorPatternsRaw) {
+    private void determineNamespaceClassnameFromPatterns(List<StatementPattern> visitorPatternsRaw) {
         // This will always be null if the properties are not prefixed with the class name.
         // This is OK of the type is given with a triple with rdf:type as predicate.
         String deducedClassName = null;
@@ -151,15 +151,15 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 Var object = myPattern.getObjectVar();
                 Value objectValue = object.getValue();
                 if(objectValue != null) {
-                    RawClassName = objectValue.stringValue();
+                    rawClassName = objectValue.stringValue();
                 } else {
                     logger.warn("Variable type. Not implemenetd yet");
-                    RawClassName = null;
+                    rawClassName = null;
                 }
                 continue;
             }
 
-            WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.SplitIRI(predicateStr);
+            WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.splitIRI(predicateStr);
             if(namespacedPredicate == null) {
                 logger.debug("Predicate:" + predicateStr + "cannot be used for WMI");
                 continue;
@@ -168,11 +168,11 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             String shortPredicate = namespacedPredicate.Token;
             logger.debug("shortPredicate=" + shortPredicate);
             if(namespacedPredicate.nameSpace != null) {
-                if (CurrentNamespace == null) {
-                    CurrentNamespace = namespacedPredicate.nameSpace;
+                if (currentNamespace == null) {
+                    currentNamespace = namespacedPredicate.nameSpace;
                 } else {
-                    if (!CurrentNamespace.equals(namespacedPredicate.nameSpace)) {
-                        throw new RuntimeException("Different namespaces:" + CurrentNamespace
+                    if (!currentNamespace.equals(namespacedPredicate.nameSpace)) {
+                        throw new RuntimeException("Different namespaces:" + currentNamespace
                                 + "!=" + namespacedPredicate.nameSpace
                                 + ". predicateStr=" + predicateStr
                                 + ". shortPredicate=" + shortPredicate);
@@ -200,58 +200,58 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             }
         } // for on triples.
 
-        if(RawClassName == null) {
+        if(rawClassName == null) {
             // Maybe the class is not given.
             if(deducedClassName == null) {
                 // This is acceptable because it might work in the further Sparql execution.
                 logger.debug("Class name is null and cannot be deduced.");
-                ClassName = null;
+                className = null;
             } else {
                 logger.debug("Short class name deduced to " + deducedClassName);
-                ClassName = deducedClassName;
+                className = deducedClassName;
             }
         }  else {
             // If the class is explicitly given, it must be correct.
-            if (!RawClassName.contains("#")) {
-                throw new RuntimeException("Invalid raw class name:" + RawClassName);
+            if (!rawClassName.contains("#")) {
+                throw new RuntimeException("Invalid raw class name:" + rawClassName);
             }
             // Example: className = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_Process"
-            WmiOntology.NamespaceTokenPair pairNamespaceToken = WmiOntology.SplitIRI(RawClassName);
+            WmiOntology.NamespaceTokenPair pairNamespaceToken = WmiOntology.splitIRI(rawClassName);
             if(pairNamespaceToken == null) {
-                logger.debug("Not a WMI class : RawClassName=" + RawClassName);
-                CurrentNamespace = null;
-                ClassName = null;
+                logger.debug("Not a WMI class : RawClassName=" + rawClassName);
+                currentNamespace = null;
+                className = null;
             } else {
-                ClassName = pairNamespaceToken.Token;
+                className = pairNamespaceToken.Token;
                 if (deducedClassName != null) {
                     // If the class is explicitly given, and also is the prefix of some attributes.
-                    if (!ClassName.equals(deducedClassName)) {
-                        throw new RuntimeException("Different short class=" + ClassName + " and deduced=" + deducedClassName);
+                    if (!className.equals(deducedClassName)) {
+                        throw new RuntimeException("Different short class=" + className + " and deduced=" + deducedClassName);
                     }
                 }
-                if (CurrentNamespace != null) {
-                    if (!CurrentNamespace.equals(pairNamespaceToken.nameSpace)) {
-                        throw new RuntimeException("Different namespaces:" + CurrentNamespace + "!=" + pairNamespaceToken.nameSpace);
+                if (currentNamespace != null) {
+                    if (!currentNamespace.equals(pairNamespaceToken.nameSpace)) {
+                        throw new RuntimeException("Different namespaces:" + currentNamespace + "!=" + pairNamespaceToken.nameSpace);
                     }
                 } else {
-                    CurrentNamespace = pairNamespaceToken.nameSpace;
+                    currentNamespace = pairNamespaceToken.nameSpace;
                 }
             }
         }
 
-        if(CurrentNamespace != null) {
+        if(currentNamespace != null) {
             // A class name is need to run WQL queries, and also its WMI namespace.
-            WmiProvider.CheckValidNamespace(CurrentNamespace);
+            WmiProvider.CheckValidNamespace(currentNamespace);
         } else {
             // Maybe this is not a WMI-style IRI, so there is no WMI namespace.
-            logger.debug("The namespace could not be found in:" + ClassName);
+            logger.debug("The namespace could not be found in:" + className);
         }
-        if(ClassName == null && CurrentNamespace == null) {
-            logger.warn("ObjectPattern:" + VariableName + " CANNOT be used for WMI: Class and namespace are unknown.");
+        if(className == null && currentNamespace == null) {
+            logger.warn("ObjectPattern:" + variableName + " CANNOT be used for WMI: Class and namespace are unknown.");
         }
     }
 
-    static private void CheckVariableNameSyntax(String variableName) {
+    static private void checkVariableNameSyntax(String variableName) {
         boolean hasNonAlpha = variableName.matches("^.*[^a-zA-Z0-9_].*$");
         if(hasNonAlpha) {
             throw new RuntimeException("Non-alphanumeric variable name:" + variableName);
@@ -259,19 +259,19 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
     }
 
     public int compareTo(ObjectPattern other) {
-        if(this.VariableName == null) {
-            if(other.VariableName == null) {
-                return this.ConstantSubject.compareTo(other.ConstantSubject);
+        if(this.variableName == null) {
+            if(other.variableName == null) {
+                return this.constantSubject.compareTo(other.constantSubject);
             }
             else {
                 return -1;
             }
         } else {
-            if(other.VariableName == null) {
+            if(other.variableName == null) {
                 return 1;
             }
             else {
-                return this.VariableName.compareTo(other.VariableName);
+                return this.variableName.compareTo(other.variableName);
             }
         }
     }
@@ -280,7 +280,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
         // patternsArray.sort(Comparator.comparing(s -> s.VariableName));
         Collections.sort(patternsArray);
         for(ObjectPattern obj:patternsArray) {
-            logger.debug("obj.VariableName=" + obj.VariableName + " obj.ConstantSubject=" + obj.ConstantSubject);
+            logger.debug("obj.VariableName=" + obj.variableName + " obj.ConstantSubject=" + obj.constantSubject);
         }
     }
 
@@ -289,11 +289,11 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
         // This is OK of the type is given with a triple with rdf:type as predicate.
         // FIXME: It would be possible to deduce the type of the subject,
         // FIXME: if it is used as an object in another pattern.
-        DetermineNamespaceClassnameFromPatterns(visitorPatternsRaw);
+        determineNamespaceClassnameFromPatterns(visitorPatternsRaw);
 
         // If the subject is constant, the namespace and the class can be extracted.
         if(isConstant) {
-            if(ClassName == null || CurrentNamespace == null) {
+            if(className == null || currentNamespace == null) {
                 // These could be deduced from a predicate, possibly.
                 logger.debug("Class or namespace could not be deduced yet");
             }
@@ -307,57 +307,57 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             // FIXME: The namespace is needed to extract the wbem path from the IRI.
 
             // This IRI can be a RDF/RDFS one, a WBEM class or predicate, or a WBEM instance.
-            WmiOntology.NamespaceTokenPair subjectNamespacedPredicate = WmiOntology.SplitIRI(subjectName);
+            WmiOntology.NamespaceTokenPair subjectNamespacedPredicate = WmiOntology.splitIRI(subjectName);
             logger.debug("Extracted subjectNamespacedPredicate.nameSpace=" + subjectNamespacedPredicate.nameSpace
                 + " subjectNamespacedPredicate.Token=" + subjectNamespacedPredicate.Token);
             if (subjectNamespacedPredicate == null) {
                 throw new RuntimeException("Constant subject:" + subjectName + " cannot be used for WMI");
             }
-            if (CurrentNamespace == null) {
-                CurrentNamespace = subjectNamespacedPredicate.nameSpace;
-                logger.debug("From constant subject CurrentNamespace=" + CurrentNamespace);
+            if (currentNamespace == null) {
+                currentNamespace = subjectNamespacedPredicate.nameSpace;
+                logger.debug("From constant subject CurrentNamespace=" + currentNamespace);
             } else {
-                if(!subjectNamespacedPredicate.nameSpace.equals(CurrentNamespace)) {
+                if(!subjectNamespacedPredicate.nameSpace.equals(currentNamespace)) {
                     throw new RuntimeException("Different namespace than the constant subject one:"
-                        + subjectNamespacedPredicate.nameSpace + " != " + CurrentNamespace);
+                        + subjectNamespacedPredicate.nameSpace + " != " + currentNamespace);
                 }
             }
-            if(ClassName == null) {
-                ClassName = subjectNamespacedPredicate.Token;
-                logger.debug("From constant subject ClassName=" + ClassName);
+            if(className == null) {
+                className = subjectNamespacedPredicate.Token;
+                logger.debug("From constant subject ClassName=" + className);
                 switch(subjectNamespacedPredicate.TokenType) {
                     case INSTANCE_IRI:
                         // The subject is the IRI of an instance with a WMI class name.
-                        WmiProvider.CheckValidClassname(ClassName);
-                        IsWMIObject = true;
+                        WmiProvider.CheckValidClassname(className);
+                        isWMIObject = true;
                         break;
                     case CLASS_IRI:
                         // The subject is a WMI class.
-                        throw new RuntimeException("Class as subject not implemented yet:" + ClassName);
+                        throw new RuntimeException("Class as subject not implemented yet:" + className);
                         //WmiProvider.CheckValidClassname(ClassName);
                         //IsWMIObject = false;
                         //break;
                     case PREDICATE_IRI:
                         // The subject is a WMI predicate, such as "WMI_Process.Handle".
-                        WmiProvider.CheckValidPredicate(ClassName);
-                        IsWMIObject = false;
+                        WmiProvider.CheckValidPredicate(className);
+                        isWMIObject = false;
                         break;
                     default:
                         throw new RuntimeException("Invalid TokenType:" + subjectNamespacedPredicate.TokenType);
                 }
             } else {
-                if(!subjectNamespacedPredicate.Token.equals(ClassName)) {
+                if(!subjectNamespacedPredicate.Token.equals(className)) {
                     throw new RuntimeException("Different class than the constant subject one:"
-                            + subjectNamespacedPredicate.Token + " != " + ClassName);
+                            + subjectNamespacedPredicate.Token + " != " + className);
                 }
             }
 
-            VariableName = null;
-            ConstantSubject = WmiOntology.IriToWbemPath(CurrentNamespace, subjectName);
+            variableName = null;
+            constantSubject = WmiOntology.IriToWbemPath(currentNamespace, subjectName);
         } else {
-            CheckVariableNameSyntax(subjectName);
-            VariableName = subjectName;
-            ConstantSubject = null;
+            checkVariableNameSyntax(subjectName);
+            variableName = subjectName;
+            constantSubject = null;
         }
 
         /*
@@ -395,14 +395,14 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 // RDFS.LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 
                 // ClassName might not be known, for example if the subject is a class or a predicate.
-                String predicateRDFSToWMI = ClassName == null ? null : RDFSToWMI(ClassName, predicateStr);
+                String predicateRDFSToWMI = className == null ? null : RDFSToWMI(className, predicateStr);
                 if (predicateRDFSToWMI != null) {
                     logger.debug("RDFS column:" + predicateStr);
                     shortPredicate = predicateRDFSToWMI;
                     logger.debug("RDFS shortPredicate=" + shortPredicate);
                     //continue;
                 } else {
-                    WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.SplitIRI(predicateStr);
+                    WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.splitIRI(predicateStr);
                     if (namespacedPredicate == null) {
                         logger.debug("Predicate:" + predicateStr + " cannot be used for WMI");
                         continue;
@@ -412,11 +412,11 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     shortPredicate = namespacedPredicate.Token;
                     logger.debug("shortPredicate=" + shortPredicate);
                     if (namespacedPredicate.nameSpace != null) {
-                        if (CurrentNamespace == null) {
-                            CurrentNamespace = namespacedPredicate.nameSpace;
+                        if (currentNamespace == null) {
+                            currentNamespace = namespacedPredicate.nameSpace;
                         } else {
-                            if (!CurrentNamespace.equals(namespacedPredicate.nameSpace)) {
-                                throw new RuntimeException("Different namespaces:" + CurrentNamespace
+                            if (!currentNamespace.equals(namespacedPredicate.nameSpace)) {
+                                throw new RuntimeException("Different namespaces:" + currentNamespace
                                         + "!=" + namespacedPredicate.nameSpace
                                         + ". predicateStr=" + predicateStr
                                         + ". shortPredicate=" + shortPredicate);
@@ -440,7 +440,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 shortPredicate = null;
             }
 
-            if(CurrentNamespace == null) {
+            if(currentNamespace == null) {
                 // If the namespace cannot be deduced from the subject and the predicate, cannot do anything.
                 logger.debug("Namespace cannot be deduced from the subject and the predicates");
                 return;
@@ -448,11 +448,10 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
 
             if(predicateStr == null) {
                 assert shortPredicate == null;
-                logger.debug("Getting classes from " + CurrentNamespace);
+                logger.debug("Getting classes from " + currentNamespace);
                 if (object.isConstant()) {
-                    throw new RuntimeException("Cannot handle variable predicate and constant object for ClassName=" + ClassName);
+                    throw new RuntimeException("Cannot handle variable predicate and constant object for ClassName=" + className);
                 } else {
-                    predicateStr = "http:*"; //  This is a horrible temporary hack.
                     shortPredicate = ALL_PREDICATES;
 
                     String predicateVariableName = predicate.getName();
@@ -464,13 +463,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     String variableName = object.getName();
                     PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicateVariableName, shortPredicate, variableName, null);
                     // FIXME: What happens if the same predicate appears several times ?
-                    Members.add(predicateObjectPair);
-
-                    /*
-                    Non: Il faut une row par predicat, avec la valeur mais aussi la valeur du predicat
-                    */
-
-                    if(2 != 1+1) throw new RuntimeException("Cannot handle variable predicate for ClassName=" + ClassName);
+                    membersList.add(predicateObjectPair);
                 }
             }
             // TODO: Make this comparison faster than a string comparison.
@@ -492,8 +485,8 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
 
                     /* Sets the data type expected by WBEM, if this is a constant passed from the Sparql query.
                     This is used for runtime validation, and overall to convert RDF IRIs to WBEM paths. */
-                    if(CurrentNamespace != null) {
-                        boolean isIri = WmiOntology.isWbemPath(CurrentNamespace, ClassName, shortPredicate);
+                    if(currentNamespace != null) {
+                        boolean isIri = WmiOntology.isWbemPath(currentNamespace, className, shortPredicate);
                         if (isIri) {
                             // This is a constant and should be an IRI surrounded by <> brackets in the Sparql query.
                             if (dataType == ValueTypePair.ValueType.NODE_TYPE) {
@@ -501,7 +494,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                                     // Double safety check.
                                     throw new RuntimeException("Inconsistent node type:" + strValue);
                                 }
-                                strValue = WmiOntology.IriToWbemPath(CurrentNamespace, strValue);
+                                strValue = WmiOntology.IriToWbemPath(currentNamespace, strValue);
                             } else {
                                 throw new RuntimeException("Value should not be an IRI:" + strValue);
                             }
@@ -513,7 +506,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     ValueTypePair vtp = new ValueTypePair(strValue, dataType);
                     PredicateObjectPair predicateObjectPair = new PredicateObjectPair(null, shortPredicate, null, vtp);
                     // FIXME: What happens if the same predicate appears several times ?
-                    Members.add(predicateObjectPair);
+                    membersList.add(predicateObjectPair);
                 } else {
                     // If it is a variable.
                     if (object.isAnonymous()) {
@@ -522,7 +515,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     String variableName = object.getName();
                     PredicateObjectPair predicateObjectPair = new PredicateObjectPair(null, shortPredicate, variableName, null);
                     // FIXME: What happens if the same predicate appears several times ?
-                    Members.add(predicateObjectPair);
+                    membersList.add(predicateObjectPair);
                 }
             }
         } // for on triples.
@@ -567,7 +560,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
      * @param visitorPatternsRaw
      * @return
      */
-    public static List<ObjectPattern> PartitionBySubject(List<StatementPattern> visitorPatternsRaw) {
+    public static List<ObjectPattern> partitionBySubject(List<StatementPattern> visitorPatternsRaw) {
         List<ObjectPattern> patternsMap = new ArrayList<>();
 
         Map<Pair<String, Boolean>, List<StatementPattern>> splitSubject = SplitBySubject(visitorPatternsRaw);
@@ -579,16 +572,15 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
             logger.debug("subjectName=" + subjectName + " isConstant=" + isConstant);
             ObjectPattern refPattern = new ObjectPattern(subjectName, isConstant, entry.getValue());
 
-            if (refPattern.CurrentNamespace == null) {
+            if (refPattern.currentNamespace == null) {
                 logger.debug("Removing key:" + entry.getKey());
-            } else if(refPattern.IsWMIObject){
+            } else if(refPattern.isWMIObject){
                 patternsMap.add(refPattern);
             } else {
-                logger.debug("Subject is not a WMI instance:" + refPattern.ClassName);
+                logger.debug("Subject is not a WMI instance:" + refPattern.className);
             }
         }
         return patternsMap;
     } // PartitionBySubject
-
 
 }

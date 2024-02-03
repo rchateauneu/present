@@ -65,8 +65,8 @@ public class RepositoryWrapperOntologyTest {
                         ?class wmi:NamespaceDefinition ?namespace .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
-        Set<String> setNamespaces = listRows.stream().map(tuple -> tuple.GetAsLiteral("namespace")).collect(Collectors.toSet());
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        Set<String> setNamespaces = listRows.stream().map(tuple -> tuple.getAsLiteral("namespace")).collect(Collectors.toSet());
         System.out.println("setNamespaces=" + setNamespaces);
         Assert.assertTrue(setNamespaces.contains("\"ROOT\\RSOP\""));
         Assert.assertTrue(setNamespaces.contains("\"ROOT\\StandardCimv2\""));
@@ -151,7 +151,7 @@ public class RepositoryWrapperOntologyTest {
                         ?class ?predicate ?value .
                     }
                 """;
-        RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertTrue(false);
     }
 }
