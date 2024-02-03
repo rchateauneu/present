@@ -160,8 +160,17 @@ public class Solution implements Iterable<Solution.Row> {
                                 throw new RuntimeException("Null value for subjectName=" + subjectName);
                             }
 
+                            logger.debug("subjectName=" + subjectName + " objectName=" + objectName);
+                            logger.debug("predicate=" + predicate);
+
                             if (subjectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
                                 resourceSubject = row.AsIRI(subjectName);
+                                logger.debug("resourceSubject=" + resourceSubject);
+                                String valueObject = row.GetStringValue(objectName);
+                                logger.debug("valueObject=" + valueObject);
+
+                                resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
+                                logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
                             } else {
                                 Value literalSubject = subjectWmiValue.ValueTypeToLiteral();
                                 /*
@@ -176,19 +185,21 @@ public class Solution implements Iterable<Solution.Row> {
                                 Utilisons un predicat qui est un IRI.
 
                                 Probleme: Ca n'existe que dans les associators !
+
+                                The label could not be calculated.
                                 */
-                                resourceSubject = Values.iri("SyntheticNode:" + literalSubject.stringValue());
+                                resourceSubject = null;
+                                resourceObject = null;
+                                logger.error("Subject is not an IRI:" + subjectName + "=" + literalSubject.stringValue()
+                                + " objectName=" + objectName);
+
+                                // row = {
+                                // date_value=DEBUG_ONLY:20240203183606.916356+000,
+                                // PseudoVariableForConstantSubject_0=DEBUG_ONLY:\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="16428"
+                                //
+                                // date_value n'est pas un IRI et ne pourra pas etre selectionne.
+                                // }
                             }
-
-                            logger.debug("subjectName=" + subjectName + " objectName=" + objectName);
-                            logger.debug("predicate=" + predicate);
-                            logger.debug("resourceSubject=" + resourceSubject);
-
-                            String valueObject = row.GetStringValue(objectName);
-                            logger.debug("valueObject=" + valueObject);
-
-                            resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
-                            logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
                         } else {
                             resourceSubject = row.AsIRI(subjectName);
                             ValueTypePair objectWmiValue = row.GetValueType(objectName);
@@ -203,11 +214,13 @@ public class Solution implements Iterable<Solution.Row> {
                             }
                         }
 
-                        IRI predicateIri = DereferencePredicate(predicate, row);
-                        generatedTriples.add(factory.createStatement(
-                                resourceSubject,
-                                predicateIri,
-                                resourceObject));
+                        if(resourceSubject != null) {
+                            IRI predicateIri = DereferencePredicate(predicate, row);
+                            generatedTriples.add(factory.createStatement(
+                                    resourceSubject,
+                                    predicateIri,
+                                    resourceObject));
+                        }
                     }
                 } else {
                     logger.debug("Predicate must be constant with variable subject and variable object:"

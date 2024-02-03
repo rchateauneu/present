@@ -310,7 +310,8 @@ uri_CIM_ProcessExecutable_Dependent
         System.out.println("sparqlQuery=" + sparqlQuery);
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
-        Assert.assertTrue(listRows.size() > 0);
+        // A literal value has no label.
+        Assert.assertEquals(0, listRows.size());
     }
 
     /*
@@ -340,7 +341,8 @@ uri_CIM_ProcessExecutable_Dependent
         System.out.println("sparqlQuery=" + sparqlQuery);
         RdfSolution listRows = repositoryWrapper.ExecuteQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
-        Assert.assertTrue(listRows.size() > 0);
+        // Cannot find an object because a literal value has no label.
+        Assert.assertEquals(0, listRows.size());
     }
 
     @Test

@@ -746,7 +746,7 @@ public class GenericProvider {
     }
 
     /** Extra filtering if "where" test when getting an object.
-     * It chcks the value and if it does not match, then no object is found.
+     * It checks the value and if it does not match, then no object is found.
      * @param queryData
      * @param returnRow
      * @return
@@ -784,6 +784,9 @@ public class GenericProvider {
         }
         PSComputerNameHandler handlerPSComputerNameHandler = new PSComputerNameHandler(queryData);
         Solution.Row returnRow = queryData.classGetter.GetSingleObject(objectPath, queryData.mainVariable, queryData.queryColumns);
+        if(returnRow == null) {
+            logger.error("Cannot find objectPath=" + objectPath);
+        }
         handlerPSComputerNameHandler.Restore(returnRow);
         // Now, apply the extra filtering if needed.
         if(ExtraFiltering(queryData, returnRow)) {
