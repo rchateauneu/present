@@ -1,5 +1,6 @@
 package paquetage;
 
+import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
@@ -10,6 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RdfSolution implements Iterable<RdfSolution.Tuple> {
+    final static private Logger logger = Logger.getLogger(WmiSelecter.class);
+
     /** This is used only for testing. It returns the content of a labelled column as a vector of longs.
     This can obviously work only if the type of each element is convertible to an integer.
     */
@@ -26,7 +29,7 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
      * @return
      */
     Set<String> stringValuesSet(String variable) {
-        return stream().map(tuple-> PresentUtils.trimQuotes(tuple.getAsLiteral(variable))).collect(Collectors.toSet());
+        return stream().map(tuple-> tuple.getAsLiteral(variable)).collect(Collectors.toSet());
     }
 
     /** Nodes are not enclosed in double-quotes. */
@@ -119,9 +122,17 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
         public Tuple(BindingSet bindingSet) throws Exception {
             for(Binding binding : bindingSet) {
                 Value bindingValue = binding.getValue();
-                // For example '"2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
-                // It must be cleaned to be used in Wikidata Sparrql GUI, for example.
-                String valueString = bindingValue.toString();
+                // If the value is a literal, it is formatted by Value.toString as in XML,
+                // for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>'
+                // or '"2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
+                // String valueString = bindingValue.toString() wraps the value. For example:
+                // '"2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
+                // And a string is wrapped within quotes.
+                // It should be cleaned to be used in Wikidata Sparql GUI, for example.
+
+                // Beware: toString() wraps the value between quotes.
+                String valueString = bindingValue.stringValue();
+                logger.error("bindingValue=" + bindingValue + " valueString=" + valueString);
 
                 if(bindingValue.isTriple()) {
                     throw new Exception("Value should not be a Triple:" + valueString);
@@ -136,9 +147,6 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
                         throw new Exception("Value should not be IRI or literal:" + valueString);
                     }
                 }
-                // TODO: If the value is a literal, it is formatted as in XML,
-                // TODO: for example '"0"^^<http://www.w3.org/2001/XMLSchema#long>'
-                // TODO: or '"2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
                 // FIXME: Where is it created ?
                 addKeyValue(binding.getName(), isIri, valueString);
             }

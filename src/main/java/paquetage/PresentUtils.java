@@ -183,17 +183,6 @@ public class PresentUtils {
         return url.startsWith("http://") || url.startsWith("https://");
     }
 
-    /* this trims the first and last characters of a string, and is used when Sparql returns strings
-    between quotes.
-     */
-    static public String trimQuotes(String inString) {
-        int lastOffset = inString.length() - 1;
-        if(inString.charAt(0) != '"' || inString.charAt(lastOffset) != '"') {
-            throw new RuntimeException("Invalid quoted string:" + inString);
-        }
-        return inString.substring(1, lastOffset);
-    }
-
     static private Pattern patternVariableName = Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9]*$", Pattern.CASE_INSENSITIVE);
 
     static boolean validSparqlVariable(String variableName) {
@@ -205,6 +194,10 @@ public class PresentUtils {
     }
 
     static public String internationalizeUnquoted(String inputString) {
+        // Sanity check.
+        if(inputString.endsWith("@en") || inputString.endsWith("@en\"")) {
+            throw new RuntimeException("Inconsistency when internationalizing:" + inputString);
+        }
         if((inputString.length() > 0) && (inputString.charAt(0) == '"') ) {
             return inputString + "@en";
         } else {

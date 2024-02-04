@@ -1,11 +1,14 @@
 package paquetage;
 
+import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Formatter;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,8 +33,16 @@ public class WmiOntologyTest {
     private static Set<String> selectColumnFromOntology(RepositoryConnection repositoryConnection, String sparqlQuery, String columnName){
         System.out.println("Repository size before=" + repositoryConnection.size());
         TupleQuery tupleQuery = repositoryConnection.prepareTupleQuery(sparqlQuery);
+        TupleQueryResult queryResult = tupleQuery.evaluate();
+        //String queryResult = tupleQuery.evaluate();
+        List<BindingSet> ll = queryResult.stream().collect(Collectors.toList());
+        System.out.println("ll.size()=" + ll.size());
+        for(BindingSet bs : ll) {
+            System.out.println("bs=" + bs);
+        }
 
-        Set<String> variablesSet = tupleQuery.evaluate().stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
+        // Set<String> variablesSet = queryResult.stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
+        Set<String> variablesSet = ll.stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
 
         System.out.println("Repository size after=" + repositoryConnection.size());
         return variablesSet;
@@ -331,9 +342,75 @@ public class WmiOntologyTest {
         Set<String> descriptionsSet = selectColumnCIMV2(queryString, "my_property_description");
         System.out.println("descriptionsSet=" + descriptionsSet.toString());
         Assert.assertEquals(1, descriptionsSet.size());
+        String firstDescription = descriptionsSet.stream().findFirst().orElse("xyz");
+        /*
+JSON:
+"propertyDescription":"A string used to identify the process. A process ID is a kind of process handle."
+RDF:
+<comment xmlns="http://www.w3.org/2000/01/rdf-schema#">"A string used to identify the process.
+A process ID is a kind of process handle."@en</comment>
+
+descriptionsSet=[""A string used to identify the process. A process ID is a kind of process handle."@en"]
+
+On dirait vraiment que c'est la lecture de Sparql qui ajoute des quotes.
+Mais pourquoi aux labels et pas aux autres chaines ?
+         */
+        System.out.println("firstDescription=" + firstDescription);
         Assert.assertEquals(
                 PresentUtils.internationalizeQuoted("\"A string used to identify the process. A process ID is a kind of process handle.\""),
-                descriptionsSet.stream().findFirst().orElse("xyz"));
+                firstDescription);
+    }
+
+    @Test
+    public void CIMV2_Win32_Process_Handle_Label() {
+        String queryString = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?my_property_label
+                    where {
+                        cimv2:Win32_Process.Handle rdfs:label ?my_property_label .
+                        cimv2:Win32_Process.Handle rdfs:domain cimv2:Win32_Process .
+                    }
+                """;
+        Set<String> labelSet = selectColumnCIMV2(queryString, "my_property_label");
+        System.out.println("labelSet=" + labelSet.toString());
+        Assert.assertEquals(1, labelSet.size());
+        String firstLabel = labelSet.stream().findFirst().orElse("xyz");
+        /*
+JSON:
+"propertyDescription":"A string used to identify the process. A process ID is a kind of process handle."
+RDF:
+<comment xmlns="http://www.w3.org/2000/01/rdf-schema#">"A string used to identify the process.
+A process ID is a kind of process handle."@en</comment>
+
+labelSet=[""A string used to identify the process. A process ID is a kind of process handle."@en"]
+
+On dirait vraiment que c'est la lecture de Sparql qui ajoute des quotes.
+Mais pourquoi aux labels et pas aux autres chaines ?
+
+bs=[my_property_label=""Win32_Process.Handle"@en"]
+Repository size after=171779
+labelSet=[""Win32_Process.Handle"@en"]
+firstLabel=""Win32_Process.Handle"@en"
+expectedLabel=""Win32_Process.Handle"@enEFGH"
+
+org.junit.ComparisonFailure:
+Expected :""Win32_Process.Handle"@enEFGH"
+Actual   :""Win32_Process.Handle"@en"
+
+Soit le contenu est foireux, soit les quotes sont ajoutees a la selection.
+En effet, le code de Present n'est quasiment pas utilise.
+         */
+
+        //Verifier ceci avec le select d'un label calcule et pas charge de la base statique.
+        // Oui, aussi : testSPARQL_ENTITES_INCOMING_NoFilter
+
+        System.out.println("firstLabel=" + firstLabel);
+        String expectedLabel = PresentUtils.internationalizeQuoted("Win32_Process.Handle");
+        System.out.println("expectedLabel=" + expectedLabel);
+        Assert.assertEquals(
+                expectedLabel,
+                firstLabel);
     }
 
     /** This checks the presence of Description for property Win32_Process.Handle. */
@@ -351,10 +428,9 @@ public class WmiOntologyTest {
         Set<String> descriptionsSet = selectColumnCIMV2(queryString, "my_property_description");
         System.out.println("descriptionsSet=" + descriptionsSet.toString());
         Assert.assertEquals(1, descriptionsSet.size());
-        Assert.assertTrue(
-                descriptionsSet.stream().findFirst().orElse("xyz").startsWith("\"\"The Name property"));
-        Assert.assertTrue(
-                descriptionsSet.stream().findFirst().orElse("xyz").endsWith("\"@en\""));
+        String firstDescription = descriptionsSet.stream().findFirst().orElse("xyz");
+        Assert.assertTrue(firstDescription.startsWith("\"\"The Name property"));
+        Assert.assertTrue(firstDescription.endsWith("\"@en\""));
     }
 
     @Test

@@ -352,7 +352,7 @@ public class WmiOntology {
                 logger.debug("Directory exists: dirSaildump=" + dirSaildump);
                 MemoryStore memStore = new MemoryStore(dirSaildump);
                 memStore.setSyncDelay(3600000L); // Practically no synchronization.
-                logger.debug("MemoryStore created");
+                logger.debug("MemoryStore created and loaded");
                 Repository repo = new SailRepository(memStore);
                 repositoryConnection = repo.getConnection();
                 logger.debug("Cached statements=" + repositoryConnection.size());

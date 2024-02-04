@@ -132,7 +132,7 @@ public class DependenciesBuilderTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_directory"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_directory"));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
@@ -163,7 +163,7 @@ public class DependenciesBuilderTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name", "my_process_handle"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process_name", "my_process_handle"));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
@@ -194,7 +194,7 @@ public class DependenciesBuilderTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name", "my_process_handle"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process_name", "my_process_handle"));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
@@ -230,7 +230,7 @@ public class DependenciesBuilderTest {
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         //System.out.println("bindings="+extractor.bindings.toString());
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file"));
 
         // Without optimisation, the patterns are sorted based on the variable name which is unique by definition,
         // because the RDF triples are grouped by subject.
@@ -283,7 +283,7 @@ public class DependenciesBuilderTest {
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
         //System.out.println("bindings="+extractor.bindings.toString());
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file"));
 
         // Without optimisation, the patterns are sorted based on the variable name which is unique by definition,
         // because the RDF triples are grouped by subject.
@@ -336,7 +336,7 @@ public class DependenciesBuilderTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file_name"));
 
         // Without optimisation, the patterns are sorted based on the variable name which is unique by definition,
         // because the RDF triples are grouped by subject.
@@ -399,7 +399,7 @@ public class DependenciesBuilderTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file_name"));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
@@ -457,7 +457,7 @@ public class DependenciesBuilderTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file_name"));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 
@@ -518,7 +518,7 @@ public class DependenciesBuilderTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparql_query);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process_caption"));
 
         DependenciesBuilder patternSparql = new DependenciesBuilder(extractor.patternsAsArray());
 

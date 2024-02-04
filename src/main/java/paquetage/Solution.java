@@ -146,7 +146,7 @@ public class Solution implements Iterable<Solution.Row> {
                     boolean isRdfsLabel = predicateValueString.equals(RDFS.LABEL.stringValue());
                     logger.debug("isRdfsLabel=" + isRdfsLabel);
                     for (Row row : rowsList) {
-                        logger.debug("row=" + row);
+                        //logger.debug("row=" + row);
                         /* The subject might not be a node if the query comes from Wikidata GUI.
                         In this case, a label must be generated anyway, but WMI cannot help for this.
                         Strictly speaking, a resourceSubject should be generated based on the various predicates used
@@ -167,7 +167,7 @@ public class Solution implements Iterable<Solution.Row> {
                                 resourceSubject = row.asIRI(subjectName);
                                 logger.debug("resourceSubject=" + resourceSubject);
                                 String valueObject = row.getStringValue(objectName);
-                                logger.debug("valueObject=" + valueObject);
+                                // logger.debug("valueObject=" + valueObject);
 
                                 resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
                                 logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());

@@ -81,7 +81,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet(
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet(
                 "file_Caption", "file_FileSize", "file_Drive", "file_Path"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -118,7 +118,7 @@ public class SparqlTranslationTest {
                     }
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_handle"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -150,7 +150,7 @@ public class SparqlTranslationTest {
                     }
                 """, currentPidStr);
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process_caption"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -174,7 +174,7 @@ public class SparqlTranslationTest {
                     }
                 """, currentPidStr);
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -198,7 +198,7 @@ public class SparqlTranslationTest {
                     }
                 """, currentPidStr);
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_caption"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process_caption"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -224,7 +224,7 @@ public class SparqlTranslationTest {
                 """, currentPidStr);
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -265,7 +265,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_handle"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -302,7 +302,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_caption", "my_handle"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_caption", "my_handle"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -338,7 +338,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -369,7 +369,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -406,7 +406,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -440,7 +440,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_file_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -487,7 +487,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -526,7 +526,7 @@ public class SparqlTranslationTest {
         """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -570,7 +570,7 @@ public class SparqlTranslationTest {
         """, dirExecutable);
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_process_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_process_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -611,7 +611,7 @@ public class SparqlTranslationTest {
         """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("device_id"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("device_id"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -642,7 +642,7 @@ public class SparqlTranslationTest {
         """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("dir_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -677,7 +677,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_drive", "my1_dir"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_drive", "my1_dir"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -710,7 +710,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_account_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_account_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -732,7 +732,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_class_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_class_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -757,7 +757,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_thread_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -785,7 +785,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name", "my_thread_priority"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_thread_name", "my_thread_priority"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -812,7 +812,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_thread_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_thread_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -848,7 +848,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet(
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet(
                 "my_product_number", "my_product_name", "my_product_vendor", "my_product_caption", "my_product_version"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
@@ -875,7 +875,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_application_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -906,7 +906,7 @@ public class SparqlTranslationTest {
                 """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("my_application_name", "my_local_service"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("my_application_name", "my_local_service"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -946,7 +946,7 @@ public class SparqlTranslationTest {
                 """, currentPidStr);
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("file_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("file_name"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
@@ -976,7 +976,7 @@ public class SparqlTranslationTest {
                 """, currentPidStr);
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("file_name", "file_size"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("file_name", "file_size"));
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();

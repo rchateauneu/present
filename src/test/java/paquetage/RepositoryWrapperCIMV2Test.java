@@ -198,7 +198,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("handle", "executablepath"), singleRow.keySet());
         System.out.println("Exec=" + singleRow.getAsLiteral("executablepath"));
-        String expectedBin = "\"" + PresentUtils.currentJavaBinary() + "\"";
+        String expectedBin = PresentUtils.currentJavaBinary();
         Assert.assertEquals(expectedBin, singleRow.getAsLiteral("executablepath"));
     }
 
@@ -224,7 +224,8 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("process", "pid"), singleRow.keySet());
         // "18936"^^<http://www.w3.org/2001/XMLSchema#long>
-        Assert.assertEquals(PresentUtils.longToXml(currentPid), singleRow.getAsLiteral("pid"));
+        // Assert.assertEquals(PresentUtils.longToXml(currentPid), singleRow.getAsLiteral("pid"));
+        Assert.assertEquals(currentPidStr, singleRow.getAsLiteral("pid"));
 
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
@@ -314,7 +315,8 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(propertiesCamelCase, singleRow.keySet());
 
         // Check the value of a property whose result is known.
-        Assert.assertEquals(PresentUtils.longToXml(currentPid), singleRow.getAsLiteral("processid"));
+        //Assert.assertEquals(PresentUtils.longToXml(currentPid), singleRow.getAsLiteral("processid"));
+        Assert.assertEquals(currentPidStr, singleRow.getAsLiteral("processid"));
     }
 
     // Transforms '"Win32_Process.VirtualSize"@en' into 'VirtualSize'
@@ -435,8 +437,8 @@ public class RepositoryWrapperCIMV2Test {
         // Win32_Service.Caption = "Windows Search"
         // Win32_Process.Caption = "SearchIndexer.exe"
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals("\"Windows Search\"",singleRow.getAsLiteral("caption1"));
-        Assert.assertEquals("\"SearchIndexer.exe\"",singleRow.getAsLiteral("caption2"));
+        Assert.assertEquals("Windows Search",singleRow.getAsLiteral("caption1"));
+        Assert.assertEquals("SearchIndexer.exe",singleRow.getAsLiteral("caption2"));
     }
 
     /** This gets the antecedents of the process running the service "Windows Search".
@@ -602,7 +604,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple singleRow = listRows.get(0);
-        Assert.assertEquals("\"services.exe\"", singleRow.getAsLiteral("parent_caption"));
+        Assert.assertEquals("services.exe", singleRow.getAsLiteral("parent_caption"));
     }
 
     /** This selects the executable and libraries of the current process.
@@ -636,7 +638,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.keySet());
         System.out.println("Exec=" + singleRow.getAsLiteral("file_name"));
-        String expectedBin = "\"" + PresentUtils.currentJavaBinary() + "\"";
+        String expectedBin = PresentUtils.currentJavaBinary();
         Assert.assertEquals(expectedBin, singleRow.getAsLiteral("file_name"));
     }
 
@@ -671,7 +673,7 @@ public class RepositoryWrapperCIMV2Test {
         RdfSolution.Tuple singleRow = listRows.get(0);
         Assert.assertEquals(Set.of("file_name"), singleRow.keySet());
         System.out.println("Exec=" + singleRow.getAsLiteral("file_name"));
-        String expectedBin = "\"" + PresentUtils.currentJavaBinary() + "\"";
+        String expectedBin = PresentUtils.currentJavaBinary();
         Assert.assertEquals(expectedBin, singleRow.getAsLiteral("file_name"));
     }
 
@@ -1035,12 +1037,13 @@ public class RepositoryWrapperCIMV2Test {
         int countFilesExpected = filesSetExpected.size();
 
         // Something like '"36"^^<http://www.w3.org/2001/XMLSchema#integer>'
-        String countStr = PresentUtils.intToXml(countFilesExpected);
+        //String countStr = PresentUtils.intToXml(countFilesExpected);
         System.out.println("countFilesExpected=" + Integer.toString(countFilesExpected));
 
         String countActual = singleRow.getAsLiteral("count_files");
         System.out.println("count_files=" + singleRow.getAsLiteral("count_files"));
-        Assert.assertEquals(countStr, countActual);
+        // Assert.assertEquals(countStr, countActual);
+        Assert.assertEquals(Integer.toString(countFilesExpected), countActual);
     }
 
     /** Minimum, maximum and file sizes in a directory.
@@ -1097,9 +1100,12 @@ public class RepositoryWrapperCIMV2Test {
         System.out.println("expectedFileSum=" + expectedFileSum);
 
         Assert.assertEquals(Set.of("size_min", "size_max", "size_sum"), singleRow.keySet());
-        Assert.assertEquals(PresentUtils.longToXml(expectedFileMin), singleRow.getAsLiteral("size_min"));
-        Assert.assertEquals(PresentUtils.longToXml(expectedFileMax), singleRow.getAsLiteral("size_max"));
-        Assert.assertEquals(PresentUtils.longToXml(expectedFileSum), singleRow.getAsLiteral("size_sum"));
+        //Assert.assertEquals(PresentUtils.longToXml(expectedFileMin), singleRow.getAsLiteral("size_min"));
+        //Assert.assertEquals(PresentUtils.longToXml(expectedFileMax), singleRow.getAsLiteral("size_max"));
+        //Assert.assertEquals(PresentUtils.longToXml(expectedFileSum), singleRow.getAsLiteral("size_sum"));
+        Assert.assertEquals(Long.toString(expectedFileMin), singleRow.getAsLiteral("size_min"));
+        Assert.assertEquals(Long.toString(expectedFileMax), singleRow.getAsLiteral("size_max"));
+        Assert.assertEquals(Long.toString(expectedFileSum), singleRow.getAsLiteral("size_sum"));
     }
 
     /** Startup time of current process.
@@ -1667,7 +1673,7 @@ public class RepositoryWrapperCIMV2Test {
                         .collect(
                                 Collectors
                                         .toMap(
-                                                tp -> PresentUtils.trimQuotes(tp.getAsLiteral("dir_name")),
+                                                tp -> tp.getAsLiteral("dir_name"),
                                                 tp -> PresentUtils.xmlToBoolean(tp.getAsLiteral(booleanAttribute))));
 
         Map<String, Boolean> mapNameToSystem = ToMapToBool.apply("dir_system");

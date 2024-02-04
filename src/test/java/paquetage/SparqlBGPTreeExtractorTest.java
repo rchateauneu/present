@@ -49,10 +49,10 @@ public class SparqlBGPTreeExtractorTest {
                 }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        Assert.assertEquals(Set.of("page", "type"), extractor.bindings);
+        Assert.assertEquals(Set.of("page", "type"), extractor.setBindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         Assert.assertEquals(1, patterns.size());
-        Assert.assertNotEquals(extractor.FindObjectPattern("s"), null);
+        Assert.assertNotEquals(extractor.findObjectPattern("s"), null);
         ObjectPattern firstPattern = patterns.get(0);
         Assert.assertEquals(null, firstPattern.className);
         Assert.assertEquals("s", firstPattern.variableName);
@@ -90,21 +90,21 @@ public class SparqlBGPTreeExtractorTest {
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
 
-        Assert.assertEquals(Set.of("process"), extractor.bindings);
+        Assert.assertEquals(Set.of("process"), extractor.setBindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         for(ObjectPattern objectPattern: patterns) {
             System.out.println("objectPattern=" + objectPattern);
         }
         Assert.assertEquals(2, patterns.size());
 
-        ObjectPattern pattern1 = extractor.FindObjectPattern("process1");
+        ObjectPattern pattern1 = extractor.findObjectPattern("process1");
         Assert.assertNotEquals(pattern1, null);
         Assert.assertEquals(null, pattern1.className);
         Assert.assertEquals("process1", pattern1.variableName);
         Assert.assertEquals(1, pattern1.membersList.size());
         CompareKeyValue(pattern1.membersList.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", "Caption1");
 
-        ObjectPattern pattern2 = extractor.FindObjectPattern("process2");
+        ObjectPattern pattern2 = extractor.findObjectPattern("process2");
         Assert.assertNotEquals(pattern2, null);
         Assert.assertEquals("process2", pattern2.variableName);
         Assert.assertEquals(1, pattern2.membersList.size());
@@ -145,7 +145,7 @@ public class SparqlBGPTreeExtractorTest {
                        ORDER BY desc(?population)
                 """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        System.out.println("extractor.bindings=" + extractor.bindings);
+        System.out.println("extractor.bindings=" + extractor.setBindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         Assert.assertEquals(1, patterns.size());
 
@@ -161,7 +161,7 @@ public class SparqlBGPTreeExtractorTest {
             }
         }
 
-        Assert.assertNotEquals(extractor.FindObjectPattern("country"), null);
+        Assert.assertNotEquals(extractor.findObjectPattern("country"), null);
         ObjectPattern firstPattern = patterns.get(0);
         Assert.assertEquals(null, firstPattern.className);
         Assert.assertEquals("country", firstPattern.variableName);
@@ -209,7 +209,7 @@ public class SparqlBGPTreeExtractorTest {
             }
         """;
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery);
-        System.out.println("extractor.bindings=" + extractor.bindings);
+        System.out.println("extractor.bindings=" + extractor.setBindings);
         List<ObjectPattern> patterns = extractor.patternsAsArray();
         Assert.assertEquals(3, patterns.size());
 
@@ -225,7 +225,7 @@ public class SparqlBGPTreeExtractorTest {
             }
         }
 
-        Assert.assertNotEquals(extractor.FindObjectPattern("country"), null);
+        Assert.assertNotEquals(extractor.findObjectPattern("country"), null);
         ObjectPattern firstPattern = patterns.get(0);
         Assert.assertEquals(null, firstPattern.className);
         Assert.assertEquals("country", firstPattern.variableName);

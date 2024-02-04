@@ -56,12 +56,12 @@ public class StatementsGenerationTest {
         """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery, false);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("dir_name"));
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 1);
 
         // Check the exact content of the BGP.
-        ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
+        ObjectPattern patternWin32_Directory = extractor.findObjectPattern("my_dir");
         Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
         Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
         Assert.assertEquals(1, patternWin32_Directory.membersList.size());
@@ -74,7 +74,7 @@ public class StatementsGenerationTest {
                 "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
                 "dir_name", ValueTypePair.FromString("C:"))));
 
-        List<Statement> statements = extractor.GenerateStatements(rows);
+        List<Statement> statements = extractor.generateStatements(rows);
 
         // Now check the content of the generated statements.
         Assert.assertEquals(2, statements.size());
@@ -107,12 +107,12 @@ public class StatementsGenerationTest {
         """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery, false);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("dir_name"));
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 1);
 
         // Check the exact content of the BGP.
-        ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
+        ObjectPattern patternWin32_Directory = extractor.findObjectPattern("my_dir");
         Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
         Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
         Assert.assertEquals(1,patternWin32_Directory.membersList.size());
@@ -131,7 +131,7 @@ public class StatementsGenerationTest {
                         "my_dir", new ValueTypePair(dirIriD, ValueTypePair.ValueType.NODE_TYPE),
                         "dir_name", ValueTypePair.FromString("D:"))));
 
-        List<Statement> statements = extractor.GenerateStatements(rows);
+        List<Statement> statements = extractor.generateStatements(rows);
 
         for(Statement statement: statements) {
             System.out.println("T=" + statement);
@@ -181,12 +181,12 @@ public class StatementsGenerationTest {
         """;
 
         SparqlBGPExtractor extractor = new SparqlBGPExtractor(sparqlQuery, false);
-        Assert.assertEquals(extractor.bindings, Sets.newHashSet("dir_caption", "dir_name"));
+        Assert.assertEquals(extractor.setBindings, Sets.newHashSet("dir_caption", "dir_name"));
 
         Assert.assertEquals(extractor.patternsAsArray().size(), 1);
 
         // Check the exact content of the BGP.
-        ObjectPattern patternWin32_Directory = extractor.FindObjectPattern("my_dir");
+        ObjectPattern patternWin32_Directory = extractor.findObjectPattern("my_dir");
         Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
         Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
         Assert.assertEquals(2, patternWin32_Directory.membersList.size());
@@ -202,7 +202,7 @@ public class StatementsGenerationTest {
                 "dir_name", ValueTypePair.FromString("C:"),
                 "dir_caption", ValueTypePair.FromString("This is a text"))));
 
-        List<Statement> statements = extractor.GenerateStatements(rows);
+        List<Statement> statements = extractor.generateStatements(rows);
 
         for(Statement statement: statements) {
             System.out.println("T=" + statement);

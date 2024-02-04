@@ -6,11 +6,14 @@ package paquetage;
 import java.util.*;
 
 import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
+
+import javax.management.RuntimeErrorException;
 
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
@@ -119,7 +122,7 @@ class JoinExpressionNode extends BaseExpressionNode {
      * @return Triples ready to be inserted in a repository.
      * @throws Exception
      */
-    void GenerateStatements(List<Statement> generatedStatements) throws Exception {
+    void generateStatements(List<Statement> generatedStatements) throws Exception {
         logger.debug("Visitor patterns number:" + visitorPatternsRaw.size());
         logger.debug("Generated statements number before:" + generatedStatements.size());
         if(localSolution == null) {
@@ -363,12 +366,12 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
     }
 
     // public Map<String, ObjectPattern> patterns() {
-    public List<ObjectPattern> patterns() {
+    public List<ObjectPattern> patternsList() {
         JoinExpressionNode join = FindTopLevelJoin(parent);
         return join.patternsMap;
     }
 
-    private void PartitionBGPAux(BaseExpressionNode node) {
+    private void partitionBGPAux(BaseExpressionNode node) {
         logger.debug("Class:" + node.getClass().getName() + " Node:" + node.children.size() + " children");
         if(node instanceof JoinExpressionNode) {
             JoinExpressionNode joinNode = (JoinExpressionNode)node;
@@ -384,34 +387,34 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
             joinNode.JoinBGPPartition();
         }
         for(BaseExpressionNode child : node.children) {
-            PartitionBGPAux(child);
+            partitionBGPAux(child);
         }
     }
 
-    void PartitionBGP() {
+    void partitionBGP() {
         logger.debug("PartitionBGP Class:" + getClass().getName());
-        PartitionBGPAux(parent);
+        partitionBGPAux(parent);
     }
 
-    private void GenerateStatementsFromTreeAux(List<Statement> generatedStatements, BaseExpressionNode node) throws Exception {
+    private void generateStatementsFromTreeAux(List<Statement> generatedStatements, BaseExpressionNode node) throws Exception {
         logger.debug("Node:" + node.getClass().getName() + " rows. generatedStatements:" + generatedStatements.size() + " statements.");
         if(node instanceof JoinExpressionNode) {
             if(!node.children.isEmpty()) {
                 logger.warn("Join has children - if projection, it can be optimised.");
             }
             JoinExpressionNode joinNode = (JoinExpressionNode)node;
-            joinNode.GenerateStatements(generatedStatements);
+            joinNode.generateStatements(generatedStatements);
         }
         logger.debug("node.children:" + node.children.size() + " generatedStatements.size()=" + generatedStatements.size());
         for(BaseExpressionNode child : node.children) {
-            GenerateStatementsFromTreeAux(generatedStatements, child);
+            generateStatementsFromTreeAux(generatedStatements, child);
         }
     }
 
-    List<Statement> GenerateStatementsFromTree() throws Exception {
+    List<Statement> generateStatementsFromTree() throws Exception {
         //logger.debug("Solution:" + rows.size() + " rows.");
         List<Statement> generatedStatements = new ArrayList<>();
-        GenerateStatementsFromTreeAux(generatedStatements, parent);
+        generateStatementsFromTreeAux(generatedStatements, parent);
         return generatedStatements;
     }
 } // PatternsVisitor
@@ -423,7 +426,7 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
 public class SparqlBGPTreeExtractor {
     final static private Logger logger = Logger.getLogger(SparqlBGPTreeExtractor.class);
 
-    public Set<String> bindings;
+    public Set<String> bindingsSet;
 
     // These are the raw patterns extracted from the query. They may contain variables which are not defined
     // in the WMI evaluation. In this case, they are copied as is.
@@ -431,36 +434,36 @@ public class SparqlBGPTreeExtractor {
     // In this case, they are replicated for each value found by WMI.
 
     public SparqlBGPTreeExtractor(String input_query) throws Exception {
-        ParseQuery(input_query);
+        parseQuery(input_query);
         //String extractorString = patternsVisitor.toString();
-        patternsVisitor.PartitionBGP();
+        patternsVisitor.partitionBGP();
     }
 
     private PatternsVisitor patternsVisitor = new PatternsVisitor();
 
     /** This examines all statements of the Sparql query and gathers them based on a common subject.
      *
-     * @param sparql_query
+     * @param sparqlQuery
      * @throws Exception
      */
-    private void ParseQuery(String sparql_query) throws Exception {
-        //logger.debug("Parsing:\n" + sparql_query);
+    private void parseQuery(String sparqlQuery) throws Exception {
+        //logger.debug("Parsing:\n" + sparqlQuery);
         SPARQLParser parser = new SPARQLParser();
-        ParsedQuery pq = parser.parseQuery(sparql_query, null);
+        ParsedQuery pq = parser.parseQuery(sparqlQuery, null);
         TupleExpr tupleExpr = pq.getTupleExpr();
         // FIXME: This is an unordered set. What about an union without BIND() statements, if several variables ?
-        bindings = tupleExpr.getBindingNames();
+        bindingsSet = tupleExpr.getBindingNames();
         tupleExpr.visit(patternsVisitor);
     }
 
-    Solution EvaluateSolution() {
+    Solution evaluateSolution() {
         Solution solution = patternsVisitor.parent.Evaluate();
         logger.debug("Evaluated solution:" + solution.size() + " rows.");
         return solution;
     }
 
-    List<Statement> SolutionToStatements() throws Exception {
-        return patternsVisitor.GenerateStatementsFromTree();
+    List<Statement> solutionToStatements() throws Exception {
+        return patternsVisitor.generateStatementsFromTree();
     }
 
     /** This is just a helper for flat Sparql queries, and for testing only,
@@ -471,7 +474,7 @@ public class SparqlBGPTreeExtractor {
      *
      * @param testSolution
      */
-    void SetTopLevelSolutionTestHelper(Solution testSolution) {
+    void setTopLevelSolutionTestHelper(Solution testSolution) {
         BaseExpressionNode node = patternsVisitor.parent;
         if(! (node instanceof ProjectionExpressionNode)) {
             throw new RuntimeException("This test helper assumes a top-level Projection node, not:" + node.getClass().getName());
@@ -488,8 +491,8 @@ public class SparqlBGPTreeExtractor {
     }
 
     // This is just a helper for flat Sparql queries, and for testing only.
-    List<ObjectPattern> TopLevelPatternsTestHelper() {
-        return patternsVisitor.patterns();
+    List<ObjectPattern> topLevelPatternsTestHelper() {
+        return patternsVisitor.patternsList();
     }
 
 }

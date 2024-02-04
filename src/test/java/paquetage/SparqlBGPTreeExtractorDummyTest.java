@@ -31,7 +31,7 @@ public class SparqlBGPTreeExtractorDummyTest {
 
     static void HelperCheck(String sparqlQuery, String[] expectedSolution, String[] expectedStatements) throws Exception{
         SparqlBGPTreeExtractor extractor = new SparqlBGPTreeExtractor(sparqlQuery);
-        Solution actualSolution = extractor.EvaluateSolution();
+        Solution actualSolution = extractor.evaluateSolution();
 
         List<String> actualSolutionStr = actualSolution.stream().map(row -> row.toValueString()).collect(Collectors.toList());
         Collections.sort(actualSolutionStr);
@@ -51,7 +51,7 @@ public class SparqlBGPTreeExtractorDummyTest {
             Assert.assertEquals(expectedSolution[index], actualSolutionStr.get(index));
         }
 
-        List<Statement> statements = extractor.SolutionToStatements();
+        List<Statement> statements = extractor.solutionToStatements();
         List<String> actualStatementsStr = statements.stream().map(st -> st.toString()).collect(Collectors.toList());
         Collections.sort(actualStatementsStr);
 

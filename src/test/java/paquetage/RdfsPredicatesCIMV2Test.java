@@ -45,7 +45,7 @@ public class RdfsPredicatesCIMV2Test {
         String actualLabel = singleRow.getAsLiteral("directory_label");
         System.out.println("actualLabel=" + actualLabel);
 
-        Assert.assertEquals("\"\"C:\\Windows\"@en\"", actualLabel);
+        Assert.assertEquals("\"C:\\Windows\"@en", actualLabel);
     }
 
     @Test

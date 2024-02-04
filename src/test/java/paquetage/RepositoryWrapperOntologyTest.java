@@ -68,8 +68,8 @@ public class RepositoryWrapperOntologyTest {
         RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         Set<String> setNamespaces = listRows.stream().map(tuple -> tuple.getAsLiteral("namespace")).collect(Collectors.toSet());
         System.out.println("setNamespaces=" + setNamespaces);
-        Assert.assertTrue(setNamespaces.contains("\"ROOT\\RSOP\""));
-        Assert.assertTrue(setNamespaces.contains("\"ROOT\\StandardCimv2\""));
+        Assert.assertTrue(setNamespaces.contains("ROOT\\RSOP"));
+        Assert.assertTrue(setNamespaces.contains("ROOT\\StandardCimv2"));
     }
 
     /*

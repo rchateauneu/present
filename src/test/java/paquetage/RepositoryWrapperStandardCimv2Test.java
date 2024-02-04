@@ -238,8 +238,8 @@ public class RepositoryWrapperStandardCimv2Test {
             }
             servicePorts.add(portNumber);
         }
-        Assert.assertTrue(mapServiceToPort.get("\"RPC Endpoint Mapper\"").contains(Long.valueOf(135)));
-        Assert.assertTrue(mapServiceToPort.get("\"Connected Devices Platform Service\"").contains(Long.valueOf(5040)));
+        Assert.assertTrue(mapServiceToPort.get("RPC Endpoint Mapper").contains(Long.valueOf(135)));
+        Assert.assertTrue(mapServiceToPort.get("Connected Devices Platform Service").contains(Long.valueOf(5040)));
         //Assert.assertTrue(mapServiceToPort.get("\"Delivery Optimization\"").contains(Long.valueOf(7680)));
     }
 
@@ -291,7 +291,7 @@ public class RepositoryWrapperStandardCimv2Test {
             setProcessNamesPairs.add(name1 + " + " + name2);
         }
         System.out.println("setProcessNamesPairs=" + setProcessNamesPairs);
-        Assert.assertTrue(setProcessNamesPairs.contains("\"java.exe\" + \"idea64.exe\""));
+        Assert.assertTrue(setProcessNamesPairs.contains("java.exe + idea64.exe"));
         //Assert.assertTrue(setProcessNamesPairs.contains("\"MediaEngineService.exe\" + \"wfica32.exe\""));
     }
 

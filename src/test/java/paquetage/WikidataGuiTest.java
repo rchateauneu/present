@@ -100,10 +100,10 @@ uri_CIM_ProcessExecutable_Dependent
         System.out.println("iri handle="+setPropValues.get(WmiProvider.toCIMV2("Handle")));
 
         System.out.println("iri Handle="+WmiProvider.toCIMV2("Handle"));
-        Assert.assertEquals("\""+currentPidStr+"\"", setPropValues.get(WmiProvider.toCIMV2("Handle")));
-        Assert.assertEquals("\"java.exe\"", setPropValues.get(WmiProvider.toCIMV2("Name")));
-        Assert.assertEquals("\"Win32_ComputerSystem\"", setPropValues.get(WmiProvider.toCIMV2("CSCreationClassName")));
-        Assert.assertEquals("\"Win32_Process\"", setPropValues.get(WmiProvider.toCIMV2("CreationClassName")));
+        Assert.assertEquals(currentPidStr, setPropValues.get(WmiProvider.toCIMV2("Handle")));
+        Assert.assertEquals("java.exe", setPropValues.get(WmiProvider.toCIMV2("Name")));
+        Assert.assertEquals("Win32_ComputerSystem", setPropValues.get(WmiProvider.toCIMV2("CSCreationClassName")));
+        Assert.assertEquals("Win32_Process", setPropValues.get(WmiProvider.toCIMV2("CreationClassName")));
     }
 
     /* This ensures that if the subject is a constant, one of its properties is correct.
@@ -131,7 +131,7 @@ uri_CIM_ProcessExecutable_Dependent
         Assert.assertEquals(Set.of("handle"), singleRow.keySet());
 
         String processHandle = singleRow.getAsLiteral("handle");
-        Assert.assertEquals("\"" + currentPidStr + "\"", processHandle);
+        Assert.assertEquals(currentPidStr, processHandle);
     }
 
     /*
@@ -220,9 +220,9 @@ uri_CIM_ProcessExecutable_Dependent
                         row -> row.getAsLiteral("o")));
         System.out.println("setPropValues=" + setPropValues);
         System.out.println("iri Handle="+WmiProvider.toCIMV2("Handle"));
-        Assert.assertEquals("\""+currentPidStr+"\"", setPropValues.get(WmiProvider.toCIMV2("Handle")));
-        Assert.assertEquals("\"java.exe\"", setPropValues.get(WmiProvider.toCIMV2("Name")));
-        Assert.assertEquals("\"Win32_ComputerSystem\"", setPropValues.get(WmiProvider.toCIMV2("CSCreationClassName")));
+        Assert.assertEquals(currentPidStr, setPropValues.get(WmiProvider.toCIMV2("Handle")));
+        Assert.assertEquals("java.exe", setPropValues.get(WmiProvider.toCIMV2("Name")));
+        Assert.assertEquals("Win32_ComputerSystem", setPropValues.get(WmiProvider.toCIMV2("CSCreationClassName")));
     }
 
 
@@ -360,7 +360,7 @@ uri_CIM_ProcessExecutable_Dependent
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple tuple = listRows.get(0);
         Assert.assertEquals(Set.of("process_label"), tuple.keySet());
-        Assert.assertEquals("\"java.exe\"", tuple.getAsLiteral("process_label"));
+        Assert.assertEquals("java.exe", tuple.getAsLiteral("process_label"));
     }
 
     @Test
@@ -378,7 +378,7 @@ uri_CIM_ProcessExecutable_Dependent
         Assert.assertEquals(1, listRows.size());
         RdfSolution.Tuple tuple = listRows.get(0);
         Assert.assertEquals(Set.of("predicate_label"), tuple.keySet());
-        Assert.assertEquals("\"\"Win32_Process.CreationDate\"@en\"", tuple.getAsLiteral("predicate_label"));
+        Assert.assertEquals("\"Win32_Process.CreationDate\"@en", tuple.getAsLiteral("predicate_label"));
     }
 
     // Typical URI : "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22"
@@ -564,7 +564,7 @@ uri_CIM_ProcessExecutable_Dependent
         for(RdfSolution.Tuple currentRow : listRows) {
             String olValue = currentRow.getAsLiteral("ol");
             System.out.println("    ol=" + olValue);
-            Assert.assertTrue(olValue.endsWith("@en\""));
+            Assert.assertTrue(olValue.endsWith("@en"));
         }
     }
 }

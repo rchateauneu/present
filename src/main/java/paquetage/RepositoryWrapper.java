@@ -2,6 +2,7 @@ package paquetage;
 
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
@@ -46,7 +47,7 @@ public class RepositoryWrapper {
                 BindingSet bindingSet = result.next();
                 RdfSolution.Tuple newTuple = new RdfSolution.Tuple(bindingSet);
                 if(!checkedBindingsExecution) {
-                    logger.debug("Selected row:" + newTuple);
+                    //logger.debug("Selected row:" + newTuple);
                     Set<String> bindingNames = bindingSet.getBindingNames();
                     if(!expectedBindings.equals(bindingNames)) {
                         throw new RuntimeException("Different bindings:" + expectedBindings + " vs " + bindingNames);
@@ -78,16 +79,17 @@ public class RepositoryWrapper {
     {
         SparqlBGPTreeExtractor treeExtractor = new SparqlBGPTreeExtractor(sparqlQuery);
         logger.debug("sparqlQuery=" + sparqlQuery);
-        logger.debug("bindings=" + treeExtractor.bindings);
+        logger.debug("bindings=" + treeExtractor.bindingsSet);
 
-        Solution translatedRows = treeExtractor.EvaluateSolution();
+        Solution translatedRows = treeExtractor.evaluateSolution();
         logger.debug("Translated rows:" + translatedRows.size());
 
-        List<Statement> statements = treeExtractor.SolutionToStatements();
+        List<Statement> statements = treeExtractor.solutionToStatements();
+        logger.debug("statements.size()=" + statements.size());
 
         localRepositoryConnection.add(statements);
 
-        RdfSolution listRows = executeQueryWithStatements(sparqlQuery, treeExtractor.bindings);
+        RdfSolution listRows = executeQueryWithStatements(sparqlQuery, treeExtractor.bindingsSet);
         return listRows;
     }
 

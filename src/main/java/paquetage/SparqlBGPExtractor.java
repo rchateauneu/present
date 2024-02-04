@@ -22,7 +22,7 @@ import org.eclipse.rdf4j.model.Statement;
 public class SparqlBGPExtractor {
     final static private Logger logger = Logger.getLogger(SparqlBGPExtractor.class);
 
-    public Set<String> bindings;
+    public Set<String> setBindings;
 
     // This should be private except for tests.
     public List<ObjectPattern> patternsMap;
@@ -32,13 +32,13 @@ public class SparqlBGPExtractor {
     public SparqlBGPExtractor(String input_query, boolean withExecution) throws Exception {
         treeExtractor = new SparqlBGPTreeExtractor(input_query);
 
-        patternsMap = treeExtractor.TopLevelPatternsTestHelper();
+        patternsMap = treeExtractor.topLevelPatternsTestHelper();
         if(patternsMap == null) {
             throw new RuntimeException("Could not get patterns");
         }
 
         // FIXME: This is an unordered set. What about an union without BIND() statements, if several variables ?
-        bindings = treeExtractor.bindings;
+        setBindings = treeExtractor.bindingsSet;
     }
 
     public SparqlBGPExtractor(String input_query) throws Exception {
@@ -46,7 +46,7 @@ public class SparqlBGPExtractor {
     }
 
     // This is only for testing.
-    public ObjectPattern FindObjectPattern(String variable) {
+    public ObjectPattern findObjectPattern(String variable) {
         for(ObjectPattern objPatt : patternsMap) {
             if(variable.equals(objPatt.variableName)) {
                 return objPatt;
@@ -63,7 +63,6 @@ public class SparqlBGPExtractor {
         // FIXME: Duplicate code with JoinExpressionNode
         ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(patternsMap);
         ObjectPattern.Sort(patternsArray);
-        // patternsArray.sort(Comparator.comparing(s -> s.VariableName));
         return patternsArray;
     }
 
@@ -80,17 +79,11 @@ public class SparqlBGPExtractor {
      * @return Triples ready to be inserted in a repository.
      * @throws Exception
      */
-    List<Statement> GenerateStatements(Solution rows) throws Exception {
+    List<Statement> generateStatements(Solution rows) throws Exception {
         logger.warn("After this operation, the extractor is unusable. For tests only.");
-        treeExtractor.SetTopLevelSolutionTestHelper(rows);
-        List<Statement> statements = treeExtractor.SolutionToStatements();
+        treeExtractor.setTopLevelSolutionTestHelper(rows);
+        List<Statement> statements = treeExtractor.solutionToStatements();
+        logger.debug("statements.size()=" + statements.size());
         return statements;
     }
-
-    /*
-    List<Statement> GenerateStatements() throws Exception {
-        List<Statement> statements = treeExtractor.SolutionToStatements();
-        return statements;
-    }
-    */
 }
