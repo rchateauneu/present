@@ -76,7 +76,7 @@ public class WmiProvider {
     }
 
     static Wbemcli.IWbemServices GetWbemService(String namespace) {
-        CheckValidNamespace(namespace);
+        checkValidNamespace(namespace);
         Wbemcli.IWbemServices wbemService = wbemServices.get(namespace);
         if(wbemService == null) {
             try {
@@ -137,12 +137,12 @@ public class WmiProvider {
             return null;
         }
         String namespace = matcher.group(1);
-        CheckValidNamespace(namespace);
+        checkValidNamespace(namespace);
         return namespace;
     }
 
 
-    static public void CheckValidNamespace(String namespace) {
+    static public void checkValidNamespace(String namespace) {
         if(namespace == null) {
             throw new RuntimeException("namespace is null");
         }
@@ -167,7 +167,7 @@ public class WmiProvider {
 
     /** This is exclusively used for tests, because this is a very common namespace. */
     static String toCIMV2(String term) {
-        return WmiOntology.NamespaceTermToIRI("ROOT\\CIMV2", term);
+        return WmiOntology.namespaceTermToIRI("ROOT\\CIMV2", term);
     }
 
     static public void CheckValidClassname(String wmiClassName) {
@@ -244,7 +244,7 @@ public class WmiProvider {
     static private Pattern patternLocalizationNamespaces = Pattern.compile("^ms_\\d\\d", Pattern.CASE_INSENSITIVE);
 
     private Set<String> flattenNamespaces(Wbemcli.IWbemServices wbemService, String namespace) {
-        CheckValidNamespace(namespace);
+        checkValidNamespace(namespace);
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL",
                 "SELECT Name FROM __NAMESPACE",
@@ -349,7 +349,7 @@ public class WmiProvider {
             boolean fileExists = Files.exists(fileCacheClasses.toPath());
             ObjectMapper mapperObj = new ObjectMapper();
             if (fileExists) {
-                logger.debug("Loading classes from:" + fileCacheClasses);
+                logger.debug("Loading classes from classes cache file:" + fileCacheClasses);
                 try {
                     // java.lang.ClassCastException: class java.util.LinkedHashMap
                     // cannot be cast to class paquetage.WmiProvider$WmiClass
@@ -372,9 +372,10 @@ public class WmiProvider {
             } else {
                 cacheClasses = classesNoCache(namespace);
                 try {
+                    logger.debug("Writing classes cache file:" + fileCacheClasses);
                     mapperObj.writeValue(fileCacheClasses, cacheClasses);
                 } catch (Exception exc) {
-                    logger.error("Cannot write classes cache:" + fileCacheClasses);
+                    logger.error("Cannot write classes cache file:" + fileCacheClasses);
                     throw new RuntimeException(exc);
                 }
                 logger.debug("Written classes to:" + fileCacheClasses);

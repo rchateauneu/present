@@ -12,14 +12,14 @@ public class CacheManager {
     public static Path ontologiesPathCache;
 
     // To cleanup the ontology, this entire directory must be deleted, and not only its content.
-    static Path PathNamespacePrefix(String namespace) {
+    static Path pathNamespacePrefix(String namespace) {
         // The namespace might contain backslashes, but this is OK on Windows.
         return Paths.get(ontologiesPathCache + "\\" + namespace);
     }
 
-    static File DirSailDump(String namespace) throws Exception {
+    static File dirSailDump(String namespace) throws Exception {
         // The namespace might contain backslashes, but this is OK on Windows.
-        Path pathNamespacePrefix = PathNamespacePrefix(namespace);
+        Path pathNamespacePrefix = pathNamespacePrefix(namespace);
 
         checkCacheDirectoryExists();
         //Files.createDirectories(ontologiesPathCache);
@@ -38,7 +38,7 @@ public class CacheManager {
 
     static File ClassesCacheFile(String namespace) {
         // The namespace might contain backslashes, but this is OK on Windows.
-        Path pathNamespacePrefix = PathNamespacePrefix(namespace);
+        Path pathNamespacePrefix = pathNamespacePrefix(namespace);
         CheckDirectoryExists(pathNamespacePrefix);
 
         String nameFileClassesCache = pathNamespacePrefix + ".ClassesCache.json";

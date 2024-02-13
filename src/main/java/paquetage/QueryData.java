@@ -97,7 +97,7 @@ public class QueryData {
     public String toString() {
         String cols = String.join("+", queryColumns.keySet());
         String wheres =  (String) whereTests.stream()
-                .map(w -> w.predicate)
+                .map(w -> w.wherePredicate)
                 .collect(Collectors.joining("/"));
         return String.format("C=%s V=%s Cols=%s W=%s", className, mainVariable, cols, wheres);
     }
@@ -111,13 +111,13 @@ public class QueryData {
 
     static public class WhereEquality {
         // This is a member of WMI class and used to build the WHERE clause of a WQL query.
-        public String predicate;
+        public String wherePredicate;
 
         // This is the value or a variable name, compared with a WMI class member in a WQL query.
-        public ValueTypePair value;
+        public ValueTypePair whereValue;
 
         // Tells if this is a Sparql variable (which must be evaluated in the nesting WQL queries) or a constant.
-        String variableName; // null if constant,
+        String whereVariableName; // null if constant,
 
         public WhereEquality(String predicateArg, ValueTypePair pairValueType, String variable) {
             logger.debug("predicateArg=" + predicateArg);
@@ -135,9 +135,9 @@ public class QueryData {
                 throw new RuntimeException("Invalid syntax for Sparql variable:" + variable);
             }
 
-            predicate = predicateArg;
-            value = pairValueType;
-            variableName = variable;
+            wherePredicate = predicateArg;
+            whereValue = pairValueType;
+            whereVariableName = variable;
         }
 
         public WhereEquality(String predicateArg, String variable) throws Exception {
@@ -158,15 +158,15 @@ public class QueryData {
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Antecedent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\DriverStore\\\\FileRepository\\\\iigd_dch.inf_amd64_ea63d1eddd5853b5\\\\igdinfo64.dll\""'
             // PS C:> Get-WmiObject -Query 'select * from CIM_ProcessExecutable where Dependent="\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"32308\""'
 
-            if(value == null) {
+            if(whereValue == null) {
                 // This should not happen.
-                logger.debug("Value of " + predicate + " is null");
+                logger.debug("Value of " + wherePredicate + " is null");
             }
             /*
             Si le predicat attend un path wbem, verifier que la syntaxe est OK.
             */
-            String escapedValue = value.toValueString().replace("\\", "\\\\").replace("\"", "\\\"");
-            return String.format("%s = \"%s\"", predicate, escapedValue);
+            String escapedValue = whereValue.toValueString().replace("\\", "\\\\").replace("\"", "\\\"");
+            return String.format("%s = \"%s\"", wherePredicate, escapedValue);
         }
     };
 
@@ -180,7 +180,7 @@ public class QueryData {
         }
 
         // The lookup is based on properties given in a "where" test. So this column must be given.
-        Set<String> queryWhereColumns = whereTests.stream().map(x -> x.predicate).collect(Collectors.toSet());
+        Set<String> queryWhereColumns = whereTests.stream().map(x -> x.wherePredicate).collect(Collectors.toSet());
         if(! queryWhereColumns.equals(whereColumns)) {
             return false;
         }
@@ -206,10 +206,10 @@ public class QueryData {
      */
     public ValueTypePair getWhereValue(String columnName) {
         logger.debug("columnName=" + columnName
-                + " whereTests=" + whereTests.stream().map(x -> x.predicate + "/" + x.variableName).collect(Collectors.toList()));
+                + " whereTests=" + whereTests.stream().map(x -> x.wherePredicate + "/" + x.whereVariableName).collect(Collectors.toList()));
         for(WhereEquality whereElement : whereTests) {
-            if(whereElement.predicate.equals(columnName)) {
-                return whereElement.value;
+            if(whereElement.wherePredicate.equals(columnName)) {
+                return whereElement.whereValue;
             }
         }
         return null;
@@ -318,7 +318,7 @@ public class QueryData {
             List<QueryData.WhereEquality> wheres,
             Map<String, List<String>> synonyms,
             Map<String, String> variableColumns) {
-        WmiProvider.CheckValidNamespace(wmiNamespace);
+        WmiProvider.checkValidNamespace(wmiNamespace);
         // If the subject is a constant, then there is no main variable.
         if(variable == null) {
             logger.debug("Variable is null");
@@ -350,7 +350,7 @@ public class QueryData {
 
     void setHandlers(boolean forceWmi) {
             if(isMainVariableAvailable)
-                classGetter = GenericProvider.FindGetter(this, forceWmi);
+                classGetter = GenericProvider.findGetter(this, forceWmi);
             else
                 classBaseSelecter = GenericProvider.FindSelecter(this, forceWmi);
     }
@@ -368,7 +368,7 @@ public class QueryData {
         else
             // This sorts the where tests so the order is always the same and helps comparisons.
             // This is not a problem performance-wise because usually there is only one element per WQL query.
-            whereTests = wheres.stream().sorted(Comparator.comparing(x -> x.predicate)).collect(Collectors.toList());
+            whereTests = wheres.stream().sorted(Comparator.comparing(x -> x.wherePredicate)).collect(Collectors.toList());
         return oldWheres;
     }
 
@@ -401,7 +401,7 @@ public class QueryData {
     public void finishSampling() {
         // This adds some extra information about the execution.
         Set<String> columnsWhere = whereTests.stream()
-                .map(entry -> entry.predicate)
+                .map(entry -> entry.wherePredicate)
                 .collect(Collectors.toSet());
         statistics.finishSample(className, columnsWhere);
     }

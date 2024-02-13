@@ -28,11 +28,11 @@ public class WikidataGuiTest {
     @Before
     public void setUp() throws Exception {
         repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
-        currentProcessUri = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        currentProcessUri = WmiOntology.createUriFromArgs("Win32_Process", "Handle", currentPidStr);
         // "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Handle"
-        uriWmi32ProcessHandle = WmiOntology.namespaces_url_prefix + "ROOT/CIMV2#" + "Win32_Process.Handle";
+        uriWmi32ProcessHandle = WmiOntology.namespacesUrlPrefix + "ROOT/CIMV2#" + "Win32_Process.Handle";
 
-        uri_CIM_ProcessExecutable_Dependent = WmiOntology.namespaces_url_prefix + "ROOT/CIMV2#" + "CIM_ProcessExecutable.Dependent";
+        uri_CIM_ProcessExecutable_Dependent = WmiOntology.namespacesUrlPrefix + "ROOT/CIMV2#" + "CIM_ProcessExecutable.Dependent";
 /*
 uri_CIM_ProcessExecutable_Dependent
 ?_2_assoc cimv2:CIM_ProcessExecutable.Dependent ?_1_process .
@@ -227,22 +227,26 @@ uri_CIM_ProcessExecutable_Dependent
 
 
     /*
-    SELECT ?p (SAMPLE(?pl) AS ?pl_) (COUNT(?o) AS ?count ) (group_concat(?ol;separator=", ") AS ?ol_)  WHERE {<http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%22876%22> ?p ?o .   ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .    FILTER ( LANG(?ol) = "en" )    ?s <http://wikiba.se/ontology#directClaim> ?p .    ?s rdfs:label ?pl .    FILTER ( LANG(?pl) = "en" )} group by ?p
-    SELECT ?p (SAMPLE(?pl) AS ?pl_) (COUNT(?o) AS ?count ) (group_concat(?ol;separator=", ") AS ?ol_)  WHERE {<http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%22876%22> ?p ?o .   ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .    FILTER ( LANG(?ol) = "fr" )    ?s <http://wikiba.se/ontology#directClaim> ?p .    ?s rdfs:label ?pl .    FILTER ( LANG(?pl) = "fr" )} group by ?p
-    */
-
-    /*
     http://www.primhillcomputers.com/ontology/ROOT/CIMV2#CIM_ManagedSystemElement
     http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.CreationDate
     http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%22876%22
     */
 
     /*
-    The directClaim property is a predicate that links a property to a statement that directly makes use of it
+    The directClaim property is a predicate that links a property to a statement that directly makes use of it.
+    https://www.mediawiki.org/wiki/Wikibase/Indexing/RDF_Dump_Format
+    wikibase:directClaim links property entity to direct claim predicate.
+
+    https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/queries
+    SERVICE wikibase:label only supplies labels for entities in the wd: namepace.
+    How then to provide labels for properties in the wdt: namespace?
+    This can be done by adding the assertion line ?prop wikibase:directClaim ?p into the query
+     – the special predicate wikibase:directClaim connects the wd: namespace entity
+      for the property to its wdt: namespace representation.
     */
 
     @Test
-    public void testSPARQL_PROPERTIES() throws Exception {
+    public void testSPARQL_PROPERTIES_CIM_Process() throws Exception {
         /*
             SELECT
                 ?p (SAMPLE(?pl) AS ?pl_) (COUNT(?o) AS ?count )
@@ -268,6 +272,67 @@ uri_CIM_ProcessExecutable_Dependent
 			} group by ?p
         """;
         String sparqlQuery = setLanguage(patternQuery).replace("{processUri}", currentProcessUri);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        System.out.println("listRows=" + listRows.size());
+        Assert.assertTrue(listRows.size() > 0);
+    }
+
+    /*
+    FIXME: "o" n'est en general (a peu pres toujours) pas un IRI pour une classe normale (pas un associator).
+    FIXME: Donc, il ne peut pas etre sujet d'un triplet.
+    FIXME: Toutefois, ca ne devrait pas crasher.
+    FIXME: Ou alors, on cree directClaim a la volee ?
+    */
+    @Test
+    public void testSPARQL_PROPERTIES_CIM_Process_NoFilter() throws Exception {
+        String patternQuery = """
+            SELECT ?p (SAMPLE(?pl) AS ?pl_) (COUNT(?o) AS ?count ) (group_concat(?ol;separator=", ") AS ?ol_)
+            WHERE {
+			   <{processUri}> ?p ?o .
+			   ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .
+			   ?s <http://wikiba.se/ontology#directClaim> ?p .
+			   ?s rdfs:label ?pl .
+			} group by ?p
+        """;
+        String sparqlQuery = setLanguage(patternQuery).replace("{processUri}", currentProcessUri);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        System.out.println("listRows=" + listRows.size());
+        Assert.assertTrue(listRows.size() > 0);
+    }
+
+    @Test
+    public void testSPARQL_PROPERTIES_CIM_ProcessExecutable_NoFilter() throws Exception {
+        String patternQuery = """
+            SELECT ?p (SAMPLE(?predlab) AS ?pl_) (COUNT(?objiri) AS ?count ) (group_concat(?objlab;separator=", ") AS ?ol_)
+            WHERE {
+			   <{processExecutableUri}> ?p ?objiri .
+			   ?objiri <http://www.w3.org/2000/01/rdf-schema#label> ?objlab .
+			   ?s <http://wikiba.se/ontology#directClaim> ?p .
+			   ?s rdfs:label ?predlab .
+			} group by ?p
+        """;
+
+        String pathAntecedent = ObjectPath.buildCimv2PathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", PresentUtils.currentJavaBinary()));
+
+        String pathDependent = ObjectPath.buildCimv2PathWbem(
+                "Win32_Process", Map.of(
+                        "Handle", currentPidStr));
+
+        String processExecutablePath = ObjectPath.buildCimv2PathWbem(
+                "CIM_ProcessExecutable", Map.of(
+                        "Antecedent", pathAntecedent,
+                        "Dependent", pathDependent));
+
+        System.out.println("processExecutablePath=" + processExecutablePath);
+
+        String processExecutableUri = WmiOntology.wbemPathToIri("ROOT\\CIMV2", processExecutablePath).toString();
+        System.out.println("processExecutableUri=" + processExecutableUri);
+
+        String sparqlQuery = setLanguage(patternQuery).replace("{processExecutableUri}", processExecutableUri);
         System.out.println("sparqlQuery=" + sparqlQuery);
         RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
@@ -495,7 +560,7 @@ uri_CIM_ProcessExecutable_Dependent
 
         Set<String> setClasses = setPropValues
                 .stream()
-                .map(iri -> WmiOntology.splitIRI(iri).Token)
+                .map(iri -> WmiOntology.splitIRI(iri).pairToken)
                 .collect(Collectors.toSet());
         System.out.println("setClasses=" + setClasses);
 

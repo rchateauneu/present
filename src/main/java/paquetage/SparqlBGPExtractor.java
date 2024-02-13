@@ -29,8 +29,8 @@ public class SparqlBGPExtractor {
 
     private SparqlBGPTreeExtractor treeExtractor;
 
-    public SparqlBGPExtractor(String input_query, boolean withExecution) throws Exception {
-        treeExtractor = new SparqlBGPTreeExtractor(input_query);
+    public SparqlBGPExtractor(String inputQuery, boolean withExecution) throws Exception {
+        treeExtractor = new SparqlBGPTreeExtractor(inputQuery);
 
         patternsMap = treeExtractor.topLevelPatternsTestHelper();
         if(patternsMap == null) {
@@ -41,8 +41,8 @@ public class SparqlBGPExtractor {
         setBindings = treeExtractor.bindingsSet;
     }
 
-    public SparqlBGPExtractor(String input_query) throws Exception {
-        this(input_query, false);
+    public SparqlBGPExtractor(String inputQuery) throws Exception {
+        this(inputQuery, false);
     }
 
     // This is only for testing.

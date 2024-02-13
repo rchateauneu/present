@@ -152,7 +152,7 @@ public class DependenciesBuilder {
                 assert pattern.constantSubject == null;
                 // If the main variable is known, it will use a getter. However, if there are "where" tests,
                 // the values of the columns must be known for extra filtering. Therefore, they must be fetched.
-                Set<String> nonSelectedColumns = wheres.stream().map(w->w.predicate).collect(Collectors.toSet());
+                Set<String> nonSelectedColumns = wheres.stream().map(w->w.wherePredicate).collect(Collectors.toSet());
                 nonSelectedColumns.removeAll(selectedVariablesConstantPredicate.keySet());
                 for(String nonSelectedColumn: nonSelectedColumns) {
                     // The counter is used to avoid an ambiguity if the same class and the same column are used
@@ -197,7 +197,7 @@ public class DependenciesBuilder {
 
             if(pattern.className != null) {
                 // A class name is needed to run WQL queries, and also its WMI namespace.
-                WmiProvider.CheckValidNamespace(pattern.currentNamespace);
+                WmiProvider.checkValidNamespace(pattern.currentNamespace);
                 WmiProvider.CheckValidClassname(pattern.className);
 
                 QueryData queryData = new QueryData(

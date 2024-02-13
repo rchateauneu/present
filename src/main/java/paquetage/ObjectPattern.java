@@ -161,19 +161,20 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
 
             WmiOntology.NamespaceTokenPair namespacedPredicate = WmiOntology.splitIRI(predicateStr);
             if(namespacedPredicate == null) {
-                logger.debug("Predicate:" + predicateStr + "cannot be used for WMI");
+                logger.debug("myPattern.getObjectVar().toString():" + myPattern.getObjectVar().toString());
+                logger.debug("Predicate:" + predicateStr + " cannot be used for WMI. Continue to next pattern.");
                 continue;
             }
 
-            String shortPredicate = namespacedPredicate.Token;
+            String shortPredicate = namespacedPredicate.pairToken;
             logger.debug("shortPredicate=" + shortPredicate);
-            if(namespacedPredicate.nameSpace != null) {
+            if(namespacedPredicate.pairNamespace != null) {
                 if (currentNamespace == null) {
-                    currentNamespace = namespacedPredicate.nameSpace;
+                    currentNamespace = namespacedPredicate.pairNamespace;
                 } else {
-                    if (!currentNamespace.equals(namespacedPredicate.nameSpace)) {
+                    if (!currentNamespace.equals(namespacedPredicate.pairNamespace)) {
                         throw new RuntimeException("Different namespaces:" + currentNamespace
-                                + "!=" + namespacedPredicate.nameSpace
+                                + "!=" + namespacedPredicate.pairNamespace
                                 + ". predicateStr=" + predicateStr
                                 + ". shortPredicate=" + shortPredicate);
                     }
@@ -222,7 +223,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 currentNamespace = null;
                 className = null;
             } else {
-                className = pairNamespaceToken.Token;
+                className = pairNamespaceToken.pairToken;
                 if (deducedClassName != null) {
                     // If the class is explicitly given, and also is the prefix of some attributes.
                     if (!className.equals(deducedClassName)) {
@@ -230,18 +231,18 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     }
                 }
                 if (currentNamespace != null) {
-                    if (!currentNamespace.equals(pairNamespaceToken.nameSpace)) {
-                        throw new RuntimeException("Different namespaces:" + currentNamespace + "!=" + pairNamespaceToken.nameSpace);
+                    if (!currentNamespace.equals(pairNamespaceToken.pairNamespace)) {
+                        throw new RuntimeException("Different namespaces:" + currentNamespace + "!=" + pairNamespaceToken.pairNamespace);
                     }
                 } else {
-                    currentNamespace = pairNamespaceToken.nameSpace;
+                    currentNamespace = pairNamespaceToken.pairNamespace;
                 }
             }
         }
 
         if(currentNamespace != null) {
             // A class name is need to run WQL queries, and also its WMI namespace.
-            WmiProvider.CheckValidNamespace(currentNamespace);
+            WmiProvider.checkValidNamespace(currentNamespace);
         } else {
             // Maybe this is not a WMI-style IRI, so there is no WMI namespace.
             logger.debug("The namespace could not be found in:" + className);
@@ -308,24 +309,24 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
 
             // This IRI can be a RDF/RDFS one, a WBEM class or predicate, or a WBEM instance.
             WmiOntology.NamespaceTokenPair subjectNamespacedPredicate = WmiOntology.splitIRI(subjectName);
-            logger.debug("Extracted subjectNamespacedPredicate.nameSpace=" + subjectNamespacedPredicate.nameSpace
-                + " subjectNamespacedPredicate.Token=" + subjectNamespacedPredicate.Token);
+            logger.debug("Extracted subjectNamespacedPredicate.nameSpace=" + subjectNamespacedPredicate.pairNamespace
+                + " subjectNamespacedPredicate.Token=" + subjectNamespacedPredicate.pairToken);
             if (subjectNamespacedPredicate == null) {
                 throw new RuntimeException("Constant subject:" + subjectName + " cannot be used for WMI");
             }
             if (currentNamespace == null) {
-                currentNamespace = subjectNamespacedPredicate.nameSpace;
+                currentNamespace = subjectNamespacedPredicate.pairNamespace;
                 logger.debug("From constant subject CurrentNamespace=" + currentNamespace);
             } else {
-                if(!subjectNamespacedPredicate.nameSpace.equals(currentNamespace)) {
+                if(!subjectNamespacedPredicate.pairNamespace.equals(currentNamespace)) {
                     throw new RuntimeException("Different namespace than the constant subject one:"
-                        + subjectNamespacedPredicate.nameSpace + " != " + currentNamespace);
+                        + subjectNamespacedPredicate.pairNamespace + " != " + currentNamespace);
                 }
             }
             if(className == null) {
-                className = subjectNamespacedPredicate.Token;
+                className = subjectNamespacedPredicate.pairToken;
                 logger.debug("From constant subject ClassName=" + className);
-                switch(subjectNamespacedPredicate.TokenType) {
+                switch(subjectNamespacedPredicate.pairTokenType) {
                     case INSTANCE_IRI:
                         // The subject is the IRI of an instance with a WMI class name.
                         WmiProvider.CheckValidClassname(className);
@@ -343,17 +344,17 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                         isWMIObject = false;
                         break;
                     default:
-                        throw new RuntimeException("Invalid TokenType:" + subjectNamespacedPredicate.TokenType);
+                        throw new RuntimeException("Invalid TokenType:" + subjectNamespacedPredicate.pairTokenType);
                 }
             } else {
-                if(!subjectNamespacedPredicate.Token.equals(className)) {
+                if(!subjectNamespacedPredicate.pairToken.equals(className)) {
                     throw new RuntimeException("Different class than the constant subject one:"
-                            + subjectNamespacedPredicate.Token + " != " + className);
+                            + subjectNamespacedPredicate.pairToken + " != " + className);
                 }
             }
 
             variableName = null;
-            constantSubject = WmiOntology.IriToWbemPath(currentNamespace, subjectName);
+            constantSubject = WmiOntology.iriToWbemPath(currentNamespace, subjectName);
         } else {
             checkVariableNameSyntax(subjectName);
             variableName = subjectName;
@@ -409,15 +410,15 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                     }
 
                     /* String */
-                    shortPredicate = namespacedPredicate.Token;
+                    shortPredicate = namespacedPredicate.pairToken;
                     logger.debug("shortPredicate=" + shortPredicate);
-                    if (namespacedPredicate.nameSpace != null) {
+                    if (namespacedPredicate.pairNamespace != null) {
                         if (currentNamespace == null) {
-                            currentNamespace = namespacedPredicate.nameSpace;
+                            currentNamespace = namespacedPredicate.pairNamespace;
                         } else {
-                            if (!currentNamespace.equals(namespacedPredicate.nameSpace)) {
+                            if (!currentNamespace.equals(namespacedPredicate.pairNamespace)) {
                                 throw new RuntimeException("Different namespaces:" + currentNamespace
-                                        + "!=" + namespacedPredicate.nameSpace
+                                        + "!=" + namespacedPredicate.pairNamespace
                                         + ". predicateStr=" + predicateStr
                                         + ". shortPredicate=" + shortPredicate);
                             }
@@ -494,7 +495,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                                     // Double safety check.
                                     throw new RuntimeException("Inconsistent node type:" + strValue);
                                 }
-                                strValue = WmiOntology.IriToWbemPath(currentNamespace, strValue);
+                                strValue = WmiOntology.iriToWbemPath(currentNamespace, strValue);
                             } else {
                                 throw new RuntimeException("Value should not be an IRI:" + strValue);
                             }
@@ -522,7 +523,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
     } // ObjectPattern constructor.
 
     /* This receives a list of BGP and groups them based on the subject. */
-    private static Map<Pair<String, Boolean>, List<StatementPattern>> SplitBySubject(List<StatementPattern> visitorPatternsRaw) {
+    private static Map<Pair<String, Boolean>, List<StatementPattern>> splitBySubject(List<StatementPattern> visitorPatternsRaw) {
         Map<Pair<String, Boolean>, List<StatementPattern> > splitSubject = new HashMap();
 
         for (StatementPattern myPattern : visitorPatternsRaw) {
@@ -563,7 +564,7 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
     public static List<ObjectPattern> partitionBySubject(List<StatementPattern> visitorPatternsRaw) {
         List<ObjectPattern> patternsMap = new ArrayList<>();
 
-        Map<Pair<String, Boolean>, List<StatementPattern>> splitSubject = SplitBySubject(visitorPatternsRaw);
+        Map<Pair<String, Boolean>, List<StatementPattern>> splitSubject = splitBySubject(visitorPatternsRaw);
 
         for (Map.Entry<Pair<String, Boolean>, List<StatementPattern>> entry : splitSubject.entrySet()) {
             Pair<String, Boolean> subjectKey = entry.getKey();

@@ -33,7 +33,7 @@ public class StatementsGenerationTest {
         Assert.assertEquals(predicate, a.shortPredicate);
         Assert.assertEquals(a.variableName, a.variableName);
         if(a.variableName == null)
-            Assert.assertEquals(ValueTypePair.FromString(content), a.objectContent);
+            Assert.assertEquals(ValueTypePair.fromString(content), a.objectContent);
     }
 
     static private Resource WbemPathToIriCIMV2(String valueString) throws Exception {
@@ -72,7 +72,7 @@ public class StatementsGenerationTest {
         Solution rows = new Solution();
         rows.add(new Solution.Row(Map.of(
                 "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
-                "dir_name", ValueTypePair.FromString("C:"))));
+                "dir_name", ValueTypePair.fromString("C:"))));
 
         List<Statement> statements = extractor.generateStatements(rows);
 
@@ -125,11 +125,11 @@ public class StatementsGenerationTest {
         rows.add(
                 new Solution.Row(Map.of(
                         "my_dir", new ValueTypePair(dirIriC, ValueTypePair.ValueType.NODE_TYPE),
-                        "dir_name", ValueTypePair.FromString("C:"))));
+                        "dir_name", ValueTypePair.fromString("C:"))));
         rows.add(
                 new Solution.Row(Map.of(
                         "my_dir", new ValueTypePair(dirIriD, ValueTypePair.ValueType.NODE_TYPE),
-                        "dir_name", ValueTypePair.FromString("D:"))));
+                        "dir_name", ValueTypePair.fromString("D:"))));
 
         List<Statement> statements = extractor.generateStatements(rows);
 
@@ -199,8 +199,8 @@ public class StatementsGenerationTest {
         rows.add(
             new Solution.Row(Map.of(
                 "my_dir", new ValueTypePair(dirIri, ValueTypePair.ValueType.NODE_TYPE),
-                "dir_name", ValueTypePair.FromString("C:"),
-                "dir_caption", ValueTypePair.FromString("This is a text"))));
+                "dir_name", ValueTypePair.fromString("C:"),
+                "dir_caption", ValueTypePair.fromString("This is a text"))));
 
         List<Statement> statements = extractor.generateStatements(rows);
 

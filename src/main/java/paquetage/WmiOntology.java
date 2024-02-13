@@ -38,19 +38,19 @@ public class WmiOntology {
 
     static private WmiProvider wmiProvider = new WmiProvider();
 
-    public static String namespaces_url_prefix = "http://www.primhillcomputers.com/ontology/";
+    public static String namespacesUrlPrefix = "http://www.primhillcomputers.com/ontology/";
 
     /** Each WMI class and property has its namespace with this predicate.
      TODO: Consider a hierarchical definition of namespaces ?
      */
-    private static IRI iriNamespaceProperty = iri(namespaces_url_prefix, "NamespaceDefinition");
+    private static IRI iriNamespaceProperty = iri(namespacesUrlPrefix, "NamespaceDefinition");
 
-    static String NamespaceUrlPrefix(String namespace) {
-        WmiProvider.CheckValidNamespace(namespace);
+    static String namespaceUrlPrefix(String namespace) {
+        WmiProvider.checkValidNamespace(namespace);
         // Backslashes in namespaces could be replaced with "%5C" but a slash is clearer.
         // All characters in a namespace are otherwise admissible in a URL, so no encoding is needed.
 
-        return namespaces_url_prefix + namespace.replace("\\", "/") + "#" ; // + namespace;
+        return namespacesUrlPrefix + namespace.replace("\\", "/") + "#" ; // + namespace;
     }
 
     /** This maps WMI types to standard RDF types. */
@@ -71,12 +71,12 @@ public class WmiOntology {
             put("real32", XSD.DOUBLE);
         }};
 
-    static String NamespaceTermToIRI(String namespace, String term) {
-        return NamespaceUrlPrefix(namespace) + term;
+    static String namespaceTermToIRI(String namespace, String term) {
+        return namespaceUrlPrefix(namespace) + term;
     }
 
     static Resource wbemPathToIri(String namespace, String valueString) {
-        WmiProvider.CheckValidNamespace(namespace);
+        WmiProvider.checkValidNamespace(namespace);
         // Convention: Namespaces in uppercase.
         // Beware thet Associators return their references with lowercase namespaces, for no reason.
         // This is not an issue in WMI, but a problem when creating an IRI which are case-sensitive.
@@ -84,7 +84,7 @@ public class WmiOntology {
         String valueStringUpNS = valueString.replace(namespace, upperNamespace);
         try {
             String encodedValueString = URLEncoder.encode(valueStringUpNS, StandardCharsets.UTF_8.toString());
-            String iriValue = NamespaceTermToIRI(upperNamespace, encodedValueString);
+            String iriValue = namespaceTermToIRI(upperNamespace, encodedValueString);
             Resource resourceValue = Values.iri(iriValue);
             return resourceValue;
         } catch(Exception exc) {
@@ -97,9 +97,9 @@ public class WmiOntology {
 
     FIXME: The namespace should not be a parameter, but parsed from the IRI and compared with the WBEM path.
     */
-    static public String IriToWbemPath(String namespace, String iri) {
-        WmiProvider.CheckValidNamespace(namespace);
-        int lenPrefix = NamespaceUrlPrefix(namespace).length();
+    static public String iriToWbemPath(String namespace, String iri) {
+        WmiProvider.checkValidNamespace(namespace);
+        int lenPrefix = namespaceUrlPrefix(namespace).length();
         String encodedValueString = iri.substring(lenPrefix);
         try {
             String decodedValueString = URLDecoder.decode(encodedValueString, StandardCharsets.UTF_8.toString());
@@ -116,6 +116,9 @@ public class WmiOntology {
     static private Literal literalInternational(String inputString) {
         return factory.createLiteral(PresentUtils.internationalizeUnquoted(inputString));
     }
+
+    // It should be: <http://wikiba.se/ontology#directClaim>
+    static public IRI directClaimIri = iri("http://wikiba.se/ontology#", "directClaim");
 
     /**
      * This transforms the classes and properties of a WMI namespace into a RDF ontology.
@@ -152,7 +155,7 @@ public class WmiOntology {
      *
      * @param connection
      */
-    static private void CreateOntologyInRepository(String namespace, RepositoryConnection connection){
+    static private void createOntologyInRepository(String namespace, RepositoryConnection connection){
         logger.debug("CreateOntologyInRepository namespace=" + namespace);
         // We want to reuse this namespace when creating several building blocks.
 
@@ -175,12 +178,12 @@ public class WmiOntology {
 
         HashMap<String, IRI> classToNode = new HashMap<>();
 
-        String namespace_iri_prefix = NamespaceUrlPrefix(namespace);
+        String namespaceIriPrefix = namespaceUrlPrefix(namespace);
 
         Function<String, IRI> lambdaClassToNode = (String className) -> {
             IRI classNode = classToNode.get(className);
             if(classNode == null) {
-                classNode = iri(namespace_iri_prefix, className);
+                classNode = iri(namespaceIriPrefix, className);
                 classToNode.put(className, classNode);
             }
             return classNode;
@@ -189,12 +192,12 @@ public class WmiOntology {
         Map<String, WmiProvider.WmiClass> classes = wmiProvider.classesMap(namespace);
         Literal literalNamespace = factory.createLiteral(namespace);
 
-        for(Map.Entry<String, WmiProvider.WmiClass> entry_class : classes.entrySet()) {
-            String className = entry_class.getKey();
+        for(Map.Entry<String, WmiProvider.WmiClass> entryClass : classes.entrySet()) {
+            String className = entryClass.getKey();
 
             IRI classIri = lambdaClassToNode.apply(className);
 
-            WmiProvider.WmiClass wmiClass = entry_class.getValue();
+            WmiProvider.WmiClass wmiClass = entryClass.getValue();
             connection.add(classIri, RDF.TYPE, RDFS.CLASS);
             connection.add(classIri, RDFS.LABEL, literalInternational(className));
             connection.add(classIri, RDFS.COMMENT, literalInternational(wmiClass.classDescription));
@@ -207,23 +210,35 @@ public class WmiOntology {
                 }
             }
 
-            for(Map.Entry<String, WmiProvider.WmiProperty> entry_property : wmiClass.classProperties.entrySet()) {
-                String ambiguousPropertyName = entry_property.getKey();
+            for(Map.Entry<String, WmiProvider.WmiProperty> entryProperty : wmiClass.classProperties.entrySet()) {
+                String ambiguousPropertyName = entryProperty.getKey();
                 String uniquePropertyName = className + "." + ambiguousPropertyName;
 
-                IRI uniquePropertyIri = iri(namespace_iri_prefix, uniquePropertyName);
-                WmiProvider.WmiProperty wmiProperty = entry_property.getValue();
+                IRI uniquePropertyIri = iri(namespaceIriPrefix, uniquePropertyName);
+                WmiProvider.WmiProperty wmiProperty = entryProperty.getValue();
 
+                Literal literalPropertyLabel = literalInternational(uniquePropertyName);
                 connection.add(uniquePropertyIri, RDF.TYPE, RDF.PROPERTY);
-                connection.add(uniquePropertyIri, RDFS.LABEL, literalInternational(uniquePropertyName));
+                connection.add(uniquePropertyIri, RDFS.LABEL, literalPropertyLabel);
                 connection.add(uniquePropertyIri, RDFS.DOMAIN, classIri);
                 connection.add(uniquePropertyIri, RDFS.COMMENT, literalInternational(wmiProperty.propertyDescription));
                 connection.add(uniquePropertyIri, iriNamespaceProperty, literalNamespace);
 
+                /*
+                This is for the Wikidata queries when right-clicking an entity in the graph-mode display.
+                directClaim https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/queries
+			    ?s <http://wikiba.se/ontology#directClaim> ?p .
+			    ?s rdfs:label ?pl .
+                */
+                IRI wdtPredicateIri = iri(namespaceIriPrefix, "WDT_" + uniquePropertyName);
+                connection.add(wdtPredicateIri, directClaimIri, uniquePropertyIri);
+                // The same label is reused.
+                connection.add(wdtPredicateIri, RDFS.LABEL, literalPropertyLabel);
+
                 if(wmiProperty.isWbemPathRef()) {
                     String domainName = wmiProperty.propertyType.substring(4);
                     // This should be another class.
-                    IRI domainIri = iri(namespace_iri_prefix, domainName);
+                    IRI domainIri = iri(namespaceIriPrefix, domainName);
                     connection.add(uniquePropertyIri, RDFS.RANGE, domainIri);
                 }
                 else
@@ -239,7 +254,7 @@ public class WmiOntology {
                 // Now link this unique property with ambiguous one.
                 IRI ambiguousPropertyIri = ambiguousProperties.get(ambiguousPropertyName);
                 if(ambiguousPropertyIri == null) {
-                    ambiguousPropertyIri = iri(namespace_iri_prefix, ambiguousPropertyName);
+                    ambiguousPropertyIri = iri(namespaceIriPrefix, ambiguousPropertyName);
                     ambiguousProperties.put(ambiguousPropertyName, ambiguousPropertyIri);
                     connection.add(ambiguousPropertyIri, RDF.TYPE, RDF.PROPERTY);
                     connection.add(ambiguousPropertyIri, RDFS.LABEL, literalInternational(ambiguousPropertyName));
@@ -284,7 +299,7 @@ public class WmiOntology {
         return oneProperty.isWbemPathRef();
     }
 
-    static private void WriteRepository(RepositoryConnection repositoryConnection, String rdfFileName) throws Exception {
+    static private void writeRepository(RepositoryConnection repositoryConnection, String rdfFileName) throws Exception {
         logger.debug("Storing RDF statements to:" + rdfFileName);
         FileOutputStream out = new FileOutputStream(rdfFileName);
         RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, out);
@@ -303,15 +318,8 @@ public class WmiOntology {
      */
     static private HashMap<String, RepositoryConnection> mapNamespaceToConnects = new HashMap<>();
 
-    /** Used to display information about the repository. */
-    /*
-    static public Set<String> Namespaces() {
-        return mapNamespaceToConnects.keySet();
-    }
-    */
-
     static public RepositoryConnection readOnlyOntologyConnection(String namespace) {
-        WmiProvider.CheckValidNamespace(namespace);
+        WmiProvider.checkValidNamespace(namespace);
         RepositoryConnection repositoryConnection = mapNamespaceToConnects.get(namespace);
         if (repositoryConnection != null) {
             logger.debug("Ontology connection in cache for namespace=" + namespace);
@@ -328,17 +336,17 @@ public class WmiOntology {
         MemoryStore memStore = new MemoryStore();
         Repository repo = new SailRepository(memStore);
         RepositoryConnection repositoryConnection = repo.getConnection();
-        CreateOntologyInRepository(namespace, repositoryConnection);
+        createOntologyInRepository(namespace, repositoryConnection);
         logger.debug("Number of created statements=" + repositoryConnection.size());
         return repositoryConnection;
     }
 
     static private RepositoryConnection readOnlyOntologyConnectionNoCache(String namespace) {
-        WmiProvider.CheckValidNamespace(namespace);
+        WmiProvider.checkValidNamespace(namespace);
         RepositoryConnection repositoryConnection;
 
         try {
-            File dirSaildump = CacheManager.DirSailDump(namespace);
+            File dirSaildump = CacheManager.dirSailDump(namespace);
             logger.debug("namespace=" + namespace + " dirSaildump=" + dirSaildump);
             boolean fileExists = Files.exists(dirSaildump.toPath());
 
@@ -366,13 +374,13 @@ public class WmiOntology {
                 repositoryConnection = repo.getConnection();
                 logger.debug("Caching new statements before=" + repositoryConnection.size() + " isActive=" + repositoryConnection.isActive());
                 repositoryConnection.begin();
-                CreateOntologyInRepository(namespace, repositoryConnection);
+                createOntologyInRepository(namespace, repositoryConnection);
                 repositoryConnection.commit();
                 memStore.sync();
                 logger.debug("Cached " + repositoryConnection.size() + " statements");
                 // Also saves the new ontology to a RDF file.
-                Path pathNamespacePrefix = CacheManager.PathNamespacePrefix(namespace);
-                WriteRepository(repositoryConnection, pathNamespacePrefix + ".rdf");
+                Path pathNamespacePrefix = CacheManager.pathNamespacePrefix(namespace);
+                writeRepository(repositoryConnection, pathNamespacePrefix + ".rdf");
             }
         }
         catch(Exception exc)
@@ -407,7 +415,7 @@ public class WmiOntology {
         Repository repo = new SailRepository(new MemoryStore());
         RepositoryConnection repositoryConnection = repo.getConnection();
         for(String namespace:namespaces) {
-            WmiProvider.CheckValidNamespace(namespace);
+            WmiProvider.checkValidNamespace(namespace);
             insertOntologyToConnection(namespace, repositoryConnection);
         }
         return repositoryConnection;
@@ -442,11 +450,11 @@ public class WmiOntology {
 
         String prefixUrl = splitToken[0];
 
-        if(prefixUrl.startsWith(namespaces_url_prefix)) {
-            String wmiNamespaceSlashes = prefixUrl.substring(namespaces_url_prefix.length());
+        if(prefixUrl.startsWith(namespacesUrlPrefix)) {
+            String wmiNamespaceSlashes = prefixUrl.substring(namespacesUrlPrefix.length());
             // In the URL, the backslash separator of namespaces is replaced with a slash.
             String wmiNamespace = wmiNamespaceSlashes.replace("/", "\\");
-            WmiProvider.CheckValidNamespace(wmiNamespace);
+            WmiProvider.checkValidNamespace(wmiNamespace);
             String className = splitToken[1];
             NamespaceTokenPair.TokenTypeEnum tokenType;
             if(className.startsWith("%5C%5C")) {
@@ -455,7 +463,7 @@ public class WmiOntology {
                 className = "%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%223160%22"
                 This is a constant instance IRI built with a WMI path. Machine name and the namespace must be removed.
                 */
-                String wbemPath = IriToWbemPath("ROOT\\CIMV2", token);
+                String wbemPath = iriToWbemPath("ROOT\\CIMV2", token);
                 className = WmiProvider.ExtractClassnameFromRef(wbemPath);
                 if(className == null) {
                     throw new RuntimeException("Classname should not be null. wbemPath=" + wbemPath);
@@ -477,17 +485,15 @@ public class WmiOntology {
         }
     }
 
-    // It returns something like "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22"
-    static public String createUriVarArgs(String className, String propertyName, String propertyValue) throws Exception {
-        String iri = "\\\\" + PresentUtils.computerName + "\\ROOT\\CIMV2:" + className + "." + propertyName + "=" + "\"" + propertyValue + "\"";
-        return wbemPathToIri("ROOT\\CIMV2", iri).stringValue();
+    static public String createUriFromArgs(String className, String propertyName, String propertyValue) throws Exception {
+        String path = ObjectPath.buildCimv2PathWbem(className, Map.of(propertyName, propertyValue));
+        return wbemPathToIri("ROOT\\CIMV2", path).stringValue();
     }
-
 
     /** This contains a WMI namespace, and a class name or a property name. */
     public static class NamespaceTokenPair {
-        public String nameSpace;
-        public String Token;
+        public String pairNamespace;
+        public String pairToken;
 
         public enum TokenTypeEnum {
             INSTANCE_IRI,
@@ -495,12 +501,12 @@ public class WmiOntology {
             PREDICATE_IRI
         }
 
-        TokenTypeEnum TokenType;
+        TokenTypeEnum pairTokenType;
 
         NamespaceTokenPair(String namespace, String token, TokenTypeEnum tokenType) {
-            nameSpace = namespace;
-            Token = token;
-            TokenType = tokenType;
+            pairNamespace = namespace;
+            pairToken = token;
+            pairTokenType = tokenType;
         }
     }
 }

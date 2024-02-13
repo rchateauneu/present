@@ -12,10 +12,10 @@ import java.util.*;
 import java.util.function.Function;
 
 abstract class BaseSelecter {
-    public abstract boolean MatchProvider(QueryData queryData);
+    public abstract boolean matchProvider(QueryData queryData);
 
     // This assumes that all needed columns can be calculated.
-    public abstract Solution EffectiveSelect(QueryData queryData);
+    public abstract Solution effectiveSelect(QueryData queryData);
 
     // TODO: Estimate cost.
 }
@@ -28,7 +28,7 @@ class DummyClass {
 
 /** This class is exclusively used for testing. */
 class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
-    public boolean MatchProvider(QueryData queryData)
+    public boolean matchProvider(QueryData queryData)
     {
         return queryData.isCompatibleQuery(
                 "DummyClass",
@@ -43,7 +43,7 @@ class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
      * @return
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String dummyValue = queryData.getWhereValue("DummyKey").toValueString();
 
@@ -65,7 +65,7 @@ class BaseSelecter_DummyClass_DummyKey extends BaseSelecter {
 
 /** This class is exclusively used for testing. */
 class BaseSelecter_DummyClass_All extends BaseSelecter {
-    public boolean MatchProvider(QueryData queryData)
+    public boolean matchProvider(QueryData queryData)
     {
         return queryData.isCompatibleQuery(
                 "DummyClass",
@@ -80,7 +80,7 @@ class BaseSelecter_DummyClass_All extends BaseSelecter {
      * @return
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         Solution result = new Solution();
 
         for(int key = 0; key < DummyClass.MaxElements; ++key) {
@@ -100,7 +100,7 @@ class BaseSelecter_DummyClass_All extends BaseSelecter {
 }
 
 class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
-    public boolean MatchProvider(QueryData queryData)
+    public boolean matchProvider(QueryData queryData)
     {
         // In this selecter, the column "Name" must be provided.
         return queryData.isCompatibleQuery(
@@ -115,7 +115,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
      * @return
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String fileName = queryData.getWhereValue("Name").toValueString();
         String pathFile = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
@@ -132,13 +132,13 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
 }
 
 class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter {
-    public boolean MatchProvider(QueryData queryData) {
+    public boolean matchProvider(QueryData queryData) {
         return queryData.isCompatibleQuery(
                 "CIM_DirectoryContainsFile",
                 Set.of("PartComponent"),
                 Set.of("GroupComponent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valuePartComponent = queryData.getWhereValue("PartComponent").toValueString();
         Map<String, String> properties = ObjectPath.parseWbemPath(valuePartComponent);
@@ -165,12 +165,12 @@ class BaseSelecter_CIM_DirectoryContainsFile_PartComponent extends BaseSelecter 
 
 class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter {
     final static private Logger logger = Logger.getLogger(ObjectPattern.class);
-    public boolean MatchProvider(QueryData queryData) {
+    public boolean matchProvider(QueryData queryData) {
         return queryData.isCompatibleQuery("CIM_DirectoryContainsFile",
                 Set.of("GroupComponent"),
                 Set.of("PartComponent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valueGroupComponent = queryData.getWhereValue("GroupComponent").toValueString();
         Map<String, String> properties = ObjectPath.parseWbemPath(valueGroupComponent);
@@ -217,13 +217,13 @@ class BaseSelecter_CIM_DirectoryContainsFile_GroupComponent extends BaseSelecter
 class BaseSelecter_CIM_ProcessExecutable_Antecedent extends BaseSelecter {
     static ProcessModules processModules = new ProcessModules();
 
-    public boolean MatchProvider(QueryData queryData) {
+    public boolean matchProvider(QueryData queryData) {
         return queryData.isCompatibleQuery(
                 "CIM_ProcessExecutable",
                 Set.of("Antecedent"),
                 Set.of("Dependent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valueAntecedent = queryData.getWhereValue("Antecedent").toValueString();
         if(valueAntecedent == null) {
@@ -264,14 +264,14 @@ class BaseSelecter_CIM_ProcessExecutable_Dependent extends BaseSelecter {
     final static private Logger logger = Logger.getLogger(BaseSelecter_CIM_ProcessExecutable_Dependent.class);
     static ProcessModules processModules = new ProcessModules();
 
-    public boolean MatchProvider(QueryData queryData) {
+    public boolean matchProvider(QueryData queryData) {
         // "Antecedent" might bit be in the variables requiring a value.
         return queryData.isCompatibleQuery(
                 "CIM_ProcessExecutable",
                 Set.of("Dependent"),
                 Set.of("Antecedent"));
     }
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         Solution result = new Solution();
         String valueDependent = queryData.getWhereValue("Dependent").toValueString();
         Map<String, String> properties = ObjectPath.parseWbemPath(valueDependent);
@@ -360,33 +360,33 @@ class BaseGetter_CIM_DataFile_Name extends BaseGetter {
     static ValueTypePair FileToDrive(String fileName) {
         Path p = Paths.get(fileName);
         String driveStrRaw = p.getRoot().toString();
-        return ValueTypePair.Factory(driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1));
+        return ValueTypePair.factoryValueTypePair(driveStrRaw.toLowerCase().substring(0, driveStrRaw.length()-1));
     }
 
     static ValueTypePair FileToName(String fileName) {
         Path p = Paths.get(fileName);
         String fileNameShort = p.getFileName().toString();
-        return ValueTypePair.Factory(fileNameShort.substring(0, fileNameShort.lastIndexOf(".")));
+        return ValueTypePair.factoryValueTypePair(fileNameShort.substring(0, fileNameShort.lastIndexOf(".")));
     }
 
     static ValueTypePair FileToSize(String fileName) {
         File f = new File(fileName);
         long fileSize = f.length();
         logger.debug("fileName=" + fileName + " size=" + fileSize);
-        return ValueTypePair.Factory(fileSize);
+        return ValueTypePair.factoryValueTypePair(fileSize);
     }
 
     static ValueTypePair FileToPath(String fileName) {
         Path p = Paths.get(fileName);
-        return ValueTypePair.Factory(p.getParent().toString().toLowerCase().substring(2) + "\\");
+        return ValueTypePair.factoryValueTypePair(p.getParent().toString().toLowerCase().substring(2) + "\\");
     }
 
     static Map<String, Function<String, ValueTypePair>> columnsMap = Map.of(
-            "Caption", (String fileName) -> ValueTypePair.Factory(fileName),
+            "Caption", (String fileName) -> ValueTypePair.factoryValueTypePair(fileName),
             "Drive", (String fileName) -> FileToDrive(fileName),
             "FileName", (String fileName) -> FileToName(fileName),
             "FileSize", (String fileName) -> FileToSize(fileName),
-            "Name", (String fileName) -> ValueTypePair.Factory(fileName),
+            "Name", (String fileName) -> ValueTypePair.factoryValueTypePair(fileName),
             "Path", (String fileName) -> FileToPath(fileName)
             // "FileType", (String fileName) -> "Application Extension",
             );
@@ -481,7 +481,7 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
                 String executablePath = listModules.get(0);
                 Path p = Paths.get(executablePath);
                 String fileNameShort = p.getFileName().toString();
-                return ValueTypePair.Factory(fileNameShort);
+                return ValueTypePair.factoryValueTypePair(fileNameShort);
         }
 
         /** Windows version and build number. */
@@ -497,14 +497,14 @@ class BaseGetter_Win32_Process_Handle extends BaseGetter {
             } else {
                 result = "Cannot get  Windows version";
             }
-            return ValueTypePair.Factory(result);
+            return ValueTypePair.factoryValueTypePair(result);
         }
 
         /** This contains the columns that this class can calculate, plus the lambda available. */
         static Map<String, Function<String, ValueTypePair>> columnsMap = Map.of(
-                "Handle", (String processId) -> ValueTypePair.Factory(processId),
+                "Handle", (String processId) -> ValueTypePair.factoryValueTypePair(processId),
                 "Name", (String processId) -> ProcessToName(processId),
-                "ProcessId", (String processId) -> ValueTypePair.Factory(processId),
+                "ProcessId", (String processId) -> ValueTypePair.factoryValueTypePair(processId),
                 "WindowsVersion", (String processId) -> WindowsVersion(processId)
         );
 
@@ -565,7 +565,7 @@ public class GenericProvider {
         String strQueryData = queryData.toString();
         for(BaseSelecter baseSelecter : baseSelecters) {
             logger.debug("Trying:" + baseSelecter.getClass().getSimpleName());
-            if (baseSelecter.MatchProvider(queryData)) {
+            if (baseSelecter.matchProvider(queryData)) {
                 if(!foundSelecters.contains(strQueryData)) {
                     // So the message is displayed once only.
                     foundSelecters.add(strQueryData);
@@ -622,9 +622,9 @@ public class GenericProvider {
 
             // It is OK to loop because there are very few "where" clauses.
             for(int whereIndex = 0; whereIndex < m_queryData.whereTests.size(); ++whereIndex) {
-                if(queryData.whereTests.get(whereIndex).predicate.equals(columnPSComputerName)) {
+                if(queryData.whereTests.get(whereIndex).wherePredicate.equals(columnPSComputerName)) {
                     wherePSComputerName = m_queryData.whereTests.get(whereIndex);
-                    if(wherePSComputerName.variableName != null) {
+                    if(wherePSComputerName.whereVariableName != null) {
                         // TODO: If this is a constant, or if its value is known, or might point to another
                         // TODO: machine than the current one, then WMI should access this other machine.
                         // TODO: If this is a variable, then other machines should be accessed too.
@@ -639,7 +639,7 @@ public class GenericProvider {
         }
 
         // Restore QueryData as it where before removing "PSComputerName" column.
-        private void RestoreQueryData() {
+        private void restoreQueryData() {
             if(selectPSComputerNameVariable != null) {
                 m_queryData.queryColumns.put(columnPSComputerName, selectPSComputerNameVariable);
             }
@@ -649,8 +649,8 @@ public class GenericProvider {
             }
         }
 
-        void Restore(Solution solution) {
-            RestoreQueryData();
+        void restore(Solution solution) {
+            restoreQueryData();
             if(selectPSComputerNameVariable != null) {
                 for(Solution.Row row: solution.rowsList) {
                     row.putString(selectPSComputerNameVariable, PresentUtils.computerName);
@@ -658,8 +658,8 @@ public class GenericProvider {
             }
         }
 
-        void Restore(Solution.Row row) {
-            RestoreQueryData();
+        void restore(Solution.Row row) {
+            restoreQueryData();
             if(selectPSComputerNameVariable != null) {
                 row.putString(selectPSComputerNameVariable, PresentUtils.computerName);
             }
@@ -673,7 +673,7 @@ public class GenericProvider {
     These custom implementations are for performance reasons. They must return the same results
     as querying from WMI.
     */
-    public Solution SelectVariablesFromWhere(QueryData queryData, boolean withCustom) {
+    public Solution selectVariablesFromWhere(QueryData queryData, boolean withCustom) {
         if(queryData.classBaseSelecter == null) {
             throw new RuntimeException("Provider is not set");
         }
@@ -687,29 +687,29 @@ public class GenericProvider {
         */
         Solution solution;
         if(withCustom) {
-            solution = queryData.classBaseSelecter.EffectiveSelect(queryData);
+            solution = queryData.classBaseSelecter.effectiveSelect(queryData);
         } else {
-            solution = wmiSelecter.EffectiveSelect(queryData);
+            solution = wmiSelecter.effectiveSelect(queryData);
         }
         // This applies to all selecters, WMI or custom.
-        handlerPSComputerNameHandler.Restore(solution);
+        handlerPSComputerNameHandler.restore(solution);
         return solution;
     }
 
     // Used for tests only.
-    public Solution SelectVariablesFromWhere(
+    public Solution selectVariablesFromWhere(
             String namespace,
             String className, String variable, Map<String, String> columns, List<QueryData.WhereEquality> wheres) throws Exception {
-        return SelectVariablesFromWhere(
+        return selectVariablesFromWhere(
                 new QueryData(namespace, className, variable, false,columns, wheres),
                 true);
     }
 
     // Used for tests only.
-    public Solution SelectVariablesFromWhere(
+    public Solution selectVariablesFromWhere(
             String namespace,
             String className, String variable, Map<String, String> columns) throws Exception {
-        return SelectVariablesFromWhere(namespace, className, variable, columns, null);
+        return selectVariablesFromWhere(namespace, className, variable, columns, null);
     }
 
     static private BaseGetter[] baseGetters = {
@@ -719,14 +719,14 @@ public class GenericProvider {
 
     static private WmiGetter wmiGetter = new WmiGetter();
 
-    static public BaseGetter FindCustomGetter(QueryData queryData) {
+    static public BaseGetter findCustomGetter(QueryData queryData) {
         logger.debug("Finding getter for:" + queryData.toString());
 
         // The columns in the "where" tests must be gettable from the object.
         // This is used when filtering getting an object.
         for(QueryData.WhereEquality whereTest : queryData.whereTests) {
-            if(! queryData.queryColumns.containsKey(whereTest.predicate)) {
-                logger.debug("Where column:" + whereTest.predicate + " missing from " + queryData.queryColumns.keySet());
+            if(! queryData.queryColumns.containsKey(whereTest.wherePredicate)) {
+                logger.debug("Where column:" + whereTest.wherePredicate + " missing from " + queryData.queryColumns.keySet());
             }
         }
 
@@ -739,9 +739,9 @@ public class GenericProvider {
         return null;
     }
 
-    static public BaseGetter FindGetter(QueryData queryData, boolean forceWmi) {
+    static public BaseGetter findGetter(QueryData queryData, boolean forceWmi) {
         if(forceWmi) return wmiGetter;
-        BaseGetter getter = FindCustomGetter(queryData);
+        BaseGetter getter = findCustomGetter(queryData);
         return  (getter == null) ? wmiGetter : getter;
     }
 
@@ -754,17 +754,17 @@ public class GenericProvider {
     static boolean extraFiltering(QueryData queryData, Solution.Row returnRow)
     {
         for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
-            logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
-            String variableName = queryData.columnToVariable(oneWhere.predicate);
+            logger.debug("    predicate=" + oneWhere.wherePredicate + " value=" + oneWhere.whereValue.toDisplayString() + " variableName=" + oneWhere.whereVariableName);
+            String variableName = queryData.columnToVariable(oneWhere.wherePredicate);
 
             // Beware of performance waste if the same value is read twice from the object,
             // if the column is in the where  expression and also in the selected column.
             ValueTypePair vtp = returnRow.getValueType(variableName);
-            if (oneWhere.variableName != null) {
-                throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context:" + oneWhere.variableName);
+            if (oneWhere.whereVariableName != null) {
+                throw new RuntimeException("Not handled yet. Should not be difficult if the variable is in the context:" + oneWhere.whereVariableName);
             }
-            if (!vtp.equals(oneWhere.value)) {
-                logger.debug("Different column value:" + vtp.toDisplayString() + "!=" + oneWhere.value.toDisplayString());
+            if (!vtp.equals(oneWhere.whereValue)) {
+                logger.debug("Different column value:" + vtp.toDisplayString() + "!=" + oneWhere.whereValue.toDisplayString());
                 return false;
             }
         }
@@ -788,7 +788,7 @@ public class GenericProvider {
             logger.error("Cannot find objectPath=" + objectPath);
             return null;
         }
-        handlerPSComputerNameHandler.Restore(returnRow);
+        handlerPSComputerNameHandler.restore(returnRow);
         // Now, apply the extra filtering if needed.
         if(extraFiltering(queryData, returnRow)) {
             return returnRow;

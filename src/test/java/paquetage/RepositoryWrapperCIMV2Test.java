@@ -32,7 +32,7 @@ public class RepositoryWrapperCIMV2Test {
     @Before
     public void setUp() throws Exception {
         repositoryWrapper = new RepositoryWrapper("ROOT\\CIMV2");
-        currentProcessUri = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        currentProcessUri = WmiOntology.createUriFromArgs("Win32_Process", "Handle", currentPidStr);
     }
 
     //@Override
@@ -128,7 +128,7 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(Set.of("caption", "process"), singleRow.keySet());
 
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
-        String uriProcess = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        String uriProcess = WmiOntology.createUriFromArgs("Win32_Process", "Handle", currentPidStr);
         System.out.println("uriProcess=" + uriProcess);
 
         Set<String> setLabels = listRows.nodeValuesSet("process");
@@ -229,7 +229,7 @@ public class RepositoryWrapperCIMV2Test {
 
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
         // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Directory.Name%3D%22C%3A%5C%5CWindows%22
-        String expectedProcessUri = WmiOntology.createUriVarArgs("Win32_Process", "Handle", currentPidStr);
+        String expectedProcessUri = WmiOntology.createUriFromArgs("Win32_Process", "Handle", currentPidStr);
         System.out.println("expectedProcessUri=" + expectedProcessUri);
         System.out.println("singleRow=" + singleRow);
         String actualProcessUri = singleRow.getAsUri("process");

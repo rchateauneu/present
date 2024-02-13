@@ -21,7 +21,6 @@ public class RepositoryWrapperStandardCimv2Test {
         repositoryWrapper = new RepositoryWrapper("ROOT\\StandardCimv2");
     }
 
-    //@Override
     @After
     public void tearDown() throws Exception {
         repositoryWrapper = null;
@@ -58,7 +57,7 @@ public class RepositoryWrapperStandardCimv2Test {
             Optional<ProcessHandle> processHandle = ProcessHandle.of(onePid);
             if(processHandle.isPresent()) countPresentProcess++;
         }
-        // At least a couple of processes should still be present.
+        // At least a couple of processes should always be present.
         Assert.assertTrue(countPresentProcess > 3);
     }
 
@@ -94,7 +93,6 @@ public class RepositoryWrapperStandardCimv2Test {
         Set<String> namesProcesses = listRows.stringValuesSet("process_name");
         System.out.println("namesProcesses=" + namesProcesses);
         // These processes open local socket connections.
-        //Assert.assertTrue(namesProcesses.contains("System Idle Process"));
         Assert.assertTrue(namesProcesses.contains("lsass.exe"));
         Assert.assertTrue(namesProcesses.contains("svchost.exe"));
         Assert.assertTrue(namesProcesses.contains("services.exe"));
@@ -344,11 +342,10 @@ public class RepositoryWrapperStandardCimv2Test {
         Set<String> setIpAddresses = listRows.nodeValuesSet("net_ip_address");
         System.out.println("setIpAddresses=" + setIpAddresses);
         Assert.assertTrue(setIpAddresses.size() > 0);
-        // String prefixIri = WmiOntology.NamespaceUrlPrefix("ROOT\\StandardCimv2");
         // Inconsistency here : WMI returns reference nodes with namespaces in lowercase.
         // Therefore, to ensure unicity of IRIs, namespaces are converted to uppercase.
         // It should be "ROOT\\StandardCimv2".
-        String prefixIri = WmiOntology.NamespaceUrlPrefix("ROOT\\STANDARDCIMV2");
+        String prefixIri = WmiOntology.namespaceUrlPrefix("ROOT\\STANDARDCIMV2");
         System.out.println("prefixIri=" + prefixIri);
         for(String iriIpAddress: setIpAddresses) {
             System.out.println("iriIpAddress=" + iriIpAddress);

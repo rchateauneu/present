@@ -1,5 +1,6 @@
 package paquetage;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,12 +29,12 @@ public class WmiProviderTest {
 
     @Test
     public void test_CheckValidNamespace_NoThrow() throws Exception {
-        WmiProvider.CheckValidNamespace("ROOT\\StandardCimv2");
+        WmiProvider.checkValidNamespace("ROOT\\StandardCimv2");
     }
 
     @Test (expected = RuntimeException.class)
     public void test_CheckValidNamespace_Throw() throws Exception {
-        WmiProvider.CheckValidNamespace("this is not a namespace #><");
+        WmiProvider.checkValidNamespace("this is not a namespace #><");
     }
 
     /**
@@ -47,7 +48,7 @@ public class WmiProviderTest {
                 "any_variable",
                 false,
                 Map.of("Handle", "var_handle"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"))));
+                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.fromString("123"))));
         String wqlQuery = queryData.buildWqlQuery();
         Assert.assertEquals("Select Handle, __PATH from CIM_Process where Handle = \"123\"", wqlQuery);
     }
@@ -98,7 +99,7 @@ public class WmiProviderTest {
     @Test
     public void TestCIM_Process() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
-        Solution listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.selectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
@@ -117,12 +118,12 @@ public class WmiProviderTest {
     @Test
     public void TestCIM_ProcessCurrent() throws Exception {
         GenericProvider genericProvider = new GenericProvider();
-        Solution listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.selectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_Process",
                 "any_variable",
                 Map.of("Handle", "var_handle"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString(currentPidStr))));
+                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.fromString(currentPidStr))));
         String stringsResults = listResults.stream().map(Solution.Row::toValueString)
                 .collect(Collectors.joining(", "));
         System.out.println(stringsResults);
@@ -142,7 +143,7 @@ public class WmiProviderTest {
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Precedent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
-        Solution listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.selectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
@@ -172,12 +173,12 @@ public class WmiProviderTest {
         // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
         // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
         GenericProvider genericProvider = new GenericProvider();
-        Solution listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.selectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Antecedent", "var_antecedent"),
-                Arrays.asList(new QueryData.WhereEquality("Dependent", ValueTypePair.FromString(dependentString))));
+                Arrays.asList(new QueryData.WhereEquality("Dependent", ValueTypePair.fromString(dependentString))));
         // Many libraries.
         Assert.assertTrue(listResults.size() > 5);
         for(Solution.Row row : listResults) {
@@ -199,12 +200,12 @@ public class WmiProviderTest {
         String antecedentString = PresentUtils.prefixCimv2Path("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\ntdll.dll\"");
 
         GenericProvider genericProvider = new GenericProvider();
-        Solution listResults = genericProvider.SelectVariablesFromWhere(
+        Solution listResults = genericProvider.selectVariablesFromWhere(
                 "ROOT\\CIMV2",
                 "CIM_ProcessExecutable",
                 "any_variable",
                 Map.of("Dependent", "var_dependent"),
-                Arrays.asList(new QueryData.WhereEquality("Antecedent", ValueTypePair.FromString(antecedentString))));
+                Arrays.asList(new QueryData.WhereEquality("Antecedent", ValueTypePair.fromString(antecedentString))));
         String stringsResults = (String) listResults.stream().map(Solution.Row::toValueString)
                 .collect(Collectors.joining(", "));
         System.out.println("stringsResults=" + stringsResults);
@@ -421,9 +422,10 @@ public class WmiProviderTest {
      * and checks that some of its properties are defined.
      */
     @Test
-    public void TestGetObject_CIM_DataFile() throws Exception {
+    public void TestGetObject_CIM_DataFile_A() throws Exception {
         // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"";
         String objectPath = PresentUtils.prefixCimv2Path("CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\System32\\\\clb.dll\"");
+        System.out.println("objectPath=" + objectPath);
         WmiGetter wmiGetter = new WmiGetter();
         Wbemcli.IWbemClassObject obj = wmiGetter.getObjectNode(objectPath);
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
@@ -431,11 +433,41 @@ public class WmiProviderTest {
         Assert.assertTrue(namesList.contains("FileName"));
         // Conversion to uppercase due to different behaviour on Windows 7 wrt to string cases.
         Assert.assertEquals(
-                wmiGetter.getObjectProperty(obj, "Caption").Value().toUpperCase(),
+                wmiGetter.getObjectProperty(obj, "Caption").getValue().toUpperCase(),
                 "C:\\WINDOWS\\System32\\clb.dll".toUpperCase());
         Assert.assertEquals(
-                wmiGetter.getObjectProperty(obj, "CreationClassName").Value(),
+                wmiGetter.getObjectProperty(obj, "CreationClassName").getValue(),
                 "CIM_LogicalFile");
+    }
+
+    @Test
+    public void TestGetObject_CIM_DataFile_B() throws Exception {
+        String objectPath = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", "C:\\WINDOWS\\System32\\clb.dll"));
+
+        System.out.println("objectPath=" + objectPath);
+        WmiGetter wmiGetter = new WmiGetter();
+        Wbemcli.IWbemClassObject obj = wmiGetter.getObjectNode(objectPath);
+        List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
+        Assert.assertTrue(namesList.contains("Name"));
+        Assert.assertTrue(namesList.contains("FileName"));
+        // Conversion to uppercase due to different behaviour on Windows 7 wrt to string cases.
+        Assert.assertEquals(
+                wmiGetter.getObjectProperty(obj, "Caption").getValue().toUpperCase(),
+                "C:\\WINDOWS\\System32\\clb.dll".toUpperCase());
+        Assert.assertEquals(
+                wmiGetter.getObjectProperty(obj, "CreationClassName").getValue(),
+                "CIM_LogicalFile");
+    }
+
+    @Test
+    public void TestGetObject_CIM_DataFile_C() throws Exception {
+        String pathDataFile = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", PresentUtils.currentJavaBinary()));
+
+        WmiGetter wmiGetter = new WmiGetter();
+        Wbemcli.IWbemClassObject obj = wmiGetter.getObjectNode(pathDataFile);
+        List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
+        Assert.assertTrue(namesList.contains("Name"));
+        Assert.assertTrue(namesList.contains("FileName"));
     }
 
     /**
@@ -444,20 +476,91 @@ public class WmiProviderTest {
      */
     @Test
     public void TestGetObject_Win32_Process() throws Exception {
-        long pid = ProcessHandle.current().pid();
-        // For example: "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"" + pid + "\"";
-        String objectPath = PresentUtils.prefixCimv2Path("Win32_Process.Handle=\"" + pid + "\"");
+        String objectPath = ObjectPath.buildCimv2PathWbem("Win32_Process", Map.of("Handle", currentPidStr));
+
         WmiGetter wmiGetter = new WmiGetter();
         Wbemcli.IWbemClassObject obj = wmiGetter.getObjectNode(objectPath);
         List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
         Assert.assertTrue(namesList.contains("Handle"));
         Assert.assertTrue(namesList.contains("Caption"));
         Assert.assertTrue(namesList.contains("Description"));
-        Assert.assertEquals(wmiGetter.getObjectProperty(obj, "Handle").Value(), Long.toString(pid));
-        Assert.assertEquals(wmiGetter.getObjectProperty(obj, "Caption").Value(), "java.exe");
+        Assert.assertEquals(wmiGetter.getObjectProperty(obj, "Handle").getValue(), currentPidStr);
+        Assert.assertEquals(wmiGetter.getObjectProperty(obj, "Caption").getValue(), "java.exe");
     }
-    // Antecedent = \\LAPTOP-R89KG6V1\root\cimv2:CIM_DataFile.Name="C:\\WINDOWS\\System32\\clbcatq.dll"
-    // Dependent = \\LAPTOP-R89KG6V1\root\cimv2:Win32_Process.Handle="2588"
+
+    @Test
+    public void TestGetObject_CIM_ExecutableProcess() throws Exception {
+        String pathAntecedent = ObjectPath.buildCimv2PathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", PresentUtils.currentJavaBinary()));
+
+        String pathDependent = ObjectPath.buildCimv2PathWbem(
+                "Win32_Process", Map.of(
+                        "Handle", currentPidStr));
+
+        String pathAssoc = ObjectPath.buildCimv2PathWbem(
+                "CIM_ProcessExecutable", Map.of(
+                        "Antecedent", pathAntecedent,
+                        "Dependent", pathDependent));
+
+        System.out.println("pathAssoc          =" + pathAssoc);
+        WmiGetter wmiGetter = new WmiGetter();
+        Wbemcli.IWbemClassObject obj = wmiGetter.getObjectNode(pathAssoc);
+        List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
+        Assert.assertTrue(namesList.contains("Antecedent"));
+        Assert.assertTrue(namesList.contains("Dependent"));
+    }
+
+    @Test
+    public void TestGetObject_CIM_DirectoryContainsFile_A() throws Exception {
+        String pathGroupComponent = ObjectPath.buildCimv2PathWbem(
+                "Win32_Directory", Map.of(
+                        "Name", "C:\\Windows"));
+
+        String pathPartComponent = ObjectPath.buildCimv2PathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", "C:\\Windows\\notepad.exe"));
+
+        String pathAssoc = ObjectPath.buildCimv2PathWbem(
+                "CIM_DirectoryContainsFile", Map.of(
+                        "PartComponent", pathPartComponent,
+                        "GroupComponent", pathGroupComponent));
+
+        System.out.println("pathAssoc=" + pathAssoc);
+        WmiGetter wmiGetter = new WmiGetter();
+        Wbemcli.IWbemClassObject obj = wmiGetter.getObjectNode(pathAssoc);
+        List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
+        Assert.assertTrue(namesList.contains("GroupComponent"));
+        Assert.assertTrue(namesList.contains("PartComponent"));
+    }
+
+    @Test
+    public void TestGetObject_CIM_DirectoryContainsFile_B() throws Exception {
+        String currentBinary = PresentUtils.currentJavaBinary();
+        File currentBinaryFile = new File(currentBinary);
+        File parentFile = currentBinaryFile.getParentFile();
+        String parentDir = parentFile.toString();
+
+        String pathGroupComponent = ObjectPath.buildCimv2PathWbem(
+                "Win32_Directory", Map.of(
+                        "Name", parentDir));
+
+        String pathPartComponent = ObjectPath.buildCimv2PathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", currentBinary));
+
+        String pathAssoc = ObjectPath.buildCimv2PathWbem(
+                "CIM_DirectoryContainsFile", Map.of(
+                        "PartComponent", pathPartComponent,
+                        "GroupComponent", pathGroupComponent));
+
+        System.out.println("pathAssoc=" + pathAssoc);
+        WmiGetter wmiGetter = new WmiGetter();
+        Wbemcli.IWbemClassObject obj = wmiGetter.getObjectNode(pathAssoc);
+        List<String> namesList = Arrays.stream(obj.GetNames(null, 0, null)).toList();
+        Assert.assertTrue(namesList.contains("GroupComponent"));
+        Assert.assertTrue(namesList.contains("PartComponent"));
+    }
 
     @Test
     public void TestClassesListMicrosoft() {

@@ -8,9 +8,7 @@ import java.util.stream.Collectors;
 
 public class RepositoryWrapperOntologyTest {
 
-
     static long currentPid = ProcessHandle.current().pid();
-    static String currentPidStr = String.valueOf(currentPid);
 
     private RepositoryWrapper repositoryWrapper = null;
 
@@ -19,7 +17,6 @@ public class RepositoryWrapperOntologyTest {
         repositoryWrapper = new RepositoryWrapper();
     }
 
-    //@Override
     @After
     public void tearDown() throws Exception {
         repositoryWrapper = null;

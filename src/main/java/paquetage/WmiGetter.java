@@ -136,8 +136,8 @@ public class WmiGetter extends BaseGetter {
         }
         return objectNode;
     }
-    /** This returns in a Row the properties of a WMI instance specified in a WMI path.
-     * The derisred properties are given in the QueryData columns.
+    /** This returns in a Solution.Row the properties of a WMI instance specified in a WMI path.
+     * The desired properties are given in the QueryData columns.
      * @param objectPath
      * @param mainVariable
      * @param queryColumns
@@ -168,7 +168,7 @@ public class WmiGetter extends BaseGetter {
         }
         // We are sure this is a node.
         ValueTypePair wbemPath = getObjectProperty(objectNode, "__PATH");
-        if(wbemPath.Type() != ValueTypePair.ValueType.NODE_TYPE) {
+        if(wbemPath.getType() != ValueTypePair.ValueType.NODE_TYPE) {
             throw new RuntimeException("GetSingleObject objectPath should be a node:" + objectPath);
         }
         singleRow.putValueType(mainVariable, wbemPath);

@@ -15,7 +15,7 @@ public class WmiSelecter extends BaseSelecter {
 
     final static private Logger logger = Logger.getLogger(WmiSelecter.class);
 
-    public boolean MatchProvider(QueryData queryData) {
+    public boolean matchProvider(QueryData queryData) {
         return true;
     }
 
@@ -27,7 +27,7 @@ public class WmiSelecter extends BaseSelecter {
      * @return A list of rows containing the values of the variables as taken from the query results.
      * @throws Exception
      */
-    public Solution EffectiveSelect(QueryData queryData) {
+    public Solution effectiveSelect(QueryData queryData) {
         if (queryData.isMainVariableAvailable) {
             throw new RuntimeException("Main variable should not be available in a WQL query.");
         }

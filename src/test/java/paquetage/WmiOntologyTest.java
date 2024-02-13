@@ -34,16 +34,18 @@ public class WmiOntologyTest {
         System.out.println("Repository size before=" + repositoryConnection.size());
         TupleQuery tupleQuery = repositoryConnection.prepareTupleQuery(sparqlQuery);
         TupleQueryResult queryResult = tupleQuery.evaluate();
-        //String queryResult = tupleQuery.evaluate();
-        List<BindingSet> ll = queryResult.stream().collect(Collectors.toList());
-        System.out.println("ll.size()=" + ll.size());
-        for(BindingSet bs : ll) {
-            System.out.println("bs=" + bs);
+        Set<String> variablesSet;
+        if(false) {
+            // For debugging.
+            List<BindingSet> ll = queryResult.stream().collect(Collectors.toList());
+            System.out.println("ll.size()=" + ll.size());
+            for (BindingSet bs : ll) {
+                System.out.println("bs=" + bs);
+            }
+            variablesSet = ll.stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
+        } else {
+            variablesSet = queryResult.stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
         }
-
-        // Set<String> variablesSet = queryResult.stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
-        Set<String> variablesSet = ll.stream().map(result -> result.getValue(columnName).toString()).collect(Collectors.toSet());
-
         System.out.println("Repository size after=" + repositoryConnection.size());
         return variablesSet;
     }
@@ -68,85 +70,65 @@ public class WmiOntologyTest {
     }
 
     private static void assertContainsItemInterop(Set<String> itemsSet, String shortItem) {
-        Assert.assertTrue(itemsSet.contains(WmiOntology.NamespaceTermToIRI("ROOT\\Interop", shortItem)));
+        Assert.assertTrue(itemsSet.contains(WmiOntology.namespaceTermToIRI("ROOT\\Interop", shortItem)));
     }
 
-    /*
     @Test
-    public void SplitWbemPath_test() {
-        String wbemPath = "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:Win32_Process.Handle=\"12456\"";
-        WmiOntology.NamespaceTokenPair ntp = WmiOntology.SplitWbemPath(wbemPath);
-        Assert.assertEquals("ROOT\\CIMV2", ntp.nameSpace);
-        Assert.assertEquals("Win32_Process", ntp.Token);
-        Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.INSTANCE_IRI, ntp.TokenType);
-    }
-    */
-
-    /*
-    @Test
-    public void ExtractNamespaceFromRef_test() {
-        String wbemPath = "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:Win32_Process.Handle=\"12456\"";
-        String namespace = WmiProvider.ExtractNamespaceFromRef(wbemPath);
-        Assert.assertEquals("ROOT\\CIMV2", namespace);
-    }
-    */
-
-    @Test
-    public void ExtractClassnameFromRef_test() {
+    public void testExtractClassnameFromRef_test() {
         String wbemPath = "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:Win32_Process.Handle=\"12456\"";
         String className = WmiProvider.ExtractClassnameFromRef(wbemPath);
         Assert.assertEquals("Win32_Process", className);
     }
 
     @Test
-    public void SplitIRI_testA() {
+    public void testSplitIRI_testA() {
         String token = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process";
         WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(token);
-        Assert.assertEquals("ROOT\\CIMV2", ntp.nameSpace);
-        Assert.assertEquals("Win32_Process", ntp.Token);
-        Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.CLASS_IRI, ntp.TokenType);
+        Assert.assertEquals("ROOT\\CIMV2", ntp.pairNamespace);
+        Assert.assertEquals("Win32_Process", ntp.pairToken);
+        Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.CLASS_IRI, ntp.pairTokenType);
     }
 
     @Test
-    public void SplitIRI_testB() {
+    public void testSplitIRI_testB() {
         String iri = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Handle";
         WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(iri);
-        Assert.assertEquals("ROOT\\CIMV2", ntp.nameSpace);
-        Assert.assertEquals("Win32_Process.Handle", ntp.Token);
-        Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.PREDICATE_IRI, ntp.TokenType);
+        Assert.assertEquals("ROOT\\CIMV2", ntp.pairNamespace);
+        Assert.assertEquals("Win32_Process.Handle", ntp.pairToken);
+        Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.PREDICATE_IRI, ntp.pairTokenType);
     }
     @Test
-    public void SplitIRI_testC() {
+    public void testSplitIRI_testC() {
         String iri = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%223160%22";
         WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(iri);
-        Assert.assertEquals("ROOT\\CIMV2", ntp.nameSpace);
-        Assert.assertEquals("Win32_Process", ntp.Token);
-        Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.INSTANCE_IRI, ntp.TokenType);
+        Assert.assertEquals("ROOT\\CIMV2", ntp.pairNamespace);
+        Assert.assertEquals("Win32_Process", ntp.pairToken);
+        Assert.assertEquals(WmiOntology.NamespaceTokenPair.TokenTypeEnum.INSTANCE_IRI, ntp.pairTokenType);
     }
 
     @Test
-    public void SplitIRI_testD() {
+    public void testSplitIRI_testD() {
         String iri = "http://www.w3.org/2000/01/rdf-schema#label" ;
         WmiOntology.NamespaceTokenPair ntp = WmiOntology.splitIRI(iri);
         Assert.assertEquals(null, ntp);
     }
 
     @Test
-    public void IriToWbemPath_testA() {
+    public void testIriToWbemPath_testA() {
         String iri = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3AWin32_Process.Handle%3D%222424%22";
-        String wbemPath = WmiOntology.IriToWbemPath("ROOT\\CIMV2", iri);
+        String wbemPath = WmiOntology.iriToWbemPath("ROOT\\CIMV2", iri);
         Assert.assertEquals("\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:Win32_Process.Handle=\"2424\"", wbemPath);
     }
 
     @Test
-    public void IriToWbemPath_testB() {
+    public void testIriToWbemPath_testB() {
         String iri = "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Handle";
-        String wbemPath = WmiOntology.IriToWbemPath("ROOT\\CIMV2", iri);
+        String wbemPath = WmiOntology.iriToWbemPath("ROOT\\CIMV2", iri);
         Assert.assertEquals("Win32_Process.Handle", wbemPath);
     }
 
     @Test
-    public void Interop_ClassesAll() {
+    public void testInterop_ClassesAll() {
         Set<String> subjectsSet = selectColumnFromOntology(
                 ontologyInterop,
                 "SELECT ?x WHERE { ?x ?p ?y }",
@@ -162,7 +144,7 @@ public class WmiOntologyTest {
      * TODO: Why does the ontology changes so often ?
      */
     @Test
-    public void Compare_Ontology_Cached() {
+    public void testCompare_Ontology_Cached() {
         String namespace = "ROOT\\Cli";
         RepositoryConnection ontologyNonCached = WmiOntology.readOnlyOntologyConnectionNoCacheInMemory(namespace);
         RepositoryConnection cachedOntology = WmiOntology.cloneToMemoryConnection(namespace);
@@ -177,7 +159,7 @@ public class WmiOntologyTest {
      *
      */
     @Test
-    public void LoadAllOntologies() throws Exception {
+    public void testLoadAllOntologies() throws Exception {
         Set<String> setNamespaces = wmiProvider.namespacesList();
         for (String oneNamespace : setNamespaces) {
             RepositoryConnection ontologyNamespace = WmiOntology.cloneToMemoryConnection(oneNamespace);
@@ -192,7 +174,7 @@ public class WmiOntologyTest {
 
     /** This selects all triples, and detects that some classes are present. */
     @Test
-    public void CIMV2_ClassesAll() {
+    public void testCIMV2_ClassesAll() {
         Set<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
         assertContainsItemCIMV2(subjectsSet, "Win32_Process");
         assertContainsItemCIMV2(subjectsSet, "CIM_DataFile");
@@ -204,7 +186,7 @@ public class WmiOntologyTest {
 
     /** This selects all definitions of RDF types and checks the presence of some classes. */
     @Test
-    public void CIMV2_ClassesFilter() {
+    public void testCIMV2_ClassesFilter() {
         Set<String> typesSet = selectColumnCIMV2("SELECT ?x WHERE { ?x rdf:type rdfs:Class }", "x");
         assertContainsItemCIMV2(typesSet, "Win32_Process");
         assertContainsItemCIMV2(typesSet, "CIM_ProcessExecutable");
@@ -213,7 +195,7 @@ public class WmiOntologyTest {
 
     /** This selects all triples, and detects that some properties are present. */
     @Test
-    public void CIMV2_PropertiesAll() {
+    public void testCIMV2_PropertiesAll() {
         Set<String> subjectsSet = selectColumnCIMV2("SELECT ?x WHERE { ?x ?p ?y }", "x");
         assertContainsItemCIMV2(subjectsSet, "Handle");
         assertContainsItemCIMV2(subjectsSet, "Name");
@@ -223,7 +205,7 @@ public class WmiOntologyTest {
 
     /** This selects all definitions of RDF properties and checks the presence of some properties. */
     @Test
-    public void CIMV2_PropertiesFilter() {
+    public void testCIMV2_PropertiesFilter() {
         Set<String> propertiesSet = selectColumnCIMV2(
                 "SELECT ?y WHERE { ?y rdf:type rdf:Property }", "y");
         assertContainsItemCIMV2(propertiesSet, "Handle");
@@ -234,20 +216,27 @@ public class WmiOntologyTest {
      *
      */
     @Test
-    public void CIMV2_Handle_Domain_All() {
-        String queryString = new Formatter().format(
-                "SELECT ?y WHERE { ?y rdfs:domain ?z }").toString();
+    public void testCIMV2_Domain_All() {
+        String queryString = "SELECT ?y WHERE { ?y rdfs:domain ?z }";
         Set<String> domainsSet = selectColumnCIMV2(queryString, "y");
         assertContainsItemCIMV2(domainsSet, "CIM_Process.Handle");
         assertContainsItemCIMV2(domainsSet, "Win32_UserAccount.Name");
         assertContainsItemCIMV2(domainsSet, "Win32_Process.Handle");
     }
 
+    /* This data is required by Wikidata Sparql GUI. */
+    @Test
+    public void testCIMV2_DirectClaim() {
+        String queryString = "SELECT ?property WHERE { ?wdt_predicate <http://wikiba.se/ontology#directClaim> ?property }";
+        Set<String> propertysSet = selectColumnCIMV2(queryString, "property");
+        assertContainsItemCIMV2(propertysSet, "Win32_Process.Handle");
+    }
+
     /** This checks the presence of class Wmi32_Process in the domain of Win32_Process.Handle.
      * The node of Win32_Process.Handle is explicitly given.
      */
     @Test
-    public void CIMV2_Win32_Process_Handle_Domain_Filter() {
+    public void testCIMV2_Win32_Process_Handle_Domain_Filter() {
         String queryString = new Formatter().format(
                 "SELECT ?x WHERE { <%s> rdfs:domain ?x }", WmiProvider.toCIMV2("Win32_Process.Handle")).toString();
         Set<String> domainsSet = selectColumnCIMV2(queryString, "x");
@@ -255,9 +244,9 @@ public class WmiOntologyTest {
         assertContainsItemCIMV2(domainsSet, "Win32_Process");
     }
 
-    /** This checks the presence of class string in one of the ranges. */
+    /** This checks the presence of the class "string" in one of the ranges. */
     @Test
-    public void CIMV2_Range_Filter() {
+    public void testCIMV2_Range_Filter() {
         // Predicates: [
         // http://www.w3.org/2000/01/rdf-schema#label,
         // http://www.w3.org/2000/01/rdf-schema#domain,
@@ -272,7 +261,7 @@ public class WmiOntologyTest {
 
     /** This checks the presence Description for class Win32_Process. */
     @Test
-    public void CIMV2_Win32_Process_Description() {
+    public void testCIMV2_Win32_Process_Description() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -293,7 +282,7 @@ public class WmiOntologyTest {
 
     /** This selects the base class of Win32_Process */
     @Test
-    public void CIMV2_Win32_Process_BaseClass() {
+    public void testCIMV2_Win32_Process_BaseClass() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -310,7 +299,7 @@ public class WmiOntologyTest {
 
     /** This select the labels of all CIM classes starting from the top. */
     @Test
-    public void CIMV2_DerivedClasses() {
+    public void testCIMV2_DerivedClasses() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -329,7 +318,7 @@ public class WmiOntologyTest {
 
     /** This checks the presence of Description for property Win32_Process.Handle. */
     @Test
-    public void CIMV2_Win32_Process_Handle_Description() {
+    public void testCIMV2_Win32_Process_Handle_Description() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -362,7 +351,7 @@ Mais pourquoi aux labels et pas aux autres chaines ?
     }
 
     @Test
-    public void CIMV2_Win32_Process_Handle_Label() {
+    public void testCIMV2_Win32_Process_Handle_Label() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -415,7 +404,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** This checks the presence of Description for property Win32_Process.Handle. */
     @Test
-    public void CIMV2_Win32_UserAccount_Name_Description() {
+    public void testCIMV2_Win32_UserAccount_Name_Description() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -434,7 +423,7 @@ En effet, le code de Present n'est quasiment pas utilise.
     }
 
     @Test
-    public void CIMV2_Win32_ClassInfoAction_AppID() {
+    public void testCIMV2_Win32_ClassInfoAction_AppID() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -450,7 +439,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** All class with the property "AppID". */
     @Test
-    public void CIMV2_Classes_AppID() {
+    public void testCIMV2_Classes_AppID() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -469,7 +458,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** Properties used by at least four tables. */
     @Test
-    public void CIMV2_Classes_SharedProperty() {
+    public void testCIMV2_Classes_SharedProperty() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -490,7 +479,7 @@ En effet, le code de Present n'est quasiment pas utilise.
     }
 
     @Test
-    public void CIMV2_Associators_Antecedent() {
+    public void testCIMV2_Associators_Antecedent() {
         String queryString = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -507,7 +496,7 @@ En effet, le code de Present n'est quasiment pas utilise.
     }
 
     @Test
-    public void CIMV2_Associators_Dependent() {
+    public void testCIMV2_Associators_Dependent() {
         String queryString = """
                 prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -544,7 +533,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** All associators referring to a CIM_Process. */
     @Test
-    public void CIMV2_Associators_To_CIM_Process() {
+    public void testCIMV2_Associators_To_CIM_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -571,7 +560,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** All associators referring to a Win32_Process. */
     @Test
-    public void CIMV2_Associators_To_Win32_Process() {
+    public void testCIMV2_Associators_To_Win32_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -590,7 +579,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** This selects the labels of the base properties of properties pointing to a Win32_Process in associators. */
     @Test
-    public void CIMV2_Associators_Labels_To_Win32_Process() {
+    public void testCIMV2_Associators_Labels_To_Win32_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -612,7 +601,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** Labels of classes linked to a CIM_DataFile with an associator. */
     @Test
-    public void CIMV2_Associated_Classes_To_CIM_DataFile() {
+    public void testCIMV2_Associated_Classes_To_CIM_DataFile() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -638,7 +627,7 @@ En effet, le code de Present n'est quasiment pas utilise.
 
     /** Labels of classes linked to a Win32_Process with an associator. */
     @Test
-    public void CIMV2_Associated_Classes_To_Win32_Process() {
+    public void testCIMV2_Associated_Classes_To_Win32_Process() {
         String queryString = """
                         prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -663,7 +652,7 @@ En effet, le code de Present n'est quasiment pas utilise.
      * Properties of StandardCimv2 class "MSFT_NetUDPEndpoint".
      */
     @Test
-    public void StandardCimv2_MSFT_NetUDPEndpoint_Properties() {
+    public void testStandardCimv2_MSFT_NetUDPEndpoint_Properties() {
         String queryString = """
                         prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -687,7 +676,7 @@ En effet, le code de Present n'est quasiment pas utilise.
      * Classes in the namespace StandardCimv2, whose a property name contains the string "Process".
      */
     @Test
-    public void StandardCimv2_ClassesWithFilteredProperties() {
+    public void testStandardCimv2_ClassesWithFilteredProperties() {
         String queryString = """
                         prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
                         prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -718,7 +707,7 @@ En effet, le code de Present n'est quasiment pas utilise.
      * Classes with the same name in the namespaces StandardCimv2 and CIMV2.
      */
     @Test
-    public void StandardCimv2_CIMV2_HomonymClasses() {
+    public void testStandardCimv2_CIMV2_HomonymClasses() {
         String queryString = """
                     prefix standard_cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/StandardCimv2#>
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>

@@ -20,7 +20,7 @@ public class GenericProviderTest extends TestCase {
     }
 
     private void CheckGetter(QueryData queryData, String nameGetterExpected) {
-        BaseGetter baseGetter = genericProvider.FindCustomGetter(queryData);
+        BaseGetter baseGetter = genericProvider.findCustomGetter(queryData);
         String nameGetterActual = (baseGetter == null) ? null : baseGetter.getClass().getCanonicalName();
         Assert.assertEquals(nameGetterExpected, nameGetterActual);
     }
@@ -76,7 +76,7 @@ public class GenericProviderTest extends TestCase {
                 false,
                 Map.of(
                         "Handle", "the_handle"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString(currentPidStr))));
+                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.fromString(currentPidStr))));
 
         CheckGetter(queryData, "paquetage.BaseGetter_Win32_Process_Handle");
         CheckSelecter(queryData, null);
@@ -102,13 +102,13 @@ public class GenericProviderTest extends TestCase {
                         "FileName", "var_filename",
                         "FileSize", "var_filesize",
                         "Path", "var_path"),
-                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
+                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.fromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
 
         CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
         CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name");
 
-        Solution rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
-        Solution rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
+        Solution rowsProviderCustom = genericProvider.selectVariablesFromWhere(queryData, true);
+        Solution rowsProviderGeneric = genericProvider.selectVariablesFromWhere(queryData, false);
 
         Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
         for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
@@ -128,13 +128,13 @@ public class GenericProviderTest extends TestCase {
                 false,
                 Map.of(
                         "Name", "var_name"),
-                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
+                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.fromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
 
         CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
         CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name");
 
-        Solution rowsProviderCustom = genericProvider.SelectVariablesFromWhere(queryData, true);
-        Solution rowsProviderGeneric = genericProvider.SelectVariablesFromWhere(queryData, false);
+        Solution rowsProviderCustom = genericProvider.selectVariablesFromWhere(queryData, true);
+        Solution rowsProviderGeneric = genericProvider.selectVariablesFromWhere(queryData, false);
 
         Assert.assertEquals(rowsProviderGeneric.size(), rowsProviderCustom.size());
         for(int index = 0; index <rowsProviderGeneric.size(); ++index) {
@@ -156,7 +156,7 @@ public class GenericProviderTest extends TestCase {
                 Map.of(
                         "CreationDate", "creation_date",
                         "Name", "var_name"),
-                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
+                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.fromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
 
         // Checks that there is a custom provider for the attribute "CreationDate".
         CheckGetter(queryData, null);
@@ -180,7 +180,7 @@ public class GenericProviderTest extends TestCase {
                         "FileSize", "var_filesize", // Available
                         "InUseCount", "in_use_count", // Not available.
                         "Name", "var_name"),
-                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
+                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.fromString("C:\\WINDOWS\\SYSTEM32\\ntdll.dll"))));
 
         // Checks that there are no custom providers.
         CheckGetter(queryData, null);
@@ -271,7 +271,7 @@ public class GenericProviderTest extends TestCase {
                         "FileName", "var_filename",
                         "FileSize", "var_filesize",
                         "Path", "var_path"),
-                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString(filePath))));
+                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.fromString(filePath))));
 
         CheckSelecter(queryData, "paquetage.BaseSelecter_CIM_DataFile_Name");
     }
@@ -319,7 +319,7 @@ public class GenericProviderTest extends TestCase {
                         "Name", "var_name",
                         "ProcessId", "var_processid",
                         "WindowsVersion", "var_windowsversion"),
-                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.FromString(currentPidStr))));
+                Arrays.asList(new QueryData.WhereEquality("Handle", ValueTypePair.fromString(currentPidStr))));
 
         CheckGetter(queryData, "paquetage.BaseGetter_Win32_Process_Handle");
         CheckSelecter(queryData, null);

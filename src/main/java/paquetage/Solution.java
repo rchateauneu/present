@@ -40,7 +40,7 @@ public class Solution implements Iterable<Solution.Row> {
         String predicateShortValue = row.getStringValue(variablePredicate);
         logger.debug("predicateShortValue=" + predicateShortValue);
         // "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#" + predicateShortValue;
-        String predicateValue = WmiOntology.NamespaceTermToIRI("ROOT\\CIMV2", predicateShortValue);
+        String predicateValue = WmiOntology.namespaceTermToIRI("ROOT\\CIMV2", predicateShortValue);
         logger.debug("predicateValue=" + predicateValue);
         IRI predicateIRI = Values.iri(predicateValue);
         return predicateIRI;
@@ -102,10 +102,15 @@ public class Solution implements Iterable<Solution.Row> {
                         continue;
                     }
                     IRI predicateIri = dereferencePredicate(predicate, row);
-                    String objectString = objectWmiValueType.Value();
-                    Value resourceObject = objectWmiValueType.Type() == ValueTypePair.ValueType.NODE_TYPE
-                            ? Values.iri(objectString)
-                            : objectWmiValueType.convertValueTypeToLiteral();
+                    String objectString = objectWmiValueType.getValue();
+                    Value resourceObject = null;
+
+                    if(objectWmiValueType.getType() == ValueTypePair.ValueType.NODE_TYPE) {
+                        String objectIri = WmiOntology.wbemPathToIri("ROOT\\CIMV2", objectString).toString();
+                        resourceObject = Values.iri(objectIri);
+                    } else {
+                        resourceObject = objectWmiValueType.convertValueTypeToLiteral();
+                    }
                     generatedTriples.add(solutionFactory.createStatement(
                             resourceSubject,
                             predicateIri,
@@ -144,7 +149,8 @@ public class Solution implements Iterable<Solution.Row> {
                     logger.debug("subjectName=" + subjectName);
                     logger.debug("RDFS.LABEL.stringValue()=" + RDFS.LABEL.stringValue() + ".");
                     boolean isRdfsLabel = predicateValueString.equals(RDFS.LABEL.stringValue());
-                    logger.debug("isRdfsLabel=" + isRdfsLabel);
+                    boolean isDirectClaim = predicateValueString.equals(WmiOntology.directClaimIri.stringValue());
+                    logger.debug("isRdfsLabel=" + isRdfsLabel + " isDirectClaim=" + isDirectClaim);
                     for (Row row : rowsList) {
                         //logger.debug("row=" + row);
                         /* The subject might not be a node if the query comes from Wikidata GUI.
@@ -163,12 +169,11 @@ public class Solution implements Iterable<Solution.Row> {
                             logger.debug("subjectName=" + subjectName + " objectName=" + objectName);
                             logger.debug("predicate=" + predicate);
 
-                            if (subjectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
+                            if (subjectWmiValue.getType() == ValueTypePair.ValueType.NODE_TYPE) {
+                                // The label is built on-the-fly.
                                 resourceSubject = row.asIRI(subjectName);
                                 logger.debug("resourceSubject=" + resourceSubject);
                                 String valueObject = row.getStringValue(objectName);
-                                // logger.debug("valueObject=" + valueObject);
-
                                 resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
                                 logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
                             } else {
@@ -183,24 +188,29 @@ public class Solution implements Iterable<Solution.Row> {
 
                                 D'une part ?date_value est un literal, mais doit aussi etre un iri.
                                 Utilisons un predicat qui est un IRI.
-
                                 Probleme: Ca n'existe que dans les associators !
-
                                 The label could not be calculated.
                                 */
                                 resourceSubject = null;
                                 resourceObject = null;
-                                logger.error("Subject is not an IRI:" + subjectName + "=" + literalSubject.stringValue()
+                                logger.error("Label subject is not an IRI:" + subjectName + "=" + literalSubject.stringValue()
                                 + " objectName=" + objectName);
                             }
-                        } else {
+                        }
+                        else if(isDirectClaim)
+                        {
+                            logger.debug("isDirectClaim yield no value");
+                            resourceSubject = null;
+                            resourceObject = null;
+                        }
+                        else {
                             resourceSubject = row.asIRI(subjectName);
                             ValueTypePair objectWmiValue = row.getValueType(objectName);
                             if (objectWmiValue == null) {
                                 throw new RuntimeException("Null value for objectName=" + objectName);
                             }
 
-                            if (objectWmiValue.Type() == ValueTypePair.ValueType.NODE_TYPE) {
+                            if (objectWmiValue.getType() == ValueTypePair.ValueType.NODE_TYPE) {
                                 resourceObject = row.asIRI(objectName);
                             } else {
                                 resourceObject = objectWmiValue.convertValueTypeToLiteral();
@@ -214,7 +224,7 @@ public class Solution implements Iterable<Solution.Row> {
                                     predicateIri,
                                     resourceObject));
                         }
-                    }
+                    } // for row
                 } else {
                     logger.debug("Predicate must be constant with variable subject and variable object:"
                             + predicate + " subjectName=" + subjectName + ". Do nothing..");
@@ -288,13 +298,13 @@ public class Solution implements Iterable<Solution.Row> {
          */
         Resource asIRI(String varName) throws Exception {
             ValueTypePair pairValueType = getValueType(varName);
-            if(pairValueType.Type() != ValueTypePair.ValueType.NODE_TYPE) {
+            if(pairValueType.getType() != ValueTypePair.ValueType.NODE_TYPE) {
                 throw new Exception("This should be a NODE:" + varName + "=" + pairValueType.toDisplayString());
             }
-            String valueString = pairValueType.Value();
+            String valueString = pairValueType.getValue();
 
             // Consistency check, for debugging.
-            if(valueString.startsWith(WmiOntology.namespaces_url_prefix)) {
+            if(valueString.startsWith(WmiOntology.namespacesUrlPrefix)) {
                 throw new Exception("Double transformation in IRI:" + valueString);
             }
 
@@ -318,9 +328,9 @@ public class Solution implements Iterable<Solution.Row> {
         public ValueTypePair tryValueType(String key) {
             ValueTypePair vtp = rowElements.get(key);
             // This is just a hint to check that wbem paths are correctly typed.
-            if(vtp != null && !vtp.IsValid())
+            if(vtp != null && !vtp.isValid())
             {
-                throw new RuntimeException("TryValueType: Key=" + key + " invalid:" + vtp.Value());
+                throw new RuntimeException("TryValueType: Key=" + key + " invalid:" + vtp.getValue());
             }
             return vtp;
         }
@@ -337,11 +347,11 @@ public class Solution implements Iterable<Solution.Row> {
         }
 
         public String getStringValue(String key) {
-            return getValueType(key).Value();
+            return getValueType(key).getValue();
         }
 
         public long getLongValue(String key) {
-            return Long.parseLong(getValueType(key).Value());
+            return Long.parseLong(getValueType(key).getValue());
         }
 
         public void putString(String key, String str) {
@@ -364,7 +374,7 @@ public class Solution implements Iterable<Solution.Row> {
             // This is just a hint to detect that Wbem paths are correctly typed.
             // It also checks for "\\?\Volume{e88d2f2b-332b-4eeb-a420-20ba76effc48}\" which is not a path.
             if(pairValueType != null) {
-                if (!pairValueType.IsValid()) {
+                if (!pairValueType.isValid()) {
                     throw new RuntimeException("PutValueType: Key=" + key + " looks like a node:" + pairValueType.toDisplayString());
                 }
             }

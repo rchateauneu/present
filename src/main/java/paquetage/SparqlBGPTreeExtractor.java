@@ -6,21 +6,18 @@ package paquetage;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
 
-import javax.management.RuntimeErrorException;
-
 // https://www.programcreek.com/java-api-examples/?api=org.eclipse.rdf4j.query.parser.ParsedQuery
 
 // https://github.com/apache/rya/blob/master/sail/src/main/java/org/apache/rya/rdftriplestore/inference/IntersectionOfVisitor.java#L54
 
 interface InterfaceExpressionNode {
-    Solution Evaluate() ;
+    Solution evaluateExpression() ;
 }
 
 abstract class BaseExpressionNode implements InterfaceExpressionNode {
@@ -68,13 +65,13 @@ class JoinExpressionNode extends BaseExpressionNode {
     // In this case, they are replicated for each value found by WMI.
     private List<StatementPattern> visitorPatternsRaw = new ArrayList<>();
 
-    void AddPattern(StatementPattern statementPattern) {
+    void addPattern(StatementPattern statementPattern) {
         //logger.debug("Add one pattern to " + visitorPatternsRaw.size());
         visitorPatternsRaw.add(statementPattern);
     }
 
     // Must be called after parsing and before evaluation.
-    void JoinBGPPartition() {
+    void joinBGPPartition() {
         if(patternsMap != null) {
             throw new RuntimeException("patternsMap should not be set twice.");
         }
@@ -88,7 +85,8 @@ class JoinExpressionNode extends BaseExpressionNode {
 
     Solution localSolution = null;
 
-    public Solution Evaluate() {
+    @Override
+    public Solution evaluateExpression() {
         logger.debug("children.size()=" + children.size() + " visitorPatternsRaw.size()=" + visitorPatternsRaw.size());
         //try {
             SparqlTranslation patternSparql = new SparqlTranslation(patternsAsArray());
@@ -102,7 +100,7 @@ class JoinExpressionNode extends BaseExpressionNode {
 
             // TODO: Avoid this cartesian product by merging BGPs in lower nodes.
             for(BaseExpressionNode child : children){
-                Solution subSolution = child.Evaluate();
+                Solution subSolution = child.evaluateExpression();
                 Solution cartesianProduct = localSolution.cartesianProduct(subSolution);
                 localSolution = cartesianProduct;
             }
@@ -172,7 +170,8 @@ class ProjectionExpressionNode extends BaseExpressionNode {
         projectionNode = visitedProjection;
     }
 
-    public Solution Evaluate() {
+    @Override
+    public Solution evaluateExpression() {
         projectionNode.getBindingNames();
         logger.debug("projectionNode.getBindingNames():" + projectionNode.getBindingNames());
         if(children.size() != 1) {
@@ -183,7 +182,7 @@ class ProjectionExpressionNode extends BaseExpressionNode {
             throw new RuntimeException("There must be one child only:" + children.size());
         }
         logger.debug("children.size():" + children.size());
-        Solution solution = children.get(0).Evaluate();
+        Solution solution = children.get(0).evaluateExpression();
         logger.debug("Solution:" + solution.size() + " Header=" + solution.header());
         /*
         TODO: Keep only some columns.
@@ -203,11 +202,13 @@ class UnionExpressionNode extends BaseExpressionNode {
         super(parent);
         unionNode = visitedUnionNode;
     }
-    public Solution Evaluate() {
+
+    @Override
+    public Solution evaluateExpression() {
         logger.debug("Children:" + children.size());
         Solution solution = new Solution();
         for(BaseExpressionNode expressionNode: children) {
-            Solution childSolution = expressionNode.Evaluate();
+            Solution childSolution = expressionNode.evaluateExpression();
             logger.debug("childSolution:" + childSolution.size() + " Header=" + childSolution.header());
             /* TODO: Instead of creating a new solution, why not pass a visitor to immediately generate triples ?
             TODO: On the other hand, it is more difficult to test.
@@ -321,16 +322,16 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
             // TODO: Is it really necessary to change the parent ?
             parent = joinParent;
             JoinExpressionNode realJoin = (JoinExpressionNode)parent;
-            realJoin.AddPattern(statementPatternNode);
+            realJoin.addPattern(statementPatternNode);
         } else if(parent instanceof UnionExpressionNode) {
             // Do not change the parent. This creates a single "Join" node for a single pattern.
             JoinExpressionNode joinParent = new JoinExpressionNode(parent);
-            joinParent.AddPattern(statementPatternNode);
+            joinParent.addPattern(statementPatternNode);
         } else if(! (parent instanceof JoinExpressionNode)) {
             throw new RuntimeException("Invalid parent type:" + parent.getClass().getName());
         } else {
             JoinExpressionNode realJoin = (JoinExpressionNode)parent;
-            realJoin.AddPattern(statementPatternNode);
+            realJoin.addPattern(statementPatternNode);
         }
     }
 
@@ -384,7 +385,7 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
                     logger.warn("Join node should have only Projection as children, not:" + child.getClass().getName());
                 }
             }
-            joinNode.JoinBGPPartition();
+            joinNode.joinBGPPartition();
         }
         for(BaseExpressionNode child : node.children) {
             partitionBGPAux(child);
@@ -457,7 +458,7 @@ public class SparqlBGPTreeExtractor {
     }
 
     Solution evaluateSolution() {
-        Solution solution = patternsVisitor.parent.Evaluate();
+        Solution solution = patternsVisitor.parent.evaluateExpression();
         logger.debug("Evaluated solution:" + solution.size() + " rows.");
         return solution;
     }

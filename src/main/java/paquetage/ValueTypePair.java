@@ -24,32 +24,32 @@ import java.time.format.DateTimeFormatter;
  */
 class ValueTypePair {
     final static private Logger logger = Logger.getLogger(ValueTypePair.class);
-    private String m_Value;
-    private ValueType m_Type;
+    private String vtpValue;
+    private ValueType vtpType;
 
-    public String Value() {
-        return m_Value;
+    public String getValue() {
+        return vtpValue;
     }
 
-    public ValueType Type() {
-        return m_Type;
+    public ValueType getType() {
+        return vtpType;
     }
 
     public boolean equals(Object otherObject) {
         ValueTypePair other = (ValueTypePair)otherObject;
-        return m_Value.equals(other.m_Value) && m_Type == other.m_Type;
+        return vtpValue.equals(other.vtpValue) && vtpType == other.vtpType;
     }
 
     /** This checks if the type is correlated with the value. There might be false positive,
      * if a plain string has the same syntax as a node, or contains an integer.
      * @return
      */
-    boolean IsValid()
+    boolean isValid()
     {
-        if(m_Value == null) {
+        if(vtpValue == null) {
             return true;
         }
-        switch(m_Type) {
+        switch(vtpType) {
             case NODE_TYPE:
                 // It could be "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process"
                 /*
@@ -58,13 +58,13 @@ class ValueTypePair {
                 mais si c'est un IRI qui ca etre utilise par WBEM, ca doit etre transforme en path wbem
                 et commencer par "\\\\machine\\"
                 */
-                return PresentUtils.hasWmiReferenceSyntax(m_Value) || PresentUtils.hasUrlSyntax(m_Value);
+                return PresentUtils.hasWmiReferenceSyntax(vtpValue) || PresentUtils.hasUrlSyntax(vtpValue);
             case INT_TYPE:
                 try {
-                    Long l = Long.parseLong(m_Value);
+                    Long l = Long.parseLong(vtpValue);
                 }
                 catch(Exception exc) {
-                    logger.error("Invalid integer:" + m_Value);
+                    logger.error("Invalid integer:" + vtpValue);
                     return false;
                 }
                 return true;
@@ -74,28 +74,24 @@ class ValueTypePair {
     }
 
     ValueTypePair(String value, ValueType type) {
-        m_Value = value;
-        m_Type = type;
-        if(!IsValid()) {
-            throw new RuntimeException("Wrong type:" + m_Value + " : " + m_Type);
+        vtpValue = value;
+        vtpType = type;
+        if(!isValid()) {
+            throw new RuntimeException("Wrong type:" + vtpValue + " : " + vtpType);
         }
     }
 
     // Very common usage in tests/
-    static public ValueTypePair FromString(String value) {
+    static public ValueTypePair fromString(String value) {
         return new ValueTypePair(value, ValueType.STRING_TYPE);
     }
 
-    static public Value AsValueFromString(String value) {
-        return factory.createLiteral(value);
-    }
-
     public String toDisplayString() {
-        return "{" + m_Value + " -> " + m_Type + "}";
+        return "{" + vtpValue + " -> " + vtpType + "}";
     }
 
     public String toValueString() {
-        return m_Value;
+        return vtpValue;
     }
 
     /** This should be disabled because there is an ambiguity between display the content for informational
@@ -103,7 +99,7 @@ class ValueTypePair {
      * @return
      */
     public String toString() {
-        return "DEBUG_ONLY:" + m_Value;
+        return "DEBUG_ONLY:" + vtpValue;
     }
 
     private static final DatatypeFactory datatypeFactory ;
@@ -119,11 +115,11 @@ class ValueTypePair {
 
     private static ValueFactory factory = SimpleValueFactory.getInstance();
 
-    public static ValueTypePair Factory(String value) {
-        return ValueTypePair.FromString(value);
+    public static ValueTypePair factoryValueTypePair(String value) {
+        return ValueTypePair.fromString(value);
     }
 
-    public static ValueTypePair Factory(long value) {
+    public static ValueTypePair factoryValueTypePair(long value) {
         return new ValueTypePair(Long.toString(value), ValueType.INT_TYPE);
     }
 
@@ -185,13 +181,13 @@ class ValueTypePair {
      * @return
      */
     Value convertValueTypeToLiteral() {
-        ValueType valueType = m_Type;
+        ValueType valueType = vtpType;
         if(valueType == null) {
             logger.warn("Invalid null type of literal value.");
             Object nullObject = new Object();
             return Values.literal(nullObject);
         }
-        String strValue = m_Value;
+        String strValue = vtpValue;
         if(strValue == null) {
             logger.warn("Invalid null literal value.");
             return Values.literal("Unexpected null value. Type=\" + valueType");
@@ -219,10 +215,10 @@ class ValueTypePair {
     static boolean identical(ValueTypePair one, ValueTypePair other) {
         if (one == null && other == null) return true;
         if (one == null || other == null) return false;
-        if (one.m_Type != other.m_Type) return false;
-        if(one.m_Value == null && other.m_Value == null) return true;
-        if(one.m_Value == null || other.m_Value == null) return false;
-        return one.m_Value.equals(other.m_Value);
+        if (one.vtpType != other.vtpType) return false;
+        if(one.vtpValue == null && other.vtpValue == null) return true;
+        if(one.vtpValue == null || other.vtpValue == null) return false;
+        return one.vtpValue.equals(other.vtpValue);
     }
 
     /** This is a special value type for this software, to bridge data types between WMI/WBEM and RDF.

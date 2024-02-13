@@ -25,8 +25,8 @@ public class DependenciesBuilderTest {
             for (int index = 0; index < expected.whereTests.size(); ++index) {
                 QueryData.WhereEquality kv_expected = expected.whereTests.get(index);
                 QueryData.WhereEquality kv_actual = actual.whereTests.get(index);
-                Assert.assertEquals(kv_expected.predicate, kv_actual.predicate);
-                Assert.assertEquals(kv_expected.value, kv_actual.value);
+                Assert.assertEquals(kv_expected.wherePredicate, kv_actual.wherePredicate);
+                Assert.assertEquals(kv_expected.whereValue, kv_actual.whereValue);
             }
         }
     }
@@ -142,7 +142,7 @@ public class DependenciesBuilderTest {
                 "my_directory",
                 false,
                 null,
-                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:")))
+                Arrays.asList(new QueryData.WhereEquality("Name", ValueTypePair.fromString("C:")))
         );
 
         List<QueryData> preparedQueries = patternSparql.preparedQueries;
@@ -205,7 +205,7 @@ public class DependenciesBuilderTest {
                 false,
                 Map.of("Name", "my_process_name"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("12345"))
+                        new QueryData.WhereEquality("Handle", ValueTypePair.fromString("12345"))
                 )
         );
 
@@ -247,7 +247,7 @@ public class DependenciesBuilderTest {
                 false,
                 null,
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"))
+                        new QueryData.WhereEquality("Handle", ValueTypePair.fromString("123"))
                 )
         );
 
@@ -371,7 +371,7 @@ public class DependenciesBuilderTest {
                 true,
                 Map.of("Handle", "Win32_Process.Handle.2.internal"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"))
+                        new QueryData.WhereEquality("Handle", ValueTypePair.fromString("123"))
                 )
         );
 
@@ -420,7 +420,7 @@ public class DependenciesBuilderTest {
                 true,
                 Map.of("Handle", "Win32_Process.Handle.1.internal"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"))
+                        new QueryData.WhereEquality("Handle", ValueTypePair.fromString("123"))
                 )
         );
 
@@ -468,7 +468,7 @@ public class DependenciesBuilderTest {
                 false,
                 null,
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("123"))
+                        new QueryData.WhereEquality("Handle", ValueTypePair.fromString("123"))
                 )
         );
 
@@ -530,7 +530,7 @@ public class DependenciesBuilderTest {
                 false,
                 null,
                 Arrays.asList(
-                        new QueryData.WhereEquality("Name", ValueTypePair.FromString("C:"))
+                        new QueryData.WhereEquality("Name", ValueTypePair.fromString("C:"))
                 )
         );
 
@@ -587,7 +587,7 @@ public class DependenciesBuilderTest {
                 false,
                 Map.of("Caption", "caption"),
                 Arrays.asList(
-                        new QueryData.WhereEquality("Handle", ValueTypePair.FromString("12345"))
+                        new QueryData.WhereEquality("Handle", ValueTypePair.fromString("12345"))
                 )
         );
 

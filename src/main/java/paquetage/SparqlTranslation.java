@@ -142,12 +142,12 @@ public class SparqlTranslation {
                 // This translates into an extra filtering.
                 logger.debug("Index=" + index + " QueryData=" + queryData);
                 for(QueryData.WhereEquality oneWhere: queryData.whereTests) {
-                    logger.debug("    predicate=" + oneWhere.predicate + " value=" + oneWhere.value.toDisplayString() + " variableName=" + oneWhere.variableName);
+                    logger.debug("    predicate=" + oneWhere.wherePredicate + " value=" + oneWhere.whereValue.toDisplayString() + " variableName=" + oneWhere.whereVariableName);
                 }
                 logger.debug("CONST_OBJECT:" + queryData.mainVariable);
             }
             // Only the value representation is needed.
-            String objectPath = dependencies.variablesContext.get(queryData.mainVariable).Value();
+            String objectPath = dependencies.variablesContext.get(queryData.mainVariable).getValue();
             // FIXME: It is a pity that handlers are set twice.
             queryData.setHandlers(true);
 
@@ -198,13 +198,13 @@ public class SparqlTranslation {
                 // This is not strictly the same type because the value of KeyValue is:
                 // - either a variable name of type string,
                 // - or the context value of this variable, theoretically of any type.
-                if(kv.variableName != null) {
+                if(kv.whereVariableName != null) {
                     // Only the value representation is needed.
-                    ValueTypePair pairValue = dependencies.variablesContext.get(kv.variableName);
+                    ValueTypePair pairValue = dependencies.variablesContext.get(kv.whereVariableName);
                     if(pairValue == null) {
-                        throw new RuntimeException("Null value for:" + kv.variableName);
+                        throw new RuntimeException("Null value for:" + kv.whereVariableName);
                     }
-                    substitutedWheres.add(new QueryData.WhereEquality(kv.predicate, pairValue));
+                    substitutedWheres.add(new QueryData.WhereEquality(kv.wherePredicate, pairValue));
                 } else {
                     // No change because the "where" value is not a variable.
                     substitutedWheres.add(kv);
@@ -213,7 +213,7 @@ public class SparqlTranslation {
 
             queryData.startSampling();
             List<QueryData.WhereEquality> oldWheres = queryData.swapWheres(substitutedWheres);
-            Solution rows = genericSelecter.SelectVariablesFromWhere(queryData, true);
+            Solution rows = genericSelecter.selectVariablesFromWhere(queryData, true);
             // restore to patterns wheres clauses (that is, with variable values).
             queryData.swapWheres(oldWheres);
             // We do not have the object path so the statistics can only be updated with the class name.
