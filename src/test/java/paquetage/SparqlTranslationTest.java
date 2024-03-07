@@ -12,13 +12,13 @@ import java.util.stream.Collectors;
 public class SparqlTranslationTest {
     static private String currentPidStr = String.valueOf(ProcessHandle.current().pid());
 
-    static private Set<String> RowColumnAsSet(Solution rowsList, String columnName) {
+    static private Set<String> cvtRowColumnAsSet(Solution rowsList, String columnName) {
         return rowsList
                 .stream()
                 .map(entry -> entry.getStringValue(columnName)).collect(Collectors.toSet());
     }
 
-    static private Set<String> RowColumnAsSetUppercase(Solution rowsList, String columnName) {
+    static private Set<String> cvtRowColumnAsSetUppercase(Solution rowsList, String columnName) {
         return rowsList
                 .stream()
                 .map(entry -> entry.getStringValue(columnName).toUpperCase()).collect(Collectors.toSet());
@@ -65,7 +65,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_CIM_DataFile() throws Exception {
+    public void testForcedExecution_CIM_DataFile() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -107,7 +107,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_Process_1() throws Exception {
+    public void testForcedExecution_Win32_Process_1() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -138,7 +138,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_Process_2() throws Exception {
+    public void testForcedExecution_Win32_Process_2() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -163,7 +163,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_Process_3() throws Exception {
+    public void testForcedExecution_Win32_Process_3() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -187,7 +187,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_Process_4() throws Exception {
+    public void testForcedExecution_Win32_Process_4() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -207,7 +207,7 @@ public class SparqlTranslationTest {
     }
 
     @Test
-    public void Execution_Forced_CIM_ProcessExecutable_1() throws Exception {
+    public void testForcedExecution_CIM_ProcessExecutable_1() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -228,7 +228,7 @@ public class SparqlTranslationTest {
 
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
-        Set<String> libsSet = RowColumnAsSet(listRows, "my_file_name");
+        Set<String> libsSet = cvtRowColumnAsSet(listRows, "my_file_name");
         // This tests the presence of some libraries which are used by the current Java process.
         String javabin = PresentUtils.currentJavaBinary();
         Assert.assertTrue(libsSet.contains(javabin));
@@ -248,7 +248,7 @@ public class SparqlTranslationTest {
      * TODO: This test might fail is a process unexpectedly leaves in the middle of the query.
      */
     @Test
-    public void Execution_Forced_CIM_ProcessExecutable_2() throws Exception {
+    public void testForcedExecution_CIM_ProcessExecutable_2() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -271,7 +271,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
 
         // The current pid must be there because it uses this library.
-        Set<String> pidsSet = RowColumnAsSet(listRows, "my_handle");
+        Set<String> pidsSet = cvtRowColumnAsSet(listRows, "my_handle");
         System.out.println("pidsSet=" + pidsSet);
         Assert.assertTrue(pidsSet.contains(currentPidStr));
     }
@@ -284,7 +284,7 @@ public class SparqlTranslationTest {
      * of main variables.
      */
     @Test
-    public void Execution_Forced_CIM_ProcessExecutable_3() throws Exception {
+    public void testForcedExecution_CIM_ProcessExecutable_3() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -308,12 +308,12 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
 
         // The current caption must be there because it uses this library.
-        Set<String> captionsSet = RowColumnAsSet(listRows, "my_caption");
+        Set<String> captionsSet = cvtRowColumnAsSet(listRows, "my_caption");
         System.out.println("captionsSet=" + captionsSet);
         Assert.assertTrue(captionsSet.contains("java.exe"));
 
         // The current pid must be there because it uses this library.
-        Set<String> libsSet = RowColumnAsSet(listRows, "my_handle");
+        Set<String> libsSet = cvtRowColumnAsSet(listRows, "my_handle");
         Assert.assertTrue(libsSet.contains(currentPidStr));
     }
 
@@ -321,7 +321,7 @@ public class SparqlTranslationTest {
     /***
      * This gets the parent-directory of a file.
      */
-    public void Execution_Forced_CIM_DirectoryContainsFile_1() throws Exception {
+    public void testForcedExecution_CIM_DirectoryContainsFile_1() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -352,7 +352,7 @@ public class SparqlTranslationTest {
      * This gets the list of files in a directory.
      * Possible because accessing CIM_DataFile is slow anyway.
      */
-    public void Execution_Forced_CIM_DirectoryContainsFile_2() throws Exception {
+    public void testForcedExecution_CIM_DirectoryContainsFile_2() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -376,7 +376,7 @@ public class SparqlTranslationTest {
 
         // These files must be in this directory.
         // Filename cases in system directories are not stable, therefore uppercase.
-        Set<String> filesSet = RowColumnAsSetUppercase(listRows, "my_file_name");
+        Set<String> filesSet = cvtRowColumnAsSetUppercase(listRows, "my_file_name");
         Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\NTDLL.DLL"));
         Assert.assertTrue(filesSet.contains("C:\\WINDOWS\\SYSTEM32\\USER32.DLL"));
     }
@@ -385,7 +385,7 @@ public class SparqlTranslationTest {
     /***
      * This gets the parent-parent-directory of a file.
      */
-    public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_1() throws Exception {
+    public void testForcedExecution_CIM_DirectoryContainsFile_Win32_SubDirectory_1() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -419,7 +419,7 @@ public class SparqlTranslationTest {
     /**
      * This gets sub-sub-files of a directory.
      */
-    public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_2() throws Exception {
+    public void testForcedExecution_CIM_DirectoryContainsFile_Win32_SubDirectory_2() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -446,7 +446,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
 
         // These files must be in this directory.
-        Set<String> filesSet = RowColumnAsSet(listRows, "my_file_name");
+        Set<String> filesSet = cvtRowColumnAsSet(listRows, "my_file_name");
         //Assert.assertTrue(filesSet.contains("C:\\Program Files\\Internet Explorer\\en-US\\hmmapi.dll.mui"));
         System.out.println(" filesSet=" + filesSet);
         // Different behaviour on Windows 7 with string cases, therefore this conversion.
@@ -458,7 +458,7 @@ public class SparqlTranslationTest {
     /**
      * This gets the grandparent of the sub-sub-files of a directory. It must be the same.
      */
-    public void Execution_Forced_CIM_DirectoryContainsFile_Win32_SubDirectory_3() throws Exception {
+    public void testForcedExecution_CIM_DirectoryContainsFile_Win32_SubDirectory_3() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -493,7 +493,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
 
         // It must fall back to the initial directory.
-        Set<String> dirsSet = RowColumnAsSet(listRows, "my_dir_name");
+        Set<String> dirsSet = cvtRowColumnAsSet(listRows, "my_dir_name");
         Assert.assertEquals(1, dirsSet.size());
         System.out.println("dirsSet=" + dirsSet);
         // Conversion to uppercase for Windows7.
@@ -506,7 +506,7 @@ public class SparqlTranslationTest {
      * This gets the directories of all executables and libraries used by running processes.
      * The order of evaluation is forced with the alphabetical order of main variables.
      */
-    public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_1() throws Exception {
+    public void testForcedExecution_CIM_ProcessExecutable_CIM_DirectoryContainsFile_1() throws Exception {
         String sparqlQuery = """
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -536,7 +536,7 @@ public class SparqlTranslationTest {
         Beware that filename cases are not stable. WMI returns for example:
         "C:\WINDOWS\System32", "c:\windows\system32", "C:\WINDOWS\system32"
          */
-        Set<String> dirsSet = RowColumnAsSetUppercase(listRows, "my_dir_name");
+        Set<String> dirsSet = cvtRowColumnAsSetUppercase(listRows, "my_dir_name");
         Assert.assertTrue(dirsSet.contains("C:\\WINDOWS"));
         Assert.assertTrue(dirsSet.contains("C:\\WINDOWS\\SYSTEM32"));
     }
@@ -545,7 +545,7 @@ public class SparqlTranslationTest {
     /**
      * Names of processes which have an executable or a library in a given directory.
      */
-    public void Execution_Forced_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2() throws Exception {
+    public void testForcedExecution_CIM_ProcessExecutable_CIM_DirectoryContainsFile_2() throws Exception {
         File file = new File(PresentUtils.currentJavaBinary());
         String parent = file.getAbsoluteFile().getParent();
         // Typically "C:\\Program Files\\Java\\jdk-17.0.2\\bin"
@@ -576,7 +576,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
         System.out.println("Rows number=" + listRows.size());
 
-        Set<String> namesSet = RowColumnAsSet(listRows, "my_process_name");
+        Set<String> namesSet = cvtRowColumnAsSet(listRows, "my_process_name");
         for(String oneName: namesSet) {
             System.out.println("Name=" + oneName);
         }
@@ -594,7 +594,7 @@ public class SparqlTranslationTest {
      Get-WmiObject -Query 'Select * from Win32_MountPoint where Directory = "Win32_Directory.Name=\"C:\\\\\""'
      */
     @Test
-    public void Execution_Forced_Win32_MountPoint_1() throws Exception {
+    public void testForcedExecution_Win32_MountPoint_1() throws Exception {
         String sparqlQuery = """
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -617,7 +617,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
 
         // Disk "C:" must be found.
-        Set<String> volumesSet = RowColumnAsSet(listRows, "device_id");
+        Set<String> volumesSet = cvtRowColumnAsSet(listRows, "device_id");
         for(String deviceId: volumesSet) {
             System.out.println("DeviceId=" + deviceId);
         }
@@ -628,7 +628,7 @@ public class SparqlTranslationTest {
      * Look for mounted volumes.
      */
     @Test
-    public void Execution_Forced_Win32_MountPoint_2() throws Exception {
+    public void testForcedExecution_Win32_MountPoint_2() throws Exception {
         String sparqlQuery = """
             prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
             prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -648,7 +648,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
 
         // Disk "C:" must be found.
-        Set<String> dirsSet = RowColumnAsSet(listRows, "dir_name");
+        Set<String> dirsSet = cvtRowColumnAsSet(listRows, "dir_name");
         for(String oneName: dirsSet) {
             System.out.println("Dir=" + dirsSet);
         }
@@ -662,7 +662,7 @@ public class SparqlTranslationTest {
      * Drive of a given directory.
      */
     @Test
-    public void Execution_Forced_Win32_Directory_Drive_1() throws Exception {
+    public void testForcedExecution_Win32_Directory_Drive_1() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -683,7 +683,7 @@ public class SparqlTranslationTest {
         Solution listRows = patternSparql.executeToRows();
 
         // Disk "C:" must be found.
-        Set<String> drivesSet = RowColumnAsSet(listRows, "my_drive");
+        Set<String> drivesSet = cvtRowColumnAsSet(listRows, "my_drive");
         for(String drive: drivesSet) {
             System.out.println("Drive=" + drive);
         }
@@ -691,14 +691,14 @@ public class SparqlTranslationTest {
         Assert.assertTrue(drivesSet.contains("c:"));
 
         // Display the dir path.
-        Set<String> dirsSet = RowColumnAsSet(listRows, "my1_dir");
+        Set<String> dirsSet = cvtRowColumnAsSet(listRows, "my1_dir");
         for(String dir: dirsSet) {
             System.out.println("Dir=" + dir);
         }
     }
 
     @Test
-    public void Execution_Forced_Win32_Account() throws Exception {
+    public void testForcedExecution_Win32_Account() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -715,12 +715,12 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> accountsSet = RowColumnAsSet(listRows, "my_account_name");
+        Set<String> accountsSet = cvtRowColumnAsSet(listRows, "my_account_name");
         Assert.assertTrue(accountsSet.contains("Users"));
     }
 
     @Test
-    public void Execution_Forced_Win32_COMClass() throws Exception {
+    public void testForcedExecution_Win32_COMClass() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -737,7 +737,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> classesSet = RowColumnAsSet(listRows, "my_class_name");
+        Set<String> classesSet = cvtRowColumnAsSet(listRows, "my_class_name");
         System.out.println("classesSet=" + classesSet);
         // Some randomly-chosen classes.
         Assert.assertTrue(classesSet.contains("Memory Allocator"));
@@ -745,7 +745,7 @@ public class SparqlTranslationTest {
     }
 
     @Test
-    public void Execution_Forced_Win32_Thread() throws Exception {
+    public void testForcedExecution_Win32_Thread() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -762,7 +762,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> threadsSet = RowColumnAsSet(listRows, "my_thread_name");
+        Set<String> threadsSet = cvtRowColumnAsSet(listRows, "my_thread_name");
         for(String threadName: threadsSet) {
             if((threadName != null) && ! threadName.equals(""))
                 System.out.println("Thread=" + threadName);
@@ -772,7 +772,7 @@ public class SparqlTranslationTest {
     }
 
     @Test
-    public void Execution_Forced_Win32_Thread_Optional_Priority() throws Exception {
+    public void testForcedExecution_Win32_Thread_Optional_Priority() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -790,7 +790,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> threadsSet = RowColumnAsSet(listRows, "my_thread_name");
+        Set<String> threadsSet = cvtRowColumnAsSet(listRows, "my_thread_name");
         for(String threadName: threadsSet) {
             if((threadName != null) && ! threadName.equals(""))
                 System.out.println("Thread=" + threadName);
@@ -801,7 +801,7 @@ public class SparqlTranslationTest {
 
     /** The type of the instances are deduced from the property names */
     @Test
-    public void Execution_Forced_Win32_Thread_NoType() throws Exception {
+    public void testForcedExecution_Win32_Thread_NoType() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -817,7 +817,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> threadsSet = RowColumnAsSet(listRows, "my_thread_name");
+        Set<String> threadsSet = cvtRowColumnAsSet(listRows, "my_thread_name");
         for(String threadName: threadsSet) {
             if((threadName != null) && ! threadName.equals(""))
                 System.out.println("Thread=" + threadName);
@@ -832,7 +832,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_Product() throws Exception {
+    public void testForcedExecution_Win32_Product() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -854,16 +854,16 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> productNamesSet = RowColumnAsSet(listRows, "my_product_name");
+        Set<String> productNamesSet = cvtRowColumnAsSet(listRows, "my_product_name");
         Assert.assertTrue(productNamesSet.contains("Windows SDK Signing Tools"));
         //Assert.assertTrue(productNamesSet.contains("Microsoft Update Health Tools"));
 
-        Set<String> productVendorsSet = RowColumnAsSet(listRows, "my_product_vendor");
+        Set<String> productVendorsSet = cvtRowColumnAsSet(listRows, "my_product_vendor");
         Assert.assertTrue(productVendorsSet.contains("Microsoft Corporation"));
     }
 
     @Test
-    public void Execution_Forced_Win32_DCOMApplication() throws Exception {
+    public void testForcedExecution_Win32_DCOMApplication() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -880,7 +880,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> applicationsSet = RowColumnAsSet(listRows, "my_application_name");
+        Set<String> applicationsSet = cvtRowColumnAsSet(listRows, "my_application_name");
         Assert.assertTrue(applicationsSet.contains("User Notification"));
         Assert.assertTrue(applicationsSet.contains("IMAPI2"));
     }
@@ -890,7 +890,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_DCOMApplication_Win32_DCOMApplicationSetting() throws Exception {
+    public void testForcedExecution_Win32_DCOMApplication_Win32_DCOMApplicationSetting() throws Exception {
         String sparqlQuery = """
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -911,11 +911,11 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> applicationsSet = RowColumnAsSet(listRows, "my_application_name");
+        Set<String> applicationsSet = cvtRowColumnAsSet(listRows, "my_application_name");
         //Assert.assertTrue(applicationsSet.contains("User Notification"));
         Assert.assertTrue(applicationsSet.contains("IMAPI2"));
 
-        Set<String> servicesSet = RowColumnAsSet(listRows, "my_local_service");
+        Set<String> servicesSet = cvtRowColumnAsSet(listRows, "my_local_service");
         System.out.println("servicesSet=" + servicesSet);
         // Windows 7: servicesSet=[null, vds, PDFescape Desktop Update Service, sdrsvc, lltdsvc, GoogleChromeElevationService, TrustedInstaller, cphs, BITS, EapHost, HFGService, MSIServer, IPBusEnum, PDFescape Desktop Creator, wercplsupport, napagent, wbengine, TlntSvr, hMailServer, VSS, edgeupdatem, wuauserv, hpqwmiex, VsEtwService120, MsDtsServer110, WSearch, hpqcaslwmiex, NisSrv, WMIApSrv, defragsvc, gupdate, TermService, hkmsvc, ehSched, EventSystem, BsHelpCS, swprv, WatAdminSvc, WcsPlugInService, HomeGroupProvider, netprofm, gupdatem, WbemConsumer, CscService, edgeupdate, netman, SharedAccess, profsvc, stisvc, ehRecvr, IEEtwCollectorService, AxInstSv, winmgmt, ShellHWDetection, SkypeUpdate, fdPHost, LMS, VSStandardCollectorService150, PDFescape Desktop, upnphost, BlueSoleilCS, ALG]
         //Assert.assertTrue(servicesSet.contains("wlansvc")); // Windows 10
@@ -928,7 +928,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_Process_CIM_ProcessExecutable_CIM_DataFile() throws Exception {
+    public void testForcedExecution_Win32_Process_CIM_ProcessExecutable_CIM_DataFile() throws Exception {
         String sparqlQuery = String.format("""
                     prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                     prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
@@ -951,7 +951,7 @@ public class SparqlTranslationTest {
         SparqlTranslation patternSparql = new SparqlTranslation(extractor);
         Solution listRows = patternSparql.executeToRows();
 
-        Set<String> applicationsSet = RowColumnAsSet(listRows, "file_name");
+        Set<String> applicationsSet = cvtRowColumnAsSet(listRows, "file_name");
         System.out.println("applicationsSet=" + applicationsSet);
         Assert.assertTrue(applicationsSet.contains(PresentUtils.currentJavaBinary()));
     }
@@ -961,7 +961,7 @@ public class SparqlTranslationTest {
      * @throws Exception
      */
     @Test
-    public void Execution_Forced_Win32_Process_CIM_DataFile_Name_FileSize() throws Exception {
+    public void testForcedExecution_Win32_Process_CIM_DataFile_Name_FileSize() throws Exception {
         String sparqlQuery = String.format("""
                 prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
                 prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>

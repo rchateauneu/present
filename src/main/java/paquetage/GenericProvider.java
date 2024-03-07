@@ -121,7 +121,7 @@ class BaseSelecter_CIM_DataFile_Name extends BaseSelecter {
         String pathFile = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", fileName));
         Solution.Row singleRow = new Solution.Row();
 
-        BaseGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData.queryColumns, fileName);
+        BaseGetter_CIM_DataFile_Name.FillRowFromQueryAndFilename(singleRow, queryData.queryConstantColumns, fileName);
 
         // Add the main variable anyway.
         singleRow.putNode(queryData.mainVariable, pathFile);
@@ -614,10 +614,10 @@ public class GenericProvider {
               For the moment, the only acceptable value is the current host.
               TODO: Run this query on another host.
             */
-            selectPSComputerNameVariable = queryData.queryColumns.get(columnPSComputerName);
+            selectPSComputerNameVariable = queryData.queryConstantColumns.get(columnPSComputerName);
             if(selectPSComputerNameVariable != null) {
                 // Remove the column "PSComputerName" if it is there.
-                m_queryData.queryColumns.remove(columnPSComputerName);
+                m_queryData.queryConstantColumns.remove(columnPSComputerName);
             }
 
             // It is OK to loop because there are very few "where" clauses.
@@ -641,7 +641,7 @@ public class GenericProvider {
         // Restore QueryData as it where before removing "PSComputerName" column.
         private void restoreQueryData() {
             if(selectPSComputerNameVariable != null) {
-                m_queryData.queryColumns.put(columnPSComputerName, selectPSComputerNameVariable);
+                m_queryData.queryConstantColumns.put(columnPSComputerName, selectPSComputerNameVariable);
             }
             if(wherePSComputerName != null) {
                 // Maybe it is not re-added at the same place but it does not matter.
@@ -725,8 +725,8 @@ public class GenericProvider {
         // The columns in the "where" tests must be gettable from the object.
         // This is used when filtering getting an object.
         for(QueryData.WhereEquality whereTest : queryData.whereTests) {
-            if(! queryData.queryColumns.containsKey(whereTest.wherePredicate)) {
-                logger.debug("Where column:" + whereTest.wherePredicate + " missing from " + queryData.queryColumns.keySet());
+            if(! queryData.queryConstantColumns.containsKey(whereTest.wherePredicate)) {
+                logger.debug("Where column:" + whereTest.wherePredicate + " missing from " + queryData.queryConstantColumns.keySet());
             }
         }
 
@@ -783,7 +783,7 @@ public class GenericProvider {
             throw new RuntimeException("Getter is not set");
         }
         PSComputerNameHandler handlerPSComputerNameHandler = new PSComputerNameHandler(queryData);
-        Solution.Row returnRow = queryData.classGetter.getSingleObject(objectPath, queryData.mainVariable, queryData.queryColumns);
+        Solution.Row returnRow = queryData.classGetter.getSingleObject(objectPath, queryData.mainVariable, queryData.queryConstantColumns);
         if(returnRow == null) {
             logger.error("Cannot find objectPath=" + objectPath);
             return null;

@@ -97,6 +97,7 @@ public class WmiGetter extends BaseGetter {
         Variant.VARIANT.ByReference pVal = new Variant.VARIANT.ByReference();
         IntByReference pType = new IntByReference();
         IntByReference plFlavor = new IntByReference(); //  Maybe this is not needed.
+        WmiProvider.checkValidShortPredicate(propertyName);
         try {
             COMUtils.checkRC(obj.Get(propertyName, 0, pVal, pType, plFlavor));
         } catch (Exception exc) {
@@ -163,8 +164,9 @@ public class WmiGetter extends BaseGetter {
             }
             if(objectNode == null)
                 singleRow.putString(variableName, "Object " + objectPath + " is null");
-            else
+            else {
                 singleRow.putValueType(variableName, getObjectProperty(objectNode, entry.getKey()));
+            }
         }
         // We are sure this is a node.
         ValueTypePair wbemPath = getObjectProperty(objectNode, "__PATH");

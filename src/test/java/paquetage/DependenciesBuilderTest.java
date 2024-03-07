@@ -12,11 +12,11 @@ public class DependenciesBuilderTest {
         Assert.assertEquals(expected.className, actual.className);
         Assert.assertEquals(expected.mainVariable, actual.mainVariable);
         Assert.assertEquals(expected.isMainVariableAvailable, actual.isMainVariableAvailable);
-        System.out.println("expected.queryColumns=" + expected.queryColumns);
-        System.out.println("actual.queryColumns=" + actual.queryColumns);
-        Assert.assertEquals(expected.queryColumns.size(), actual.queryColumns.size());
-        for (String key : expected.queryColumns.keySet()) {
-            Assert.assertEquals(expected.queryColumns.get(key), actual.queryColumns.get(key));
+        System.out.println("expected.queryColumns=" + expected.queryConstantColumns);
+        System.out.println("actual.queryColumns=" + actual.queryConstantColumns);
+        Assert.assertEquals(expected.queryConstantColumns.size(), actual.queryConstantColumns.size());
+        for (String key : expected.queryConstantColumns.keySet()) {
+            Assert.assertEquals(expected.queryConstantColumns.get(key), actual.queryConstantColumns.get(key));
         }
         if ((expected.whereTests == null) || (actual.whereTests == null)) {
             Assert.assertEquals(null, actual.whereTests);
@@ -369,7 +369,7 @@ public class DependenciesBuilderTest {
                 "Win32_Process",
                 "my2_process",
                 true,
-                Map.of("Handle", "Win32_Process.Handle.2.internal"),
+                Map.of("Handle", "Win32_Process.Handle.2.internal_variable"),
                 Arrays.asList(
                         new QueryData.WhereEquality("Handle", ValueTypePair.fromString("123"))
                 )
@@ -418,7 +418,7 @@ public class DependenciesBuilderTest {
                 "Win32_Process",
                 "my1_process",
                 true,
-                Map.of("Handle", "Win32_Process.Handle.1.internal"),
+                Map.of("Handle", "Win32_Process.Handle.1.internal_variable"),
                 Arrays.asList(
                         new QueryData.WhereEquality("Handle", ValueTypePair.fromString("123"))
                 )

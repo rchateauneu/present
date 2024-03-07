@@ -1,13 +1,22 @@
 package paquetage;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Map;
 
 public class ObjectPathTest {
+
     @Test
-    public void ParseWbemPath_1() throws Exception {
+    public void testParseWbemPathToNamespaceClass_1() throws Exception {
+        Pair<String, String> pairNamespaceClass = ObjectPath.parseWbemPathToNamespaceClass("\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"2088\"");
+        Assert.assertEquals("root\\cimv2", pairNamespaceClass.getLeft());
+        Assert.assertEquals("Win32_Process", pairNamespaceClass.getRight());
+    }
+
+    @Test
+    public void testParseWbemPath_1() throws Exception {
         Map<String, String> pathMap = ObjectPath.parseWbemPath(
                 "\\\\LAPTOP-R89KG6V1\\root\\cimv2:Win32_Process.Handle=\"2088\"");
 
@@ -17,7 +26,7 @@ public class ObjectPathTest {
     }
 
     @Test
-    public void ParseWbemPath_2() throws Exception {
+    public void testParseWbemPath_2() throws Exception {
         Map<String, String> pathMap = ObjectPath.parseWbemPath(
                 "\\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"");
 
@@ -27,7 +36,7 @@ public class ObjectPathTest {
     }
 
     @Test
-    public void ParseWbemPath_3_1() throws Exception {
+    public void testParseWbemPath_3_1() throws Exception {
         Map<String, String> pathMap = ObjectPath.parseWbemPath(
                 "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:X.Y=\"\\\\\\\\Z\\\\ns:W.N=\\\"C:\\\\\\\\a.dll\\\"\"");
 
@@ -39,7 +48,7 @@ public class ObjectPathTest {
     }
 
     @Test
-    public void ParseWbemPath_3_2() throws Exception {
+    public void testParseWbemPath_3_2() throws Exception {
         Map<String, String> pathMap = ObjectPath.parseWbemPath(
                 "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:CIM_ProcessExecutable.Antecedent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:CIM_DataFile.Name=\\\"C:\\\\\\\\WINDOWS\\\\\\\\System32\\\\\\\\msvcp_win.dll\\\"\",Dependent=\"\\\\\\\\LAPTOP-R89KG6V1\\\\root\\\\cimv2:Win32_Process.Handle=\\\"2088\\\"\"");
 
@@ -55,7 +64,7 @@ public class ObjectPathTest {
     }
 
     @Test
-    public void BuildPathWbem_1() throws Exception {
+    public void testBuildPathWbem_1() throws Exception {
         String createdPath = ObjectPath.buildCimv2PathWbem(
                 "Win32_Process",
                 Map.of("Handle", "1234"));
@@ -66,7 +75,7 @@ public class ObjectPathTest {
     }
 
     @Test
-    public void BuildPathWbem_2() throws Exception {
+    public void testBuildPathWbem_2() throws Exception {
         String createdPath = ObjectPath.buildCimv2PathWbem(
                 "CIM_DataFile",
                 Map.of("Name", "C:\\WINDOWS\\SYSTEM32\\HologramWorld.dll"));
@@ -77,7 +86,7 @@ public class ObjectPathTest {
     }
 
     @Test
-    public void BuildPathWbem_3() throws Exception {
+    public void testBuildPathWbem_3() throws Exception {
         String currentHost = PresentUtils.computerName;
         String createdPath = ObjectPath.buildCimv2PathWbem(
                 "CIM_ProcessExecutable",

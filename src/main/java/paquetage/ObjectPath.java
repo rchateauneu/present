@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.Vector;
 
 // See also: import javax.cim;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.log4j.Logger;
 import org.sblim.wbem.cim.CIMDataType;
 import org.sblim.wbem.cim.CIMObjectPath;
 import org.sblim.wbem.cim.CIMProperty;
@@ -17,10 +20,46 @@ import org.sblim.wbem.cim.CIMValue;
  *
  */
 public class ObjectPath {
+    final static private Logger logger = Logger.getLogger(ObjectPath.class);
 
     /*
     Example of input: \\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"");
-     */
+    */
+    public static Pair<String, String> parseWbemPathToNamespaceClass(String objectPath) {
+        if(!PresentUtils.checkValidWbemPath(objectPath)){
+            throw new RuntimeException("Invalid Wbem path:" + objectPath);
+        }
+
+        assert objectPath.startsWith("\\\\");
+        int positionColon = objectPath.indexOf(':');
+        assert positionColon > 0;
+
+        // After the two first backslashes.
+        int positionBackslash = objectPath.indexOf('\\', 2);
+        assert positionBackslash > 3;
+        String namespace = objectPath.substring(positionBackslash + 1, positionColon);
+        WmiProvider.checkValidNamespace(namespace);
+
+        int positionDot = objectPath.indexOf('.', positionColon);
+        if(positionDot < positionColon) {
+            throw new RuntimeException("Cannot find dot: objectPath=" + objectPath
+                    + " positionColon=" + positionColon
+                    + " positionDot=" + positionDot
+            );
+        }
+        logger.debug("objectPath=" + objectPath
+                + " positionColon=" + positionColon
+                + " positionDot=" + positionDot);
+        String className = objectPath.substring(positionColon + 1, positionDot);
+        WmiProvider.checkValidClassname(className);
+
+        return new ImmutablePair<>(namespace, className);
+    }
+
+    /*
+    This parses a CIM path into a map of key-value pairs. Most of times, there should be only one value.
+    Example of input: \\\\LAPTOP-R89KG6V1\\root\\cimv2:CIM_DataFile.Name=\"C:\\\\WINDOWS\\\\SYSTEM32\\\\HologramWorld.dll\"");
+    */
     public static Map<String, String> parseWbemPath(String objectPath) {
         if(!PresentUtils.checkValidWbemPath(objectPath)){
             throw new RuntimeException("Invalid Wbem path:" + objectPath);

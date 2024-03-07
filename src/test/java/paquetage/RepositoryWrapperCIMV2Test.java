@@ -364,7 +364,6 @@ public class RepositoryWrapperCIMV2Test {
         Assert.assertEquals(shortLabels, allProperties);
     }
 
-
     @Test
     public void testSelect_Win32_Process_WithoutClass_WithOntology() throws Exception {
         String sparqlQuery = String.format("""

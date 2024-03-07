@@ -42,6 +42,10 @@ public class WmiProvider {
     static private String regexNamespace = "^ROOT[\\\\_A-Z\\d]*$";
     static private Pattern patternNamespace = Pattern.compile(regexNamespace, Pattern.CASE_INSENSITIVE);
 
+    static private String regexWmiIdentifier = "^[_A-Z\\d]*$";
+    static private Pattern patternWmiIdentifier = Pattern.compile(regexWmiIdentifier, Pattern.CASE_INSENSITIVE);
+
+
     static {
         Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
         /*
@@ -68,14 +72,14 @@ public class WmiProvider {
         }
 
         // These namespaces are practically always needed. Other namespaces are loaded on demand.
-        wbemServiceRoot = GetWbemService("ROOT");
-        wbemServiceRootCimv2 = GetWbemService("ROOT\\CIMV2");
+        wbemServiceRoot = getWbemService("ROOT");
+        wbemServiceRootCimv2 = getWbemService("ROOT\\CIMV2");
     }
 
     public WmiProvider() {
     }
 
-    static Wbemcli.IWbemServices GetWbemService(String namespace) {
+    static Wbemcli.IWbemServices getWbemService(String namespace) {
         checkValidNamespace(namespace);
         Wbemcli.IWbemServices wbemService = wbemServices.get(namespace);
         if(wbemService == null) {
@@ -141,7 +145,6 @@ public class WmiProvider {
         return namespace;
     }
 
-
     static public void checkValidNamespace(String namespace) {
         if(namespace == null) {
             throw new RuntimeException("namespace is null");
@@ -154,7 +157,7 @@ public class WmiProvider {
     }
 
     // '\\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="12456"'
-    static public String ExtractClassnameFromRef(String refString) {
+    static public String extractClassnameFromRef(String refString) {
         Matcher matcher = patternReferenceNamespaceClassname.matcher(refString);
         boolean matchFound = matcher.find();
         if (!matchFound) {
@@ -164,24 +167,40 @@ public class WmiProvider {
         return classname;
     }
 
-
     /** This is exclusively used for tests, because this is a very common namespace. */
     static String toCIMV2(String term) {
         return WmiOntology.namespaceTermToIRI("ROOT\\CIMV2", term);
     }
 
-    static public void CheckValidClassname(String wmiClassName) {
-        if(wmiClassName.contains("#") || wmiClassName.contains(".") ) {
+    static public void checkValidClassname(String wmiClassName) {
+        if(wmiClassName == null) {
+            throw new RuntimeException("class is null");
+        }
+        Matcher matcher = patternWmiIdentifier.matcher(wmiClassName);
+        boolean matchFound = matcher.find();
+        if (!matchFound) {
             throw new RuntimeException("Invalid class:" + wmiClassName);
         }
     }
 
-    static public void CheckValidPredicate(String wmiPredicateName) {
+    static public void checkValidPredicate(String wmiPredicateName) {
         String[] splitPredicate = wmiPredicateName.split("\\.");
         if(splitPredicate.length != 2) {
             throw new RuntimeException("Invalid predicate (No dot):" + wmiPredicateName);
         }
-        CheckValidClassname(splitPredicate[0]);
+        checkValidClassname(splitPredicate[0]);
+        checkValidShortPredicate(splitPredicate[1]);
+    }
+
+    static public void checkValidShortPredicate(String wmiPredicateName) {
+        if(wmiPredicateName == null) {
+            throw new RuntimeException("predicate is null");
+        }
+        Matcher matcher = patternWmiIdentifier.matcher(wmiPredicateName);
+        boolean matchFound = matcher.find();
+        if (!matchFound) {
+            throw new RuntimeException("Invalid predicate:" + wmiPredicateName);
+        }
     }
 
     /*
@@ -297,7 +316,7 @@ public class WmiProvider {
             // This may throw : "com.sun.jna.platform.win32.COM.COMException: (HRESULT: 80041003)"
             // 80041003: The current user does not have permission to perform the action.
             // In this case, do not add the namespace to the list.
-            Wbemcli.IWbemServices wbemServiceSub = GetWbemService(namespaceFull);
+            Wbemcli.IWbemServices wbemServiceSub = getWbemService(namespaceFull);
             if(wbemServiceSub != null) {
                 namespacesHierarchical.add(namespaceFull);
                 buildNamespacesList(namespacesHierarchical, wbemServiceSub, namespaceFull);
@@ -390,7 +409,7 @@ public class WmiProvider {
      * This is rather a task whose result does not often change, so it must be cached.
      * */
     private Map<String, WmiClass> classesNoCache(String namespace) {
-        Wbemcli.IWbemServices wbemService = GetWbemService(namespace);
+        Wbemcli.IWbemServices wbemService = getWbemService(namespace);
         if(wbemService == null) {
             throw new RuntimeException("WBEM service is null for namespace=" + namespace);
         }

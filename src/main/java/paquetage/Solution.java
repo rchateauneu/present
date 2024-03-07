@@ -122,7 +122,7 @@ public class Solution implements Iterable<Solution.Row> {
                 // Only the subject changes for each row.
                 String objectString = objectValue.stringValue();
                 // Maybe this value was not used in a "where" clause, so how can we return it ?
-                logger.debug("objectString=" + objectString + " isIRI=" + objectValue.isIRI());
+                logger.debug("subjectName=" + subjectName + " objectString=" + objectString + " isIRI=" + objectValue.isIRI());
 
                 // TODO: Maybe this is already an IRI ? So, should not transform it again !
                 Value resourceObject = objectValue.isIRI()

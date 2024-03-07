@@ -303,6 +303,113 @@ uri_CIM_ProcessExecutable_Dependent
     }
 
     @Test
+    public void testSPARQL_PROPERTIES_CIM_ProcessExecutable_NoFilter_NoGroup_NoDirectClaim() throws Exception {
+        String patternQuery = """
+            SELECT ?objpred ?objiri ?objlab
+            WHERE {
+			   <{processExecutableUri}> ?objpred ?objiri .
+			   ?objiri <http://www.w3.org/2000/01/rdf-schema#label> ?objlab .
+			}
+        """;
+
+        String pathAntecedent = ObjectPath.buildCimv2PathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", PresentUtils.currentJavaBinary()));
+
+        String pathDependent = ObjectPath.buildCimv2PathWbem(
+                "Win32_Process", Map.of(
+                        "Handle", currentPidStr));
+
+        String processExecutablePath = ObjectPath.buildCimv2PathWbem(
+                "CIM_ProcessExecutable", Map.of(
+                        "Antecedent", pathAntecedent,
+                        "Dependent", pathDependent));
+
+        System.out.println("processExecutablePath=" + processExecutablePath);
+
+        String processExecutableUri = WmiOntology.wbemPathToIri("ROOT\\CIMV2", processExecutablePath).toString();
+        System.out.println("processExecutableUri=" + processExecutableUri);
+
+        String sparqlQuery = setLanguage(patternQuery).replace("{processExecutableUri}", processExecutableUri);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        System.out.println("listRows=" + listRows.size());
+        Assert.assertTrue(listRows.size() > 0);
+    }
+
+    @Test
+    public void testSPARQL_PROPERTIES_CIM_ProcessExecutable_NoFilter_NoGroup_DirectClaim() throws Exception {
+        String patternQuery = """
+            SELECT ?objpred ?objiri ?objlab
+            WHERE {
+			   <{processExecutableUri}> ?objpred ?objiri .
+			   ?objiri <http://www.w3.org/2000/01/rdf-schema#label> ?objlab .
+			   ?s <http://wikiba.se/ontology#directClaim> ?objpred .
+			   ?s rdfs:label ?predlab .
+			}
+        """;
+
+        String pathAntecedent = ObjectPath.buildCimv2PathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", PresentUtils.currentJavaBinary()));
+
+        String pathDependent = ObjectPath.buildCimv2PathWbem(
+                "Win32_Process", Map.of(
+                        "Handle", currentPidStr));
+
+        String processExecutablePath = ObjectPath.buildCimv2PathWbem(
+                "CIM_ProcessExecutable", Map.of(
+                        "Antecedent", pathAntecedent,
+                        "Dependent", pathDependent));
+
+        System.out.println("processExecutablePath=" + processExecutablePath);
+
+        String processExecutableUri = WmiOntology.wbemPathToIri("ROOT\\CIMV2", processExecutablePath).toString();
+        System.out.println("processExecutableUri=" + processExecutableUri);
+
+        String sparqlQuery = setLanguage(patternQuery).replace("{processExecutableUri}", processExecutableUri);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        System.out.println("listRows=" + listRows.size());
+        Assert.assertTrue(listRows.size() > 0);
+    }
+
+    @Test
+    public void testSPARQL_PROPERTIES_CIM_ProcessExecutable_NoFilter_NoDirectClaim() throws Exception {
+        String patternQuery = """
+            SELECT ?p (COUNT(?objiri) AS ?count ) (group_concat(?objlab;separator=", ") AS ?ol_)
+            WHERE {
+			   <{processExecutableUri}> ?p ?objiri .
+			   ?objiri <http://www.w3.org/2000/01/rdf-schema#label> ?objlab .
+			} group by ?p
+        """;
+
+        String pathAntecedent = ObjectPath.buildCimv2PathWbem(
+                "CIM_DataFile", Map.of(
+                        "Name", PresentUtils.currentJavaBinary()));
+
+        String pathDependent = ObjectPath.buildCimv2PathWbem(
+                "Win32_Process", Map.of(
+                        "Handle", currentPidStr));
+
+        String processExecutablePath = ObjectPath.buildCimv2PathWbem(
+                "CIM_ProcessExecutable", Map.of(
+                        "Antecedent", pathAntecedent,
+                        "Dependent", pathDependent));
+
+        System.out.println("processExecutablePath=" + processExecutablePath);
+
+        String processExecutableUri = WmiOntology.wbemPathToIri("ROOT\\CIMV2", processExecutablePath).toString();
+        System.out.println("processExecutableUri=" + processExecutableUri);
+
+        String sparqlQuery = setLanguage(patternQuery).replace("{processExecutableUri}", processExecutableUri);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        System.out.println("listRows=" + listRows.size());
+        Assert.assertTrue(listRows.size() > 0);
+    }
+
+    @Test
     public void testSPARQL_PROPERTIES_CIM_ProcessExecutable_NoFilter() throws Exception {
         String patternQuery = """
             SELECT ?p (SAMPLE(?predlab) AS ?pl_) (COUNT(?objiri) AS ?count ) (group_concat(?objlab;separator=", ") AS ?ol_)

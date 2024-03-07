@@ -25,15 +25,15 @@ public class SparqlBGPExtractor {
     public Set<String> setBindings;
 
     // This should be private except for tests.
-    public List<ObjectPattern> patternsMap;
+    public List<ObjectPattern> flatExtractorPatternsMap;
 
     private SparqlBGPTreeExtractor treeExtractor;
 
     public SparqlBGPExtractor(String inputQuery, boolean withExecution) throws Exception {
         treeExtractor = new SparqlBGPTreeExtractor(inputQuery);
 
-        patternsMap = treeExtractor.topLevelPatternsTestHelper();
-        if(patternsMap == null) {
+        flatExtractorPatternsMap = treeExtractor.topLevelPatternsTestHelper();
+        if(flatExtractorPatternsMap == null) {
             throw new RuntimeException("Could not get patterns");
         }
 
@@ -47,7 +47,7 @@ public class SparqlBGPExtractor {
 
     // This is only for testing.
     public ObjectPattern findObjectPattern(String variable) {
-        for(ObjectPattern objPatt : patternsMap) {
+        for(ObjectPattern objPatt : flatExtractorPatternsMap) {
             if(variable.equals(objPatt.variableName)) {
                 return objPatt;
             }
@@ -61,7 +61,7 @@ public class SparqlBGPExtractor {
      */
     List<ObjectPattern> patternsAsArray() {
         // FIXME: Duplicate code with JoinExpressionNode
-        ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(patternsMap);
+        ArrayList<ObjectPattern> patternsArray = new ArrayList<ObjectPattern>(flatExtractorPatternsMap);
         ObjectPattern.Sort(patternsArray);
         return patternsArray;
     }

@@ -46,7 +46,7 @@ public class WmiSelecter extends BaseSelecter {
         // The results are batched in a big number, so it is faster.
         int countRows = 1000;
 
-        Wbemcli.IWbemServices wbemService = wmiProvider.GetWbemService(queryData.namespace);
+        Wbemcli.IWbemServices wbemService = wmiProvider.getWbemService(queryData.namespace);
 
         /**
          * Not always necessary to add __PATH in the selected fields. Possibly consider WBEM_FLAG_ENSURE_LOCATABLE.
@@ -89,7 +89,7 @@ public class WmiSelecter extends BaseSelecter {
                         OleAuto.INSTANCE.VariantClear(pVal);
                     };
 
-                    queryData.queryColumns.forEach(storeValue);
+                    queryData.queryConstantColumns.forEach(storeValue);
                     // Also get the path of each returned object.
                     storeValue.accept("__PATH", queryData.mainVariable);
                     wqlResult.Release();

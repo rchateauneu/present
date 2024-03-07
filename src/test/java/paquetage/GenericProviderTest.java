@@ -294,9 +294,9 @@ public class GenericProviderTest extends TestCase {
         CheckGetter(queryData, "paquetage.BaseGetter_CIM_DataFile_Name");
 
         String objectPath = ObjectPath.buildCimv2PathWbem("CIM_DataFile", Map.of("Name", filePath));
-        queryData.setHandlers(true);
+        queryData.setProviders(true);
         Solution.Row rowGetterCustom = genericProvider.getObjectFromPath(objectPath, queryData);
-        queryData.setHandlers(false);
+        queryData.setProviders(false);
         Solution.Row rowGetterGeneric = genericProvider.getObjectFromPath(objectPath, queryData);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }
@@ -326,9 +326,9 @@ public class GenericProviderTest extends TestCase {
 
         String objectPath = ObjectPath.buildCimv2PathWbem("Win32_Process", Map.of("Handle", currentPidStr));
         System.out.println("objectPath=" + objectPath);
-        queryData.setHandlers(true);
+        queryData.setProviders(true);
         Solution.Row rowGetterCustom = genericProvider.getObjectFromPath(objectPath, queryData);
-        queryData.setHandlers(false);
+        queryData.setProviders(false);
         Solution.Row rowGetterGeneric = genericProvider.getObjectFromPath(objectPath, queryData);
         CompareRows(rowGetterCustom, rowGetterGeneric);
     }

@@ -464,7 +464,7 @@ public class WmiOntology {
                 This is a constant instance IRI built with a WMI path. Machine name and the namespace must be removed.
                 */
                 String wbemPath = iriToWbemPath("ROOT\\CIMV2", token);
-                className = WmiProvider.ExtractClassnameFromRef(wbemPath);
+                className = WmiProvider.extractClassnameFromRef(wbemPath);
                 if(className == null) {
                     throw new RuntimeException("Classname should not be null. wbemPath=" + wbemPath);
                 }
@@ -472,10 +472,10 @@ public class WmiOntology {
             } else {
                 if (className.indexOf('.') > 0) {
                     tokenType = NamespaceTokenPair.TokenTypeEnum.PREDICATE_IRI;
-                    WmiProvider.CheckValidPredicate(className);
+                    WmiProvider.checkValidPredicate(className);
                 } else {
                     tokenType = NamespaceTokenPair.TokenTypeEnum.CLASS_IRI;
-                    WmiProvider.CheckValidClassname(className);
+                    WmiProvider.checkValidClassname(className);
                 }
             }
             return new NamespaceTokenPair(wmiNamespace, className, tokenType);

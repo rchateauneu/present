@@ -79,10 +79,6 @@ public class PresentUtils {
         return "\"" + longNumber + "\"^^<http://www.w3.org/2001/XMLSchema#long>";
     }
 
-    static public String intToXml(int intNumber) {
-        return "\"" + intNumber + "\"^^<http://www.w3.org/2001/XMLSchema#integer>";
-    }
-
     /** This is used to extract the significant part for "\"41\"^^<http://www.w3.org/2001/XMLSchema#integer>",
      * for example. The XSD type is not checked.
      */

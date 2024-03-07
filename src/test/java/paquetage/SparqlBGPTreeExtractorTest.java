@@ -54,7 +54,7 @@ public class SparqlBGPTreeExtractorTest {
         Assert.assertEquals(1, patterns.size());
         Assert.assertNotEquals(extractor.findObjectPattern("s"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.subjectClassname);
         Assert.assertEquals("s", firstPattern.variableName);
         Assert.assertEquals(4, firstPattern.membersList.size());
 
@@ -99,7 +99,7 @@ public class SparqlBGPTreeExtractorTest {
 
         ObjectPattern pattern1 = extractor.findObjectPattern("process1");
         Assert.assertNotEquals(pattern1, null);
-        Assert.assertEquals(null, pattern1.className);
+        Assert.assertEquals(null, pattern1.subjectClassname);
         Assert.assertEquals("process1", pattern1.variableName);
         Assert.assertEquals(1, pattern1.membersList.size());
         CompareKeyValue(pattern1.membersList.get(0), "http://www.primhillcomputers.com/ontology/ROOT/CIMV2#Win32_Process.Caption", "Caption1");
@@ -151,7 +151,7 @@ public class SparqlBGPTreeExtractorTest {
 
         for(ObjectPattern pattern : patterns )
         {
-            System.out.println("pattern.className"+pattern.className);
+            System.out.println("pattern.className"+pattern.subjectClassname);
             System.out.println("pattern.VariableName"+pattern.variableName);
             for(ObjectPattern.PredicateObjectPair pop:pattern.membersList) {
                 System.out.println("    pattern.Predicate   :" + pop.shortPredicate);
@@ -163,7 +163,7 @@ public class SparqlBGPTreeExtractorTest {
 
         Assert.assertNotEquals(extractor.findObjectPattern("country"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.subjectClassname);
         Assert.assertEquals("country", firstPattern.variableName);
         Assert.assertEquals(4, firstPattern.membersList.size());
         CompareKeyValue(firstPattern.membersList.get(0), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");
@@ -215,7 +215,7 @@ public class SparqlBGPTreeExtractorTest {
 
         for(ObjectPattern pattern : patterns )
         {
-            System.out.println("pattern.className"+pattern.className);
+            System.out.println("pattern.className"+pattern.subjectClassname);
             System.out.println("pattern.VariableName"+pattern.variableName);
             for(ObjectPattern.PredicateObjectPair pop:pattern.membersList) {
                 System.out.println("    pattern.Predicate   :" + pop.shortPredicate);
@@ -227,7 +227,7 @@ public class SparqlBGPTreeExtractorTest {
 
         Assert.assertNotEquals(extractor.findObjectPattern("country"), null);
         ObjectPattern firstPattern = patterns.get(0);
-        Assert.assertEquals(null, firstPattern.className);
+        Assert.assertEquals(null, firstPattern.subjectClassname);
         Assert.assertEquals("country", firstPattern.variableName);
         Assert.assertEquals(4, firstPattern.membersList.size());
         CompareKeyValue(firstPattern.membersList.get(0), "http://www.wikidata.org/prop/direct/P31", "http://www.wikidata.org/entity/Q3624078");

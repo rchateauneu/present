@@ -40,10 +40,10 @@ public class DependenciesBuilder {
      * Each ObjectPattern instances contains all the triples related to the same RDF subject.
      *
      * TODO: The execution of WQL queries could be optimised be changing the order of the patterns list.
-     * @param patterns
+     * @param listSortedPatterns
      * @throws Exception
      */
-    public DependenciesBuilder(List<ObjectPattern> patterns) //throws Exception
+    public DependenciesBuilder(List<ObjectPattern> listSortedPatterns) //throws Exception
     {
         preparedQueries = new ArrayList<>();
 
@@ -60,10 +60,11 @@ public class DependenciesBuilder {
         * If the class is not given, it can implicitly be deduced from the predicates prefixes.
         */
 
-        for(int patternCounter = 0; patternCounter < patterns.size(); ++patternCounter)
+        for(int patternCounter = 0; patternCounter < listSortedPatterns.size(); ++patternCounter)
         {
-            ObjectPattern pattern = patterns.get(patternCounter);
-            List<QueryData.WhereEquality> wheres = new ArrayList<>();
+            logger.debug("patternCounter=" + patternCounter);
+            ObjectPattern pattern = listSortedPatterns.get(patternCounter);
+            List<QueryData.WhereEquality> whereKVs = new ArrayList<>();
             Map<String, String> selectedVariablesConstantPredicate = new HashMap<>();
             Map<String, String> selectedVariablesVariablePredicate = new HashMap<>();
 
@@ -74,9 +75,11 @@ public class DependenciesBuilder {
             // - the variables which are not known yet, and returned by this WQL query.
             // The variable representing the object is selected anyway and contains the WMI relative path.
             String predVarName = null;
+            logger.debug("pattern.membersList.size()=" + pattern.membersList.size());
             for(ObjectPattern.PredicateObjectPair predicateObjectPair: pattern.membersList) {
                 String predShortPredicate = predicateObjectPair.shortPredicate;
                 String objectVariableName = predicateObjectPair.variableName;
+                logger.debug("predShortPredicate=" + predShortPredicate + " objectVariableName=" + objectVariableName);
                 if(predShortPredicate.equals(ObjectPattern.ALL_PREDICATES)) {
                     if(predicateObjectPair.predicateVariableName == null) {
                         throw new RuntimeException("predicateObjectPair.predVarName is null");
@@ -98,7 +101,8 @@ public class DependenciesBuilder {
                     if (objectVariableName != null) {
                         if (variablesContext.containsKey(objectVariableName)) {
                             // If it is a variable calculated in the previous queries, its value is known when executing.
-                            wheres.add(wmiKeyValue);
+                            logger.debug("whereKVs gets:" + "P=" + wmiKeyValue.wherePredicate + " N=" + wmiKeyValue.whereVariableName + " V=" + wmiKeyValue.whereValue);
+                            whereKVs.add(wmiKeyValue);
                         } else {
                             logger.debug("Selecting variable:" + predShortPredicate + "=>" + objectVariableName);
                             String existingVariable = selectedVariablesConstantPredicate.get(predShortPredicate);
@@ -126,7 +130,8 @@ public class DependenciesBuilder {
                         }
                     } else {
                         // If the value of the predicate is known because it is a constant.
-                        wheres.add(wmiKeyValue);
+                        logger.debug("whereKVs gets:" + "P=" + wmiKeyValue.wherePredicate + " N=" + wmiKeyValue.whereVariableName + " V=" + wmiKeyValue.whereValue);
+                        whereKVs.add(wmiKeyValue);
                     }
                 }
             } // Next member of the pattern.
@@ -136,10 +141,16 @@ public class DependenciesBuilder {
 
             // The same variables might be added several times, and duplicates will be eliminated.
             for(String variableName : selectedVariablesConstantPredicate.values()) {
+                logger.debug("variableName=" + variableName);
                 addToVariablesContext(variableName);
             }
 
+            logger.debug("selectedVariablesVariablePredicate="
+                    + selectedVariablesVariablePredicate.entrySet().stream()
+                    .map(x -> x.getKey() + "=>" + x.getValue()).collect(Collectors.toList()));
+
             for(Map.Entry<String, String> pairTwoVars : selectedVariablesVariablePredicate.entrySet()) {
+                logger.debug("pairTwoVars.getKey()=" + pairTwoVars.getKey() + " pairTwoVars.getValue()=" + pairTwoVars.getValue());
                 addToVariablesContext(pairTwoVars.getKey());
                 addToVariablesContext(pairTwoVars.getValue());
             }
@@ -147,17 +158,18 @@ public class DependenciesBuilder {
             // The variable which defines the object will receive a value with the execution of this WQL query,
             // but maybe it is already known because of an association request done before.
             boolean isMainVariableAvailable = variablesContext.containsKey(pattern.variableName);
+            logger.debug("pattern.variableName=" + pattern.variableName + " variablesContext.keySet()=" + variablesContext.keySet());
 
             if(isMainVariableAvailable) {
                 assert pattern.constantSubject == null;
                 // If the main variable is known, it will use a getter. However, if there are "where" tests,
                 // the values of the columns must be known for extra filtering. Therefore, they must be fetched.
-                Set<String> nonSelectedColumns = wheres.stream().map(w->w.wherePredicate).collect(Collectors.toSet());
+                Set<String> nonSelectedColumns = whereKVs.stream().map(w->w.wherePredicate).collect(Collectors.toSet());
                 nonSelectedColumns.removeAll(selectedVariablesConstantPredicate.keySet());
                 for(String nonSelectedColumn: nonSelectedColumns) {
                     // The counter is used to avoid an ambiguity if the same class and the same column are used
                     // several times in this Sparql query.
-                    String internalVariable = pattern.className + "." + nonSelectedColumn + "." + patternCounter + ".internal";
+                    String internalVariable = pattern.subjectClassname + "." + nonSelectedColumn + "." + patternCounter + ".internal_variable";
                     selectedVariablesConstantPredicate.put(nonSelectedColumn, internalVariable);
                     logger.debug("variablesContext.put internalVariable=" + internalVariable);
                     variablesContext.put(internalVariable, null);
@@ -165,19 +177,19 @@ public class DependenciesBuilder {
             } else {
                 // This has nothing to do with a constant subject.
                 logger.debug("NOT isMainVariableAvailable VariableName=" + pattern.variableName
-                        + " ClassName=" + pattern.className);
+                        + " ClassName=" + pattern.subjectClassname);
             }
 
             if(pattern.constantSubject != null) {
                 logger.warn("isMainVariableAvailable=" + isMainVariableAvailable
                         + " VariableName=" + pattern.variableName
                         + " ConstantSubject=" + pattern.constantSubject
-                        + " ClassName=" + pattern.className);
+                        + " ClassName=" + pattern.subjectClassname);
                 assert pattern.variableName == null;
 
                 // This is an artificial variable whose value is the subject given as a constant.
                 // It has a unique number associated to the pattern index.
-                String constantSubjectVariable = "PseudoVariableForConstantSubject_" + String.valueOf(patternCounter);
+                String constantSubjectVariable = "PseudoVariableForConstantSubject_" + patternCounter;
                 pattern.variableName = constantSubjectVariable;
                 assert variablesContext.containsKey(constantSubjectVariable) == false;
                 // The subject must be a node.
@@ -195,15 +207,28 @@ public class DependenciesBuilder {
                 variablesContext.put(pattern.variableName, null);
             }
 
-            if(pattern.className != null) {
+            if(pattern.subjectClassname != null) {
                 // A class name is needed to run WQL queries, and also its WMI namespace.
-                WmiProvider.checkValidNamespace(pattern.currentNamespace);
-                WmiProvider.CheckValidClassname(pattern.className);
+                WmiProvider.checkValidNamespace(pattern.subjectNamespace);
+                WmiProvider.checkValidClassname(pattern.subjectClassname);
 
                 QueryData queryData = new QueryData(
-                        pattern.currentNamespace, pattern.className, pattern.variableName,
+                        pattern.subjectNamespace, pattern.subjectClassname, pattern.variableName,
                         isMainVariableAvailable, selectedVariablesConstantPredicate,
-                        wheres, variablesSynonyms,
+                        whereKVs, variablesSynonyms,
+                        selectedVariablesVariablePredicate);
+                preparedQueries.add(queryData);
+            } else {
+                logger.debug("Create QueryData with null subjectClassName. pattern.variableName="
+                        + pattern.variableName + " Members=" + pattern.membersList);
+
+                //On fait qq chose pour accepter que la classe soit nulle.
+                //C est ici qu il faut se placer pour calculer plus tard la classe quand on aura la valeur du sujet.
+                assert(pattern.subjectClassname == null);
+                QueryData queryData = new QueryData(
+                        pattern.subjectNamespace, pattern.subjectClassname, pattern.variableName,
+                        isMainVariableAvailable, selectedVariablesConstantPredicate,
+                        whereKVs, variablesSynonyms,
                         selectedVariablesVariablePredicate);
                 preparedQueries.add(queryData);
             }

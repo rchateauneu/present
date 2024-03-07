@@ -76,7 +76,7 @@ public class WmiOntologyTest {
     @Test
     public void testExtractClassnameFromRef_test() {
         String wbemPath = "\\\\LAPTOP-R89KG6V1\\ROOT\\CIMV2:Win32_Process.Handle=\"12456\"";
-        String className = WmiProvider.ExtractClassnameFromRef(wbemPath);
+        String className = WmiProvider.extractClassnameFromRef(wbemPath);
         Assert.assertEquals("Win32_Process", className);
     }
 

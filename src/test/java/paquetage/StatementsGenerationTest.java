@@ -62,8 +62,8 @@ public class StatementsGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = extractor.findObjectPattern("my_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
-        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.subjectClassname);
+        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.subjectNamespace);
         Assert.assertEquals(1, patternWin32_Directory.membersList.size());
         CompareKeyValue(patternWin32_Directory.membersList.get(0), "Name", true, "dir_name");
 
@@ -113,8 +113,8 @@ public class StatementsGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = extractor.findObjectPattern("my_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
-        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.subjectClassname);
+        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.subjectNamespace);
         Assert.assertEquals(1,patternWin32_Directory.membersList.size());
         CompareKeyValue(patternWin32_Directory.membersList.get(0), "Name", true, "dir_name");
 
@@ -187,8 +187,8 @@ public class StatementsGenerationTest {
 
         // Check the exact content of the BGP.
         ObjectPattern patternWin32_Directory = extractor.findObjectPattern("my_dir");
-        Assert.assertEquals("Win32_Directory", patternWin32_Directory.className);
-        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.currentNamespace);
+        Assert.assertEquals("Win32_Directory", patternWin32_Directory.subjectClassname);
+        Assert.assertEquals("ROOT\\CIMV2", patternWin32_Directory.subjectNamespace);
         Assert.assertEquals(2, patternWin32_Directory.membersList.size());
         CompareKeyValue(patternWin32_Directory.membersList.get(1), "Caption", true, "dir_caption");
         CompareKeyValue(patternWin32_Directory.membersList.get(0), "Name", true, "dir_name");

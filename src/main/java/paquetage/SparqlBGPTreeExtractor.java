@@ -56,8 +56,7 @@ class JoinExpressionNode extends BaseExpressionNode {
         logger.debug("JoinExpressionNode. Parent type=" + parent.getClass().getName());
     }
 
-    // public Map<String, ObjectPattern> patternsMap = null;
-    public List<ObjectPattern> patternsMap = null;
+    public List<ObjectPattern> treeExtractorPatternsMap = null;
 
     // These are the raw patterns extracted from the query. They may contain variables which are not defined
     // in the WMI evaluation. In this case, they are copied as is.
@@ -72,15 +71,18 @@ class JoinExpressionNode extends BaseExpressionNode {
 
     // Must be called after parsing and before evaluation.
     void joinBGPPartition() {
-        if(patternsMap != null) {
+        if(treeExtractorPatternsMap != null) {
             throw new RuntimeException("patternsMap should not be set twice.");
         }
-        patternsMap = ObjectPattern.partitionBySubject(visitorPatternsRaw);
+        treeExtractorPatternsMap = ObjectPattern.partitionBySubject(visitorPatternsRaw);
+        /*
         List<String> listKeys = new ArrayList<>();
         for(ObjectPattern objPatt: patternsMap) {
             listKeys.add(objPatt.variableName);
         }
         logger.debug("Pattern keys:" + listKeys);
+
+        */
     }
 
     Solution localSolution = null;
@@ -88,27 +90,21 @@ class JoinExpressionNode extends BaseExpressionNode {
     @Override
     public Solution evaluateExpression() {
         logger.debug("children.size()=" + children.size() + " visitorPatternsRaw.size()=" + visitorPatternsRaw.size());
-        //try {
-            SparqlTranslation patternSparql = new SparqlTranslation(patternsAsArray());
-            /*
-            TODO: This solution is returned only for testing.
-            TODO: It is possible to get rid of it and keep only the solutions in nodes which have a BGP.
-            */
-            // IS IT HERE THAT WE CALL patternSparql.dependencies.ListeRenommage(solution) ??
-            localSolution = patternSparql.executeToRows();
-            logger.debug("Solution:" + localSolution.size() + " Header=" + localSolution.header());
+        SparqlTranslation patternSparql = new SparqlTranslation(patternsAsSortedArray());
+        /*
+        TODO: This solution is returned only for testing.
+        TODO: It is possible to get rid of it and keep only the solutions in nodes which have a BGP.
+        */
+        localSolution = patternSparql.executeToRows();
+        logger.debug("Solution:" + localSolution.size() + " Header=" + localSolution.header());
 
-            // TODO: Avoid this cartesian product by merging BGPs in lower nodes.
-            for(BaseExpressionNode child : children){
-                Solution subSolution = child.evaluateExpression();
-                Solution cartesianProduct = localSolution.cartesianProduct(subSolution);
-                localSolution = cartesianProduct;
-            }
-            return localSolution;
-        //}
-        //catch(Exception exc) {
-        //    throw new RuntimeException(exc);
-        //}
+        // TODO: Avoid this cartesian product by merging BGPs in lower nodes.
+        for(BaseExpressionNode child : children){
+            Solution subSolution = child.evaluateExpression();
+            Solution cartesianProduct = localSolution.cartesianProduct(subSolution);
+            localSolution = cartesianProduct;
+        }
+        return localSolution;
     }
 
     public String toString() {
@@ -143,14 +139,11 @@ class JoinExpressionNode extends BaseExpressionNode {
      * FIXME: Duplicate code with SparqlBGPExtractor
      * @return
      */
-    List<ObjectPattern> patternsAsArray() {
-        if(patternsMap == null) {
+    List<ObjectPattern> patternsAsSortedArray() {
+        if(treeExtractorPatternsMap == null) {
             throw new RuntimeException("patternsMap is null");
         }
-        //ArrayList<ObjectPattern> patternsArray = new ArrayList<>(patternsMap.values());
-        ArrayList<ObjectPattern> patternsArray = new ArrayList<>(patternsMap);
-        // patternsArray.sort(Comparator.comparing(s -> s.VariableName));
-        // patternsArray.sort(new Comparator<ObjectPattern>());
+        ArrayList<ObjectPattern> patternsArray = new ArrayList<>(treeExtractorPatternsMap);
         ObjectPattern.Sort(patternsArray);
 
         return patternsArray;
@@ -366,10 +359,9 @@ class PatternsVisitor extends AbstractQueryModelVisitor {
         return null;
     }
 
-    // public Map<String, ObjectPattern> patterns() {
     public List<ObjectPattern> patternsList() {
         JoinExpressionNode join = FindTopLevelJoin(parent);
-        return join.patternsMap;
+        return join.treeExtractorPatternsMap;
     }
 
     private void partitionBGPAux(BaseExpressionNode node) {

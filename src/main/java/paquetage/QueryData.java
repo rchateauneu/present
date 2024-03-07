@@ -1,9 +1,12 @@
 package paquetage;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 /**
  * To be used when reconstructing a WQL query.
@@ -23,14 +26,18 @@ public class QueryData {
 
     // It maps a column name to a Sparql variable and is used to copy the column values to the variables.
     // This sorted container guarantees the order to help comparison in tests.
-    SortedMap<String, String> queryColumns;
+
+    //Je crois qu 'on ne se sert jamais des Values,
+    //        et pas grave si duplcates.'
+
+    SortedMap<String, String> queryConstantColumns;
 
     // The key and the values are Sparql variable name.
     SortedMap<String, String> queryVariableColumns;
 
     // When several variables are selected with the same predicate, then the predicate appears once only in the query
     // for one of the variables. Once the value is selected, it is copied to the other variables.
-    public Map<String, List<String>> variablesSynonyms;
+    public Map<String, List<String>> queryDataVariablesSynonyms;
 
     /** Patterns of the WHERE clause of a WMI query. The values are variables or constants at creation,
     but are transformed into constants before building the query .
@@ -44,6 +51,128 @@ public class QueryData {
          ?instance cimv2:Predicate ?var2 .
     */
     List<WhereEquality> whereTests;
+
+    ArrayList<WhereEquality> substituteWherePairs(HashMap<String, ValueTypePair> variablesContext) {
+        ArrayList<WhereEquality> substitutedWheres = new ArrayList<>();
+        Set<String> uniqueWhereKeys = new HashSet<>();
+        for(WhereEquality kv : whereTests) {
+            // This is not strictly the same type because the value of KeyValue is:
+            // - either a variable name of type string,
+            // - or the context value of this variable, theoretically of any type.
+            String replacedPredicate = ObjectPattern.replaceRDFSToWMI(className, kv.wherePredicate);
+            if(replacedPredicate == null) {
+                replacedPredicate = kv.wherePredicate;
+            }
+            logger.debug("replacedPredicate=" + replacedPredicate);
+            if(uniqueWhereKeys.contains(replacedPredicate)) {
+                // For example, if selecting rddfs label and wmi Name.
+                throw new RuntimeException("Duplicate where key=" + replacedPredicate);
+            } else {
+                uniqueWhereKeys.add(replacedPredicate);
+            }
+            WmiProvider.checkValidShortPredicate(replacedPredicate);
+
+            if(kv.whereVariableName != null) {
+                // Only the value representation is needed.
+                ValueTypePair pairValue = variablesContext.get(kv.whereVariableName);
+                if(pairValue == null) {
+                    throw new RuntimeException("Null value for:" + kv.whereVariableName);
+                }
+                //substitutedWheres.add(new QueryData.WhereEquality(kv.wherePredicate, pairValue));
+                substitutedWheres.add(new WhereEquality(replacedPredicate, pairValue));
+            } else {
+                // No change because the "where" value is not a variable.
+                substitutedWheres.add(new WhereEquality(replacedPredicate, kv.whereValue));
+                // substitutedWheres.add(kv);
+            }
+        }
+        return substitutedWheres;
+    }
+
+    /*
+    This creates a dictionary mapping predicates to values.The RDFS predicates such as rdfs.LABEL
+    are replaced with the WMI equivalent. The class name is needed to determine the best WMI equivalent.
+    */
+    SortedMap<String, String> substituteQueryConstantColumns(HashMap<String, ValueTypePair> variablesContext) {
+        SortedMap<String, String> substitutedQueryConstantColumns = new TreeMap<>();
+        List<Pair<String, String>> columnsRdfsToWmi = new ArrayList();
+
+        for(Map.Entry<String, String> kv : queryConstantColumns.entrySet()) {
+            logger.debug("kv.getKey()=" + kv.getKey() + " kv.getValue()=" + kv.getValue());
+        }
+        // First pass which selects only the pairs with a constant value.
+        for(Map.Entry<String, String> kv : queryConstantColumns.entrySet()) {
+            String originalKey = kv.getKey();
+            String replacedPredicate = ObjectPattern.replaceRDFSToWMI(className, originalKey);
+            if (replacedPredicate == null) {
+                WmiProvider.checkValidShortPredicate(originalKey);
+                substitutedQueryConstantColumns.put(originalKey, kv.getValue());
+            } else {
+                WmiProvider.checkValidShortPredicate(replacedPredicate);
+                columnsRdfsToWmi.add(new ImmutablePair<>(replacedPredicate, kv.getValue()));
+            }
+        }
+
+        // Now second pass for the predicated which were RDFS and now replaced with WMI equivalents.
+        for(Pair<String, String> kvRdfsToWmi : columnsRdfsToWmi) {
+            String value = substitutedQueryConstantColumns.get(kvRdfsToWmi.getKey());
+            if(value != null) {
+                logger.debug("Duplicate kvRdfsToWmi.getKey()=" + kvRdfsToWmi.getKey()
+                    + " kvRdfsToWmi.getValue()=" + kvRdfsToWmi.getValue()
+                    + " value=" + value);
+                List<String> synonymsList = queryDataVariablesSynonyms.get(value);
+                if (synonymsList == null) {
+                    synonymsList = new ArrayList<String>();
+                    queryDataVariablesSynonyms.put(value, synonymsList);
+                }
+                synonymsList.add(kvRdfsToWmi.getValue());
+            } else {
+                substitutedQueryConstantColumns.put(kvRdfsToWmi.getKey(), kvRdfsToWmi.getValue());
+            }
+        }
+        /*
+
+            if(substitutedQueryConstantColumns.containsKey(replacedPredicate)) {
+                // For example, if selecting rdfs label and wmi Name.
+                throw new RuntimeException("Duplicate where"
+                        + " replacedPredicate=" + replacedPredicate
+                        + " uniqueColumnKeys.get()=" + substitutedQueryConstantColumns.get(replacedPredicate)
+                        + " kv.getValue()=" + kv.getValue()
+                        + " variablesSynonyms=" + variablesSynonyms
+                );
+            }
+            WmiProvider.checkValidShortPredicate(replacedPredicate);
+            substitutedQueryConstantColumns.put(replacedPredicate, kv.getValue());
+        }
+        */
+        return substitutedQueryConstantColumns;
+    }
+
+    public record ContextualisedColumns(
+        List<WhereEquality> savedWhereTests,
+        SortedMap<String, String> savedQueryConstantColumns)
+    {}
+
+    public ContextualisedColumns substitutionStart(HashMap<String, ValueTypePair> variablesContext) {
+        logger.debug("variablesContext.keySet()=" + variablesContext.keySet());
+        ArrayList<QueryData.WhereEquality> substitutedWheres = substituteWherePairs(variablesContext);
+        SortedMap<String, String> substitutedQueryConstantColumns = substituteQueryConstantColumns(variablesContext);
+        ContextualisedColumns subsContext = new ContextualisedColumns(substitutedWheres, substitutedQueryConstantColumns);
+
+        ContextualisedColumns oldWheres = exchangeWheres(subsContext);
+        for(String key : queryConstantColumns.keySet()) {
+            WmiProvider.checkValidShortPredicate(key);
+        }
+
+        startSampling();
+        return oldWheres;
+    }
+
+    void substitutionEnd(ContextualisedColumns subsContext) {
+        restoreWheres(subsContext);
+        // We do not have the object path so the statistics can only be updated with the class name.
+        finishSampling();
+    }
 
     // Provider is a class used to execute a query similar to WQL.
     // This attempts to return the same result as a WQL query, but faster.
@@ -95,7 +224,7 @@ public class QueryData {
 
     // This is just for debugging.
     public String toString() {
-        String cols = String.join("+", queryColumns.keySet());
+        String cols = String.join("+", queryConstantColumns.keySet());
         String wheres =  (String) whereTests.stream()
                 .map(w -> w.wherePredicate)
                 .collect(Collectors.joining("/"));
@@ -191,9 +320,9 @@ public class QueryData {
         if(! className.equals(whereClassName)) {
             return false;
         }
-        Set<String> requiredColumns = queryColumns.keySet();
+        Set<String> requiredColumns = queryConstantColumns.keySet();
         logger.debug("whereClassName="+whereClassName);
-        logger.debug("queryColumns.keySet()="+queryColumns.keySet());
+        logger.debug("queryColumns.keySet()="+ queryConstantColumns.keySet());
         logger.debug("selectedColumns="+selectedColumns);
         logger.debug("requiredColumns="+requiredColumns);
         return selectedColumns.containsAll(requiredColumns);
@@ -216,7 +345,7 @@ public class QueryData {
     }
 
     public String columnToVariable(String columnName) {
-        String variableName = queryColumns.get(columnName);
+        String variableName = queryConstantColumns.get(columnName);
         return variableName;
     }
 
@@ -309,6 +438,8 @@ public class QueryData {
         this(wmiNamespace, wmiClassName, variable, mainVariableAvailable, columns, wheres, null, null);
     }
 
+    public Boolean knownNamespaceClass;
+
     QueryData(
             String wmiNamespace,
             String wmiClassName,
@@ -318,67 +449,101 @@ public class QueryData {
             List<QueryData.WhereEquality> wheres,
             Map<String, List<String>> synonyms,
             Map<String, String> variableColumns) {
-        WmiProvider.checkValidNamespace(wmiNamespace);
+
+        if((wmiNamespace == null) ^ (wmiClassName == null)) {
+            throw new RuntimeException("Inconsistency between namespace and class");
+        }
+
+        knownNamespaceClass = (wmiNamespace != null) && (wmiClassName != null);
+        if(knownNamespaceClass) {
+            // Otherwise, we will attempt to calculate it on the fly using the current value of the main variable.
+            WmiProvider.checkValidNamespace(wmiNamespace);
+            WmiProvider.checkValidClassname(wmiClassName);
+        }
         // If the subject is a constant, then there is no main variable.
         if(variable == null) {
             logger.debug("Variable is null");
         }
         mainVariable = variable;
         isMainVariableAvailable = mainVariableAvailable;
-        WmiProvider.CheckValidClassname(wmiClassName);
+
         namespace = wmiNamespace;
         className = wmiClassName;
-        variablesSynonyms = synonyms;
+        queryDataVariablesSynonyms = synonyms;
         // Creates a map even if no columns are selected.
         if(constantColumns == null) {
-            queryColumns = new TreeMap<>();
+            queryConstantColumns = new TreeMap<>();
         } else {
             for(String oneColumn: constantColumns.keySet()) {
                 if (specialColumns.contains(oneColumn)) {
                     throw new RuntimeException("Selected constant column is forbidden:" + oneColumn);
                 }
             }
-            queryColumns = new TreeMap<>(constantColumns);
+            queryConstantColumns = new TreeMap<>(constantColumns);
         }
         queryVariableColumns = (variableColumns == null) ? new TreeMap<>() : new TreeMap<>(variableColumns);
 
-        swapWheres(wheres);
-        logger.debug("wmiClassName=" + wmiClassName + " variable=" + variable + " queryColumns=" + queryColumns);
+        setWheres(wheres);
+        logger.debug("wmiClassName=" + wmiClassName + " variable=" + variable + " queryConstantColumns=" + queryConstantColumns);
 
-        setHandlers(false);
+        if(wmiClassName != null) {
+            setProviders(false);
+        }
     }
 
-    void setHandlers(boolean forceWmi) {
-            if(isMainVariableAvailable)
-                classGetter = GenericProvider.findGetter(this, forceWmi);
-            else
-                classBaseSelecter = GenericProvider.FindSelecter(this, forceWmi);
+    void setProviders(boolean forceWmi) {
+        //D'abord voir si on peut trouver la class et le namespace correspondant a la variable, en allant chercher dans le contexte.
+
+        if(isMainVariableAvailable)
+            classGetter = GenericProvider.findGetter(this, forceWmi);
+        else
+            classBaseSelecter = GenericProvider.FindSelecter(this, forceWmi);
     }
 
-    /** This is used for initialising when adding the WHERE tests without values,
-     * and later when calculating a QueryData for a specific context.
-     * @param wheres
-     * @return
-     */
-    List<QueryData.WhereEquality> swapWheres(List<QueryData.WhereEquality> wheres) {
-        List<QueryData.WhereEquality> oldWheres = whereTests;
+    void setWheres(List<QueryData.WhereEquality> wheres) {
         if(wheres == null)
             // Guaranteed representation of an empty where clause.
             whereTests = new ArrayList<>();
         else
             // This sorts the where tests so the order is always the same and helps comparisons.
             // This is not a problem performance-wise because usually there is only one element per WQL query.
+
+            // TODO: Sorting does not need streaming ?!?!
             whereTests = wheres.stream().sorted(Comparator.comparing(x -> x.wherePredicate)).collect(Collectors.toList());
-        return oldWheres;
+    }
+
+    /** This is used for initialising when adding the WHERE tests without values,
+     * and later when calculating a QueryData for a specific columnsContext.
+     * @param columnsContext
+     * @return
+     */
+    ContextualisedColumns exchangeWheres(ContextualisedColumns columnsContext) {
+        ContextualisedColumns oldContext = new ContextualisedColumns(whereTests, queryConstantColumns);
+
+        // The object must be copied.
+        whereTests = columnsContext.savedWhereTests.stream().sorted(Comparator.comparing(x -> x.wherePredicate)).collect(Collectors.toList());
+        queryConstantColumns = new TreeMap<>(columnsContext.savedQueryConstantColumns);
+
+        return oldContext;
+    }
+
+    void restoreWheres(ContextualisedColumns columnsContext) {
+        whereTests = columnsContext.savedWhereTests;
+        queryConstantColumns = columnsContext.savedQueryConstantColumns;
     }
 
     public String buildWqlQuery() {
+        /*
+        C est peut etre que ici qu on decouvre certaines colonnes style "LABEL" car on connait enfin la classe.
+        Mais du coup, ca peut faire apparaitre des synonymes.
+        */
+
         // The order of select columns is not very important because the results can be mapped to variables.
-        String columns = String.join(",", queryColumns.keySet());
+        String columns = String.join(",", queryConstantColumns.keySet());
 
         // If the keys of the class are given, __RELPATH is not calculated.
         // Anyway, it seems that __PATH is calculated only when explicitly requested.
-        if (queryColumns.isEmpty())
+        if (queryConstantColumns.isEmpty())
             columns += "__PATH";
         else
             columns += ", __PATH";
@@ -406,9 +571,11 @@ public class QueryData {
         statistics.finishSample(className, columnsWhere);
     }
 
+    /*
     public void finishSampling(String objectPath) {
-        statistics.finishSample(objectPath, queryColumns.keySet());
+        statistics.finishSample(objectPath, queryConstantColumns.keySet());
     }
+    */
 
     public void displayStatistics() {
         // Consistency check, then display the selecter of getter of data.

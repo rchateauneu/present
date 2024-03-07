@@ -1,5 +1,6 @@
 package paquetage;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -15,17 +16,14 @@ public class SparqlTranslation {
     private DependenciesBuilder dependencies;
     private Solution solution;
     private GenericProvider genericSelecter = new GenericProvider();
-    //private Set<String> bindings;
 
     public SparqlTranslation(SparqlBGPExtractor input_extractor) throws Exception {
         this(input_extractor.patternsAsArray());
     }
 
-    public SparqlTranslation(List<ObjectPattern> patterns) /*throws Exception */ {
+    public SparqlTranslation(List<ObjectPattern> listSortedPatterns) /*throws Exception */ {
         // TODO: Optimize QueryData list here. Providers are necessary.
-        //bindings = inputBindings;
-
-        dependencies = new DependenciesBuilder(patterns);
+        dependencies = new DependenciesBuilder(listSortedPatterns);
     }
 
     /**
@@ -120,8 +118,9 @@ public class SparqlTranslation {
      * @param index
      * @throws Exception
      */
-    void executeOneLevel(int index) //throws Exception
+    void executeOneLevel(int index)
     {
+        //logger.debug("index=" + index + " size=" + dependencies.preparedQueries.size());
         if(index == dependencies.preparedQueries.size())
         {
             // The most nested WQL query is reached. Store data then return.
@@ -134,6 +133,27 @@ public class SparqlTranslation {
             return;
         }
         QueryData queryData = dependencies.preparedQueries.get(index);
+
+        if(! queryData.knownNamespaceClass) {
+            if(queryData.isMainVariableAvailable) {
+                ValueTypePair objectVTP = dependencies.variablesContext.get(queryData.mainVariable);
+                String objectValue = objectVTP.getValue();
+                if(objectVTP.getType() == ValueTypePair.ValueType.NODE_TYPE) {
+                    // For example \\LAPTOP-R89KG6V1\ROOT\CIMV2:Win32_Process.Handle="2264"
+                    Pair<String, String> pairNamespaceClass = ObjectPath.parseWbemPathToNamespaceClass(objectValue);
+                    logger.debug("namespace=" + pairNamespaceClass.getLeft() + " class=" + pairNamespaceClass.getRight());
+                    queryData.namespace = pairNamespaceClass.getLeft();
+                    queryData.className = pairNamespaceClass.getRight();
+                } else {
+                    logger.error("Cannot extract class and namespace with non-node objectValue=" + objectValue + " mainVariable=" + queryData.mainVariable);
+                    return;
+                }
+            } else {
+                logger.error("Cannot extract class and namespace from mainVariable=" + queryData.mainVariable);
+                return;
+            }
+        }
+
         if(queryData.isMainVariableAvailable) {
             // NO NEED TO CHECK IT EACH TIME.
             if(! queryData.whereTests.isEmpty()) {
@@ -149,25 +169,28 @@ public class SparqlTranslation {
             // Only the value representation is needed.
             String objectPath = dependencies.variablesContext.get(queryData.mainVariable).getValue();
             // FIXME: It is a pity that handlers are set twice.
-            queryData.setHandlers(true);
+            // TODO: Store somewhere this information.
+            queryData.setProviders(true);
 
             if(queryData.queryVariableColumns.isEmpty())  {
-                queryData.startSampling();
+                //queryData.startSampling();
+                QueryData.ContextualisedColumns subsContext = queryData.substitutionStart(dependencies.variablesContext);
                 Solution.Row singleRow = genericSelecter.getObjectFromPath(objectPath, queryData);
-                queryData.finishSampling(objectPath);
+                //queryData.finishSampling(objectPath);
+                queryData.substitutionEnd(subsContext);
 
                 if (singleRow == null) {
                     // Object does not exist or maybe a CIM_FataFile is protected, or a CIM_Process exited ?
                     // FIXME: Maybe this is not an error but a normal behaviour, so should not display an error.
                     logger.error("Cannot get row for objectPath=" + objectPath);
                 } else {
-                    rowToContext(singleRow, queryData.variablesSynonyms);
+                    rowToContext(singleRow, queryData.queryDataVariablesSynonyms);
                     // New WQL query for this row only.
                     executeOneLevel(index + 1);
                 }
             } else {
-                if(!queryData.queryColumns.isEmpty()) {
-                    throw new RuntimeException("No constant predicates with Variable predicate. queryData.queryColumns=" + queryData.queryColumns);
+                if(!queryData.queryConstantColumns.isEmpty()) {
+                    throw new RuntimeException("No constant predicates with Variable predicate. queryData.queryColumns=" + queryData.queryConstantColumns);
                 }
                 if(queryData.queryVariableColumns.size() != 1) {
                     throw new RuntimeException("Variable predicate must be unique (Now). Columns=" + queryData.queryVariableColumns.keySet());
@@ -188,38 +211,18 @@ public class SparqlTranslation {
                     // This adds the value of the column name.
                     returnRow.putString(predicateVariable, onePredicate);
                     logger.debug("returnRow=" + returnRow);
-                    rowToContext(returnRow, queryData.variablesSynonyms);
+                    rowToContext(returnRow, queryData.queryDataVariablesSynonyms);
                     executeOneLevel(index + 1);
                 }
             }
         } else {
-            ArrayList<QueryData.WhereEquality> substitutedWheres = new ArrayList<>();
-            for(QueryData.WhereEquality kv : queryData.whereTests) {
-                // This is not strictly the same type because the value of KeyValue is:
-                // - either a variable name of type string,
-                // - or the context value of this variable, theoretically of any type.
-                if(kv.whereVariableName != null) {
-                    // Only the value representation is needed.
-                    ValueTypePair pairValue = dependencies.variablesContext.get(kv.whereVariableName);
-                    if(pairValue == null) {
-                        throw new RuntimeException("Null value for:" + kv.whereVariableName);
-                    }
-                    substitutedWheres.add(new QueryData.WhereEquality(kv.wherePredicate, pairValue));
-                } else {
-                    // No change because the "where" value is not a variable.
-                    substitutedWheres.add(kv);
-                }
-            }
+            QueryData.ContextualisedColumns subsContext = queryData.substitutionStart(dependencies.variablesContext);
 
-            queryData.startSampling();
-            List<QueryData.WhereEquality> oldWheres = queryData.swapWheres(substitutedWheres);
             Solution rows = genericSelecter.selectVariablesFromWhere(queryData, true);
             // restore to patterns wheres clauses (that is, with variable values).
-            queryData.swapWheres(oldWheres);
-            // We do not have the object path so the statistics can only be updated with the class name.
-            queryData.finishSampling();
+            queryData.substitutionEnd(subsContext);
 
-            int numColumns = queryData.queryColumns.size();
+            int numColumns = queryData.queryConstantColumns.size();
             for(Solution.Row row : rows) {
                 // An extra column contains the path.
                 if(row.elementsSize() != numColumns + 1) {
@@ -228,10 +231,10 @@ public class SparqlTranslation {
                     TODO: Do this once only, the result set should separately contain the header.
                     */
                     throw new RuntimeException("Inconsistent size between returned results " + row.elementsSize()
-                            + " and columns:" + numColumns + " columns=" + queryData.queryColumns.keySet()
+                            + " and columns:" + numColumns + " columns=" + queryData.queryConstantColumns.keySet()
                             + " row.KeySet()=" + row.keySet());
                 }
-                rowToContext(row, queryData.variablesSynonyms);
+                rowToContext(row, queryData.queryDataVariablesSynonyms);
                 // New WQL query for this row.
                 executeOneLevel(index + 1);
             } //  Next fetched row.
