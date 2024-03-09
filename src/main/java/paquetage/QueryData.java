@@ -27,8 +27,7 @@ public class QueryData {
     // It maps a column name to a Sparql variable and is used to copy the column values to the variables.
     // This sorted container guarantees the order to help comparison in tests.
 
-    //Je crois qu 'on ne se sert jamais des Values,
-    //        et pas grave si duplcates.'
+    // FIXME: Je crois qu'on ne se sert jamais des Values, et pas grave si duplcates.
 
     SortedMap<String, String> queryConstantColumns;
 
@@ -130,21 +129,6 @@ public class QueryData {
                 substitutedQueryConstantColumns.put(kvRdfsToWmi.getKey(), kvRdfsToWmi.getValue());
             }
         }
-        /*
-
-            if(substitutedQueryConstantColumns.containsKey(replacedPredicate)) {
-                // For example, if selecting rdfs label and wmi Name.
-                throw new RuntimeException("Duplicate where"
-                        + " replacedPredicate=" + replacedPredicate
-                        + " uniqueColumnKeys.get()=" + substitutedQueryConstantColumns.get(replacedPredicate)
-                        + " kv.getValue()=" + kv.getValue()
-                        + " variablesSynonyms=" + variablesSynonyms
-                );
-            }
-            WmiProvider.checkValidShortPredicate(replacedPredicate);
-            substitutedQueryConstantColumns.put(replacedPredicate, kv.getValue());
-        }
-        */
         return substitutedQueryConstantColumns;
     }
 
@@ -570,12 +554,6 @@ public class QueryData {
                 .collect(Collectors.toSet());
         statistics.finishSample(className, columnsWhere);
     }
-
-    /*
-    public void finishSampling(String objectPath) {
-        statistics.finishSample(objectPath, queryConstantColumns.keySet());
-    }
-    */
 
     public void displayStatistics() {
         // Consistency check, then display the selecter of getter of data.

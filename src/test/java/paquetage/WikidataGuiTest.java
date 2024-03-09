@@ -90,20 +90,20 @@ uri_CIM_ProcessExecutable_Dependent
         Assert.assertEquals(Set.of("process_property", "property_value"), singleRow.keySet());
 
         // Most of not all properties should have one value only.
-        Map<String, String> setPropValues = listRows
+        Map<String, String> mapPropValues = listRows
                 .stream()
                 .collect(Collectors.toMap(
                         row -> row.getAsUri("process_property"),
                         row -> row.getAsLiteral("property_value")));
 
-        System.out.println("setPropValues=" + setPropValues);
-        System.out.println("iri handle="+setPropValues.get(WmiProvider.toCIMV2("Handle")));
+        System.out.println("mapPropValues=" + mapPropValues);
+        System.out.println("iri handle="+mapPropValues.get(WmiProvider.toCIMV2("Handle")));
 
         System.out.println("iri Handle="+WmiProvider.toCIMV2("Handle"));
-        Assert.assertEquals(currentPidStr, setPropValues.get(WmiProvider.toCIMV2("Handle")));
-        Assert.assertEquals("java.exe", setPropValues.get(WmiProvider.toCIMV2("Name")));
-        Assert.assertEquals("Win32_ComputerSystem", setPropValues.get(WmiProvider.toCIMV2("CSCreationClassName")));
-        Assert.assertEquals("Win32_Process", setPropValues.get(WmiProvider.toCIMV2("CreationClassName")));
+        Assert.assertEquals(currentPidStr, mapPropValues.get(WmiProvider.toCIMV2("Handle")));
+        Assert.assertEquals("java.exe", mapPropValues.get(WmiProvider.toCIMV2("Name")));
+        Assert.assertEquals("Win32_ComputerSystem", mapPropValues.get(WmiProvider.toCIMV2("CSCreationClassName")));
+        Assert.assertEquals("Win32_Process", mapPropValues.get(WmiProvider.toCIMV2("CreationClassName")));
     }
 
     /* This ensures that if the subject is a constant, one of its properties is correct.
@@ -209,10 +209,6 @@ uri_CIM_ProcessExecutable_Dependent
         RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
         System.out.println("listRows=" + listRows.size());
         Assert.assertTrue(listRows.size() > 0);
-        //for(RdfSolution.Tuple tuple : listRows) {
-        //    System.out.println(tuple);
-        //    Assert.assertEquals(tuple, "");
-        //}
         Map<String, String> setPropValues = listRows
                 .stream()
                 .collect(Collectors.toMap(
@@ -696,9 +692,30 @@ uri_CIM_ProcessExecutable_Dependent
     }
 
     @Test
+    public void testSPARQL_ENTITES_INCOMING_en() throws Exception {
+        String patternQuery = """
+            SELECT ?o ?ol
+            WHERE {
+                ?o <{propertyUri}> <{processUri}> .
+			    ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .
+			    FILTER ( LANG(?ol) = "[AUTO_LANGUAGE]" )
+		    } LIMIT 50
+         """;
+        String sparqlQuery = setLanguage(patternQuery)
+                .replace("{processUri}", currentProcessUri)
+                .replace("{propertyUri}", uri_CIM_ProcessExecutable_Dependent);
+        System.out.println("sparqlQuery=" + sparqlQuery);
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+        System.out.println("listRows=" + listRows.size());
+
+        // There must be one executable and probably several libraries.
+        Assert.assertTrue(listRows.size() > 0);
+    }
+
+    @Test
     public void testSPARQL_ENTITES_INCOMING_LANG() throws Exception {
         String patternQuery = """
-            SELECT ?o ?ol (LANG(?ol) as ?lang)
+            SELECT ?o ?ol (LANG(?ol) as ?langext)
             WHERE {
                 ?o <{propertyUri}> <{processUri}> .
 			    ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .
@@ -713,6 +730,12 @@ uri_CIM_ProcessExecutable_Dependent
 
         // There must be one executable and probably several libraries.
         Assert.assertTrue(listRows.size() > 0);
+
+        Set<String> setLangs = listRows
+                .stream()
+                .map(row -> row.getAsLiteral("langext"))
+                .collect(Collectors.toSet());
+        Assert.assertEquals(Set.of("en"), setLangs);
     }
 
     @Test

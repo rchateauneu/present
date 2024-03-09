@@ -45,7 +45,7 @@ public class RdfsPredicatesCIMV2Test {
         String actualLabel = singleRow.getAsLiteral("directory_label");
         System.out.println("actualLabel=" + actualLabel);
 
-        Assert.assertEquals("\"C:\\Windows\"@en", actualLabel);
+        Assert.assertEquals("C:\\Windows", actualLabel);
     }
 
     @Test
@@ -69,8 +69,8 @@ public class RdfsPredicatesCIMV2Test {
         Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\notepad.exe"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\system.ini"));
 
         Set<String> setNames = listRows.stringValuesSet("my_name");
         System.out.println("setNames=" + setNames.toString());
@@ -130,8 +130,8 @@ public class RdfsPredicatesCIMV2Test {
         Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\notepad.exe"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\system.ini"));
     }
 
     @Test
@@ -155,8 +155,8 @@ public class RdfsPredicatesCIMV2Test {
         Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\notepad.exe"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\system.ini"));
     }
 
     /* The same column is selected in two different variables.
@@ -217,8 +217,8 @@ public class RdfsPredicatesCIMV2Test {
         Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\system.ini\"@en"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\notepad.exe"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\system.ini"));
     }
 
     @Test
@@ -263,7 +263,7 @@ public class RdfsPredicatesCIMV2Test {
         Set<String> setLabels = listRows.stringValuesSet("my_label");
         System.out.println("setLabels=" + setLabels.toString());
 
-        Assert.assertTrue(setLabels.contains("\"C:\\Windows\\notepad.exe\"@en"));
+        Assert.assertTrue(setLabels.contains("C:\\Windows\\notepad.exe"));
     }
 
 }

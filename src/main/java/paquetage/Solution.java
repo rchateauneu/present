@@ -174,7 +174,8 @@ public class Solution implements Iterable<Solution.Row> {
                                 resourceSubject = row.asIRI(subjectName);
                                 logger.debug("resourceSubject=" + resourceSubject);
                                 String valueObject = row.getStringValue(objectName);
-                                resourceObject = Values.literal("\"" + valueObject + "\"" + "@en");
+                                // Creates a new Literal with the supplied lexical value.
+                                resourceObject = Values.literal(valueObject, "en");
                                 logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
                             } else {
                                 Value literalSubject = subjectWmiValue.convertValueTypeToLiteral();

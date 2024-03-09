@@ -75,14 +75,6 @@ class JoinExpressionNode extends BaseExpressionNode {
             throw new RuntimeException("patternsMap should not be set twice.");
         }
         treeExtractorPatternsMap = ObjectPattern.partitionBySubject(visitorPatternsRaw);
-        /*
-        List<String> listKeys = new ArrayList<>();
-        for(ObjectPattern objPatt: patternsMap) {
-            listKeys.add(objPatt.variableName);
-        }
-        logger.debug("Pattern keys:" + listKeys);
-
-        */
     }
 
     Solution localSolution = null;
