@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 // Queries sent by Wikidata Sparql GUI: wikibase/queryService/ui/resultBrowser/GraphResultBrowserNodeBrowser.js
@@ -243,19 +245,6 @@ uri_CIM_ProcessExecutable_Dependent
 
     @Test
     public void testSPARQL_PROPERTIES_CIM_Process() throws Exception {
-        /*
-            SELECT
-                ?p (SAMPLE(?pl) AS ?pl_) (COUNT(?o) AS ?count )
-                (group_concat(?ol;separator=", ") AS ?ol_)
-            WHERE {
-                <http://www.wikidata.org/entity/Q5496635> ?p ?o .
-                ?o <http://www.w3.org/2000/01/rdf-schema#label> ?ol .
-                FILTER ( LANG(?ol) = "en" )
-                ?s <http://wikiba.se/ontology#directClaim> ?p .
-                ?s rdfs:label ?pl .
-                FILTER ( LANG(?pl) = "en" )
-            } group by ?p
-        */
         String patternQuery = """
             SELECT ?p (SAMPLE(?pl) AS ?pl_) (COUNT(?o) AS ?count ) (group_concat(?ol;separator=", ") AS ?ol_)
             WHERE {
@@ -756,10 +745,19 @@ uri_CIM_ProcessExecutable_Dependent
 
         // There must be one executable and probably several libraries.
         Assert.assertTrue(listRows.size() > 0);
+        // http://www.primhillcomputers.com/ontology/ROOT/CIMV2#%5C%5CLAPTOP-R89KG6V1%5CROOT%5CCIMV2%3ACIM_ProcessExecutable.Antecedent%3D%22%5C%5C%5C%5CLAPTOP-R89KG6V1%5C%5Croot%5C%5Ccimv2%3ACIM_DataFile.Name%3D%5C%22C%3A%5C%5C%5C%5CProgram+Files%5C%5C%5C%5CJava%5C%5C%5C%5Cjdk-17.0.2%5C%5C%5C%5Cbin%5C%5C%5C%5Cnio.dll%5C%22%22%2CDependent%3D%22%5C%5C%5C%5CLAPTOP-R89KG6V1%5C%5Croot%5C%5Ccimv2%3AWin32_Process.Handle%3D%5C%2212424%5C%22%22
+        String uriRegex = ".*CIM_ProcessExecutable\\.Antecedent.*CIM_DataFile\\.Name.*Dependent.*Win32_Process\\.Handle.*";
+        Pattern uriPattern = Pattern.compile(uriRegex);
+
         for(RdfSolution.Tuple currentRow : listRows) {
+            String oValue = currentRow.getAsUri("o");
+            System.out.println("    o=" + oValue);
+            Matcher matcher = uriPattern.matcher(oValue);
+            Assert.assertTrue(matcher.find());    
+
             String olValue = currentRow.getAsLiteral("ol");
             System.out.println("    ol=" + olValue);
-            Assert.assertTrue(olValue.endsWith("@en"));
+            Assert.assertFalse(olValue.endsWith("@en"));
         }
     }
 }

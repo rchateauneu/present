@@ -91,6 +91,9 @@ public class DependenciesBuilder {
                     predVarName = predicateObjectPair.predicateVariableName;
                     logger.debug("All predicates. predVarName=" + predVarName);
 
+                    if(objectVariableName == null) {
+                        logger.debug("objectVariableName is null");
+                    }
                     selectedVariablesVariablePredicate.put(predVarName, objectVariableName);
                 } else {
                     QueryData.WhereEquality wmiKeyValue = new QueryData.WhereEquality(
@@ -150,9 +153,15 @@ public class DependenciesBuilder {
                     .map(x -> x.getKey() + "=>" + x.getValue()).collect(Collectors.toList()));
 
             for(Map.Entry<String, String> pairTwoVars : selectedVariablesVariablePredicate.entrySet()) {
-                logger.debug("pairTwoVars.getKey()=" + pairTwoVars.getKey() + " pairTwoVars.getValue()=" + pairTwoVars.getValue());
+                String stringValue = pairTwoVars.getValue();
+                logger.debug("pairTwoVars.getKey()=" + pairTwoVars.getKey() + " stringValue=" + stringValue);
                 addToVariablesContext(pairTwoVars.getKey());
-                addToVariablesContext(pairTwoVars.getValue());
+                // Maybe the object is a constant.
+                if(stringValue != null) {
+                    addToVariablesContext(pairTwoVars.getValue());
+                } else {
+                    logger.debug("Not adding null variable of object");
+                }
             }
 
             // The variable which defines the object will receive a value with the execution of this WQL query,

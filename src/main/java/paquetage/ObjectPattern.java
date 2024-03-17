@@ -469,7 +469,6 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                         +" variableName=" + variableName
                         +" object=" + object
                 );
-                // return;
                 String objectVariableName = object.getName();
                 PredicateObjectPair predicateObjectPair = new PredicateObjectPair(null, shortPredicate, objectVariableName, null);
                 // FIXME: What happens if the same predicate appears several times ?
@@ -478,7 +477,20 @@ public class ObjectPattern implements Comparable<ObjectPattern> {
                 assert shortPredicate == null;
                 logger.debug("Getting classes from " + subjectNamespace);
                 if (object.isConstant()) {
-                    throw new RuntimeException("Cannot handle variable predicate and constant object for ClassName=" + subjectClassname);
+                    shortPredicate = ALL_PREDICATES;
+
+                    String predicateVariableName = predicate.getName();
+                    logger.debug("predicateVariableName=" + predicateVariableName);
+                    if(predicate.getValue() != null) {
+                        throw new RuntimeException("Predicate value should be null.");
+                    }
+
+                    Value objectValue = object.getValue();
+                    ValueTypePair.ValueType dataType = ValueToType(objectValue);
+                    String strValue = objectValue.stringValue();
+                    ValueTypePair vtp = new ValueTypePair(strValue, dataType);
+                    PredicateObjectPair predicateObjectPair = new PredicateObjectPair(predicateVariableName, shortPredicate, null, vtp);
+                    membersList.add(predicateObjectPair);
                 } else {
                     shortPredicate = ALL_PREDICATES;
 

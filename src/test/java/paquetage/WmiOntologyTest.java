@@ -228,8 +228,8 @@ public class WmiOntologyTest {
     @Test
     public void testCIMV2_DirectClaim() {
         String queryString = "SELECT ?property WHERE { ?wdt_predicate <http://wikiba.se/ontology#directClaim> ?property }";
-        Set<String> propertysSet = selectColumnCIMV2(queryString, "property");
-        assertContainsItemCIMV2(propertysSet, "Win32_Process.Handle");
+        Set<String> propertiesSet = selectColumnCIMV2(queryString, "property");
+        assertContainsItemCIMV2(propertiesSet, "Win32_Process.Handle");
     }
 
     /** This checks the presence of class Wmi32_Process in the domain of Win32_Process.Handle.

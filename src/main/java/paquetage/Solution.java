@@ -150,7 +150,7 @@ public class Solution implements Iterable<Solution.Row> {
                     logger.debug("RDFS.LABEL.stringValue()=" + RDFS.LABEL.stringValue() + ".");
                     boolean isRdfsLabel = predicateValueString.equals(RDFS.LABEL.stringValue());
                     boolean isDirectClaim = predicateValueString.equals(WmiOntology.directClaimIri.stringValue());
-                    logger.debug("isRdfsLabel=" + isRdfsLabel + " isDirectClaim=" + isDirectClaim);
+                    logger.debug("isRdfsLabel=" + isRdfsLabel + " isDirectClaim=" + isDirectClaim + " rowsList.size()=" + rowsList.size());
                     for (Row row : rowsList) {
                         //logger.debug("row=" + row);
                         /* The subject might not be a node if the query comes from Wikidata GUI.
@@ -176,7 +176,7 @@ public class Solution implements Iterable<Solution.Row> {
                                 String valueObject = row.getStringValue(objectName);
                                 // Creates a new Literal with the supplied lexical value.
                                 resourceObject = Values.literal(valueObject, "en");
-                                logger.debug("resourceObject.stringValue()=" + resourceObject.stringValue());
+                                logger.debug("Label resourceObject.stringValue()=" + resourceObject.stringValue());
                             } else {
                                 Value literalSubject = subjectWmiValue.convertValueTypeToLiteral();
                                 /*
@@ -201,8 +201,12 @@ public class Solution implements Iterable<Solution.Row> {
                         else if(isDirectClaim)
                         {
                             logger.debug("isDirectClaim yield no value");
-                            resourceSubject = null;
-                            resourceObject = null;
+                            resourceSubject = row.asIRI(subjectName);
+                            logger.debug("resourceSubject=" + resourceSubject);
+                            String valueObject = "directClaim===" + row.getStringValue(objectName);
+                            // Creates a new Literal with the supplied lexical value.
+                            resourceObject = Values.literal(valueObject, "en");
+                            logger.debug("directClaim resourceObject.stringValue()=" + resourceObject.stringValue());
                         }
                         else {
                             resourceSubject = row.asIRI(subjectName);
