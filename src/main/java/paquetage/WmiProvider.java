@@ -262,7 +262,7 @@ public class WmiProvider {
      */
     static private Pattern patternLocalizationNamespaces = Pattern.compile("^ms_\\d\\d", Pattern.CASE_INSENSITIVE);
 
-    private Set<String> flattenNamespaces(Wbemcli.IWbemServices wbemService, String namespace) {
+    private static Set<String> flattenNamespaces(Wbemcli.IWbemServices wbemService, String namespace) {
         checkValidNamespace(namespace);
         Wbemcli.IEnumWbemClassObject enumerator = wbemService.ExecQuery(
                 "WQL",
@@ -306,7 +306,7 @@ public class WmiProvider {
         return namespacesFlat;
     }
 
-    private void buildNamespacesList(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
+    private static void buildNamespacesList(Set<String> namespacesHierarchical, Wbemcli.IWbemServices wbemService, String namespace) {
 
         Set<String> namespacesFlat = flattenNamespaces(wbemService, namespace);
 
@@ -330,7 +330,7 @@ public class WmiProvider {
      */
     private static HashSet<String> cacheNamespaces = null;
 
-    public Set<String> namespacesList() throws Exception {
+    public static Set<String> namespacesList() throws Exception {
         if(cacheNamespaces == null) {
             cacheNamespaces = new HashSet<>();
             Path pathCacheNamespaces = Paths.get(CacheManager.ontologiesPathCache + "\\" + "namespaces.json");

@@ -4,18 +4,18 @@
   Internal status
   <%
   String computerName = paquetage.PresentUtils.computerName;
-  String parentProcessId = paquetage.PresentUtils.ParentProcessId();
-  String parentProcessName = paquetage.PresentUtils.ParentProcessName();
+  String parentProcessId = paquetage.PresentUtils.parentProcessId();
+  String parentProcessName = paquetage.PresentUtils.parentProcessName();
   %>
   <table border=1>
   <tr><td>Computer name</td><td><%= computerName %></td></tr>
   <tr><td>Parent process id</td><td><%= parentProcessId %></td></tr>
   <tr><td>Parent process name</td><td><%= parentProcessName %></td></tr>
-  <tr><td>Ontologies path cache</td><td><%= paquetage.WmiProvider.ontologiesPathCache %></td></tr>
+  <tr><td>Ontologies path cache</td><td><%= paquetage.CacheManager.ontologiesPathCache %></td></tr>
   </table>
 
   <%
-  java.util.Set<String> namespaces = paquetage.WmiOntology.Namespaces();
+  java.util.Set<String> namespaces = paquetage.WmiProvider.namespacesList();
   int countNamespaces = namespaces.size();
   %>
   Namespaces in cache: <p><%= countNamespaces %></p>
