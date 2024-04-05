@@ -229,6 +229,44 @@ query_samples = [
         `
     },
     {
+        category : "Processes",
+        title : "Predicates of class Win32_Process",
+        query : `
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?predicate
+            where {
+              ?predicate rdfs:domain cimv2:Win32_Process .
+            }
+        `
+    },
+    {
+        category : "Processes",
+        title : "Associators of class Win32_Process",
+        query : `
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?class
+            where {
+              ?class rdfs:range cimv2:Win32_Process .
+            }
+        `
+    },
+    {
+        category : "Processes",
+        title : "Processes creation dates",
+        query : `
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?caption ?credate
+            where {
+              ?process rdf:type cimv2:Win32_Process .
+              ?process cimv2:Win32_Process.Caption ?caption .
+              ?process cimv2:Win32_Process.CreationDate ?credate .
+            }
+        `
+    },
+    {
         category : "Accounts",
         title : "Selects all Win32_UserAccount",
         query : `
@@ -390,6 +428,37 @@ query_samples = [
                 ?_1_service1 ^cimv2:Win32_DependentService.Dependent/cimv2:Win32_DependentService.Antecedent ?zzzzz_2_service2 .
                 ?zzzzz_2_service2 cimv2:Win32_Service.DisplayName ?service_name .
                 ?zzzzz_2_service2 cimv2:Win32_Service.PathName ?path_name .
+            }
+        `
+    },
+    {
+        category : "Services",
+        title : "Dependency graph of Windows services.",
+        query : `
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?dependent ?antecedent
+            where {
+              ?assoc rdf:type cimv2:Win32_DependentService .
+              ?assoc cimv2:Win32_DependentService.Dependent ?dependent .
+              ?assoc cimv2:Win32_DependentService.Antecedent ?antecedent .
+            }
+        `
+    },
+    {
+        category : "Services",
+        title : "Services creation dates.",
+        query : `
+            prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+            prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+            select ?caption ?credate
+            where {
+              ?service rdf:type  cimv2:Win32_Service .
+              ?service cimv2:Win32_Service.Caption  ?caption .
+              ?service cimv2:Win32_Service.ProcessId ?pid .
+              ?process rdf:type cimv2:Win32_Process .
+              ?process cimv2:ProcessId ?pid .
+              ?process cimv2:Win32_Process.CreationDate ?credate
             }
         `
     },

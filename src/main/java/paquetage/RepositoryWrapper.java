@@ -81,6 +81,9 @@ public class RepositoryWrapper {
         logger.debug("sparqlQuery=" + sparqlQuery);
         logger.debug("bindings=" + treeExtractor.bindingsSet);
 
+        /* This solution is not useful. What is important is to insert in the current repository, the triples
+        which were built.
+        */
         Solution translatedRows = treeExtractor.evaluateSolution();
         logger.debug("Translated rows:" + translatedRows.size());
 

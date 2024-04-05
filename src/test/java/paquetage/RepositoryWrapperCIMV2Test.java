@@ -1,6 +1,7 @@
 package paquetage;
 
 import org.apache.commons.text.CaseUtils;
+import org.json.JSONObject;
 import org.junit.*;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -237,7 +238,7 @@ public class RepositoryWrapperCIMV2Test {
         //Assert.assertTrue(PresentUtils.CheckValidWbemPath(actualProcessUri));
     }
 
-    /** Selects all properties of a process.
+    /** Selects all properties of the current process.
      *
      * @throws Exception
      */
@@ -317,6 +318,11 @@ public class RepositoryWrapperCIMV2Test {
         // Check the value of a property whose result is known.
         //Assert.assertEquals(PresentUtils.longToXml(currentPid), singleRow.getAsLiteral("processid"));
         Assert.assertEquals(currentPidStr, singleRow.getAsLiteral("processid"));
+
+        RdfSolution.Tuple.RdfValue rdfValue = singleRow.getValueType("creationdate");
+        JSONObject jsonObject = rdfValue.toJSONObject(true);
+        System.out.println("jsonObject=" + jsonObject);
+        Assert.assertEquals("http://www.w3.org/2001/XMLSchema#dateTime", jsonObject.get("datatype"));
     }
 
     // Transforms '"Win32_Process.VirtualSize"@en' into 'VirtualSize'
@@ -1282,6 +1288,68 @@ public class RepositoryWrapperCIMV2Test {
         // Actual   :2022-02-11T00:44:44.730519
         // Truncate the expected date because of different format.
         Assert.assertEquals(expectedCreationTimeXml.toString().substring(0, 26), xmlDate.toString());
+
+        // Checks the type of the date.
+        RdfSolution.Tuple.RdfValue rdfValue = singleRow.getValueType("creation_date");
+        System.out.println("rdfValue=" + rdfValue);
+        JSONObject jsonObject = rdfValue.toJSONObject(true);
+        System.out.println("jsonObject=" + jsonObject);
+        Assert.assertEquals("http://www.w3.org/2001/XMLSchema#dateTime", jsonObject.get("datatype"));
+    }
+
+    /** Creation date of a Win32_Directory. Here, "C:/Windows", and Sparql functions.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSelect_Win32_Directory_CreationDate_Functions() throws Exception {
+        String sparqlQuery = """
+                    prefix cimv2:  <http://www.primhillcomputers.com/ontology/ROOT/CIMV2#>
+                    prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                    select ?creation_date (YEAR(?creation_date) as ?creation_year) (MONTH(?creation_date) as ?creation_month) (DAY(?creation_date) as ?creation_day)
+                    where {
+                        ?my_file cimv2:Win32_Directory.CreationDate ?creation_date .
+                        ?my_file cimv2:Win32_Directory.Name "C:\\\\Windows" .
+                    }
+                """;
+
+        RdfSolution listRows = repositoryWrapper.executeQuery(sparqlQuery);
+
+        Assert.assertEquals(1, listRows.size());
+        RdfSolution.Tuple singleRow = listRows.get(0);
+        Assert.assertEquals(Set.of("creation_date", "creation_year", "creation_month", "creation_day"), singleRow.keySet());
+
+        RdfSolution.Tuple.RdfValue valueDate = singleRow.getValueType("creation_date");
+        System.out.println("valueDate=" + valueDate);
+        String creationDate = singleRow.getAsLiteral("creation_date");
+        System.out.println("creationDate=" + creationDate);
+
+        RdfSolution.Tuple.RdfValue valueYear = singleRow.getValueType("creation_year");
+        System.out.println("valueYear=" + valueYear);
+        String creationYear = singleRow.getAsLiteral("creation_year");
+        System.out.println("creationYear=" + creationYear);
+
+        RdfSolution.Tuple.RdfValue valueMonth = singleRow.getValueType("creation_month");
+        System.out.println("valueMonth=" + valueMonth);
+        String creationMonth = singleRow.getAsLiteral("creation_month");
+        System.out.println("creationMonth=" + creationMonth);
+
+        RdfSolution.Tuple.RdfValue valueDay = singleRow.getValueType("creation_day");
+        System.out.println("valueDay=" + valueDay);
+        String creationDay = singleRow.getAsLiteral("creation_day");
+        System.out.println("creationDay=" + creationDay);
+
+        FileTime expectedCreationTime = (FileTime) Files.getAttribute( Path.of("C:\\Windows"), "creationTime");
+        System.out.println("expectedCreationTime=" + expectedCreationTime);
+
+        LocalDateTime localDateTime = expectedCreationTime
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+
+        Assert.assertEquals(String.valueOf(localDateTime.getYear()), creationYear);
+        Assert.assertEquals(String.valueOf(localDateTime.getMonthValue()), creationMonth);
+        Assert.assertEquals(String.valueOf(localDateTime.getDayOfMonth()), creationDay);
     }
 
     /** Most used modules of the current process.

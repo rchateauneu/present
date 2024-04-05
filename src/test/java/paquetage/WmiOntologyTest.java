@@ -259,7 +259,7 @@ public class WmiOntologyTest {
         Assert.assertTrue(rangesSet.contains("http://www.w3.org/2001/XMLSchema#string"));
     }
 
-    /** This checks the presence Description for class Win32_Process. */
+    /** This checks the presence of Description for class Win32_Process. */
     @Test
     public void testCIMV2_Win32_Process_Description() {
         String queryString = """

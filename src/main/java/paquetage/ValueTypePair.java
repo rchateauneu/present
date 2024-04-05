@@ -153,18 +153,7 @@ class ValueTypePair {
         // that outputs the full value of the time where the omitted parts are implied to be zero."
         // https://stackoverflow.com/questions/50786482/java-8-localdatetime-dropping-00-seconds-value-when-parsing-date-string-value-wi
 
-        /*
-            The output will be one of the following ISO-8601 formats:
-            uuuu-MM-dd'T'HH:mm
-            uuuu-MM-dd'T'HH:mm:ss
-            uuuu-MM-dd'T'HH:mm:ss.SSS
-            uuuu-MM-dd'T'HH:mm:ss.SSSSSS
-            uuuu-MM-dd'T'HH:mm:ss.SSSSSSSSS
-         */
         DateTimeFormatter formatterOutput = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
-        //String currentTime= "2017-10-19 22:00:00";
-        //LocalDateTime datetime = LocalDateTime.parse(currentTime,formatter1);
-        //2017-10-19T22:00
         String strDate=dateFromGmtString.format(formatterOutput);
 
         logger.debug("strValue=" + strValue);
@@ -173,7 +162,25 @@ class ValueTypePair {
         // See https://www.w3.org/TR/xmlschema-2/#dateTime-order
         XMLGregorianCalendar dateGregorian = datatypeFactory.newXMLGregorianCalendar(strDate);
 
-        return Values.literal(factory, dateGregorian, true);
+        // literal(ValueFactory vf, String lexicalValue, IRI datatype)
+        /*
+        Mais pourquoi ca marchait avant ? Et je me souviens qu on avait vire l'extension XSD.
+
+        "2024-03-25T00:03:23.323227"^^<http://www.w3.org/2001/XMLSchema#dateTime>
+
+        retValue = {SimpleLiteral@3885} ""2024-03-25T00:03:23.323227"^^<http://www.w3.org/2001/XMLSchema#dateTime>"
+            label = "2024-03-25T00:03:23.323227"
+            language = null
+            datatype = {Vocabularies$2@3889} "http://www.w3.org/2001/XMLSchema#dateTime"
+            xsdDatatype = null
+        */
+
+
+
+
+        // METTRE CA DANS LA FONCTION APPELANTE, CA SERA PLUS PROPRE.
+        Value retValue = Values.literal(factory, dateGregorian, true);
+        return retValue;
     }
 
     /** This transforms a ValueType (as calculated from WMI) into a literal usable by RDF.

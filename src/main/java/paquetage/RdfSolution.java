@@ -1,6 +1,8 @@
 package paquetage;
 
 import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
@@ -11,7 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RdfSolution implements Iterable<RdfSolution.Tuple> {
-    final static private Logger logger = Logger.getLogger(WmiSelecter.class);
+    final static private Logger logger = Logger.getLogger(RdfSolution.class);
 
     /** This is used only for testing. It returns the content of a labelled column as a vector of longs.
     This can obviously work only if the type of each element is convertible to an integer.
@@ -38,8 +40,25 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
     }
 
     public static class Tuple {
-        public record RdfValue(boolean isUri, String value)
+        public static class RdfValue
         {
+            private boolean isUri;
+            private String value;
+
+            private String xsdType;
+
+            public RdfValue(boolean theUri, String theValue, String theXsdType) {
+                isUri = theUri;
+                value = theValue;
+                // En principe, je devrais avoir le datatype ici.
+                PresentUtils.ParsedXMLTag parsedXml = new PresentUtils.ParsedXMLTag(value);
+                if(parsedXml.datatype != null) {
+                    throw new RuntimeException("Datatype should be stripped:" + theValue);
+                }
+                xsdType = theXsdType;
+            }
+
+
             public JSONObject toJSONObject(Boolean withSchema) {
                 // Possible values: "2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>
                 JSONObject jsonRdfValue = new JSONObject();
@@ -68,8 +87,13 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
                  "datatype" : "http://www.w3.org/1998/Math/MathML",
                  "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime"
                 */
+                // if(parsedXml.datatype != null) {
                 if(parsedXml.datatype != null) {
-                    jsonRdfValue.put("datatype", parsedXml.datatype);
+                    throw new RuntimeException("Type should be stripped");
+                }
+                // if(parsedXml.datatype != null) {
+                if(xsdType != null) {
+                    jsonRdfValue.put("datatype", xsdType);
                 }
 
                 /* TODO: Should add
@@ -84,7 +108,7 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
             return mapKeyValuePairs.keySet();
         }
 
-        private RdfValue getValueType(String key) {
+        public RdfValue getValueType(String key) {
             RdfValue rdfValue = mapKeyValuePairs.get(key);
             if(rdfValue == null) {
                 throw new RuntimeException("Unknown variable " + key + ". Vars=" + keySet());
@@ -109,9 +133,9 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
             return rdfValue.value;
         }
 
-        public Tuple addKeyValue(String key, boolean valueIsUri, String valueString) {
+        public Tuple addKeyValue(String key, boolean valueIsUri, String valueString, String xsdType) {
             // FIXME: Where is it created ? "2023-08-15T01:37:31.308650"^^<http://www.w3.org/2001/XMLSchema#dateTime>
-            mapKeyValuePairs.put(key, new RdfValue(valueIsUri, valueString));
+            mapKeyValuePairs.put(key, new RdfValue(valueIsUri, valueString, xsdType));
             return this;
         }
         /** This is used to insert the result of a Sparql query execution.
@@ -147,8 +171,45 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
                         throw new Exception("Value should not be IRI or literal:" + valueString);
                     }
                 }
+                // datatype="http://www.w3.org/2001/XMLSchema#long" . Comment la garder ?
+                // On en a besoin pour convertir en json.
                 // FIXME: Where is it created ?
-                addKeyValue(binding.getName(), isIri, valueString);
+                // FIXME : IL FAUT GARDER LE TYPE.
+
+
+                //BESOIN DU TYPE POUR JSON. Il faudrait l'extraire ?
+
+                /*
+"39"^^<http://www.w3.org/2001/XMLSchema#long>
+
+bindingValue = {IntegerMemLiteral@3862} ""39"^^<http://www.w3.org/2001/XMLSchema#long>"
+ value = {BigInteger@3978} "39"
+ creator = {MemValueFactory@3948}
+ objectStatements = {MemStatementList@3979}
+ label = "39"
+ language = null
+ datatype = {Vocabularies$2@3980} "http://www.w3.org/2001/XMLSchema#long"
+ xsdDatatype = null
+
+                 valueString = 39
+                 */
+                String toto = bindingValue.toString();
+                if(bindingValue.isLiteral()) {
+                    Literal xx = (Literal)bindingValue;
+                    IRI dt = xx.getDatatype();
+                    String dts = dt.toString();
+                    logger.debug("dt=" + dt + " dts=" + dts);
+                    if(isIri) {
+                        throw new RuntimeException("Should be false");
+                    }
+                    addKeyValue(binding.getName(), false, valueString, dts);
+                } else {
+                    if(!isIri) {
+                        throw new RuntimeException("Should be true");
+                    }
+                    addKeyValue(binding.getName(), true, valueString, null);
+                }
+
             }
         }
 
@@ -227,6 +288,7 @@ public class RdfSolution implements Iterable<RdfSolution.Tuple> {
             }
      */
     String toJson(Boolean withSchema) {
+        logger.debug("withSchema=" + withSchema);
         JSONObject jsonTop = new JSONObject();
 
         JSONObject jsonHead = new JSONObject();
